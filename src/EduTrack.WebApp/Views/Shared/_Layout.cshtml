@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - EduTrack</title>
+    <link rel="icon" type="image/x-icon" href="~/favicon.ico" />
+    <link rel="icon" type="image/png" sizes="16x16" href="~/favicon-16x16.png" />
+    <link rel="icon" type="image/png" sizes="24x24" href="~/favicon-24x24.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="~/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="48x48" href="~/favicon-48x48.png" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/lib/fontawesome/css/all.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="manifest" href="~/manifest.webmanifest" />
+    <meta name="theme-color" content="#6366f1" />
+    <meta name="description" content="EduTrack - سیستم مدیریت یادگیری آنلاین" />
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body>
+    <div class="offline-indicator" id="offlineIndicator">
+        <i class="fas fa-wifi"></i> شما در حالت آفلاین هستید
+    </div>
+    
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-dark">
+            <div class="container-fluid">
+                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">
+                    <i class="fas fa-graduation-cap me-2"></i>EduTrack
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+                        aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="navbar-collapse collapse d-lg-inline-flex justify-content-between">
+                    <ul class="navbar-nav flex-grow-1">
+                        <li class="nav-item">
+                            <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Index">
+                                <i class="fas fa-home me-1"></i>خانه
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-area="" asp-controller="Catalog" asp-action="Index">
+                                <i class="fas fa-book me-1"></i>دوره‌ها
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-area="" asp-controller="Exam" asp-action="Index">
+                                <i class="fas fa-clipboard-list me-1"></i>آزمون‌ها
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-area="" asp-controller="Classroom" asp-action="Index">
+                                <i class="fas fa-users me-1"></i>کلاس‌ها
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-area="" asp-controller="Progress" asp-action="Index">
+                                <i class="fas fa-chart-line me-1"></i>پیشرفت
+                            </a>
+                        </li>
+                    </ul>
+                    <div class="d-flex align-items-center">
+                        <button id="install-button" class="btn btn-outline-light btn-sm me-2" style="display: none;">
+                            <i class="fas fa-download me-1"></i>نصب برنامه
+                        </button>
+                        <partial name="_LoginPartial" />
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+    
+    <div class="container-fluid">
+        <main role="main" class="pb-3">
+            <partial name="_Toast" />
+            @RenderBody()
+        </main>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5 class="text-gradient">EduTrack</h5>
+                    <p class="text-muted">سیستم مدیریت یادگیری هوشمند و مدرن</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p class="text-muted mb-0">
+                        &copy; 2024 - EduTrack - 
+                        <a asp-area="" asp-controller="Home" asp-action="Privacy">حریم خصوصی</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+    
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+    <script src="~/lib/fontawesome/js/all.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/js/pwa.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
