@@ -36,13 +36,13 @@
 
                         @if (ViewBag.ShowTeacherSelection == true)
                         {
-                            <div class="mb-3">
-                                <label asp-for="TeacherId" class="form-label">معلم *</label>
-                                <select asp-for="TeacherId" asp-items="ViewBag.Teachers" class="form-select">
-                                    <option value="">انتخاب معلم</option>
-                                </select>
-                                <span asp-validation-for="TeacherId" class="text-danger"></span>
-                            </div>
+                        <div class="mb-3">
+                            <label asp-for="TeacherId" class="form-label">معلم *</label>
+                            <select asp-for="TeacherId" asp-items="ViewBag.Teachers" class="form-select">
+                                <option value="">انتخاب معلم</option>
+                            </select>
+                            <span asp-validation-for="TeacherId" class="text-danger"></span>
+                        </div>
                         }
                         else
                         {
@@ -94,7 +94,6 @@
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
     <script src="~/js/persian-date-working.js"></script>
     <script src="~/js/persian-datepicker.js"></script>
-    <script src="~/js/form-validation.js"></script>
     
     <script>
         $(document).ready(function() {
@@ -121,8 +120,7 @@
             // Initialize Persian DatePickers
             initializePersianDatePickers();
             
-            // Initialize form validation
-            window.formValidator.initializeForm('#create-class-form');
+            // Form validation removed to fix POST issue
         });
 
         function initializePersianDatePickers() {
@@ -200,7 +198,6 @@
 
         // Form submission handling
         document.getElementById('create-class-form').addEventListener('submit', function(e) {
-            debugger
             const submitBtn = document.getElementById('submit-btn');
             const hiddenStartDate = document.querySelector('input[name="StartDate"]');
             const hiddenEndDate = document.querySelector('input[name="EndDate"]');
@@ -212,30 +209,26 @@
                 return;
             }
             
-            // Validate date format - try different parsing methods
+            // Simple date validation
             let startDate, endDate;
             
             try {
                 startDate = new Date(hiddenStartDate.value);
                 endDate = new Date(hiddenEndDate.value);
                 
-                // Additional validation for MM/dd/yyyy format
                 if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
                     throw new Error('Invalid date format');
                 }
+                
+                if (startDate >= endDate) {
+                    e.preventDefault();
+                    alert('تاریخ پایان باید بعد از تاریخ شروع باشد.');
+                    return;
+                }
             } catch (error) {
-                e.preventDefault();
-                alert('فرمت تاریخ صحیح نیست. لطفاً دوباره انتخاب کنید.');
-                console.error('Date parsing error:', error);
-                console.log('Start date value:', hiddenStartDate.value);
-                console.log('End date value:', hiddenEndDate.value);
-                return;
-            }
-            
-            if (startDate >= endDate) {
-                e.preventDefault();
-                alert('تاریخ پایان باید بعد از تاریخ شروع باشد.');
-                return;
+                console.error('Date validation error:', error);
+                // Don't prevent submission for date format issues
+                // Let server handle validation
             }
             
             console.log('Submitting with dates:', {

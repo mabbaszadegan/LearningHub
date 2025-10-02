@@ -6,8 +6,32 @@ namespace EduTrack.Infrastructure.Data;
 
 public class AppDbContext : IdentityDbContext<User>
 {
+    private readonly IDatabaseProviderConfiguration _providerConfig;
+
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
     {
+        // Try to get provider name from Database, fallback to SqlServer if not available (design-time)
+        string providerName;
+        try
+        {
+            providerName = Database?.ProviderName ?? "Microsoft.EntityFrameworkCore.SqlServer";
+        }
+        catch
+        {
+            providerName = "Microsoft.EntityFrameworkCore.SqlServer";
+        }
+        _providerConfig = DatabaseProviderFactory.GetConfiguration(providerName);
+    }
+
+    public AppDbContext(DbContextOptions<AppDbContext> options, string databaseProvider) : base(options)
+    {
+        _providerConfig = DatabaseProviderFactory.GetConfiguration(databaseProvider switch
+        {
+            "Sqlite" => "Microsoft.EntityFrameworkCore.Sqlite",
+            "SqlServer" => "Microsoft.EntityFrameworkCore.SqlServer", 
+            "Postgres" => "Npgsql.EntityFrameworkCore.PostgreSQL",
+            _ => "Microsoft.EntityFrameworkCore.SqlServer"
+        });
     }
 
     public DbSet<Profile> Profiles { get; set; }
@@ -83,7 +107,7 @@ public class AppDbContext : IdentityDbContext<User>
         builder.Entity<Lesson>(entity =>
         {
             entity.Property(e => e.Title).HasMaxLength(200).IsRequired();
-            entity.Property(e => e.Content).HasColumnType("text");
+            _providerConfig.ConfigureLongText<Lesson>(entity.Property(e => e.Content));
             entity.Property(e => e.VideoUrl).HasMaxLength(500);
             entity.HasOne(e => e.Module)
                 .WithMany(e => e.Lessons)

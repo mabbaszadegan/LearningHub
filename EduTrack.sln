@@ -12,6 +12,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EduTrack.WebApp", "src\EduT
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EduTrack.Tests", "src\EduTrack.Tests\EduTrack.Tests.csproj", "{4DDB6922-BAAA-4114-AEC5-FB5C5B653C75}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Src", "Src", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{26684FF1-2D80-4628-A599-DA3E9F2797F2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -41,6 +45,13 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567890} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{226389FB-588E-47B8-9E88-C2E061E11D66} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{DC59F9EB-E621-4863-AD8D-A49A7C2B3B4F} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{51263FD2-F672-43DB-893B-0B4BAAD2EB7E} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{4DDB6922-BAAA-4114-AEC5-FB5C5B653C75} = {26684FF1-2D80-4628-A599-DA3E9F2797F2}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {F6G7H8I9-J0K1-2345-FGHI-678901234567}

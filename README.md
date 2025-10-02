@@ -44,6 +44,33 @@ chmod +x scripts/dev-setup.sh
 ./scripts/dev-setup.sh
 ```
 
+### Database Migration (Multi-Provider Support)
+
+**Switch to SQL Server:**
+```powershell
+.\scripts\migrate-database.ps1 -Provider SqlServer
+```
+
+**Switch to SQLite:**
+```powershell
+.\scripts\migrate-database.ps1 -Provider Sqlite
+```
+
+**Switch to PostgreSQL:**
+```powershell
+.\scripts\migrate-database.ps1 -Provider Postgres
+```
+
+**With custom connection string:**
+```powershell
+.\scripts\migrate-database.ps1 -Provider SqlServer -ConnectionString "Server=myserver;Database=EduTrack;..."
+```
+
+**Reset and migrate:**
+```powershell
+.\scripts\migrate-database.ps1 -Provider SqlServer -Reset
+```
+
 ### Manual Setup
 
 1. **Clone and restore packages:**
