@@ -1,7 +1,6 @@
-@model EduTrack.WebApp.Controllers.RegisterViewModel
+@model EduTrack.WebApp.Areas.Public.Controllers.RegisterViewModel
 @{
     ViewData["Title"] = "ثبت نام";
-    var roleText = Model.Role == EduTrack.Domain.Enums.UserRole.Teacher ? "معلم" : "دانش‌آموز";
 }
 
 <div class="register-container">
@@ -13,14 +12,12 @@
                         <div class="register-logo">
                             <i class="fas fa-graduation-cap"></i>
                         </div>
-                        <h2 class="register-title">ثبت نام @roleText</h2>
+                        <h2 class="register-title">ثبت نام</h2>
                         <p class="register-subtitle">به جمع کاربران EduTrack بپیوندید</p>
                     </div>
 
                     <form asp-action="Register" method="post" class="register-form">
                         <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
-                        
-                        <input asp-for="Role" type="hidden" />
 
                         <div class="row">
                             <div class="col-md-6">
@@ -83,9 +80,9 @@
                         </div>
 
                         <div class="role-display">
-                            <div class="role-badge @(Model.Role == EduTrack.Domain.Enums.UserRole.Teacher ? "teacher" : "student")">
-                                <i class="fas @(Model.Role == EduTrack.Domain.Enums.UserRole.Teacher ? "fa-chalkboard-teacher" : "fa-user-graduate") me-2"></i>
-                                ثبت نام به عنوان @roleText
+                            <div class="role-badge student">
+                                <i class="fas fa-user-graduate me-2"></i>
+                                ثبت نام به عنوان دانش‌آموز
                             </div>
                         </div>
 
@@ -99,12 +96,6 @@
                             <p class="mb-0">
                                 قبلاً ثبت نام کرده‌اید؟ 
                                 <a asp-controller="Account" asp-action="Login" class="text-primary fw-bold">وارد شوید</a>
-                            </p>
-                            <p class="mt-2 mb-0">
-                                نقش اشتباه انتخاب کرده‌اید؟ 
-                                <a asp-controller="Account" asp-action="Register" asp-route-role="@(Model.Role == EduTrack.Domain.Enums.UserRole.Teacher ? "Student" : "Teacher")" class="text-secondary">
-                                    ثبت نام @(Model.Role == EduTrack.Domain.Enums.UserRole.Teacher ? "دانش‌آموز" : "معلم")
-                                </a>
                             </p>
                         </div>
                     </form>

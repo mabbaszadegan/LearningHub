@@ -1,0 +1,305 @@
+/* Teacher Area Styles */
+
+/* Teacher Dashboard */
+.teacher-dashboard {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    color: white;
+}
+
+.teacher-stats-card {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 15px;
+    padding: 2rem;
+    transition: all 0.3s ease;
+}
+
+.teacher-stats-card:hover {
+    transform: translateY(-5px);
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.teacher-stats-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.teacher-stats-label {
+    font-size: 1rem;
+    opacity: 0.9;
+}
+
+/* Teacher Class Cards */
+.teacher-class-card {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+    margin-bottom: 2rem;
+    transition: all 0.3s ease;
+    border-left: 5px solid #11998e;
+}
+
+.teacher-class-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+}
+
+.teacher-class-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 1rem;
+}
+
+.teacher-class-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.teacher-class-students {
+    background: linear-gradient(45deg, #11998e, #38ef7d);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.teacher-class-date {
+    color: #6c757d;
+    font-size: 0.875rem;
+}
+
+/* Teacher Buttons */
+.btn-teacher-primary {
+    background: linear-gradient(45deg, #11998e, #38ef7d);
+    border: none;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-teacher-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(17, 153, 142, 0.4);
+    color: white;
+}
+
+.btn-teacher-secondary {
+    background: transparent;
+    border: 2px solid #11998e;
+    color: #11998e;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-teacher-secondary:hover {
+    background: #11998e;
+    color: white;
+}
+
+/* Teacher Forms */
+.teacher-form-container {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+    margin: 2rem 0;
+}
+
+.teacher-form-group {
+    margin-bottom: 1.5rem;
+}
+
+.teacher-form-label {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.teacher-form-control {
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    width: 100%;
+}
+
+.teacher-form-control:focus {
+    border-color: #11998e;
+    box-shadow: 0 0 0 0.2rem rgba(17, 153, 142, 0.25);
+    outline: none;
+}
+
+/* Teacher Navigation */
+.teacher-sidebar {
+    background: linear-gradient(180deg, #11998e 0%, #0f7b72 100%);
+    min-height: 100vh;
+    padding: 2rem 0;
+}
+
+.teacher-nav-link {
+    color: rgba(255, 255, 255, 0.8);
+    padding: 1rem 1.5rem;
+    display: block;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border-left: 3px solid transparent;
+}
+
+.teacher-nav-link:hover,
+.teacher-nav-link.active {
+    color: white;
+    background: rgba(255, 255, 255, 0.1);
+    border-left-color: #38ef7d;
+    text-decoration: none;
+}
+
+.teacher-nav-icon {
+    margin-left: 0.5rem;
+    width: 20px;
+    text-align: center;
+}
+
+/* Teacher Student List */
+.teacher-student-card {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+}
+
+.teacher-student-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+}
+
+.teacher-student-name {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+}
+
+.teacher-student-email {
+    color: #6c757d;
+    font-size: 0.875rem;
+}
+
+.teacher-student-progress {
+    margin-top: 1rem;
+}
+
+.teacher-progress-bar {
+    background: #e9ecef;
+    border-radius: 10px;
+    height: 8px;
+    overflow: hidden;
+}
+
+.teacher-progress-fill {
+    background: linear-gradient(45deg, #11998e, #38ef7d);
+    height: 100%;
+    transition: width 0.3s ease;
+}
+
+/* Teacher Course Management */
+.teacher-course-card {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    margin-bottom: 2rem;
+    transition: all 0.3s ease;
+}
+
+.teacher-course-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+}
+
+.teacher-course-header {
+    background: linear-gradient(45deg, #11998e, #38ef7d);
+    color: white;
+    padding: 2rem;
+}
+
+.teacher-course-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.teacher-course-description {
+    opacity: 0.9;
+    font-size: 1rem;
+}
+
+.teacher-course-body {
+    padding: 2rem;
+}
+
+.teacher-course-stats {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 2rem;
+}
+
+.teacher-course-stat {
+    text-align: center;
+}
+
+.teacher-course-stat-number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #11998e;
+    display: block;
+}
+
+.teacher-course-stat-label {
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .teacher-stats-card {
+        margin-bottom: 1rem;
+    }
+    
+    .teacher-form-container {
+        padding: 1rem;
+        margin: 1rem 0;
+    }
+    
+    .teacher-class-card {
+        padding: 1rem;
+    }
+    
+    .teacher-class-info {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .teacher-class-students {
+        margin-bottom: 0.5rem;
+    }
+    
+    .teacher-course-stats {
+        flex-direction: column;
+        gap: 1rem;
+    }
+}

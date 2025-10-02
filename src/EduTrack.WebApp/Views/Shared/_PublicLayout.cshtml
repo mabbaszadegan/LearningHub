@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - EduTrack</title>
+    
+    <!-- Bootstrap RTL CSS -->
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.rtl.min.css" />
+    
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="~/lib/fontawesome/css/all.min.css" />
+    
+    <!-- Site CSS -->
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    
+    <!-- Public Area CSS -->
+    <link rel="stylesheet" href="~/css/areas/public/public.css" asp-append-version="true" />
+    
+    <!-- AOS (Animate On Scroll) -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body class="public-body">
+    <!-- Public Navigation -->
+    <nav class="navbar navbar-expand-lg public-navbar fixed-top">
+        <div class="container">
+            <a class="navbar-brand public-navbar-brand" asp-area="Public" asp-controller="Home" asp-action="Index">
+                <i class="fas fa-graduation-cap me-2"></i>
+                EduTrack
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link public-nav-link" asp-area="Public" asp-controller="Home" asp-action="Index">خانه</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link public-nav-link" asp-area="Public" asp-controller="Catalog" asp-action="Index">دوره‌ها</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link public-nav-link" asp-area="Public" asp-controller="Catalog" asp-action="Classes">کلاس‌ها</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link public-nav-link" href="#about">درباره ما</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link public-nav-link" href="#contact">تماس با ما</a>
+                    </li>
+                </ul>
+                
+                <div class="public-navbar-nav">
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <div class="dropdown">
+                            <a class="nav-link dropdown-toggle public-nav-link" href="#" role="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-user-circle me-1"></i>
+                                @User.Identity.Name
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" asp-area="Public" asp-controller="Account" asp-action="Profile">پروفایل</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <form asp-area="Public" asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
+                                        <button type="submit" class="dropdown-item">خروج</button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
+                    }
+                    else
+                    {
+                        <a class="public-nav-link me-3" asp-area="Public" asp-controller="Account" asp-action="Login">ورود</a>
+                        <a class="public-nav-button" asp-area="Public" asp-controller="Account" asp-action="Register">ثبت نام</a>
+                    }
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Main Content -->
+    <main class="public-main">
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                @TempData["Success"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+        
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                @TempData["Error"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+        
+        @RenderBody()
+    </main>
+    
+    <!-- Public Footer -->
+    <footer class="public-footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4">
+                    <h5 class="public-footer-title">EduTrack</h5>
+                    <p class="public-footer-description">
+                        سیستم مدیریت یادگیری پیشرفته برای آموزش آنلاین
+                    </p>
+                </div>
+                <div class="col-md-4">
+                    <h6>لینک‌های مفید</h6>
+                    <div class="public-footer-links">
+                        <a href="#" class="public-footer-link">درباره ما</a>
+                        <a href="#" class="public-footer-link">تماس با ما</a>
+                        <a href="#" class="public-footer-link">حریم خصوصی</a>
+                        <a href="#" class="public-footer-link">شرایط استفاده</a>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <h6>عضویت در خبرنامه</h6>
+                    <form id="newsletterForm" class="mt-3">
+                        <div class="input-group">
+                            <input type="email" id="newsletterEmail" class="form-control" placeholder="ایمیل شما">
+                            <button type="submit" class="btn btn-primary">عضویت</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="public-footer-copyright">
+                <p>&copy; @DateTime.Now.Year EduTrack. تمامی حقوق محفوظ است.</p>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- Scroll to Top Button -->
+    <button class="btn btn-primary btn-scroll-to-top" style="display: none;">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+    
+    <!-- Toast Container -->
+    <div id="toast-container" class="toast-container position-fixed top-0 end-0 p-3"></div>
+    
+    <!-- Scripts -->
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- AOS (Animate On Scroll) -->
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    
+    <!-- Owl Carousel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/owl.carousel.min.js"></script>
+    
+    <!-- Site JS -->
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    
+    <!-- Public Area JS -->
+    <script src="~/js/areas/public/public.js" asp-append-version="true"></script>
+    
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

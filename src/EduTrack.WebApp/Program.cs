@@ -83,9 +83,9 @@ builder.Services.AddIdentity<User, IdentityRole>(options =>
 // Configure authentication
 builder.Services.ConfigureApplicationCookie(options =>
 {
-    options.LoginPath = "/Account/Login";
-    options.LogoutPath = "/Account/Logout";
-    options.AccessDeniedPath = "/Account/AccessDenied";
+    options.LoginPath = "/Public/Account/Login";
+    options.LogoutPath = "/Public/Account/Logout";
+    options.AccessDeniedPath = "/Public/Account/AccessDenied";
     options.ExpireTimeSpan = TimeSpan.FromHours(8);
     options.SlidingExpiration = true;
 });
@@ -135,13 +135,16 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
+// Configure area routing
 app.MapControllerRoute(
     name: "areas",
     pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
 
+// Default route redirects to Public area
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
+    pattern: "{controller=Home}/{action=Index}/{id?}",
+    defaults: new { area = "Public" });
 
 // Seed database
 using (var scope = app.Services.CreateScope())

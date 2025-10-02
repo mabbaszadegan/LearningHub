@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - پنل مدیریت EduTrack</title>
+    
+    <!-- Bootstrap RTL CSS -->
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.rtl.min.css" />
+    
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="~/lib/fontawesome/css/all.min.css" />
+    
+    <!-- Site CSS -->
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    
+    <!-- Admin Area CSS -->
+    <link rel="stylesheet" href="~/css/areas/admin/admin.css" asp-append-version="true" />
+    
+    <!-- Persian Date Picker CSS -->
+    <link rel="stylesheet" href="~/css/persian-datepicker.css" asp-append-version="true" />
+    
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body class="admin-body">
+    <div class="admin-wrapper">
+        <!-- Admin Sidebar -->
+        <nav class="admin-sidebar">
+            <div class="admin-sidebar-header">
+                <h4 class="text-white text-center py-3">
+                    <i class="fas fa-graduation-cap me-2"></i>
+                    پنل مدیریت
+                </h4>
+            </div>
+            
+            <div class="admin-sidebar-menu">
+                <a asp-area="Admin" asp-controller="Home" asp-action="Index" class="admin-nav-link">
+                    <i class="fas fa-tachometer-alt admin-nav-icon"></i>
+                    داشبورد
+                </a>
+                
+                <a asp-area="Admin" asp-controller="Users" asp-action="Index" class="admin-nav-link">
+                    <i class="fas fa-users admin-nav-icon"></i>
+                    مدیریت کاربران
+                </a>
+                
+                <a asp-area="Admin" asp-controller="Courses" asp-action="Index" class="admin-nav-link">
+                    <i class="fas fa-book admin-nav-icon"></i>
+                    مدیریت دوره‌ها
+                </a>
+                
+                <a asp-area="Admin" asp-controller="Classes" asp-action="Index" class="admin-nav-link">
+                    <i class="fas fa-chalkboard-teacher admin-nav-icon"></i>
+                    مدیریت کلاس‌ها
+                </a>
+                
+                <a asp-area="Admin" asp-controller="Sessions" asp-action="Index" class="admin-nav-link">
+                    <i class="fas fa-user-clock admin-nav-icon"></i>
+                    جلسات فعال
+                </a>
+                
+                <a asp-area="Admin" asp-controller="ActivityLogs" asp-action="Index" class="admin-nav-link">
+                    <i class="fas fa-history admin-nav-icon"></i>
+                    گزارش فعالیت‌ها
+                </a>
+                
+                <a asp-area="Admin" asp-controller="Home" asp-action="Analytics" class="admin-nav-link">
+                    <i class="fas fa-chart-bar admin-nav-icon"></i>
+                    آمار و تحلیل
+                </a>
+            </div>
+        </nav>
+        
+        <!-- Main Content -->
+        <div class="admin-main">
+            <!-- Top Navigation -->
+            <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom">
+                <div class="container-fluid">
+                    <button class="btn btn-link admin-sidebar-toggle d-lg-none">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    
+                    <div class="navbar-nav ms-auto">
+                        <div class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-user-circle me-1"></i>
+                                @User.Identity?.Name
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" asp-area="Public" asp-controller="Account" asp-action="Profile">پروفایل</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <form asp-area="Public" asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
+                                        <button type="submit" class="dropdown-item">خروج</button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+            
+            <!-- Page Content -->
+            <div class="admin-content">
+                <div class="container-fluid">
+                    @if (TempData["Success"] != null)
+                    {
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            @TempData["Success"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+                    
+                    @if (TempData["Error"] != null)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            @TempData["Error"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+                    
+                    @RenderBody()
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Toast Container -->
+    <div id="toast-container" class="toast-container position-fixed top-0 end-0 p-3"></div>
+    
+    <!-- Scripts -->
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- DataTables -->
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+    
+    <!-- Persian Date Picker -->
+    <script src="~/js/persian-date.js"></script>
+    <script src="~/js/persian-datepicker.js"></script>
+    <script src="~/js/datepicker-init.js"></script>
+    
+    <!-- Site JS -->
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    
+    <!-- Admin Area JS -->
+    <script src="~/js/areas/admin/admin.js" asp-append-version="true"></script>
+    
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

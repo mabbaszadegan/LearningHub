@@ -1,0 +1,244 @@
+/* Admin Area Styles */
+
+/* Admin Dashboard */
+.admin-dashboard {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.admin-stats-card {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 15px;
+    padding: 2rem;
+    transition: all 0.3s ease;
+}
+
+.admin-stats-card:hover {
+    transform: translateY(-5px);
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.admin-stats-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.admin-stats-label {
+    font-size: 1rem;
+    opacity: 0.9;
+}
+
+/* Admin Tables */
+.admin-table {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.admin-table thead {
+    background: #f8f9fa;
+}
+
+.admin-table th {
+    font-weight: 600;
+    color: #495057;
+    border: none;
+    padding: 1rem;
+}
+
+.admin-table td {
+    padding: 1rem;
+    border: none;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.admin-table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+/* Admin Buttons */
+.btn-admin-primary {
+    background: linear-gradient(45deg, #667eea, #764ba2);
+    border: none;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-admin-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    color: white;
+}
+
+.btn-admin-danger {
+    background: linear-gradient(45deg, #ff6b6b, #ee5a52);
+    border: none;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-size: 0.875rem;
+}
+
+.btn-admin-success {
+    background: linear-gradient(45deg, #51cf66, #40c057);
+    border: none;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-size: 0.875rem;
+}
+
+/* Admin Forms */
+.admin-form-container {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+    margin: 2rem 0;
+}
+
+.admin-form-group {
+    margin-bottom: 1.5rem;
+}
+
+.admin-form-label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.admin-form-control {
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    width: 100%;
+}
+
+.admin-form-control:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    outline: none;
+}
+
+/* Admin Navigation */
+.admin-sidebar {
+    background: linear-gradient(180deg, #2c3e50 0%, #34495e 100%);
+    min-height: 100vh;
+    padding: 2rem 0;
+}
+
+.admin-nav-link {
+    color: rgba(255, 255, 255, 0.8);
+    padding: 1rem 1.5rem;
+    display: block;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border-left: 3px solid transparent;
+}
+
+.admin-nav-link:hover,
+.admin-nav-link.active {
+    color: white;
+    background: rgba(255, 255, 255, 0.1);
+    border-left-color: #667eea;
+    text-decoration: none;
+}
+
+.admin-nav-icon {
+    margin-left: 0.5rem;
+    width: 20px;
+    text-align: center;
+}
+
+/* Admin Charts */
+.admin-chart-container {
+    background: white;
+    border-radius: 15px;
+    padding: 2rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 2rem;
+}
+
+.admin-chart-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 1.5rem;
+}
+
+/* Admin Activity Logs */
+.admin-activity-item {
+    padding: 1rem;
+    border-bottom: 1px solid #e9ecef;
+    transition: background-color 0.3s ease;
+}
+
+.admin-activity-item:hover {
+    background-color: #f8f9fa;
+}
+
+.admin-activity-time {
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+.admin-activity-action {
+    font-weight: 600;
+    color: #495057;
+}
+
+.admin-activity-details {
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin-top: 0.25rem;
+}
+
+/* Admin Status Badges */
+.admin-status-active {
+    background: linear-gradient(45deg, #51cf66, #40c057);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.admin-status-inactive {
+    background: linear-gradient(45deg, #ff6b6b, #ee5a52);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .admin-stats-card {
+        margin-bottom: 1rem;
+    }
+    
+    .admin-form-container {
+        padding: 1rem;
+        margin: 1rem 0;
+    }
+    
+    .admin-table {
+        font-size: 0.875rem;
+    }
+    
+    .admin-table th,
+    .admin-table td {
+        padding: 0.5rem;
+    }
+}
