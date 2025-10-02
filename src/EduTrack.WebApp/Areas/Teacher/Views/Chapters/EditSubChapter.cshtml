@@ -1,0 +1,152 @@
+@model EduTrack.Application.Features.Chapters.Commands.UpdateSubChapterCommand
+@{
+    ViewData["Title"] = "ویرایش زیرفصل";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="h4 mb-0">ویرایش زیرفصل</h2>
+        <p class="text-muted mb-0">@ViewBag.ChapterTitle</p>
+        <small class="text-muted">دوره: @ViewBag.CourseTitle</small>
+    </div>
+    <a asp-action="Index" asp-route-courseId="@ViewBag.CourseId" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-right me-2"></i>بازگشت
+    </a>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="modern-card">
+            <div class="modern-card-body">
+                <form asp-action="EditSubChapter" method="post">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+                    
+                    <input asp-for="Id" type="hidden" />
+                    
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="form-group mb-3">
+                                <label asp-for="Title" class="form-label">
+                                    <i class="fas fa-heading me-2"></i>عنوان زیرفصل
+                                </label>
+                                <input asp-for="Title" class="form-control" placeholder="عنوان زیرفصل را وارد کنید" />
+                                <span asp-validation-for="Title" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group mb-3">
+                                <label asp-for="Order" class="form-label">
+                                    <i class="fas fa-sort-numeric-up me-2"></i>ترتیب
+                                </label>
+                                <input asp-for="Order" type="number" class="form-control" min="0" placeholder="0" />
+                                <span asp-validation-for="Order" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group mb-3">
+                        <label asp-for="Description" class="form-label">
+                            <i class="fas fa-align-right me-2"></i>توضیحات (اختیاری)
+                        </label>
+                        <textarea asp-for="Description" class="form-control" rows="3" 
+                                  placeholder="توضیحات کوتاه در مورد این زیرفصل"></textarea>
+                        <span asp-validation-for="Description" class="text-danger"></span>
+                    </div>
+                    
+                    <div class="form-group mb-4">
+                        <label asp-for="Objective" class="form-label">
+                            <i class="fas fa-target me-2"></i>هدف زیرفصل <span class="text-danger">*</span>
+                        </label>
+                        <textarea asp-for="Objective" class="form-control" rows="4" 
+                                  placeholder="هدف این زیرفصل چیست؟ دانش‌آموزان پس از مطالعه این زیرفصل چه چیزی یاد خواهند گرفت؟"></textarea>
+                        <div class="form-text">
+                            <i class="fas fa-info-circle me-1"></i>
+                            هدف زیرفصل باید به طور شفاف مشخص کند که دانش‌آموزان پس از مطالعه این زیرفصل چه مهارت‌ها یا دانشی کسب خواهند کرد.
+                        </div>
+                        <span asp-validation-for="Objective" class="text-danger"></span>
+                    </div>
+                    
+                    <div class="form-group mb-4">
+                        <div class="form-check">
+                            <input asp-for="IsActive" class="form-check-input" type="checkbox" />
+                            <label asp-for="IsActive" class="form-check-label">
+                                <i class="fas fa-toggle-on me-2"></i>زیرفصل فعال است
+                            </label>
+                        </div>
+                        <div class="form-text">
+                            <i class="fas fa-info-circle me-1"></i>
+                            زیرفصل‌های غیرفعال در لیست دانش‌آموزان نمایش داده نمی‌شوند.
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-end gap-2">
+                        <a asp-action="Index" asp-route-courseId="@ViewBag.CourseId" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-2"></i>انصراف
+                        </a>
+                        <button type="submit" class="btn btn-modern-primary">
+                            <i class="fas fa-save me-2"></i>ذخیره تغییرات
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.modern-card {
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.modern-card-body {
+    padding: 30px;
+}
+
+.form-label {
+    font-weight: 500;
+    color: #495057;
+    margin-bottom: 8px;
+}
+
+.form-control {
+    border-radius: 8px;
+    border: 1px solid #ced4da;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.btn-modern-primary {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-modern-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+}
+
+.form-check-input:checked {
+    background-color: #007bff;
+    border-color: #007bff;
+}
+
+.form-text {
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin-top: 5px;
+}
+</style>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

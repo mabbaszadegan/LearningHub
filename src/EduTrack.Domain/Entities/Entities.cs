@@ -53,6 +53,7 @@ public class Course
 
     // Navigation properties
     public ICollection<Module> Modules { get; set; } = new List<Module>();
+    public ICollection<Chapter> Chapters { get; set; } = new List<Chapter>();
     public ICollection<Class> Classes { get; set; } = new List<Class>();
 }
 
@@ -256,6 +257,39 @@ public class Progress
     public User Student { get; set; } = null!;
     public Lesson? Lesson { get; set; }
     public Exam? Exam { get; set; }
+}
+
+public class Chapter
+{
+    public int Id { get; set; }
+    public int CourseId { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public string Objective { get; set; } = string.Empty;
+    public bool IsActive { get; set; } = true;
+    public int Order { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
+    public DateTimeOffset UpdatedAt { get; set; }
+
+    // Navigation properties
+    public Course Course { get; set; } = null!;
+    public ICollection<SubChapter> SubChapters { get; set; } = new List<SubChapter>();
+}
+
+public class SubChapter
+{
+    public int Id { get; set; }
+    public int ChapterId { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public string Objective { get; set; } = string.Empty;
+    public bool IsActive { get; set; } = true;
+    public int Order { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
+    public DateTimeOffset UpdatedAt { get; set; }
+
+    // Navigation properties
+    public Chapter Chapter { get; set; } = null!;
 }
 
 public class ActivityLog

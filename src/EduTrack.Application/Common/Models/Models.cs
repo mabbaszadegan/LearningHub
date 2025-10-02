@@ -206,6 +206,34 @@ public class ClassSummaryDto
     public DateTimeOffset? EndDate { get; set; }
 }
 
+public class ChapterDto
+{
+    public int Id { get; set; }
+    public int CourseId { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public string Objective { get; set; } = string.Empty;
+    public bool IsActive { get; set; }
+    public int Order { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
+    public DateTimeOffset UpdatedAt { get; set; }
+    public int SubChapterCount { get; set; }
+    public List<SubChapterDto> SubChapters { get; set; } = new();
+}
+
+public class SubChapterDto
+{
+    public int Id { get; set; }
+    public int ChapterId { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public string Objective { get; set; } = string.Empty;
+    public bool IsActive { get; set; }
+    public int Order { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
+    public DateTimeOffset UpdatedAt { get; set; }
+}
+
 public class DashboardViewModel
 {
     public PaginatedList<CourseDto> Courses { get; set; } = null!;

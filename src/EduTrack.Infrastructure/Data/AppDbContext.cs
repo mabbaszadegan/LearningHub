@@ -44,6 +44,8 @@ public class AppDbContext : IdentityDbContext<User>
     public DbSet<Module> Modules { get; set; }
     public DbSet<Lesson> Lessons { get; set; }
     public DbSet<Resource> Resources { get; set; }
+    public DbSet<Chapter> Chapters { get; set; }
+    public DbSet<SubChapter> SubChapters { get; set; }
     public DbSet<Class> Classes { get; set; }
     public DbSet<Enrollment> Enrollments { get; set; }
     public DbSet<Question> Questions { get; set; }
@@ -275,6 +277,34 @@ public class AppDbContext : IdentityDbContext<User>
             entity.HasIndex(e => e.LessonId);
             entity.HasIndex(e => e.ExamId);
             entity.HasIndex(e => e.Status);
+        });
+
+        // Configure Chapter entity
+        builder.Entity<Chapter>(entity =>
+        {
+            entity.Property(e => e.Title).HasMaxLength(200).IsRequired();
+            entity.Property(e => e.Description).HasMaxLength(1000);
+            entity.Property(e => e.Objective).HasMaxLength(2000).IsRequired();
+            entity.HasOne(e => e.Course)
+                .WithMany(e => e.Chapters)
+                .HasForeignKey(e => e.CourseId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasIndex(e => new { e.CourseId, e.Order });
+            entity.HasIndex(e => e.IsActive);
+        });
+
+        // Configure SubChapter entity
+        builder.Entity<SubChapter>(entity =>
+        {
+            entity.Property(e => e.Title).HasMaxLength(200).IsRequired();
+            entity.Property(e => e.Description).HasMaxLength(1000);
+            entity.Property(e => e.Objective).HasMaxLength(2000).IsRequired();
+            entity.HasOne(e => e.Chapter)
+                .WithMany(e => e.SubChapters)
+                .HasForeignKey(e => e.ChapterId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasIndex(e => new { e.ChapterId, e.Order });
+            entity.HasIndex(e => e.IsActive);
         });
 
         // Configure ActivityLog entity

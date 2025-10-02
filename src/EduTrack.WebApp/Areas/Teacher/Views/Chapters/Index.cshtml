@@ -1,0 +1,240 @@
+@model List<EduTrack.Application.Common.Models.ChapterDto>
+@{
+    ViewData["Title"] = "مدیریت فصول";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="h4 mb-0">مدیریت فصول</h2>
+        <p class="text-muted mb-0">@ViewBag.CourseTitle</p>
+    </div>
+    <div>
+        <a asp-controller="Courses" asp-action="Index" class="btn btn-outline-secondary me-2">
+            <i class="fas fa-arrow-right me-2"></i>بازگشت به دوره‌ها
+        </a>
+        <a asp-action="Create" asp-route-courseId="@ViewBag.CourseId" class="btn btn-modern-primary">
+            <i class="fas fa-plus me-2"></i>افزودن فصل جدید
+        </a>
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="fas fa-check-circle me-2"></i>
+        @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="fas fa-exclamation-circle me-2"></i>
+        @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (Model.Any())
+{
+    <div class="row">
+        @foreach (var chapter in Model)
+        {
+            <div class="col-lg-6 col-xl-4 mb-4">
+                <div class="modern-card">
+                    <div class="modern-card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <h5 class="modern-card-title">@chapter.Title</h5>
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-ellipsis-v"></i>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <a class="dropdown-item" asp-action="Edit" asp-route-id="@chapter.Id">
+                                            <i class="fas fa-edit me-2"></i>ویرایش
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-action="CreateSubChapter" asp-route-chapterId="@chapter.Id">
+                                            <i class="fas fa-plus me-2"></i>افزودن زیرفصل
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <form asp-action="Delete" asp-route-id="@chapter.Id" method="post" 
+                                              onsubmit="return confirm('آیا از حذف این فصل اطمینان دارید؟')">
+                                            <button type="submit" class="dropdown-item text-danger">
+                                                <i class="fas fa-trash me-2"></i>حذف
+                                            </button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        @if (!string.IsNullOrEmpty(chapter.Description))
+                        {
+                            <p class="text-muted mb-3">@chapter.Description</p>
+                        }
+                        
+                        <div class="objective-section mb-3">
+                            <h6 class="text-primary mb-2">
+                                <i class="fas fa-target me-2"></i>هدف فصل:
+                            </h6>
+                            <p class="objective-text">@chapter.Objective</p>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="badge bg-info">
+                                <i class="fas fa-list me-1"></i>
+                                @chapter.SubChapterCount زیرفصل
+                            </span>
+                            <small class="text-muted">
+                                <i class="fas fa-sort-numeric-up me-1"></i>
+                                ترتیب: @chapter.Order
+                            </small>
+                        </div>
+                        
+                        @if (chapter.SubChapters.Any())
+                        {
+                            <div class="subchapters-section">
+                                <h6 class="text-secondary mb-2">
+                                    <i class="fas fa-list-ul me-2"></i>زیرفصل‌ها:
+                                </h6>
+                                <div class="subchapters-list">
+                                    @foreach (var subChapter in chapter.SubChapters.Take(3))
+                                    {
+                                        <div class="subchapter-item d-flex justify-content-between align-items-center mb-2">
+                                            <div class="flex-grow-1">
+                                                <span class="subchapter-title">@subChapter.Title</span>
+                                                <br>
+                                                <small class="text-muted">@subChapter.Objective</small>
+                                            </div>
+                                            <div class="dropdown">
+                                                <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="dropdown">
+                                                    <i class="fas fa-ellipsis-v"></i>
+                                                </button>
+                                                <ul class="dropdown-menu">
+                                                    <li>
+                                                        <a class="dropdown-item" asp-action="EditSubChapter" asp-route-id="@subChapter.Id">
+                                                            <i class="fas fa-edit me-2"></i>ویرایش
+                                                        </a>
+                                                    </li>
+                                                    <li><hr class="dropdown-divider"></li>
+                                                    <li>
+                                                        <form asp-action="DeleteSubChapter" asp-route-id="@subChapter.Id" method="post" 
+                                                              onsubmit="return confirm('آیا از حذف این زیرفصل اطمینان دارید؟')">
+                                                            <button type="submit" class="dropdown-item text-danger">
+                                                                <i class="fas fa-trash me-2"></i>حذف
+                                                            </button>
+                                                        </form>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    }
+                                    @if (chapter.SubChapters.Count > 3)
+                                    {
+                                        <div class="text-center">
+                                            <small class="text-muted">
+                                                و @(chapter.SubChapters.Count - 3) زیرفصل دیگر...
+                                            </small>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="text-center py-3">
+                                <i class="fas fa-list-ul text-muted mb-2" style="font-size: 2rem;"></i>
+                                <p class="text-muted mb-0">هنوز زیرفصلی اضافه نشده</p>
+                                <a asp-action="CreateSubChapter" asp-route-chapterId="@chapter.Id" class="btn btn-sm btn-outline-primary mt-2">
+                                    <i class="fas fa-plus me-1"></i>افزودن زیرفصل
+                                </a>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <div class="empty-state text-center py-5">
+        <i class="fas fa-book-open text-muted mb-3" style="font-size: 4rem;"></i>
+        <h4 class="text-muted mb-3">هنوز فصلی اضافه نشده</h4>
+        <p class="text-muted mb-4">برای شروع، اولین فصل دوره خود را ایجاد کنید.</p>
+        <a asp-action="Create" asp-route-courseId="@ViewBag.CourseId" class="btn btn-modern-primary">
+            <i class="fas fa-plus me-2"></i>افزودن فصل جدید
+        </a>
+    </div>
+}
+
+<style>
+.objective-section {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 15px;
+    border-right: 4px solid #007bff;
+}
+
+.objective-text {
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin: 0;
+    color: #495057;
+}
+
+.subchapters-section {
+    border-top: 1px solid #e9ecef;
+    padding-top: 15px;
+}
+
+.subchapter-item {
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    padding: 10px;
+    border: 1px solid #e9ecef;
+}
+
+.subchapter-title {
+    font-weight: 500;
+    color: #495057;
+}
+
+.modern-card {
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    height: 100%;
+}
+
+.modern-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transform: translateY(-2px);
+}
+
+.modern-card-body {
+    padding: 20px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.modern-card-title {
+    font-weight: 600;
+    color: #2c3e50;
+    margin: 0;
+}
+
+.empty-state {
+    background-color: #f8f9fa;
+    border-radius: 12px;
+    border: 2px dashed #dee2e6;
+}
+</style>
