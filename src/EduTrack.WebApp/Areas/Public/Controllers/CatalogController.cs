@@ -1,4 +1,6 @@
+using EduTrack.Application.Features.Courses.Queries;
 using EduTrack.Domain.Entities;
+using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,18 +11,31 @@ public class CatalogController : Controller
 {
     private readonly ILogger<CatalogController> _logger;
     private readonly UserManager<User> _userManager;
+    private readonly IMediator _mediator;
 
     public CatalogController(
         ILogger<CatalogController> logger, 
-        UserManager<User> userManager)
+        UserManager<User> userManager,
+        IMediator mediator)
     {
         _logger = logger;
         _userManager = userManager;
+        _mediator = mediator;
     }
 
-    public IActionResult Index()
+    public async Task<IActionResult> Index(int pageNumber = 1, int pageSize = 10)
     {
-        return View();
+        try
+        {
+            var courses = await _mediator.Send(new GetCoursesQuery(pageNumber, pageSize, true));
+            return View(courses);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error loading courses for catalog");
+            TempData["Error"] = "خطا در بارگذاری دوره‌ها";
+            return View(new EduTrack.Application.Common.Models.PaginatedList<EduTrack.Application.Common.Models.CourseDto>(new List<EduTrack.Application.Common.Models.CourseDto>(), 0, pageNumber, pageSize));
+        }
     }
 
     public IActionResult Course(int id)

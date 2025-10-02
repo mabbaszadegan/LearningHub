@@ -38,19 +38,25 @@ public class AccountController : Controller
         
         if (ModelState.IsValid)
         {
-            var result = await _signInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, lockoutOnFailure: false);
+            // Try to find user by username or email
+            var user = await _userManager.FindByNameAsync(model.Email) ?? 
+                      await _userManager.FindByEmailAsync(model.Email);
+            
+            if (user == null)
+            {
+                ModelState.AddModelError(string.Empty, "نام کاربری یا رمز عبور اشتباه است.");
+                return View(model);
+            }
+
+            var result = await _signInManager.PasswordSignInAsync(user.UserName!, model.Password, model.RememberMe, lockoutOnFailure: false);
             
             if (result.Succeeded)
             {
                 _logger.LogInformation("User logged in.");
                 
                 // Update last login time
-                var user = await _userManager.FindByEmailAsync(model.Email);
-                if (user != null)
-                {
-                    user.LastLoginAt = DateTimeOffset.UtcNow;
-                    await _userManager.UpdateAsync(user);
-                }
+                user.LastLoginAt = DateTimeOffset.UtcNow;
+                await _userManager.UpdateAsync(user);
                 
                 return RedirectToLocal(returnUrl);
             }
@@ -63,7 +69,7 @@ public class AccountController : Controller
             }
             else
             {
-                ModelState.AddModelError(string.Empty, "ایمیل یا رمز عبور اشتباه است.");
+                ModelState.AddModelError(string.Empty, "نام کاربری یا رمز عبور اشتباه است.");
                 return View(model);
             }
         }
@@ -72,24 +78,53 @@ public class AccountController : Controller
     }
 
     [HttpGet]
-    public IActionResult Register()
+    public IActionResult Register(string? role = "Student")
     {
-        return View();
+        var model = new RegisterViewModel
+        {
+            Role = role ?? "Student"
+        };
+        return View(model);
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Register(RegisterViewModel model)
     {
+        // For students, email is optional, so remove email validation errors
+        if (model.Role == "Student" && string.IsNullOrEmpty(model.Email))
+        {
+            ModelState.Remove(nameof(model.Email));
+        }
+
         if (ModelState.IsValid)
         {
+            // Check username uniqueness
+            if (!string.IsNullOrEmpty(model.Username))
+            {
+                var existingUser = await _userManager.FindByNameAsync(model.Username);
+                if (existingUser != null)
+                {
+                    ModelState.AddModelError(nameof(model.Username), "این نام کاربری قبلاً استفاده شده است.");
+                    return View(model);
+                }
+            }
+
+            // For teachers, email is required
+            if (model.Role == "Teacher" && string.IsNullOrEmpty(model.Email))
+            {
+                ModelState.AddModelError(nameof(model.Email), "برای ثبت نام به عنوان استاد، ایمیل الزامی است.");
+                return View(model);
+            }
+
+            // For students, email is optional
             var user = new User
             {
-                UserName = model.Email,
-                Email = model.Email,
+                UserName = model.Username,
+                Email = model.Email ?? $"{model.Username}@edutrack.local", // Default email for students
                 FirstName = model.FirstName,
                 LastName = model.LastName,
-                Role = UserRole.Student, // Default role for public registration
+                Role = model.Role == "Teacher" ? UserRole.Teacher : UserRole.Student,
                 IsActive = true,
                 CreatedAt = DateTimeOffset.UtcNow
             };
@@ -100,8 +135,29 @@ public class AccountController : Controller
             {
                 _logger.LogInformation("User created a new account with password.");
                 
+                // Add user to the appropriate role
+                var roleName = user.Role.ToString();
+                var roleResult = await _userManager.AddToRoleAsync(user, roleName);
+                
+                if (roleResult.Succeeded)
+                {
+                    _logger.LogInformation("User {UserName} added to role {Role}", user.UserName, roleName);
+                }
+                else
+                {
+                    _logger.LogWarning("Failed to add user {UserName} to role {Role}: {Errors}", 
+                        user.UserName, roleName, string.Join(", ", roleResult.Errors.Select(e => e.Description)));
+                }
+                
                 await _signInManager.SignInAsync(user, isPersistent: false);
-                return RedirectToAction("Index", "Home", new { area = "Student" });
+                
+                // Redirect based on role
+                return user.Role switch
+                {
+                    UserRole.Teacher => RedirectToAction("Index", "Home", new { area = "Teacher" }),
+                    UserRole.Student => RedirectToAction("Index", "Home", new { area = "Student" }),
+                    _ => RedirectToAction("Index", "Home", new { area = "Student" })
+                };
             }
             
             foreach (var error in result.Errors)
@@ -111,6 +167,12 @@ public class AccountController : Controller
         }
 
         return View(model);
+    }
+
+    [HttpGet]
+    public IActionResult AccessDenied()
+    {
+        return View();
     }
 
     [HttpPost]
@@ -146,7 +208,9 @@ public class RegisterViewModel
 {
     public string FirstName { get; set; } = "";
     public string LastName { get; set; } = "";
+    public string Username { get; set; } = "";
     public string Email { get; set; } = "";
     public string Password { get; set; } = "";
     public string ConfirmPassword { get; set; } = "";
+    public string Role { get; set; } = "Student";
 }

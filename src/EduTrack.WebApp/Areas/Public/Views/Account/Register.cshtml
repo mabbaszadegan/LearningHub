@@ -1,133 +1,227 @@
 @model EduTrack.WebApp.Areas.Public.Controllers.RegisterViewModel
 @{
     ViewData["Title"] = "ثبت نام";
+    Layout = null;
 }
 
-<div class="register-container">
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-lg-6 col-md-8">
-                <div class="register-card">
-                    <div class="register-header">
-                        <div class="register-logo">
-                            <i class="fas fa-graduation-cap"></i>
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - EduTrack</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/lib/font-awesome/css/all.min.css" />
+    <link rel="manifest" href="~/manifest.webmanifest" />
+    <meta name="theme-color" content="#6366f1" />
+    <meta name="description" content="EduTrack - سیستم مدیریت یادگیری آنلاین" />
+</head>
+<body>
+    <div class="register-container">
+        <div class="register-background">
+            <div class="register-particles"></div>
+            <div class="register-gradient"></div>
+        </div>
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-8 col-md-10">
+                    <div class="register-card">
+                        <div class="register-header">
+                            <div class="register-logo">
+                                <i class="fas fa-graduation-cap"></i>
+                            </div>
+                            <h1 class="register-title text-gradient">EduTrack</h1>
+                            <p class="register-subtitle">به جمع کاربران EduTrack بپیوندید</p>
                         </div>
-                        <h2 class="register-title">ثبت نام</h2>
-                        <p class="register-subtitle">به جمع کاربران EduTrack بپیوندید</p>
+
+                        <form asp-action="Register" method="post" class="register-form">
+                            <input type="hidden" asp-for="Role" />
+                            <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                            <!-- Role Selection -->
+                            <div class="role-selection mb-4">
+                                <h3 class="role-selection-title">نوع حساب کاربری</h3>
+                                <div class="role-options">
+                                    <div class="role-option @(Model.Role == "Student" ? "active" : "")" data-role="Student">
+                                        <div class="role-icon student">
+                                            <i class="fas fa-user-graduate"></i>
+                                        </div>
+                                        <h4>دانشجو</h4>
+                                        <p>دسترسی به دوره‌ها و آزمون‌ها</p>
+                                    </div>
+                                    <div class="role-option @(Model.Role == "Teacher" ? "active" : "")" data-role="Teacher">
+                                        <div class="role-icon teacher">
+                                            <i class="fas fa-chalkboard-teacher"></i>
+                                        </div>
+                                        <h4>استاد</h4>
+                                        <p>مدیریت کلاس‌ها و ایجاد محتوا</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label asp-for="FirstName" class="form-label">
+                                            <i class="fas fa-user me-2"></i>نام
+                                        </label>
+                                        <input asp-for="FirstName" class="form-control" placeholder="نام خود را وارد کنید" />
+                                        <span asp-validation-for="FirstName" class="text-danger"></span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label asp-for="LastName" class="form-label">
+                                            <i class="fas fa-user me-2"></i>نام خانوادگی
+                                        </label>
+                                        <input asp-for="LastName" class="form-control" placeholder="نام خانوادگی خود را وارد کنید" />
+                                        <span asp-validation-for="LastName" class="text-danger"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label asp-for="Username" class="form-label">
+                                    <i class="fas fa-at me-2"></i>نام کاربری
+                                </label>
+                                <input asp-for="Username" class="form-control" placeholder="نام کاربری خود را وارد کنید" />
+                                <span asp-validation-for="Username" class="text-danger"></span>
+                                <div class="form-text">نام کاربری باید یکتا باشد</div>
+                            </div>
+
+                            <div class="form-group" id="email-group" style="@(Model.Role == "Student" ? "display: none;" : "")">
+                                <label asp-for="Email" class="form-label">
+                                    <i class="fas fa-envelope me-2"></i>ایمیل
+                                    <span class="text-danger">*</span>
+                                </label>
+                                <input asp-for="Email" class="form-control" placeholder="example@domain.com" />
+                                <span asp-validation-for="Email" class="text-danger"></span>
+                                <div class="form-text">برای استادان الزامی است</div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label asp-for="Password" class="form-label">
+                                            <i class="fas fa-lock me-2"></i>رمز عبور
+                                        </label>
+                                        <div class="password-input">
+                                            <input asp-for="Password" type="password" class="form-control" placeholder="رمز عبور خود را وارد کنید" />
+                                            <button type="button" class="password-toggle" onclick="togglePassword('Password')" tabindex="-1">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </div>
+                                        <span asp-validation-for="Password" class="text-danger"></span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label asp-for="ConfirmPassword" class="form-label">
+                                            <i class="fas fa-lock me-2"></i>تکرار رمز عبور
+                                        </label>
+                                        <div class="password-input">
+                                            <input asp-for="ConfirmPassword" type="password" class="form-control" placeholder="رمز عبور را تکرار کنید" />
+                                            <button type="button" class="password-toggle" onclick="togglePassword('ConfirmPassword')" tabindex="-1">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </div>
+                                        <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary btn-lg w-100">
+                                    <i class="fas fa-user-plus me-2"></i>ثبت نام
+                                </button>
+                            </div>
+
+                            <div class="register-footer">
+                                <p class="mb-0">
+                                    قبلاً ثبت نام کرده‌اید؟ 
+                                    <a asp-controller="Account" asp-action="Login" class="text-primary fw-bold">وارد شوید</a>
+                                </p>
+                            </div>
+                        </form>
                     </div>
-
-                    <form asp-action="Register" method="post" class="register-form">
-                        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
-
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label asp-for="FirstName" class="form-label">
-                                        <i class="fas fa-user me-2"></i>@Html.DisplayNameFor(m => m.FirstName)
-                                    </label>
-                                    <input asp-for="FirstName" class="form-control" placeholder="نام خود را وارد کنید" />
-                                    <span asp-validation-for="FirstName" class="text-danger"></span>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label asp-for="LastName" class="form-label">
-                                        <i class="fas fa-user me-2"></i>@Html.DisplayNameFor(m => m.LastName)
-                                    </label>
-                                    <input asp-for="LastName" class="form-control" placeholder="نام خانوادگی خود را وارد کنید" />
-                                    <span asp-validation-for="LastName" class="text-danger"></span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label asp-for="Email" class="form-label">
-                                <i class="fas fa-envelope me-2"></i>@Html.DisplayNameFor(m => m.Email)
-                            </label>
-                            <input asp-for="Email" class="form-control" placeholder="example@domain.com" />
-                            <span asp-validation-for="Email" class="text-danger"></span>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label asp-for="Password" class="form-label">
-                                        <i class="fas fa-lock me-2"></i>@Html.DisplayNameFor(m => m.Password)
-                                    </label>
-                                    <div class="password-input">
-                                        <input asp-for="Password" class="form-control" placeholder="رمز عبور خود را وارد کنید" />
-                                        <button type="button" class="password-toggle" onclick="togglePassword('Password')">
-                                            <i class="fas fa-eye"></i>
-                                        </button>
-                                    </div>
-                                    <span asp-validation-for="Password" class="text-danger"></span>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label asp-for="ConfirmPassword" class="form-label">
-                                        <i class="fas fa-lock me-2"></i>@Html.DisplayNameFor(m => m.ConfirmPassword)
-                                    </label>
-                                    <div class="password-input">
-                                        <input asp-for="ConfirmPassword" class="form-control" placeholder="رمز عبور را تکرار کنید" />
-                                        <button type="button" class="password-toggle" onclick="togglePassword('ConfirmPassword')">
-                                            <i class="fas fa-eye"></i>
-                                        </button>
-                                    </div>
-                                    <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="role-display">
-                            <div class="role-badge student">
-                                <i class="fas fa-user-graduate me-2"></i>
-                                ثبت نام به عنوان دانش‌آموز
-                            </div>
-                        </div>
-
-                        <div class="form-actions">
-                            <button type="submit" class="btn btn-primary btn-lg w-100">
-                                <i class="fas fa-user-plus me-2"></i>ثبت نام
-                            </button>
-                        </div>
-
-                        <div class="register-footer">
-                            <p class="mb-0">
-                                قبلاً ثبت نام کرده‌اید؟ 
-                                <a asp-controller="Account" asp-action="Login" class="text-primary fw-bold">وارد شوید</a>
-                            </p>
-                        </div>
-                    </form>
                 </div>
             </div>
         </div>
     </div>
-</div>
 
-@section Styles {
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+
     <style>
         .register-container {
             min-height: 100vh;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             display: flex;
             align-items: center;
+            position: relative;
+            overflow: hidden;
             padding: 2rem 0;
         }
 
+        .register-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 1;
+        }
+
+        .register-particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="register-particles" width="50" height="50" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="10" cy="10" r="0.5" fill="rgba(255,255,255,0.05)"/><circle cx="40" cy="15" r="0.8" fill="rgba(255,255,255,0.08)"/></pattern></defs><rect width="100" height="100" fill="url(%23register-particles)"/></svg>');
+            animation: float 30s ease-in-out infinite;
+        }
+
+        .register-gradient {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 50%, var(--secondary-color) 100%);
+        }
+
         .register-card {
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: var(--radius-xl);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
             overflow: hidden;
-            animation: fadeInUp 0.6s ease-out;
+            position: relative;
+            z-index: 2;
+            animation: fadeInUp 0.8s ease-out;
         }
 
         .register-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
             color: white;
             text-align: center;
-            padding: 3rem 2rem 2rem;
+            padding: var(--spacing-2xl);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .register-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="header-pattern" width="20" height="20" patternUnits="userSpaceOnUse"><circle cx="10" cy="10" r="1" fill="rgba(255,255,255,0.1)"/></pattern></defs><rect width="100" height="100" fill="url(%23header-pattern)"/></svg>');
+            opacity: 0.3;
         }
 
         .register-logo {
@@ -138,48 +232,153 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0 auto 1.5rem;
+            margin: 0 auto var(--spacing-lg);
             font-size: 2rem;
+            position: relative;
+            z-index: 2;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.3);
         }
 
         .register-title {
-            font-size: 2rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: var(--spacing-sm);
+            position: relative;
+            z-index: 2;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
         }
 
         .register-subtitle {
             opacity: 0.9;
             margin: 0;
+            position: relative;
+            z-index: 2;
+            font-size: 1.1rem;
         }
 
         .register-form {
-            padding: 2.5rem;
+            padding: var(--spacing-2xl);
+        }
+
+        .role-selection {
+            text-align: center;
+        }
+
+        .role-selection-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--gray-800);
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .role-options {
+            display: flex;
+            gap: var(--spacing-lg);
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .role-option {
+            background: white;
+            border: 2px solid var(--gray-200);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            text-align: center;
+            cursor: pointer;
+            transition: all var(--transition-normal);
+            min-width: 180px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .role-option::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            opacity: 0;
+            transition: var(--transition-normal);
+        }
+
+        .role-option:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-md);
+            border-color: var(--primary-color);
+        }
+
+        .role-option.active {
+            border-color: var(--primary-color);
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(99, 102, 241, 0.1) 100%);
+        }
+
+        .role-option.active::before {
+            opacity: 1;
+        }
+
+        .role-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+            margin: 0 auto var(--spacing-md);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .role-icon.student {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+        }
+
+        .role-icon.teacher {
+            background: linear-gradient(135deg, var(--success-color) 0%, var(--success-dark) 100%);
+        }
+
+        .role-option h4 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--gray-800);
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .role-option p {
+            font-size: 0.9rem;
+            color: var(--gray-600);
+            margin: 0;
+            line-height: 1.4;
         }
 
         .form-group {
-            margin-bottom: 1.5rem;
+            margin-bottom: var(--spacing-lg);
         }
 
         .form-label {
             font-weight: 600;
-            color: #333;
-            margin-bottom: 0.5rem;
+            color: var(--gray-700);
+            margin-bottom: var(--spacing-sm);
             display: flex;
             align-items: center;
         }
 
         .form-control {
-            border: 2px solid #e9ecef;
-            border-radius: 10px;
-            padding: 0.75rem 1rem;
+            border: 2px solid var(--gray-200);
+            border-radius: var(--radius-md);
+            padding: var(--spacing-md);
             font-size: 1rem;
-            transition: all 0.3s ease;
+            transition: all var(--transition-fast);
+            background: white;
         }
 
         .form-control:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+            outline: none;
         }
 
         .password-input {
@@ -188,12 +387,12 @@
 
         .password-toggle {
             position: absolute;
-            left: 15px;
+            left: var(--spacing-md);
             top: 50%;
             transform: translateY(-50%);
             background: none;
             border: none;
-            color: #6c757d;
+            color: var(--gray-500);
             cursor: pointer;
             padding: 0;
             width: 20px;
@@ -201,112 +400,105 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            transition: var(--transition-fast);
         }
 
         .password-toggle:hover {
-            color: #333;
-        }
-
-        .role-display {
-            text-align: center;
-            margin: 2rem 0;
-        }
-
-        .role-badge {
-            display: inline-flex;
-            align-items: center;
-            padding: 0.75rem 1.5rem;
-            border-radius: 50px;
-            font-weight: 600;
-            font-size: 1.1rem;
-        }
-
-        .role-badge.teacher {
-            background: linear-gradient(135deg, #28a745, #20c997);
-            color: white;
-        }
-
-        .role-badge.student {
-            background: linear-gradient(135deg, #007bff, #6610f2);
-            color: white;
+            color: var(--primary-color);
         }
 
         .form-actions {
-            margin: 2rem 0;
+            margin: var(--spacing-2xl) 0;
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
             border: none;
-            border-radius: 10px;
-            padding: 0.875rem 2rem;
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-md) var(--spacing-xl);
             font-weight: 600;
-            transition: all 0.3s ease;
+            font-size: 1.1rem;
+            transition: all var(--transition-normal);
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.3);
         }
 
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 12px 35px rgba(99, 102, 241, 0.4);
         }
 
         .register-footer {
             text-align: center;
-            padding-top: 1.5rem;
-            border-top: 1px solid #e9ecef;
+            padding-top: var(--spacing-lg);
+            border-top: 1px solid var(--gray-200);
         }
 
         .text-danger {
             font-size: 0.875rem;
-            margin-top: 0.25rem;
+            margin-top: var(--spacing-xs);
         }
 
         .alert-danger {
-            border-radius: 10px;
+            border-radius: var(--radius-md);
             border: none;
-            background: #f8d7da;
-            color: #721c24;
+            background: linear-gradient(135deg, var(--error-light) 0%, var(--error-color) 100%);
+            color: white;
         }
 
-        @@keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        .form-text {
+            font-size: 0.8rem;
+            color: var(--gray-500);
+            margin-top: var(--spacing-xs);
         }
 
-        /* Responsive */
+        /* Responsive Design */
         @@media (max-width: 768px) {
             .register-container {
                 padding: 1rem 0;
             }
 
             .register-header {
-                padding: 2rem 1rem 1.5rem;
+                padding: var(--spacing-xl);
             }
 
             .register-title {
-                font-size: 1.5rem;
+                font-size: 2rem;
             }
 
             .register-form {
-                padding: 1.5rem;
+                padding: var(--spacing-xl);
             }
 
-            .role-badge {
-                font-size: 1rem;
-                padding: 0.5rem 1rem;
+            .role-options {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .role-option {
+                width: 100%;
+                max-width: 300px;
+            }
+        }
+
+        @@media (max-width: 576px) {
+            .register-title {
+                font-size: 1.75rem;
+            }
+
+            .register-logo {
+                width: 60px;
+                height: 60px;
+                font-size: 1.5rem;
+            }
+
+            .role-icon {
+                width: 50px;
+                height: 50px;
+                font-size: 1.2rem;
             }
         }
     </style>
-}
 
-@section Scripts {
-    <partial name="_ValidationScriptsPartial" />
-    
     <script>
         function togglePassword(fieldId) {
             const field = document.getElementById(fieldId);
@@ -324,9 +516,42 @@
         }
 
         $(document).ready(function() {
-            // Add floating label effect
-            $('.form-control').on('focus blur', function() {
-                $(this).toggleClass('focused', $(this).is(':focus') || $(this).val().length > 0);
+            // Role selection functionality
+            $('.role-option').on('click', function() {
+                const role = $(this).data('role');
+                
+                // Update active state
+                $('.role-option').removeClass('active');
+                $(this).addClass('active');
+                
+                // Update hidden field
+                $('#Role').val(role);
+                
+                // Show/hide email field based on role
+                const emailGroup = $('#email-group');
+                if (role === 'Teacher') {
+                    emailGroup.slideDown(300);
+                    $('#Email').prop('required', true);
+                } else {
+                    emailGroup.slideUp(300);
+                    $('#Email').prop('required', false);
+                }
+            });
+
+            // Username validation
+            $('#Username').on('blur', function() {
+                const username = $(this).val();
+                if (username.length > 0) {
+                    // Check username uniqueness (you can implement AJAX call here)
+                    $(this).removeClass('is-invalid is-valid');
+                    if (username.length < 3) {
+                        $(this).addClass('is-invalid');
+                        $(this).siblings('.text-danger').text('نام کاربری باید حداقل 3 کاراکتر باشد');
+                    } else {
+                        $(this).addClass('is-valid');
+                        $(this).siblings('.text-danger').text('');
+                    }
+                }
             });
 
             // Form validation enhancement
@@ -366,6 +591,30 @@
                     $(this).siblings('.password-strength').remove();
                 }
             });
+
+            // Confirm password validation
+            $('#ConfirmPassword').on('input', function() {
+                const password = $('#Password').val();
+                const confirmPassword = $(this).val();
+                
+                if (confirmPassword.length > 0) {
+                    if (password === confirmPassword) {
+                        $(this).removeClass('is-invalid').addClass('is-valid');
+                        $(this).siblings('.text-danger').text('');
+                    } else {
+                        $(this).removeClass('is-valid').addClass('is-invalid');
+                        $(this).siblings('.text-danger').text('رمز عبور و تکرار آن مطابقت ندارند');
+                    }
+                }
+            });
+
+            // Initialize email field visibility based on current role
+            const currentRole = $('#Role').val();
+            if (currentRole === 'Teacher') {
+                $('#email-group').show();
+                $('#Email').prop('required', true);
+            }
         });
     </script>
-}
+</body>
+</html>

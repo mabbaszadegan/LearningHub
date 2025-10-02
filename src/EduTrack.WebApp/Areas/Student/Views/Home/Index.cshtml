@@ -1,13 +1,272 @@
-﻿@{
-    ViewData["Title"] = "ط¯ط§ط´ط¨ظˆط±ط¯ ط¯ط§ظ†ط´â€Œط¢ظ…ظˆط²";
+﻿@model EduTrack.WebApp.Models.StudentDashboardViewModel
+@{
+    ViewData["Title"] = "داشبورد دانش‌آموز";
 }
 
-<div class="student-dashboard">
-    <div class="container-fluid">
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="h4 mb-1">سلام @Model.StudentName! 👋</h2>
+        <p class="text-muted mb-0">خوش آمدید به داشبورد دانش‌آموزی</p>
+    </div>
+    <div class="d-flex gap-2">
+        <button class="btn btn-modern-secondary btn-sm">
+            <i class="fas fa-calendar me-1"></i>تقویم
+        </button>
+        <button class="btn btn-modern-primary btn-sm">
+            <i class="fas fa-plus me-1"></i>ثبت‌نام در کلاس
+        </button>
+    </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="row mb-4">
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="stats-card">
+            <div class="stats-icon primary">
+                <i class="fas fa-chalkboard"></i>
+            </div>
+            <div class="stats-number">@Model.TotalClasses</div>
+            <div class="stats-label">کلاس‌های فعال</div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="stats-card">
+            <div class="stats-icon success">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="stats-number">@Model.CompletedLessons</div>
+            <div class="stats-label">درس‌های تکمیل شده</div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="stats-card">
+            <div class="stats-icon warning">
+                <i class="fas fa-clipboard-list"></i>
+            </div>
+            <div class="stats-number">@Model.TotalExams</div>
+            <div class="stats-label">آزمون‌های انجام شده</div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="stats-card">
+            <div class="stats-icon info">
+                <i class="fas fa-star"></i>
+            </div>
+            <div class="stats-number">@Model.AverageScore.ToString("F1")</div>
+            <div class="stats-label">میانگین نمرات</div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Progress Overview -->
+    <div class="col-lg-8 mb-4">
+        <div class="modern-card">
+            <div class="modern-card-header">
+                <h3 class="modern-card-title">
+                    <i class="fas fa-chart-line me-2"></i>نمای کلی پیشرفت
+                </h3>
+            </div>
+            <div class="modern-card-body">
+                @{
+                    var progressStats = Model.ProgressStats as dynamic;
+                    var completionPercentage = progressStats?.CompletionPercentage ?? 0;
+                }
+                
+                <div class="progress-card mb-3">
+                    <div class="progress-header">
+                        <h4 class="progress-title">پیشرفت کلی</h4>
+                        <span class="progress-percentage">@completionPercentage.ToString("F1")%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: @(completionPercentage)%"></div>
+                    </div>
+                    <div class="progress-details">
+                        <span>تکمیل شده: @(progressStats?.Completed ?? 0)</span>
+                        <span>در حال انجام: @(progressStats?.InProgress ?? 0)</span>
+                        <span>شروع نشده: @(progressStats?.NotStarted ?? 0)</span>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-4 text-center">
+                        <div class="stats-number text-success">@(progressStats?.Completed ?? 0)</div>
+                        <div class="stats-label">تکمیل شده</div>
+                    </div>
+                    <div class="col-md-4 text-center">
+                        <div class="stats-number text-warning">@(progressStats?.InProgress ?? 0)</div>
+                        <div class="stats-label">در حال انجام</div>
+                    </div>
+                    <div class="col-md-4 text-center">
+                        <div class="stats-number text-muted">@(progressStats?.NotStarted ?? 0)</div>
+                        <div class="stats-label">شروع نشده</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="col-lg-4 mb-4">
+        <div class="modern-card">
+            <div class="modern-card-header">
+                <h3 class="modern-card-title">
+                    <i class="fas fa-bolt me-2"></i>دسترسی سریع
+                </h3>
+            </div>
+            <div class="modern-card-body">
+                <div class="d-grid gap-2">
+                    <a asp-area="Student" asp-controller="Classes" asp-action="Index" class="btn btn-modern-primary">
+                        <i class="fas fa-chalkboard me-2"></i>کلاس‌های من
+                    </a>
+                    <a asp-area="Student" asp-controller="Home" asp-action="MyProgress" class="btn btn-modern-secondary">
+                        <i class="fas fa-chart-line me-2"></i>پیشرفت من
+                    </a>
+                    <a asp-controller="Exam" asp-action="Index" class="btn btn-modern-secondary">
+                        <i class="fas fa-clipboard-list me-2"></i>آزمون‌ها
+                    </a>
+                    <a asp-area="Public" asp-controller="Catalog" asp-action="Index" class="btn btn-modern-secondary">
+                        <i class="fas fa-book me-2"></i>کاتالوگ دوره‌ها
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Classes -->
         <div class="row">
-            <div class="col-12">
-                <h1>ط®ظˆط´ ط¢ظ…ط¯غŒط¯طŒ ط¯ط§ظ†ط´â€Œط¢ظ…ظˆط² ط¹ط²غŒط²</h1>
-                <p>ط§غŒظ† ظ¾ظ†ظ„ غŒط§ط¯ع¯غŒط±غŒ ط´ظ…ط§ط³طھ.</p>
+    <div class="col-lg-6 mb-4">
+        <div class="modern-card">
+            <div class="modern-card-header">
+                <h3 class="modern-card-title">
+                    <i class="fas fa-clock me-2"></i>کلاس‌های اخیر
+                </h3>
+            </div>
+            <div class="modern-card-body">
+                @if (Model.RecentClasses.Any())
+                {
+                    @foreach (var classItem in Model.RecentClasses)
+                    {
+                        <div class="d-flex align-items-center mb-3 p-2 border rounded">
+                            <div class="flex-shrink-0">
+                                <div class="stats-icon primary" style="width: 40px; height: 40px; font-size: 1rem;">
+                                    <i class="fas fa-chalkboard"></i>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h6 class="mb-1">@classItem.GetType().GetProperty("ClassName")?.GetValue(classItem)</h6>
+                                <small class="text-muted">@classItem.GetType().GetProperty("CourseTitle")?.GetValue(classItem)</small>
+                            </div>
+                            <div class="flex-shrink-0">
+                                <span class="badge bg-success">فعال</span>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="text-center py-4">
+                        <i class="fas fa-chalkboard fa-2x text-muted mb-3"></i>
+                        <p class="text-muted">هنوز در کلاسی ثبت‌نام نکرده‌اید</p>
+                        <a asp-area="Public" asp-controller="Catalog" asp-action="Classes" class="btn btn-modern-primary btn-sm">
+                            <i class="fas fa-search me-1"></i>جستجوی کلاس‌ها
+                        </a>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+    
+    <!-- Upcoming Exams -->
+    <div class="col-lg-6 mb-4">
+        <div class="modern-card">
+            <div class="modern-card-header">
+                <h3 class="modern-card-title">
+                    <i class="fas fa-calendar-alt me-2"></i>آزمون‌های پیش‌رو
+                </h3>
+            </div>
+            <div class="modern-card-body">
+                @if (Model.UpcomingExams.Any())
+                {
+                    @foreach (var exam in Model.UpcomingExams)
+                    {
+                        <div class="d-flex align-items-center mb-3 p-2 border rounded">
+                            <div class="flex-shrink-0">
+                                <div class="stats-icon warning" style="width: 40px; height: 40px; font-size: 1rem;">
+                                    <i class="fas fa-clipboard-list"></i>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h6 class="mb-1">@exam.GetType().GetProperty("Title")?.GetValue(exam)</h6>
+                                <small class="text-muted">@exam.GetType().GetProperty("Date")?.GetValue(exam)</small>
+                            </div>
+                            <div class="flex-shrink-0">
+                                <span class="badge bg-warning">آینده</span>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="text-center py-4">
+                        <i class="fas fa-clipboard-list fa-2x text-muted mb-3"></i>
+                        <p class="text-muted">آزمون پیش‌رویی وجود ندارد</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Study Tips -->
+<div class="row">
+    <div class="col-12">
+        <div class="modern-card">
+            <div class="modern-card-header">
+                <h3 class="modern-card-title">
+                    <i class="fas fa-lightbulb me-2"></i>نکات مطالعه
+                </h3>
+            </div>
+            <div class="modern-card-body">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <div class="d-flex align-items-start">
+                            <div class="stats-icon success me-3" style="width: 40px; height: 40px; font-size: 1rem;">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">مدیریت زمان</h6>
+                                <small class="text-muted">هر روز حداقل 30 دقیقه مطالعه کنید</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="d-flex align-items-start">
+                            <div class="stats-icon info me-3" style="width: 40px; height: 40px; font-size: 1rem;">
+                                <i class="fas fa-book"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">مرور منظم</h6>
+                                <small class="text-muted">مطالب را به صورت دوره‌ای مرور کنید</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="d-flex align-items-start">
+                            <div class="stats-icon warning me-3" style="width: 40px; height: 40px; font-size: 1rem;">
+                                <i class="fas fa-question-circle"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">سوال بپرسید</h6>
+                                <small class="text-muted">در صورت ابهام از معلم سوال کنید</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

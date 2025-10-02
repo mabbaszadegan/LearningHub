@@ -1,0 +1,297 @@
+@{
+    ViewData["Title"] = "دسترسی محدود";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - EduTrack</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/lib/font-awesome/css/all.min.css" />
+    <link rel="manifest" href="~/manifest.webmanifest" />
+    <meta name="theme-color" content="#6366f1" />
+    <meta name="description" content="EduTrack - سیستم مدیریت یادگیری آنلاین" />
+</head>
+<body>
+    <div class="access-denied-container">
+        <div class="access-denied-card">
+            <div class="access-denied-icon">
+                <i class="fas fa-shield-alt"></i>
+            </div>
+            
+            <h1 class="access-denied-title">دسترسی محدود</h1>
+            <p class="access-denied-description">
+                متأسفانه شما به این بخش دسترسی ندارید. لطفاً با حساب کاربری مناسب وارد شوید.
+            </p>
+            
+            <div class="access-denied-actions">
+                <a asp-area="Public" asp-controller="Account" asp-action="Login" class="btn btn-primary">
+                    <i class="fas fa-sign-in-alt me-2"></i>
+                    ورود مجدد
+                </a>
+                <a asp-area="Public" asp-controller="Home" asp-action="Index" class="btn btn-outline-primary">
+                    <i class="fas fa-home me-2"></i>
+                    صفحه اصلی
+                </a>
+                <form asp-area="Public" asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
+                    <button type="submit" class="btn btn-outline-danger">
+                        <i class="fas fa-sign-out-alt me-2"></i>
+                        خروج
+                    </button>
+                </form>
+            </div>
+            
+            <div class="access-denied-help">
+                <h3>راهنمای دسترسی:</h3>
+                <div class="help-cards">
+                    <div class="help-card">
+                        <div class="help-icon student">
+                            <i class="fas fa-user-graduate"></i>
+                        </div>
+                        <h4>دانشجو</h4>
+                        <p>دسترسی به دوره‌ها، آزمون‌ها و پیشرفت تحصیلی</p>
+                    </div>
+                    <div class="help-card">
+                        <div class="help-icon teacher">
+                            <i class="fas fa-chalkboard-teacher"></i>
+                        </div>
+                        <h4>استاد</h4>
+                        <p>مدیریت کلاس‌ها، ایجاد آزمون و نظارت بر دانشجویان</p>
+                    </div>
+                    <div class="help-card">
+                        <div class="help-icon admin">
+                            <i class="fas fa-user-shield"></i>
+                        </div>
+                        <h4>مدیر</h4>
+                        <p>مدیریت کامل سیستم، کاربران و تنظیمات</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+
+<style>
+    .access-denied-container {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 50%, var(--secondary-color) 100%);
+        position: relative;
+        overflow: hidden;
+        padding: 2rem;
+    }
+
+    .access-denied-container::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="access-pattern" width="50" height="50" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="10" cy="10" r="0.5" fill="rgba(255,255,255,0.05)"/><circle cx="40" cy="15" r="0.8" fill="rgba(255,255,255,0.08)"/></pattern></defs><rect width="100" height="100" fill="url(%23access-pattern)"/></svg>');
+        animation: float 30s ease-in-out infinite;
+    }
+
+    .access-denied-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: var(--radius-xl);
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+        padding: var(--spacing-2xl);
+        text-align: center;
+        max-width: 600px;
+        width: 100%;
+        position: relative;
+        z-index: 2;
+        animation: fadeInUp 0.8s ease-out;
+    }
+
+    .access-denied-icon {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--error-color) 0%, var(--error-dark) 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3rem;
+        color: white;
+        margin: 0 auto var(--spacing-xl);
+        box-shadow: 0 15px 35px rgba(239, 68, 68, 0.3);
+        animation: pulse 2s infinite;
+    }
+
+    .access-denied-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--gray-900);
+        margin-bottom: var(--spacing-md);
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .access-denied-description {
+        font-size: 1.1rem;
+        color: var(--gray-600);
+        line-height: 1.6;
+        margin-bottom: var(--spacing-2xl);
+        max-width: 500px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .access-denied-actions {
+        display: flex;
+        gap: var(--spacing-md);
+        justify-content: center;
+        margin-bottom: var(--spacing-2xl);
+        flex-wrap: wrap;
+    }
+
+        .access-denied-actions .btn {
+            padding: var(--spacing-sm) var(--spacing-lg);
+            font-size: 0.9rem;
+            font-weight: 500;
+            border-radius: var(--radius-md);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transition: all var(--transition-normal);
+            min-width: 120px;
+        }
+
+    .access-denied-actions .btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    .access-denied-help {
+        text-align: center;
+        padding-top: var(--spacing-xl);
+        border-top: 1px solid var(--gray-200);
+    }
+
+    .access-denied-help h3 {
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: var(--gray-800);
+        margin-bottom: var(--spacing-lg);
+    }
+
+    .help-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: var(--spacing-lg);
+        margin-top: var(--spacing-lg);
+    }
+
+    .help-card {
+        background: var(--gray-50);
+        border-radius: var(--radius-lg);
+        padding: var(--spacing-lg);
+        transition: all var(--transition-normal);
+        border: 1px solid var(--gray-200);
+    }
+
+    .help-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-md);
+        background: white;
+    }
+
+    .help-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+        margin: 0 auto var(--spacing-md);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+    }
+
+    .help-icon.student {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    }
+
+    .help-icon.teacher {
+        background: linear-gradient(135deg, var(--success-color) 0%, var(--success-dark) 100%);
+    }
+
+    .help-icon.admin {
+        background: linear-gradient(135deg, var(--warning-color) 0%, var(--warning-dark) 100%);
+    }
+
+    .help-card h4 {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--gray-800);
+        margin-bottom: var(--spacing-sm);
+    }
+
+    .help-card p {
+        font-size: 0.85rem;
+        color: var(--gray-600);
+        line-height: 1.4;
+        margin: 0;
+    }
+
+        /* Responsive Design */
+        @@media (max-width: 768px) {
+        .access-denied-container {
+            padding: 1rem;
+        }
+
+        .access-denied-card {
+            padding: var(--spacing-xl);
+        }
+
+        .access-denied-title {
+            font-size: 2rem;
+        }
+
+        .access-denied-description {
+            font-size: 1rem;
+        }
+
+        .access-denied-actions {
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .access-denied-actions .btn {
+            width: 100%;
+            max-width: 300px;
+        }
+
+        .help-cards {
+            grid-template-columns: 1fr;
+            gap: var(--spacing-md);
+        }
+    }
+
+        @@media (max-width: 576px) {
+        .access-denied-icon {
+            width: 80px;
+            height: 80px;
+            font-size: 2rem;
+        }
+
+        .access-denied-title {
+            font-size: 1.75rem;
+        }
+
+        .help-card {
+            padding: var(--spacing-md);
+        }
+    }
+</style>

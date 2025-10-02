@@ -24,78 +24,155 @@
 </head>
 <body class="admin-body">
     <div class="admin-wrapper">
-        <!-- Admin Sidebar -->
+        <!-- Modern Admin Sidebar -->
         <nav class="admin-sidebar">
             <div class="admin-sidebar-header">
-                <h4 class="text-white text-center py-3">
-                    <i class="fas fa-graduation-cap me-2"></i>
-                    پنل مدیریت
-                </h4>
+                <div class="admin-logo">
+                    <div class="logo-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <div class="logo-text">
+                        <h5>EduTrack</h5>
+                        <span>پنل مدیریت</span>
+                    </div>
+                </div>
             </div>
             
             <div class="admin-sidebar-menu">
+                <!-- Dashboard -->
                 <a asp-area="Admin" asp-controller="Home" asp-action="Index" class="admin-nav-link">
-                    <i class="fas fa-tachometer-alt admin-nav-icon"></i>
-                    داشبورد
+                    <div class="nav-icon">
+                        <i class="fas fa-home"></i>
+                    </div>
+                    <span class="nav-text">داشبورد</span>
                 </a>
                 
-                <a asp-area="Admin" asp-controller="Users" asp-action="Index" class="admin-nav-link">
-                    <i class="fas fa-users admin-nav-icon"></i>
-                    مدیریت کاربران
-                </a>
+                <!-- Management Section -->
+                <div class="nav-section">
+                    <div class="nav-section-header">
+                        <i class="fas fa-cogs"></i>
+                        <span>مدیریت</span>
+                    </div>
+                    <div class="nav-section-items">
+                        <a asp-area="Admin" asp-controller="Users" asp-action="Index" class="admin-nav-link sub-link">
+                            <div class="nav-icon">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <span class="nav-text">کاربران</span>
+                        </a>
+                        <a asp-area="Admin" asp-controller="Courses" asp-action="Index" class="admin-nav-link sub-link">
+                            <div class="nav-icon">
+                                <i class="fas fa-book"></i>
+                            </div>
+                            <span class="nav-text">دوره‌ها</span>
+                        </a>
+                        <a asp-area="Admin" asp-controller="Classes" asp-action="Index" class="admin-nav-link sub-link">
+                            <div class="nav-icon">
+                                <i class="fas fa-chalkboard"></i>
+                            </div>
+                            <span class="nav-text">کلاس‌ها</span>
+                        </a>
+                    </div>
+                </div>
                 
-                <a asp-area="Admin" asp-controller="Courses" asp-action="Index" class="admin-nav-link">
-                    <i class="fas fa-book admin-nav-icon"></i>
-                    مدیریت دوره‌ها
-                </a>
+                <!-- Monitoring Section -->
+                <div class="nav-section">
+                    <div class="nav-section-header">
+                        <i class="fas fa-eye"></i>
+                        <span>نظارت</span>
+                    </div>
+                    <div class="nav-section-items">
+                        <a asp-area="Admin" asp-controller="Sessions" asp-action="Index" class="admin-nav-link sub-link">
+                            <div class="nav-icon">
+                                <i class="fas fa-user-clock"></i>
+                            </div>
+                            <span class="nav-text">جلسات فعال</span>
+                        </a>
+                        <a asp-area="Admin" asp-controller="ActivityLogs" asp-action="Index" class="admin-nav-link sub-link">
+                            <div class="nav-icon">
+                                <i class="fas fa-history"></i>
+                            </div>
+                            <span class="nav-text">گزارش فعالیت‌ها</span>
+                        </a>
+                    </div>
+                </div>
                 
-                <a asp-area="Admin" asp-controller="Classes" asp-action="Index" class="admin-nav-link">
-                    <i class="fas fa-chalkboard-teacher admin-nav-icon"></i>
-                    مدیریت کلاس‌ها
-                </a>
-                
-                <a asp-area="Admin" asp-controller="Sessions" asp-action="Index" class="admin-nav-link">
-                    <i class="fas fa-user-clock admin-nav-icon"></i>
-                    جلسات فعال
-                </a>
-                
-                <a asp-area="Admin" asp-controller="ActivityLogs" asp-action="Index" class="admin-nav-link">
-                    <i class="fas fa-history admin-nav-icon"></i>
-                    گزارش فعالیت‌ها
-                </a>
-                
+                <!-- Analytics -->
                 <a asp-area="Admin" asp-controller="Home" asp-action="Analytics" class="admin-nav-link">
-                    <i class="fas fa-chart-bar admin-nav-icon"></i>
-                    آمار و تحلیل
+                    <div class="nav-icon">
+                        <i class="fas fa-chart-bar"></i>
+                    </div>
+                    <span class="nav-text">آمار و تحلیل</span>
                 </a>
+                
+                <!-- Reports -->
+                <a asp-area="Admin" asp-controller="Home" asp-action="Reports" class="admin-nav-link">
+                    <div class="nav-icon">
+                        <i class="fas fa-file-alt"></i>
+                    </div>
+                    <span class="nav-text">گزارش‌ها</span>
+                </a>
+            </div>
+            
+            <!-- User Profile -->
+            <div class="admin-sidebar-footer">
+                <div class="user-profile">
+                    <div class="user-avatar">
+                        <i class="fas fa-user-shield"></i>
+                    </div>
+                    <div class="user-info">
+                        <div class="user-name">@User.Identity?.Name</div>
+                        <div class="user-role">مدیر سیستم</div>
+                    </div>
+                    <div class="user-actions">
+                        <div class="dropdown">
+                            <button class="btn btn-link" data-bs-toggle="dropdown">
+                                <i class="fas fa-ellipsis-v"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" asp-area="Public" asp-controller="Account" asp-action="Profile">
+                                    <i class="fas fa-user me-2"></i>پروفایل
+                                </a></li>
+                                <li><a class="dropdown-item" asp-area="Admin" asp-controller="Home" asp-action="Analytics">
+                                    <i class="fas fa-chart-bar me-2"></i>آمار
+                                </a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <form asp-area="Public" asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
+                                        <button type="submit" class="dropdown-item">
+                                            <i class="fas fa-sign-out-alt me-2"></i>خروج
+                                        </button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
             </div>
         </nav>
         
         <!-- Main Content -->
         <div class="admin-main">
             <!-- Top Navigation -->
-            <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom">
-                <div class="container-fluid">
-                    <button class="btn btn-link admin-sidebar-toggle d-lg-none">
+            <nav class="admin-topbar">
+                <div class="topbar-left">
+                    <button class="sidebar-toggle d-lg-none">
                         <i class="fas fa-bars"></i>
                     </button>
-                    
-                    <div class="navbar-nav ms-auto">
-                        <div class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                                <i class="fas fa-user-circle me-1"></i>
-                                @User.Identity?.Name
-                            </a>
-                            <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" asp-area="Public" asp-controller="Account" asp-action="Profile">پروفایل</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li>
-                                    <form asp-area="Public" asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
-                                        <button type="submit" class="dropdown-item">خروج</button>
-                                    </form>
-                                </li>
-                            </ul>
-                        </div>
+                    <div class="breadcrumb-nav">
+                        <span class="breadcrumb-item">@ViewData["Title"]</span>
+                    </div>
+                </div>
+                
+                <div class="topbar-right">
+                    <div class="topbar-actions">
+                        <button class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-bell"></i>
+                            <span class="badge bg-danger">5</span>
+                        </button>
+                        <button class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-cog"></i>
+                        </button>
                     </div>
                 </div>
             </nav>
@@ -106,6 +183,7 @@
                     @if (TempData["Success"] != null)
                     {
                         <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <i class="fas fa-check-circle me-2"></i>
                             @TempData["Success"]
                             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                         </div>
@@ -114,6 +192,7 @@
                     @if (TempData["Error"] != null)
                     {
                         <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="fas fa-exclamation-circle me-2"></i>
                             @TempData["Error"]
                             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                         </div>

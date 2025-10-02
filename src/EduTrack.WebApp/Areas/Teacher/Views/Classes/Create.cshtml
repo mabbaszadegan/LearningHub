@@ -3,88 +3,70 @@
     ViewData["Title"] = "ایجاد کلاس جدید";
 }
 
-<div class="container-fluid">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title mb-0">ایجاد کلاس جدید</h3>
-                </div>
-                <div class="card-body">
-                    <form asp-action="Create" method="post" id="create-class-form">
-                        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="modern-card">
+            <div class="modern-card-header">
+                <h3 class="modern-card-title">
+                    <i class="fas fa-plus me-2"></i>ایجاد کلاس جدید
+                </h3>
+            </div>
+            <div class="modern-card-body">
+                <form asp-action="Create" method="post">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Name" class="form-label">نام کلاس</label>
+                            <input asp-for="Name" class="form-control" placeholder="نام کلاس را وارد کنید" />
+                            <span asp-validation-for="Name" class="text-danger"></span>
+                        </div>
                         
-                        <div class="mb-3">
-                            <label asp-for="CourseId" class="form-label">دوره *</label>
-                            <select asp-for="CourseId" asp-items="ViewBag.Courses" class="form-select">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="CourseId" class="form-label">دوره</label>
+                            <select asp-for="CourseId" class="form-select" asp-items="ViewBag.Courses">
                                 <option value="">انتخاب دوره</option>
                             </select>
                             <span asp-validation-for="CourseId" class="text-danger"></span>
                         </div>
-
-                        <div class="mb-3">
-                            <label asp-for="Name" class="form-label">نام کلاس *</label>
-                            <input asp-for="Name" class="form-control" placeholder="نام کلاس را وارد کنید" />
-                            <span asp-validation-for="Name" class="text-danger"></span>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="StartDate" class="form-label">تاریخ شروع</label>
+                            <input asp-for="StartDate" class="form-control" type="date" />
+                            <span asp-validation-for="StartDate" class="text-danger"></span>
                         </div>
-
-                        <div class="mb-3">
-                            <label asp-for="Description" class="form-label">توضیحات</label>
-                            <textarea asp-for="Description" class="form-control" rows="3" placeholder="توضیحات کلاس را وارد کنید"></textarea>
-                            <span asp-validation-for="Description" class="text-danger"></span>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="EndDate" class="form-label">تاریخ پایان</label>
+                            <input asp-for="EndDate" class="form-control" type="date" />
+                            <span asp-validation-for="EndDate" class="text-danger"></span>
                         </div>
-
-                        @if (ViewBag.ShowTeacherSelection == true)
-                        {
-                        <div class="mb-3">
-                            <label asp-for="TeacherId" class="form-label">معلم *</label>
-                            <select asp-for="TeacherId" asp-items="ViewBag.Teachers" class="form-select">
-                                <option value="">انتخاب معلم</option>
-                            </select>
-                            <span asp-validation-for="TeacherId" class="text-danger"></span>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label asp-for="Description" class="form-label">توضیحات</label>
+                        <textarea asp-for="Description" class="form-control" rows="3" placeholder="توضیحات کلاس را وارد کنید"></textarea>
+                        <span asp-validation-for="Description" class="text-danger"></span>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" checked disabled />
+                            <label class="form-check-label">
+                                کلاس فعال باشد (پیش‌فرض)
+                            </label>
                         </div>
-                        }
-                        else
-                        {
-                            <div class="mb-3">
-                                <label class="form-label">معلم</label>
-                                <div class="form-control-plaintext bg-light p-2 rounded">
-                                    <i class="fas fa-user-tie me-2"></i>
-                                    @ViewBag.CurrentTeacherName
-                                </div>
-                                <input asp-for="TeacherId" type="hidden" />
-                            </div>
-                        }
-
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="PersianStartDate" class="form-label">تاریخ شروع (شمسی) *</label>
-                                    <input type="text" id="PersianStartDate" class="form-control persian-datepicker" 
-                                           placeholder="انتخاب تاریخ شروع" />
-                                    <input asp-for="StartDate" type="hidden" />
-                                    <span asp-validation-for="StartDate" class="text-danger"></span>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="PersianEndDate" class="form-label">تاریخ پایان (شمسی)</label>
-                                    <input type="text" id="PersianEndDate" class="form-control persian-datepicker" 
-                                           placeholder="انتخاب تاریخ پایان" />
-                                    <input asp-for="EndDate" type="hidden" />
-                                    <span asp-validation-for="EndDate" class="text-danger"></span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="d-flex justify-content-between">
-                            <a asp-action="Index" class="btn btn-secondary">بازگشت</a>
-                            <button type="submit" class="btn btn-primary" id="submit-btn">
-                                <i class="fas fa-save"></i> ایجاد کلاس
-                            </button>
-                        </div>
-                    </form>
-                </div>
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-modern-primary">
+                            <i class="fas fa-save me-2"></i>ایجاد کلاس
+                        </button>
+                        <a asp-action="Index" class="btn btn-modern-secondary">
+                            <i class="fas fa-times me-2"></i>انصراف
+                        </a>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -92,159 +74,4 @@
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
-    <script src="~/js/persian-date-working.js"></script>
-    <script src="~/js/persian-datepicker.js"></script>
-    
-    <script>
-        $(document).ready(function() {
-            // Test Persian date conversion
-            console.log('Testing Persian date conversion...');
-            const testToday = window.persianDate.getTodayPersian();
-            console.log('Today Persian:', testToday);
-            
-            // Test with a known date: 2024/10/2 should be around 1403/07/11
-            const testGregorianDate = new Date(2024, 9, 2); // October 2, 2024
-            const testPersianFromGregorian = window.persianDate.gregorianDateToPersianString(testGregorianDate);
-            console.log('2024/10/2 in Persian:', testPersianFromGregorian);
-            
-            const testTodayString = window.persianDate.formatPersian(testToday.year, testToday.month, testToday.day);
-            console.log('Today Persian String:', testTodayString);
-            const testGregorian = window.persianDate.persianStringToGregorianDate(testTodayString);
-            console.log('Converted back to Gregorian:', testGregorian);
-            
-            // Test specific Persian date: 1403/07/15
-            const testPersianString = '1403/07/15';
-            const testConvertedGregorian = window.persianDate.persianStringToGregorianDate(testPersianString);
-            console.log('1403/07/15 in Gregorian:', testConvertedGregorian);
-            
-            // Initialize Persian DatePickers
-            initializePersianDatePickers();
-            
-            // Form validation removed to fix POST issue
-        });
-
-        function initializePersianDatePickers() {
-            const startDateInput = document.getElementById('PersianStartDate');
-            const endDateInput = document.getElementById('PersianEndDate');
-            const hiddenStartDate = document.querySelector('input[name="StartDate"]');
-            const hiddenEndDate = document.querySelector('input[name="EndDate"]');
-
-            // Get today's Persian date for minimum date
-            const today = window.persianDate.getTodayPersian();
-            const todayString = window.persianDate.formatPersian(today.year, today.month, today.day);
-
-            // Initialize start date picker
-            const startDatePicker = new PersianDatePicker(startDateInput, {
-                placeholder: 'انتخاب تاریخ شروع',
-                minDate: todayString,
-                onSelect: function(date, dateString) {
-                    // Update hidden field with Gregorian date in correct format
-                    const gregorianDate = window.persianDate.persianStringToGregorianDate(dateString);
-                    if (gregorianDate) {
-                        // Format as MM/dd/yyyy for ASP.NET Core model binding
-                        const year = gregorianDate.getFullYear();
-                        const month = (gregorianDate.getMonth() + 1).toString().padStart(2, '0');
-                        const day = gregorianDate.getDate().toString().padStart(2, '0');
-                        hiddenStartDate.value = `${month}/${day}/${year}`;
-                        
-                        console.log('Start date set to:', hiddenStartDate.value);
-                        console.log('Gregorian date object:', gregorianDate);
-                    }
-                    
-                    // Update end date picker minimum date
-                    endDatePicker.options.minDate = dateString;
-                    
-                    // Clear end date if it's before start date
-                    if (endDateInput.value && endDateInput.value < dateString) {
-                        endDatePicker.clearDate();
-                    }
-                }
-            });
-
-            // Initialize end date picker
-            const endDatePicker = new PersianDatePicker(endDateInput, {
-                placeholder: 'انتخاب تاریخ پایان',
-                minDate: todayString,
-                onSelect: function(date, dateString) {
-                    // Update hidden field with Gregorian date in correct format
-                    const gregorianDate = window.persianDate.persianStringToGregorianDate(dateString);
-                    if (gregorianDate) {
-                        // Format as MM/dd/yyyy for ASP.NET Core model binding
-                        const year = gregorianDate.getFullYear();
-                        const month = (gregorianDate.getMonth() + 1).toString().padStart(2, '0');
-                        const day = gregorianDate.getDate().toString().padStart(2, '0');
-                        hiddenEndDate.value = `${month}/${day}/${year}`;
-                        
-                        console.log('End date set to:', hiddenEndDate.value);
-                        console.log('Gregorian date object:', gregorianDate);
-                    }
-                }
-            });
-
-            // Initialize with current values if any
-            if (hiddenStartDate.value) {
-                const startDate = new Date(hiddenStartDate.value);
-                const persianStartDate = window.persianDate.gregorianDateToPersianString(startDate);
-                startDatePicker.setDate(persianStartDate);
-            }
-
-            if (hiddenEndDate.value) {
-                const endDate = new Date(hiddenEndDate.value);
-                const persianEndDate = window.persianDate.gregorianDateToPersianString(endDate);
-                endDatePicker.setDate(persianEndDate);
-            }
-        }
-
-
-        // Form submission handling
-        document.getElementById('create-class-form').addEventListener('submit', function(e) {
-            const submitBtn = document.getElementById('submit-btn');
-            const hiddenStartDate = document.querySelector('input[name="StartDate"]');
-            const hiddenEndDate = document.querySelector('input[name="EndDate"]');
-            
-            // Validate dates before submission
-            if (!hiddenStartDate.value || !hiddenEndDate.value) {
-                e.preventDefault();
-                alert('لطفاً تاریخ شروع و پایان را انتخاب کنید.');
-                return;
-            }
-            
-            // Simple date validation
-            let startDate, endDate;
-            
-            try {
-                startDate = new Date(hiddenStartDate.value);
-                endDate = new Date(hiddenEndDate.value);
-                
-                if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
-                    throw new Error('Invalid date format');
-                }
-                
-                if (startDate >= endDate) {
-                    e.preventDefault();
-                    alert('تاریخ پایان باید بعد از تاریخ شروع باشد.');
-                    return;
-                }
-            } catch (error) {
-                console.error('Date validation error:', error);
-                // Don't prevent submission for date format issues
-                // Let server handle validation
-            }
-            
-            console.log('Submitting with dates:', {
-                startDate: hiddenStartDate.value,
-                endDate: hiddenEndDate.value
-            });
-            
-            // Disable submit button and show loading
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>در حال ایجاد...';
-            
-            // Re-enable button after 5 seconds (in case of error)
-            setTimeout(() => {
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = '<i class="fas fa-save"></i> ایجاد کلاس';
-            }, 5000);
-        });
-    </script>
 }

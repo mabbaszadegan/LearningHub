@@ -1,14 +1,220 @@
 ﻿@{
-    ViewData["Title"] = "ط®ط§ظ†ظ‡";
+    ViewData["Title"] = "EduTrack - پلتفرم آموزش آنلاین";
 }
 
-<section class="public-hero">
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="hero-background">
+        <div class="hero-particles"></div>
+        <div class="hero-gradient"></div>
+    </div>
     <div class="container">
-        <h1 class="public-hero-title">ط³غŒط³طھظ… ظ…ط¯غŒط±غŒطھ غŒط§ط¯ع¯غŒط±غŒ EduTrack</h1>
-        <p class="public-hero-subtitle">ظ¾ظ„طھظپط±ظ… ظ¾غŒط´ط±ظپطھظ‡ ط¢ظ…ظˆط²ط´ ط¢ظ†ظ„ط§غŒظ†</p>
-        <div class="mt-4">
-            <a asp-area="Public" asp-controller="Account" asp-action="Register" class="btn btn-primary me-3">ط´ط±ظˆط¹ ع©ظ†غŒط¯</a>
-            <a asp-area="Public" asp-controller="Catalog" asp-action="Index" class="btn btn-outline-primary">ظ…ط´ط§ظ‡ط¯ظ‡ ط¯ظˆط±ظ‡â€Œظ‡ط§</a>
+        <div class="row align-items-center min-vh-100">
+            <div class="col-lg-6">
+                <div class="hero-content animate-fade-in-up">
+                    <div class="hero-badge">
+                        <i class="fas fa-graduation-cap me-2"></i>
+                        پلتفرم پیشرفته آموزش آنلاین
+                    </div>
+                    <h1 class="hero-title">
+                        آینده یادگیری را
+                        <span class="text-gradient">تجربه کنید</span>
+                    </h1>
+                    <p class="hero-description">
+                        با EduTrack، آموزش آنلاین را به سطح جدیدی ببرید. دوره‌های تعاملی، 
+                        آزمون‌های هوشمند و پیگیری پیشرفت در یک پلتفرم یکپارچه.
+                    </p>
+                    <div class="hero-actions">
+                        <a asp-area="Public" asp-controller="Account" asp-action="Register" class="btn btn-primary btn-lg me-3">
+                            <i class="fas fa-rocket me-2"></i>
+                            شروع کنید
+                        </a>
+                        <a asp-area="Public" asp-controller="Catalog" asp-action="Index" class="btn btn-outline-primary btn-lg">
+                            <i class="fas fa-play me-2"></i>
+                            مشاهده دوره‌ها
+                        </a>
+                    </div>
+                    <div class="hero-stats">
+                        <div class="stat-item">
+                            <div class="stat-number">1000+</div>
+                            <div class="stat-label">دانشجو</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">50+</div>
+                            <div class="stat-label">دوره</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">20+</div>
+                            <div class="stat-label">استاد</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="hero-visual animate-slide-in-right">
+                    <div class="hero-card">
+                        <div class="card-header">
+                            <div class="card-dots">
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                            </div>
+                        </div>
+                        <div class="card-content">
+                            <div class="dashboard-preview">
+                                <div class="preview-header">
+                                    <div class="preview-avatar"></div>
+                                    <div class="preview-info">
+                                        <div class="preview-name"></div>
+                                        <div class="preview-role"></div>
+                                    </div>
+                                </div>
+                                <div class="preview-stats">
+                                    <div class="preview-stat">
+                                        <div class="preview-stat-icon primary"></div>
+                                        <div class="preview-stat-content">
+                                            <div class="preview-stat-number"></div>
+                                            <div class="preview-stat-label"></div>
+                                        </div>
+                                    </div>
+                                    <div class="preview-stat">
+                                        <div class="preview-stat-icon success"></div>
+                                        <div class="preview-stat-content">
+                                            <div class="preview-stat-number"></div>
+                                            <div class="preview-stat-label"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="preview-progress">
+                                    <div class="progress-item">
+                                        <div class="progress-bar"></div>
+                                    </div>
+                                    <div class="progress-item">
+                                        <div class="progress-bar"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="features-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-12 text-center mb-5">
+                <div class="section-header animate-fade-in-up">
+                    <h2 class="section-title">چرا EduTrack؟</h2>
+                    <p class="section-description">
+                        ویژگی‌های منحصر به فرد که یادگیری را آسان و مؤثر می‌کند
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="row g-4">
+            <div class="col-lg-4 col-md-6">
+                <div class="feature-card animate-fade-in-up animate-delay-1">
+                    <div class="feature-icon primary">
+                        <i class="fas fa-brain"></i>
+                    </div>
+                    <h3 class="feature-title">آزمون‌های هوشمند</h3>
+                    <p class="feature-description">
+                        سیستم آزمون‌گیری پیشرفته با سوالات تطبیقی و تحلیل عملکرد
+                    </p>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6">
+                <div class="feature-card animate-fade-in-up animate-delay-2">
+                    <div class="feature-icon success">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h3 class="feature-title">پیگیری پیشرفت</h3>
+                    <p class="feature-description">
+                        نمودارهای تفصیلی و گزارش‌های جامع از روند یادگیری
+                    </p>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6">
+                <div class="feature-card animate-fade-in-up animate-delay-3">
+                    <div class="feature-icon warning">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h3 class="feature-title">کلاس‌های تعاملی</h3>
+                    <p class="feature-description">
+                        محیط یادگیری مشارکتی با امکان تعامل مستقیم با استادان
+                    </p>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6">
+                <div class="feature-card animate-fade-in-up animate-delay-4">
+                    <div class="feature-icon info">
+                        <i class="fas fa-mobile-alt"></i>
+                    </div>
+                    <h3 class="feature-title">دسترسی همه‌جا</h3>
+                    <p class="feature-description">
+                        یادگیری در هر زمان و مکان با رابط کاربری واکنش‌گرا
+                    </p>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6">
+                <div class="feature-card animate-fade-in-up animate-delay-5">
+                    <div class="feature-icon primary">
+                        <i class="fas fa-certificate"></i>
+                    </div>
+                    <h3 class="feature-title">گواهی معتبر</h3>
+                    <p class="feature-description">
+                        دریافت گواهی پایان دوره پس از تکمیل موفقیت‌آمیز
+                    </p>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6">
+                <div class="feature-card animate-fade-in-up animate-delay-5">
+                    <div class="feature-icon success">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h3 class="feature-title">امنیت بالا</h3>
+                    <p class="feature-description">
+                        حفاظت از اطلاعات و حریم خصوصی با بالاترین استانداردها
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="cta-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <div class="cta-card">
+                    <div class="cta-content">
+                        <h2 class="cta-title">آماده شروع هستید؟</h2>
+                        <p class="cta-description">
+                            همین امروز به جامعه یادگیرندگان EduTrack بپیوندید
+                        </p>
+                        <div class="cta-actions">
+                            <a asp-area="Public" asp-controller="Account" asp-action="Register" class="btn btn-primary btn-lg me-3">
+                                <i class="fas fa-user-plus me-2"></i>
+                                ثبت نام رایگان
+                            </a>
+                            <a asp-area="Public" asp-controller="Account" asp-action="Login" class="btn btn-outline-light btn-lg">
+                                <i class="fas fa-sign-in-alt me-2"></i>
+                                ورود
+                            </a>
+                        </div>
+                    </div>
+                    <div class="cta-visual">
+                        <div class="cta-icon">
+                            <i class="fas fa-rocket"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </section>

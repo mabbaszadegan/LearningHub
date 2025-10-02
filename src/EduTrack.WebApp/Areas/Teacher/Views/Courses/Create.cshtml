@@ -1,0 +1,61 @@
+@model EduTrack.Application.Features.Courses.Commands.CreateCourseCommand
+@{
+    ViewData["Title"] = "ایجاد دوره جدید";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="modern-card">
+            <div class="modern-card-header">
+                <h3 class="modern-card-title">
+                    <i class="fas fa-plus me-2"></i>ایجاد دوره جدید
+                </h3>
+            </div>
+            <div class="modern-card-body">
+                <form asp-action="Create" method="post">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Title" class="form-label">عنوان دوره</label>
+                            <input asp-for="Title" class="form-control" placeholder="عنوان دوره را وارد کنید" />
+                            <span asp-validation-for="Title" class="text-danger"></span>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Order" class="form-label">ترتیب</label>
+                            <input asp-for="Order" class="form-control" type="number" placeholder="0" />
+                            <span asp-validation-for="Order" class="text-danger"></span>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label asp-for="Description" class="form-label">توضیحات</label>
+                        <textarea asp-for="Description" class="form-control" rows="4" placeholder="توضیحات دوره را وارد کنید"></textarea>
+                        <span asp-validation-for="Description" class="text-danger"></span>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" checked disabled />
+                            <label class="form-check-label">
+                                دوره فعال باشد (پیش‌فرض)
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-modern-primary">
+                            <i class="fas fa-save me-2"></i>ایجاد دوره
+                        </button>
+                        <a asp-action="Index" class="btn btn-modern-secondary">
+                            <i class="fas fa-times me-2"></i>انصراف
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

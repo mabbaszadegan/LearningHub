@@ -24,74 +24,154 @@
 </head>
 <body class="teacher-body">
     <div class="teacher-wrapper">
-        <!-- Teacher Sidebar -->
+        <!-- Modern Teacher Sidebar -->
         <nav class="teacher-sidebar">
             <div class="teacher-sidebar-header">
-                <h4 class="text-white text-center py-3">
-                    <i class="fas fa-chalkboard-teacher me-2"></i>
-                    پنل معلم
-                </h4>
+                <div class="teacher-logo">
+                    <div class="logo-icon">
+                        <i class="fas fa-graduation-cap"></i>
+                    </div>
+                    <div class="logo-text">
+                        <h5>EduTrack</h5>
+                        <span>پنل معلم</span>
+                    </div>
+                </div>
             </div>
             
             <div class="teacher-sidebar-menu">
+                <!-- Dashboard -->
                 <a asp-area="Teacher" asp-controller="Home" asp-action="Index" class="teacher-nav-link">
-                    <i class="fas fa-tachometer-alt teacher-nav-icon"></i>
-                    داشبورد
+                    <div class="nav-icon">
+                        <i class="fas fa-home"></i>
+                    </div>
+                    <span class="nav-text">داشبورد</span>
                 </a>
                 
-                <a asp-area="Teacher" asp-controller="Classes" asp-action="Index" class="teacher-nav-link">
-                    <i class="fas fa-chalkboard teacher-nav-icon"></i>
-                    کلاس‌های من
-                </a>
+                <!-- Courses Section -->
+                <div class="nav-section">
+                    <div class="nav-section-header">
+                        <i class="fas fa-book"></i>
+                        <span>دوره‌ها</span>
+                    </div>
+                    <div class="nav-section-items">
+                        <a asp-area="Teacher" asp-controller="Courses" asp-action="Index" class="teacher-nav-link sub-link">
+                            <div class="nav-icon">
+                                <i class="fas fa-list"></i>
+                            </div>
+                            <span class="nav-text">همه دوره‌ها</span>
+                        </a>
+                        <a asp-area="Teacher" asp-controller="Courses" asp-action="Create" class="teacher-nav-link sub-link">
+                            <div class="nav-icon">
+                                <i class="fas fa-plus"></i>
+                            </div>
+                            <span class="nav-text">ایجاد دوره</span>
+                        </a>
+                    </div>
+                </div>
                 
-                <a asp-area="Teacher" asp-controller="Courses" asp-action="Index" class="teacher-nav-link">
-                    <i class="fas fa-book teacher-nav-icon"></i>
-                    دوره‌ها
-                </a>
+                <!-- Classes Section -->
+                <div class="nav-section">
+                    <div class="nav-section-header">
+                        <i class="fas fa-chalkboard"></i>
+                        <span>کلاس‌ها</span>
+                    </div>
+                    <div class="nav-section-items">
+                        <a asp-area="Teacher" asp-controller="Classes" asp-action="Index" class="teacher-nav-link sub-link">
+                            <div class="nav-icon">
+                                <i class="fas fa-list"></i>
+                            </div>
+                            <span class="nav-text">همه کلاس‌ها</span>
+                        </a>
+                        <a asp-area="Teacher" asp-controller="Classes" asp-action="Create" class="teacher-nav-link sub-link">
+                            <div class="nav-icon">
+                                <i class="fas fa-plus"></i>
+                            </div>
+                            <span class="nav-text">ایجاد کلاس</span>
+                        </a>
+                    </div>
+                </div>
                 
+                <!-- Students -->
                 <a asp-area="Teacher" asp-controller="Home" asp-action="MyStudents" class="teacher-nav-link">
-                    <i class="fas fa-user-graduate teacher-nav-icon"></i>
-                    دانش‌آموزان من
+                    <div class="nav-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <span class="nav-text">دانش‌آموزان</span>
                 </a>
                 
-                <a asp-area="Teacher" asp-controller="Classes" asp-action="Create" class="teacher-nav-link">
-                    <i class="fas fa-plus teacher-nav-icon"></i>
-                    ایجاد کلاس جدید
+                <!-- Exams -->
+                <a asp-controller="Exam" asp-action="Index" class="teacher-nav-link">
+                    <div class="nav-icon">
+                        <i class="fas fa-clipboard-list"></i>
+                    </div>
+                    <span class="nav-text">آزمون‌ها</span>
                 </a>
                 
-                <a asp-area="Teacher" asp-controller="Courses" asp-action="Create" class="teacher-nav-link">
-                    <i class="fas fa-plus-circle teacher-nav-icon"></i>
-                    ایجاد دوره جدید
+                <!-- Progress -->
+                <a asp-controller="Progress" asp-action="Index" class="teacher-nav-link">
+                    <div class="nav-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <span class="nav-text">گزارش‌ها</span>
                 </a>
+            </div>
+            
+            <!-- User Profile -->
+            <div class="teacher-sidebar-footer">
+                <div class="user-profile">
+                    <div class="user-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="user-info">
+                        <div class="user-name">@User.Identity?.Name</div>
+                        <div class="user-role">معلم</div>
+                    </div>
+                    <div class="user-actions">
+                        <div class="dropdown">
+                            <button class="btn btn-link" data-bs-toggle="dropdown">
+                                <i class="fas fa-ellipsis-v"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" asp-area="Public" asp-controller="Account" asp-action="Profile">
+                                    <i class="fas fa-user me-2"></i>پروفایل
+                                </a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <form asp-area="Public" asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
+                                        <button type="submit" class="dropdown-item">
+                                            <i class="fas fa-sign-out-alt me-2"></i>خروج
+                                        </button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
             </div>
         </nav>
         
         <!-- Main Content -->
         <div class="teacher-main">
             <!-- Top Navigation -->
-            <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom">
-                <div class="container-fluid">
-                    <button class="btn btn-link teacher-sidebar-toggle d-lg-none">
+            <nav class="teacher-topbar">
+                <div class="topbar-left">
+                    <button class="sidebar-toggle d-lg-none">
                         <i class="fas fa-bars"></i>
                     </button>
-                    
-                    <div class="navbar-nav ms-auto">
-                        <div class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                                <i class="fas fa-user-circle me-1"></i>
-                                @User.Identity?.Name
-                            </a>
-                            <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" asp-area="Public" asp-controller="Account" asp-action="Profile">پروفایل</a></li>
-                                <li><a class="dropdown-item" asp-area="Public" asp-controller="Catalog" asp-action="Index">کاتالوگ دوره‌ها</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li>
-                                    <form asp-area="Public" asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
-                                        <button type="submit" class="dropdown-item">خروج</button>
-                                    </form>
-                                </li>
-                            </ul>
-                        </div>
+                    <div class="breadcrumb-nav">
+                        <span class="breadcrumb-item">@ViewData["Title"]</span>
+                    </div>
+                </div>
+                
+                <div class="topbar-right">
+                    <div class="topbar-actions">
+                        <button class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-bell"></i>
+                            <span class="badge bg-danger">3</span>
+                        </button>
+                        <button class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-cog"></i>
+                        </button>
                     </div>
                 </div>
             </nav>
@@ -102,6 +182,7 @@
                     @if (TempData["Success"] != null)
                     {
                         <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <i class="fas fa-check-circle me-2"></i>
                             @TempData["Success"]
                             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                         </div>
@@ -110,6 +191,7 @@
                     @if (TempData["Error"] != null)
                     {
                         <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="fas fa-exclamation-circle me-2"></i>
                             @TempData["Error"]
                             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                         </div>

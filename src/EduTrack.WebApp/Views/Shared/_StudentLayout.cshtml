@@ -21,69 +21,135 @@
 </head>
 <body class="student-body">
     <div class="student-wrapper">
-        <!-- Student Sidebar -->
+        <!-- Modern Student Sidebar -->
         <nav class="student-sidebar">
             <div class="student-sidebar-header">
-                <h4 class="text-white text-center py-3">
-                    <i class="fas fa-user-graduate me-2"></i>
-                    پنل دانش‌آموز
-                </h4>
+                <div class="student-logo">
+                    <div class="logo-icon">
+                        <i class="fas fa-graduation-cap"></i>
+                    </div>
+                    <div class="logo-text">
+                        <h5>EduTrack</h5>
+                        <span>پنل دانش‌آموز</span>
+                    </div>
+                </div>
             </div>
             
             <div class="student-sidebar-menu">
+                <!-- Dashboard -->
                 <a asp-area="Student" asp-controller="Home" asp-action="Index" class="student-nav-link">
-                    <i class="fas fa-tachometer-alt student-nav-icon"></i>
-                    داشبورد
+                    <div class="nav-icon">
+                        <i class="fas fa-home"></i>
+                    </div>
+                    <span class="nav-text">داشبورد</span>
                 </a>
                 
+                <!-- My Classes -->
                 <a asp-area="Student" asp-controller="Classes" asp-action="Index" class="student-nav-link">
-                    <i class="fas fa-chalkboard student-nav-icon"></i>
-                    کلاس‌های من
+                    <div class="nav-icon">
+                        <i class="fas fa-chalkboard"></i>
+                    </div>
+                    <span class="nav-text">کلاس‌های من</span>
                 </a>
                 
+                <!-- Progress -->
                 <a asp-area="Student" asp-controller="Home" asp-action="MyProgress" class="student-nav-link">
-                    <i class="fas fa-chart-line student-nav-icon"></i>
-                    پیشرفت من
+                    <div class="nav-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <span class="nav-text">پیشرفت من</span>
                 </a>
                 
-                <a asp-area="Public" asp-controller="Catalog" asp-action="Index" class="student-nav-link">
-                    <i class="fas fa-book student-nav-icon"></i>
-                    کاتالوگ دوره‌ها
+                <!-- Exams -->
+                <a asp-controller="Exam" asp-action="Index" class="student-nav-link">
+                    <div class="nav-icon">
+                        <i class="fas fa-clipboard-list"></i>
+                    </div>
+                    <span class="nav-text">آزمون‌ها</span>
                 </a>
                 
-                <a asp-area="Public" asp-controller="Catalog" asp-action="Classes" class="student-nav-link">
-                    <i class="fas fa-search student-nav-icon"></i>
-                    جستجوی کلاس‌ها
-                </a>
+                <!-- Catalog Section -->
+                <div class="nav-section">
+                    <div class="nav-section-header">
+                        <i class="fas fa-book"></i>
+                        <span>کاتالوگ</span>
+                    </div>
+                    <div class="nav-section-items">
+                        <a asp-area="Public" asp-controller="Catalog" asp-action="Index" class="student-nav-link sub-link">
+                            <div class="nav-icon">
+                                <i class="fas fa-list"></i>
+                            </div>
+                            <span class="nav-text">دوره‌ها</span>
+                        </a>
+                        <a asp-area="Public" asp-controller="Catalog" asp-action="Classes" class="student-nav-link sub-link">
+                            <div class="nav-icon">
+                                <i class="fas fa-search"></i>
+                            </div>
+                            <span class="nav-text">جستجوی کلاس</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- User Profile -->
+            <div class="student-sidebar-footer">
+                <div class="user-profile">
+                    <div class="user-avatar">
+                        <i class="fas fa-user-graduate"></i>
+                    </div>
+                    <div class="user-info">
+                        <div class="user-name">@User.Identity?.Name</div>
+                        <div class="user-role">دانش‌آموز</div>
+                    </div>
+                    <div class="user-actions">
+                        <div class="dropdown">
+                            <button class="btn btn-link" data-bs-toggle="dropdown">
+                                <i class="fas fa-ellipsis-v"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" asp-area="Public" asp-controller="Account" asp-action="Profile">
+                                    <i class="fas fa-user me-2"></i>پروفایل
+                                </a></li>
+                                <li><a class="dropdown-item" asp-area="Student" asp-controller="Home" asp-action="MyProgress">
+                                    <i class="fas fa-chart-line me-2"></i>پیشرفت من
+                                </a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <form asp-area="Public" asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
+                                        <button type="submit" class="dropdown-item">
+                                            <i class="fas fa-sign-out-alt me-2"></i>خروج
+                                        </button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
             </div>
         </nav>
         
         <!-- Main Content -->
         <div class="student-main">
             <!-- Top Navigation -->
-            <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom">
-                <div class="container-fluid">
-                    <button class="btn btn-link student-sidebar-toggle d-lg-none">
+            <nav class="student-topbar">
+                <div class="topbar-left">
+                    <button class="sidebar-toggle d-lg-none">
                         <i class="fas fa-bars"></i>
                     </button>
-                    
-                    <div class="navbar-nav ms-auto">
-                        <div class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                                <i class="fas fa-user-circle me-1"></i>
-                                @User.Identity?.Name
-                            </a>
-                            <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" asp-area="Public" asp-controller="Account" asp-action="Profile">پروفایل</a></li>
-                                <li><a class="dropdown-item" asp-area="Student" asp-controller="Home" asp-action="MyProgress">پیشرفت من</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li>
-                                    <form asp-area="Public" asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
-                                        <button type="submit" class="dropdown-item">خروج</button>
-                                    </form>
-                                </li>
-                            </ul>
-                        </div>
+                    <div class="breadcrumb-nav">
+                        <span class="breadcrumb-item">@ViewData["Title"]</span>
+                    </div>
+                </div>
+                
+                <div class="topbar-right">
+                    <div class="topbar-actions">
+                        <button class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-bell"></i>
+                            <span class="badge bg-danger">2</span>
+                        </button>
+                        <button class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-cog"></i>
+                        </button>
                     </div>
                 </div>
             </nav>
@@ -94,6 +160,7 @@
                     @if (TempData["Success"] != null)
                     {
                         <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <i class="fas fa-check-circle me-2"></i>
                             @TempData["Success"]
                             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                         </div>
@@ -102,6 +169,7 @@
                     @if (TempData["Error"] != null)
                     {
                         <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="fas fa-exclamation-circle me-2"></i>
                             @TempData["Error"]
                             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                         </div>

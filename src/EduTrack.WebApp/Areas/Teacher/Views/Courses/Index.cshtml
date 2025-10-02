@@ -1,8 +1,69 @@
-﻿@{
-    ViewData["Title"] = "ط¯ظˆط±ظ‡â€Œظ‡ط§غŒ ظ…ظ†";
+﻿@model List<EduTrack.Application.Common.Models.CourseDto>
+@{
+    ViewData["Title"] = "دوره‌های من";
 }
 
-<div class="container-fluid">
-    <h2>ظ…ط¯غŒط±غŒطھ ط¯ظˆط±ظ‡â€Œظ‡ط§</h2>
-    <p>ط¯ط± ط§غŒظ†ط¬ط§ ظ…غŒâ€Œطھظˆط§ظ†غŒط¯ ط¯ظˆط±ظ‡â€Œظ‡ط§غŒ ط®ظˆط¯ ط±ط§ ظ…ط¯غŒط±غŒطھ ع©ظ†غŒط¯.</p>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="h4 mb-0">دوره‌های من</h2>
+    <a asp-action="Create" class="btn btn-modern-primary">
+        <i class="fas fa-plus me-2"></i>ایجاد دوره جدید
+    </a>
 </div>
+
+@if (Model.Any())
+{
+    <div class="row">
+        @foreach (var course in Model)
+        {
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="modern-card">
+                    <div class="modern-card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <h5 class="modern-card-title">@course.Title</h5>
+                            <span class="badge bg-success">فعال</span>
+                        </div>
+                        
+                        <p class="text-muted mb-3">@course.Description</p>
+                        
+                        <div class="row text-center mb-3">
+                            <div class="col-4">
+                                <div class="stats-number">@course.ModuleCount</div>
+                                <div class="stats-label">ماژول</div>
+                            </div>
+                            <div class="col-4">
+                                <div class="stats-number">@course.LessonCount</div>
+                                <div class="stats-label">درس</div>
+                            </div>
+                            <div class="col-4">
+                                <div class="stats-number">0</div>
+                                <div class="stats-label">دانش‌آموز</div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex gap-2">
+                            <a href="#" class="btn btn-modern-secondary btn-sm flex-fill">
+                                <i class="fas fa-edit me-1"></i>ویرایش
+                            </a>
+                            <a href="#" class="btn btn-modern-primary btn-sm flex-fill">
+                                <i class="fas fa-eye me-1"></i>مشاهده
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <div class="text-center py-5">
+        <div class="mb-4">
+            <i class="fas fa-book fa-3x text-muted"></i>
+        </div>
+        <h4 class="text-muted mb-3">هنوز دوره‌ای ایجاد نکرده‌اید</h4>
+        <p class="text-muted mb-4">اولین دوره خود را ایجاد کنید و شروع به تدریس کنید.</p>
+        <a asp-action="Create" class="btn btn-modern-primary">
+            <i class="fas fa-plus me-2"></i>ایجاد دوره جدید
+        </a>
+    </div>
+}
