@@ -1,0 +1,144 @@
+@model EduTrack.Application.Common.Models.ClassDto
+@{
+    ViewData["Title"] = "جزئیات کلاس";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title mb-0">جزئیات کلاس: @Model.Name</h3>
+                    <div>
+                        <a asp-action="Index" class="btn btn-secondary">
+                            <i class="fas fa-arrow-right"></i> بازگشت
+                        </a>
+                        <a asp-action="Summary" asp-route-id="@Model.Id" class="btn btn-info">
+                            <i class="fas fa-chart-bar"></i> خلاصه کلاس
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    @if (TempData["Success"] != null)
+                    {
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            @TempData["Success"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+                    @if (TempData["Error"] != null)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            @TempData["Error"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0">اطلاعات کلاس</h5>
+                                </div>
+                                <div class="card-body">
+                                    <table class="table table-borderless">
+                                        <tr>
+                                            <td><strong>نام کلاس:</strong></td>
+                                            <td>@Model.Name</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>توضیحات:</strong></td>
+                                            <td>@(Model.Description ?? "ندارد")</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>معلم:</strong></td>
+                                            <td>@Model.TeacherName</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>تعداد دانش‌آموز:</strong></td>
+                                            <td>
+                                                <span class="badge bg-info">@Model.StudentCount</span>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>تاریخ شروع:</strong></td>
+                                            <td>@Model.StartDate.ToString("yyyy/MM/dd HH:mm")</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>تاریخ پایان:</strong></td>
+                                            <td>@(Model.EndDate?.ToString("yyyy/MM/dd HH:mm") ?? "تعیین نشده")</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>وضعیت:</strong></td>
+                                            <td>
+                                                @if (Model.IsActive)
+                                                {
+                                                    <span class="badge bg-success">فعال</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-secondary">غیرفعال</span>
+                                                }
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>تاریخ ایجاد:</strong></td>
+                                            <td>@Model.CreatedAt.ToString("yyyy/MM/dd HH:mm")</td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <h5 class="card-title mb-0">ثبت‌نام دانش‌آموز</h5>
+                                    <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#enrollModal">
+                                        <i class="fas fa-user-plus"></i> ثبت‌نام جدید
+                                    </button>
+                                </div>
+                                <div class="card-body">
+                                    <p class="text-muted">
+                                        برای ثبت‌نام دانش‌آموز جدید در این کلاس، روی دکمه "ثبت‌نام جدید" کلیک کنید.
+                                    </p>
+                                    <div class="d-grid gap-2">
+                                        <a asp-action="Export" asp-route-id="@Model.Id" class="btn btn-outline-success">
+                                            <i class="fas fa-download"></i> دانلود گزارش کلاس
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for Student Enrollment -->
+<div class="modal fade" id="enrollModal" tabindex="-1" aria-labelledby="enrollModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="enrollModalLabel">ثبت‌نام دانش‌آموز</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-action="EnrollStudent" method="post">
+                <div class="modal-body">
+                    <input type="hidden" name="classId" value="@Model.Id" />
+                    <div class="mb-3">
+                        <label for="studentId" class="form-label">شناسه دانش‌آموز</label>
+                        <input type="text" class="form-control" id="studentId" name="studentId" required>
+                        <div class="form-text">شناسه دانش‌آموز را وارد کنید</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">انصراف</button>
+                    <button type="submit" class="btn btn-primary">ثبت‌نام</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

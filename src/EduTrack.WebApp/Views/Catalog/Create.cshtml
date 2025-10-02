@@ -1,0 +1,56 @@
+@model EduTrack.Application.Features.Courses.Commands.CreateCourseCommand
+@{
+    ViewData["Title"] = "ایجاد دوره جدید";
+}
+
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title mb-0">ایجاد دوره جدید</h3>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Create" method="post">
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+                        
+                        <div class="mb-3">
+                            <label asp-for="Title" class="form-label">عنوان دوره *</label>
+                            <input asp-for="Title" class="form-control" placeholder="عنوان دوره را وارد کنید" />
+                            <span asp-validation-for="Title" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Description" class="form-label">توضیحات</label>
+                            <textarea asp-for="Description" class="form-control" rows="4" placeholder="توضیحات دوره را وارد کنید"></textarea>
+                            <span asp-validation-for="Description" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Thumbnail" class="form-label">تصویر شاخص</label>
+                            <input asp-for="Thumbnail" class="form-control" placeholder="آدرس تصویر شاخص" />
+                            <span asp-validation-for="Thumbnail" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Order" class="form-label">ترتیب نمایش</label>
+                            <input asp-for="Order" type="number" class="form-control" min="0" value="0" />
+                            <span asp-validation-for="Order" class="text-danger"></span>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a asp-action="Index" class="btn btn-secondary">بازگشت</a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> ایجاد دوره
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

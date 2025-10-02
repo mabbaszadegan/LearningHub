@@ -151,4 +151,79 @@ public class CatalogController : Controller
         }
         return View(result.Value);
     }
+
+    // GET: Create Module
+    public IActionResult CreateModule(int courseId)
+    {
+        var command = new CreateModuleCommand(courseId, string.Empty, string.Empty, 0);
+        return View(command);
+    }
+
+    // POST: Create Module
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreateModule(CreateModuleCommand command)
+    {
+        if (ModelState.IsValid)
+        {
+            var result = await _mediator.Send(command);
+            if (result.IsSuccess)
+            {
+                TempData["Success"] = "Module created successfully.";
+                return RedirectToAction(nameof(Modules), new { courseId = command.CourseId });
+            }
+            TempData["Error"] = result.Error;
+        }
+        return View(command);
+    }
+
+    // GET: Create Lesson
+    public IActionResult CreateLesson(int moduleId)
+    {
+        var command = new CreateLessonCommand(moduleId, string.Empty, string.Empty, string.Empty, 0, 0);
+        return View(command);
+    }
+
+    // POST: Create Lesson
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreateLesson(CreateLessonCommand command)
+    {
+        if (ModelState.IsValid)
+        {
+            var result = await _mediator.Send(command);
+            if (result.IsSuccess)
+            {
+                TempData["Success"] = "Lesson created successfully.";
+                return RedirectToAction(nameof(Lessons), new { moduleId = command.ModuleId });
+            }
+            TempData["Error"] = result.Error;
+        }
+        return View(command);
+    }
+
+    // GET: Create Resource
+    public IActionResult CreateResource(int lessonId)
+    {
+        var command = new CreateResourceCommand(lessonId, string.Empty, string.Empty, Domain.Enums.ResourceType.Document, string.Empty, string.Empty, null, string.Empty, 0);
+        return View(command);
+    }
+
+    // POST: Create Resource
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreateResource(CreateResourceCommand command)
+    {
+        if (ModelState.IsValid)
+        {
+            var result = await _mediator.Send(command);
+            if (result.IsSuccess)
+            {
+                TempData["Success"] = "Resource created successfully.";
+                return RedirectToAction(nameof(Lessons), new { moduleId = command.LessonId });
+            }
+            TempData["Error"] = result.Error;
+        }
+        return View(command);
+    }
 }

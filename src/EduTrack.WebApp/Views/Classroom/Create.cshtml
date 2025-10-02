@@ -1,0 +1,256 @@
+@model EduTrack.Application.Features.Classroom.Commands.CreateClassCommand
+@{
+    ViewData["Title"] = "ایجاد کلاس جدید";
+}
+
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title mb-0">ایجاد کلاس جدید</h3>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Create" method="post" id="create-class-form">
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+                        
+                        <div class="mb-3">
+                            <label asp-for="CourseId" class="form-label">دوره *</label>
+                            <select asp-for="CourseId" asp-items="ViewBag.Courses" class="form-select">
+                                <option value="">انتخاب دوره</option>
+                            </select>
+                            <span asp-validation-for="CourseId" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Name" class="form-label">نام کلاس *</label>
+                            <input asp-for="Name" class="form-control" placeholder="نام کلاس را وارد کنید" />
+                            <span asp-validation-for="Name" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Description" class="form-label">توضیحات</label>
+                            <textarea asp-for="Description" class="form-control" rows="3" placeholder="توضیحات کلاس را وارد کنید"></textarea>
+                            <span asp-validation-for="Description" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="TeacherId" class="form-label">معلم *</label>
+                            <select asp-for="TeacherId" asp-items="ViewBag.Teachers" class="form-select">
+                                <option value="">انتخاب معلم</option>
+                            </select>
+                            <span asp-validation-for="TeacherId" class="text-danger"></span>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="PersianStartDate" class="form-label">تاریخ شروع (شمسی) *</label>
+                                    <input type="text" id="PersianStartDate" class="form-control persian-date" 
+                                           placeholder="مثال: 1403/01/15" maxlength="10" />
+                                    <input asp-for="StartDate" type="hidden" />
+                                    <span asp-validation-for="StartDate" class="text-danger"></span>
+                                    <small class="form-text text-muted">فرمت: سال/ماه/روز</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="PersianEndDate" class="form-label">تاریخ پایان (شمسی)</label>
+                                    <input type="text" id="PersianEndDate" class="form-control persian-date" 
+                                           placeholder="مثال: 1403/06/31" maxlength="10" />
+                                    <input asp-for="EndDate" type="hidden" />
+                                    <span asp-validation-for="EndDate" class="text-danger"></span>
+                                    <small class="form-text text-muted">فرمت: سال/ماه/روز</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a asp-action="Index" class="btn btn-secondary">بازگشت</a>
+                            <button type="submit" class="btn btn-primary" id="submit-btn">
+                                <i class="fas fa-save"></i> ایجاد کلاس
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script src="~/js/persian-date.js"></script>
+    <script src="~/js/form-validation.js"></script>
+    <script src="~/js/test-class-creation.js"></script>
+    
+    <script>
+        $(document).ready(function() {
+            // Initialize Persian date inputs
+            initializePersianDateInputs();
+            
+            // Initialize form validation
+            window.formValidator.initializeForm('#create-class-form');
+            
+            // Custom validation rules for Persian dates
+            setupPersianDateValidation();
+        });
+
+        function initializePersianDateInputs() {
+            const startDateInput = document.getElementById('PersianStartDate');
+            const endDateInput = document.getElementById('PersianEndDate');
+            const hiddenStartDate = document.querySelector('input[name="StartDate"]');
+            const hiddenEndDate = document.querySelector('input[name="EndDate"]');
+
+            // Format Persian date input
+            function formatPersianInput(input) {
+                let value = input.value.replace(/[^\d]/g, '');
+                if (value.length >= 4) {
+                    value = value.substring(0, 4) + '/' + value.substring(4);
+                }
+                if (value.length >= 7) {
+                    value = value.substring(0, 7) + '/' + value.substring(7, 9);
+                }
+                input.value = value;
+            }
+
+            // Convert Persian to Gregorian and update hidden field
+            function updateHiddenDate(persianInput, hiddenInput) {
+                const persianValue = persianInput.value;
+                if (persianValue && window.persianDate.parsePersian(persianValue)) {
+                    const gregorianDate = window.persianDate.persianStringToGregorianDate(persianValue);
+                    if (gregorianDate) {
+                        hiddenInput.value = gregorianDate.toISOString();
+                    }
+                } else {
+                    hiddenInput.value = '';
+                }
+            }
+
+            // Setup event listeners for start date
+            startDateInput.addEventListener('input', function() {
+                formatPersianInput(this);
+                updateHiddenDate(this, hiddenStartDate);
+            });
+
+            startDateInput.addEventListener('blur', function() {
+                updateHiddenDate(this, hiddenStartDate);
+            });
+
+            // Setup event listeners for end date
+            endDateInput.addEventListener('input', function() {
+                formatPersianInput(this);
+                updateHiddenDate(this, hiddenEndDate);
+            });
+
+            endDateInput.addEventListener('blur', function() {
+                updateHiddenDate(this, hiddenEndDate);
+            });
+
+            // Initialize with current values if any
+            if (hiddenStartDate.value) {
+                const startDate = new Date(hiddenStartDate.value);
+                startDateInput.value = window.persianDate.gregorianDateToPersianString(startDate);
+            }
+
+            if (hiddenEndDate.value) {
+                const endDate = new Date(hiddenEndDate.value);
+                endDateInput.value = window.persianDate.gregorianDateToPersianString(endDate);
+            }
+        }
+
+        function setupPersianDateValidation() {
+            // Override default validation for Persian date fields
+            const startDateInput = document.getElementById('PersianStartDate');
+            const endDateInput = document.getElementById('PersianEndDate');
+
+            // Add validation attributes
+            startDateInput.setAttribute('name', 'StartDate');
+            endDateInput.setAttribute('name', 'EndDate');
+
+            // Custom validation messages
+            const validationMessages = {
+                'StartDate': 'تاریخ شروع الزامی است و باید در آینده باشد',
+                'EndDate': 'تاریخ پایان باید بعد از تاریخ شروع باشد'
+            };
+
+            // Real-time validation feedback
+            function showValidationFeedback(input, isValid, message = '') {
+                const feedbackElement = input.parentElement.querySelector('.text-danger');
+                
+                if (isValid) {
+                    input.classList.remove('is-invalid');
+                    input.classList.add('is-valid');
+                    if (feedbackElement) {
+                        feedbackElement.textContent = '';
+                        feedbackElement.style.display = 'none';
+                    }
+                } else {
+                    input.classList.add('is-invalid');
+                    input.classList.remove('is-valid');
+                    if (feedbackElement) {
+                        feedbackElement.textContent = message;
+                        feedbackElement.style.display = 'block';
+                    }
+                }
+            }
+
+            // Validate start date
+            startDateInput.addEventListener('blur', function() {
+                const value = this.value.trim();
+                let isValid = true;
+                let message = '';
+
+                if (!value) {
+                    isValid = false;
+                    message = 'تاریخ شروع الزامی است';
+                } else if (!window.formValidator.isValidPersianDate(value)) {
+                    isValid = false;
+                    message = 'فرمت تاریخ صحیح نیست';
+                } else if (!window.formValidator.isFutureDate(value)) {
+                    isValid = false;
+                    message = 'تاریخ شروع باید در آینده باشد';
+                }
+
+                showValidationFeedback(this, isValid, message);
+            });
+
+            // Validate end date
+            endDateInput.addEventListener('blur', function() {
+                const value = this.value.trim();
+                const startValue = startDateInput.value.trim();
+                let isValid = true;
+                let message = '';
+
+                if (value) {
+                    if (!window.formValidator.isValidPersianDate(value)) {
+                        isValid = false;
+                        message = 'فرمت تاریخ صحیح نیست';
+                    } else if (startValue && window.formValidator.isValidPersianDate(startValue)) {
+                        if (!window.formValidator.validateDateRange(startDateInput, this)) {
+                            isValid = false;
+                            message = 'تاریخ پایان باید بعد از تاریخ شروع باشد';
+                        }
+                    }
+                }
+
+                showValidationFeedback(this, isValid, message);
+            });
+        }
+
+        // Form submission handling
+        document.getElementById('create-class-form').addEventListener('submit', function(e) {
+            const submitBtn = document.getElementById('submit-btn');
+            
+            // Disable submit button and show loading
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>در حال ایجاد...';
+            
+            // Re-enable button after 5 seconds (in case of error)
+            setTimeout(() => {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-save"></i> ایجاد کلاس';
+            }, 5000);
+        });
+    </script>
+}

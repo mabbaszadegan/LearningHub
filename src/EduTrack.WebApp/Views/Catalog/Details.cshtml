@@ -1,0 +1,114 @@
+@model EduTrack.Application.Common.Models.CourseDto
+@{
+    ViewData["Title"] = "جزئیات دوره";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title mb-0">@Model.Title</h3>
+                    <div class="btn-group">
+                        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">
+                            <i class="fas fa-edit"></i> ویرایش
+                        </a>
+                        <a asp-action="Modules" asp-route-courseId="@Model.Id" class="btn btn-primary">
+                            <i class="fas fa-layer-group"></i> ماژول‌ها
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    @if (!string.IsNullOrEmpty(Model.Description))
+                    {
+                        <div class="mb-4">
+                            <h5>توضیحات</h5>
+                            <p class="text-muted">@Model.Description</p>
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrEmpty(Model.Thumbnail))
+                    {
+                        <div class="mb-4">
+                            <h5>تصویر شاخص</h5>
+                            <img src="@Model.Thumbnail" alt="@Model.Title" class="img-fluid rounded" style="max-height: 200px;" />
+                        </div>
+                    }
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h4 class="text-primary">@Model.ModuleCount</h4>
+                                    <p class="mb-0">تعداد ماژول</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h4 class="text-success">@Model.LessonCount</h4>
+                                    <p class="mb-0">تعداد درس</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <h5>اطلاعات دوره</h5>
+                        <table class="table table-sm">
+                            <tr>
+                                <td><strong>وضعیت:</strong></td>
+                                <td>
+                                    @if (Model.IsActive)
+                                    {
+                                        <span class="badge bg-success">فعال</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">غیرفعال</span>
+                                    }
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>ترتیب نمایش:</strong></td>
+                                <td>@Model.Order</td>
+                            </tr>
+                            <tr>
+                                <td><strong>تاریخ ایجاد:</strong></td>
+                                <td>@Model.CreatedAt.ToString("yyyy/MM/dd HH:mm")</td>
+                            </tr>
+                            <tr>
+                                <td><strong>آخرین بروزرسانی:</strong></td>
+                                <td>@Model.UpdatedAt.ToString("yyyy/MM/dd HH:mm")</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">عملیات سریع</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a asp-action="CreateModule" asp-route-courseId="@Model.Id" class="btn btn-outline-primary">
+                            <i class="fas fa-plus"></i> افزودن ماژول
+                        </a>
+                        <a asp-controller="Classroom" asp-action="Create" asp-route-courseId="@Model.Id" class="btn btn-outline-success">
+                            <i class="fas fa-chalkboard-teacher"></i> ایجاد کلاس
+                        </a>
+                        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-warning">
+                            <i class="fas fa-edit"></i> ویرایش دوره
+                        </a>
+                        <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-outline-danger">
+                            <i class="fas fa-trash"></i> حذف دوره
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

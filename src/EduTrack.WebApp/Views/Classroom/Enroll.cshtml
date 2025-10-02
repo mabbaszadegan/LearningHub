@@ -1,0 +1,116 @@
+@model EduTrack.Application.Common.Models.ClassDto
+@{
+    ViewData["Title"] = "ثبت‌نام دانش‌آموز";
+}
+
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title mb-0">ثبت‌نام دانش‌آموز در کلاس: @Model.Name</h3>
+                    <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-secondary">
+                        <i class="fas fa-arrow-right"></i> بازگشت
+                    </a>
+                </div>
+                <div class="card-body">
+                    @if (TempData["Success"] != null)
+                    {
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            @TempData["Success"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+                    @if (TempData["Error"] != null)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            @TempData["Error"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0">اطلاعات کلاس</h5>
+                                </div>
+                                <div class="card-body">
+                                    <table class="table table-borderless">
+                                        <tr>
+                                            <td><strong>نام کلاس:</strong></td>
+                                            <td>@Model.Name</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>معلم:</strong></td>
+                                            <td>@Model.TeacherName</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>تعداد دانش‌آموز فعلی:</strong></td>
+                                            <td><span class="badge bg-info">@Model.StudentCount</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>تاریخ شروع:</strong></td>
+                                            <td>@Model.StartDate.ToString("yyyy/MM/dd")</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>وضعیت:</strong></td>
+                                            <td>
+                                                @if (Model.IsActive)
+                                                {
+                                                    <span class="badge bg-success">فعال</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-secondary">غیرفعال</span>
+                                                }
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0">ثبت‌نام دانش‌آموز جدید</h5>
+                                </div>
+                                <div class="card-body">
+                                    <form asp-action="EnrollStudent" method="post">
+                                        <input type="hidden" name="classId" value="@Model.Id" />
+                                        
+                                        <div class="mb-3">
+                                            <label for="studentId" class="form-label">شناسه دانش‌آموز *</label>
+                                            <input type="text" class="form-control" id="studentId" name="studentId" required 
+                                                   placeholder="شناسه دانش‌آموز را وارد کنید">
+                                            <div class="form-text">شناسه یکتای دانش‌آموز را وارد کنید</div>
+                                        </div>
+                                        
+                                        <div class="d-grid">
+                                            <button type="submit" class="btn btn-primary">
+                                                <i class="fas fa-user-plus"></i> ثبت‌نام دانش‌آموز
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    @if (!string.IsNullOrEmpty(Model.Description))
+                    {
+                        <div class="card mt-4">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">توضیحات کلاس</h5>
+                            </div>
+                            <div class="card-body">
+                                <p class="text-muted">@Model.Description</p>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

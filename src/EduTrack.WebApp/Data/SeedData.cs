@@ -67,7 +67,7 @@ public static class SeedData
     {
         var now = DateTimeOffset.UtcNow;
 
-        // Create teacher
+        // Create teachers
         var teacherEmail = "teacher@local";
         var teacher = await userManager.FindByEmailAsync(teacherEmail);
         if (teacher == null)
@@ -76,8 +76,8 @@ public static class SeedData
             {
                 UserName = teacherEmail,
                 Email = teacherEmail,
-                FirstName = "John",
-                LastName = "Teacher",
+                FirstName = "احمد",
+                LastName = "احمدی",
                 Role = UserRole.Teacher,
                 EmailConfirmed = true,
                 CreatedAt = now,
@@ -85,6 +85,45 @@ public static class SeedData
             };
             await userManager.CreateAsync(teacher, "Passw0rd!");
             await userManager.AddToRoleAsync(teacher, "Teacher");
+        }
+
+        // Create additional teachers
+        var teacher2Email = "teacher2@local";
+        var teacher2 = await userManager.FindByEmailAsync(teacher2Email);
+        if (teacher2 == null)
+        {
+            teacher2 = new User
+            {
+                UserName = teacher2Email,
+                Email = teacher2Email,
+                FirstName = "فاطمه",
+                LastName = "محمدی",
+                Role = UserRole.Teacher,
+                EmailConfirmed = true,
+                CreatedAt = now,
+                IsActive = true
+            };
+            await userManager.CreateAsync(teacher2, "Passw0rd!");
+            await userManager.AddToRoleAsync(teacher2, "Teacher");
+        }
+
+        var teacher3Email = "teacher3@local";
+        var teacher3 = await userManager.FindByEmailAsync(teacher3Email);
+        if (teacher3 == null)
+        {
+            teacher3 = new User
+            {
+                UserName = teacher3Email,
+                Email = teacher3Email,
+                FirstName = "علی",
+                LastName = "رضایی",
+                Role = UserRole.Teacher,
+                EmailConfirmed = true,
+                CreatedAt = now,
+                IsActive = true
+            };
+            await userManager.CreateAsync(teacher3, "Passw0rd!");
+            await userManager.AddToRoleAsync(teacher3, "Teacher");
         }
 
         // Create students

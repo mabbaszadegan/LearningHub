@@ -1,0 +1,92 @@
+@model EduTrack.Application.Features.Courses.Commands.CreateResourceCommand
+@{
+    ViewData["Title"] = "افزودن منبع جدید";
+}
+
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title mb-0">افزودن منبع جدید</h3>
+                </div>
+                <div class="card-body">
+                    <form asp-action="CreateResource" method="post" enctype="multipart/form-data">
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+                        
+                        <input asp-for="LessonId" type="hidden" />
+                        
+                        <div class="mb-3">
+                            <label asp-for="Title" class="form-label">عنوان منبع *</label>
+                            <input asp-for="Title" class="form-control" placeholder="عنوان منبع را وارد کنید" />
+                            <span asp-validation-for="Title" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Description" class="form-label">توضیحات</label>
+                            <textarea asp-for="Description" class="form-control" rows="3" placeholder="توضیحات منبع را وارد کنید"></textarea>
+                            <span asp-validation-for="Description" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Type" class="form-label">نوع منبع *</label>
+                            <select asp-for="Type" class="form-select">
+                                <option value="@EduTrack.Domain.Enums.ResourceType.Document">سند</option>
+                                <option value="@EduTrack.Domain.Enums.ResourceType.PDF">PDF</option>
+                                <option value="@EduTrack.Domain.Enums.ResourceType.Video">ویدیو</option>
+                                <option value="@EduTrack.Domain.Enums.ResourceType.Image">تصویر</option>
+                                <option value="@EduTrack.Domain.Enums.ResourceType.URL">لینک</option>
+                            </select>
+                            <span asp-validation-for="Type" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="file" class="form-label">فایل</label>
+                            <input type="file" id="file" name="file" class="form-control" accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif,.mp4,.avi,.mov" />
+                            <div class="form-text">حداکثر حجم فایل: 50 مگابایت</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Url" class="form-label">آدرس اینترنتی</label>
+                            <input asp-for="Url" class="form-control" placeholder="آدرس اینترنتی منبع (اختیاری)" />
+                            <span asp-validation-for="Url" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Order" class="form-label">ترتیب نمایش</label>
+                            <input asp-for="Order" type="number" class="form-control" min="0" value="0" />
+                            <span asp-validation-for="Order" class="text-danger"></span>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a asp-action="Lessons" asp-route-moduleId="@Model.LessonId" class="btn btn-secondary">بازگشت</a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> افزودن منبع
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    
+    <script>
+        document.getElementById('file').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                // Update title if empty
+                const titleInput = document.querySelector('input[name="Title"]');
+                if (!titleInput.value) {
+                    titleInput.value = file.name;
+                }
+                
+                // Update file path (this will be handled by the controller)
+                document.querySelector('input[name="FilePath"]').value = file.name;
+            }
+        });
+    </script>
+}

@@ -1,8 +1,10 @@
 using EduTrack.Application.Features.Classroom.Commands;
 using EduTrack.Application.Features.Classroom.Queries;
+using EduTrack.Application.Features.Users.Queries;
 using EduTrack.Application.Common.Models;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace EduTrack.WebApp.Controllers;
 
@@ -37,8 +39,9 @@ public class ClassroomController : Controller
     }
 
     // GET: Classes/Create
-    public IActionResult Create()
+    public async Task<IActionResult> Create()
     {
+        await LoadCreateViewData();
         return View();
     }
 
@@ -52,12 +55,41 @@ public class ClassroomController : Controller
             var result = await _mediator.Send(command);
             if (result.IsSuccess)
             {
-                TempData["Success"] = "Class created successfully.";
+                TempData["Success"] = "کلاس با موفقیت ایجاد شد.";
                 return RedirectToAction(nameof(Index));
             }
             TempData["Error"] = result.Error;
         }
+        await LoadCreateViewData();
         return View(command);
+    }
+
+    private async Task LoadCreateViewData()
+    {
+        try
+        {
+            // Load courses
+            var courses = await _mediator.Send(new EduTrack.Application.Features.Courses.Queries.GetCoursesQuery(1, 100, true));
+            ViewBag.Courses = new SelectList(courses.Items, "Id", "Title");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error loading courses for class creation");
+            ViewBag.Courses = new SelectList(new List<object>(), "Id", "Title");
+        }
+        
+        try
+        {
+            // Load teachers from database
+            var teachersQuery = new GetTeachersQuery();
+            var teachers = await _mediator.Send(teachersQuery);
+            ViewBag.Teachers = new SelectList(teachers, "Id", "FullName");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error loading teachers for class creation");
+            ViewBag.Teachers = new SelectList(new List<object>(), "Id", "FullName");
+        }
     }
 
     // GET: Classes/Enroll/5

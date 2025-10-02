@@ -43,3 +43,9 @@ public interface IFileStorageService
     Task DeleteFileAsync(string filePath, CancellationToken cancellationToken = default);
     Task<bool> FileExistsAsync(string filePath, CancellationToken cancellationToken = default);
 }
+
+public interface IUserService
+{
+    Task<User?> GetUserByIdAsync(string userId, CancellationToken cancellationToken = default);
+    Task<IEnumerable<User>> GetUsersByRoleAsync(UserRole role, CancellationToken cancellationToken = default);
+}

@@ -1,0 +1,136 @@
+@model List<EduTrack.Application.Common.Models.LessonDto>
+@{
+    ViewData["Title"] = "دروس ماژول";
+    var moduleId = ViewBag.ModuleId as int?;
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title mb-0">دروس ماژول</h3>
+                    <a asp-action="CreateLesson" asp-route-moduleId="@moduleId" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> درس جدید
+                    </a>
+                </div>
+                <div class="card-body">
+                    @if (TempData["Success"] != null)
+                    {
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            @TempData["Success"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+                    @if (TempData["Error"] != null)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            @TempData["Error"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+
+                    @if (Model.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>عنوان درس</th>
+                                        <th>مدت زمان</th>
+                                        <th>تعداد منابع</th>
+                                        <th>وضعیت</th>
+                                        <th>ترتیب</th>
+                                        <th>عملیات</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var lesson in Model)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <strong>@lesson.Title</strong>
+                                                @if (!string.IsNullOrEmpty(lesson.Content))
+                                                {
+                                                    <br><small class="text-muted">@(lesson.Content.Length > 100 ? lesson.Content.Substring(0, 100) + "..." : lesson.Content)</small>
+                                                }
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-info">@lesson.DurationMinutes دقیقه</span>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-success">@lesson.Resources.Count</span>
+                                            </td>
+                                            <td>
+                                                @if (lesson.IsActive)
+                                                {
+                                                    <span class="badge bg-success">فعال</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-secondary">غیرفعال</span>
+                                                }
+                                            </td>
+                                            <td>@lesson.Order</td>
+                                            <td>
+                                                <div class="btn-group" role="group">
+                                                    <a asp-action="CreateResource" asp-route-lessonId="@lesson.Id" class="btn btn-sm btn-outline-primary" title="افزودن منبع">
+                                                        <i class="fas fa-paperclip"></i>
+                                                    </a>
+                                                    <button type="button" class="btn btn-sm btn-outline-info" title="مشاهده منابع" onclick="showResources(@lesson.Id)">
+                                                        <i class="fas fa-eye"></i>
+                                                    </button>
+                                                    <button type="button" class="btn btn-sm btn-outline-warning" title="ویرایش">
+                                                        <i class="fas fa-edit"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-5">
+                            <i class="fas fa-book fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">هیچ درسی یافت نشد</h5>
+                            <p class="text-muted">اولین درس را برای این ماژول ایجاد کنید</p>
+                            <a asp-action="CreateLesson" asp-route-moduleId="@moduleId" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> ایجاد درس
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Resources Modal -->
+<div class="modal fade" id="resourcesModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">منابع درس</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="resourcesContent">
+                <!-- Resources will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function showResources(lessonId) {
+            // This would typically load resources via AJAX
+            // For now, we'll show a placeholder
+            document.getElementById('resourcesContent').innerHTML = '<p>در حال بارگذاری منابع...</p>';
+            var modal = new bootstrap.Modal(document.getElementById('resourcesModal'));
+            modal.show();
+        }
+    </script>
+}

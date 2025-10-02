@@ -49,6 +49,8 @@ public static class DependencyInjection
         services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<IFileStorageService, FileStorageService>();
+        services.AddScoped<IUserService, UserService>();
+        services.AddScoped<IClock, SystemClock>();
 
         return services;
     }
