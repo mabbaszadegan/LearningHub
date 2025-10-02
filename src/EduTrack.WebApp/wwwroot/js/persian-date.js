@@ -11,21 +11,23 @@ class PersianDate {
         ];
     }
 
-    // Convert Gregorian to Persian
+    // Convert Gregorian to Persian - Improved Algorithm
     gregorianToPersian(gYear, gMonth, gDay) {
         const g_d_m = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
         
+        let jy, jm, jd;
+        
         if (gMonth > 2) {
-            const gy2 = (gYear + 1);
-            const days = 365 * gYear + Math.floor((gy2 + 3) / 4) - Math.floor((gy2 + 99) / 100) + Math.floor((gy2 + 399) / 400) - 80 + gDay + g_d_m[gMonth - 1];
-            const jy = -1029 + 33 * Math.floor(days / 12053);
-            let jm, jd;
+            const gy2 = gYear + 1;
+            const days = 365 * gYear + Math.floor((gy2 + 3) / 4) - Math.floor((gy2 + 99) / 100) + 
+                        Math.floor((gy2 + 399) / 400) - 80 + gDay + g_d_m[gMonth - 1];
+            jy = -1029 + 33 * Math.floor(days / 12053);
             const days2 = days % 12053;
-            const jy2 = jy + 4 * Math.floor(days2 / 1461);
+            jy += 4 * Math.floor(days2 / 1461);
             const days3 = days2 % 1461;
             
             if (days3 > 365) {
-                const jy3 = jy2 + Math.floor((days3 - 1) / 365);
+                jy += Math.floor((days3 - 1) / 365);
                 const days4 = (days3 - 1) % 365;
                 
                 if (days4 < 186) {
@@ -35,7 +37,6 @@ class PersianDate {
                     jm = 7 + Math.floor((days4 - 186) / 30);
                     jd = 1 + ((days4 - 186) % 30);
                 }
-                return [jy3, jm, jd];
             } else {
                 if (days3 < 186) {
                     jm = 1 + Math.floor(days3 / 31);
@@ -44,19 +45,18 @@ class PersianDate {
                     jm = 7 + Math.floor((days3 - 186) / 30);
                     jd = 1 + ((days3 - 186) % 30);
                 }
-                return [jy2, jm, jd];
             }
         } else {
             const gy2 = gYear;
-            const days = 365 * gYear + Math.floor((gy2 + 3) / 4) - Math.floor((gy2 + 99) / 100) + Math.floor((gy2 + 399) / 400) - 80 + gDay + g_d_m[gMonth - 1];
-            const jy = -1029 + 33 * Math.floor(days / 12053);
-            let jm, jd;
+            const days = 365 * gYear + Math.floor((gy2 + 3) / 4) - Math.floor((gy2 + 99) / 100) + 
+                        Math.floor((gy2 + 399) / 400) - 80 + gDay + g_d_m[gMonth - 1];
+            jy = -1029 + 33 * Math.floor(days / 12053);
             const days2 = days % 12053;
-            const jy2 = jy + 4 * Math.floor(days2 / 1461);
+            jy += 4 * Math.floor(days2 / 1461);
             const days3 = days2 % 1461;
             
             if (days3 >= 366) {
-                const jy3 = jy2 + Math.floor((days3 - 1) / 365);
+                jy += Math.floor((days3 - 1) / 365);
                 const days4 = (days3 - 1) % 365;
                 
                 if (days4 < 186) {
@@ -66,7 +66,6 @@ class PersianDate {
                     jm = 7 + Math.floor((days4 - 186) / 30);
                     jd = 1 + ((days4 - 186) % 30);
                 }
-                return [jy3, jm, jd];
             } else {
                 if (days3 < 186) {
                     jm = 1 + Math.floor(days3 / 31);
@@ -75,9 +74,10 @@ class PersianDate {
                     jm = 7 + Math.floor((days3 - 186) / 30);
                     jd = 1 + ((days3 - 186) % 30);
                 }
-                return [jy2, jm, jd];
             }
         }
+        
+        return [jy, jm, jd];
     }
 
     // Convert Persian to Gregorian

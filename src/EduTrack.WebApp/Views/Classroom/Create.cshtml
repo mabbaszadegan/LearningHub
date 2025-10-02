@@ -34,33 +34,45 @@
                             <span asp-validation-for="Description" class="text-danger"></span>
                         </div>
 
-                        <div class="mb-3">
-                            <label asp-for="TeacherId" class="form-label">معلم *</label>
-                            <select asp-for="TeacherId" asp-items="ViewBag.Teachers" class="form-select">
-                                <option value="">انتخاب معلم</option>
-                            </select>
-                            <span asp-validation-for="TeacherId" class="text-danger"></span>
-                        </div>
+                        @if (ViewBag.ShowTeacherSelection == true)
+                        {
+                            <div class="mb-3">
+                                <label asp-for="TeacherId" class="form-label">معلم *</label>
+                                <select asp-for="TeacherId" asp-items="ViewBag.Teachers" class="form-select">
+                                    <option value="">انتخاب معلم</option>
+                                </select>
+                                <span asp-validation-for="TeacherId" class="text-danger"></span>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="mb-3">
+                                <label class="form-label">معلم</label>
+                                <div class="form-control-plaintext bg-light p-2 rounded">
+                                    <i class="fas fa-user-tie me-2"></i>
+                                    @ViewBag.CurrentTeacherName
+                                </div>
+                                <input asp-for="TeacherId" type="hidden" />
+                            </div>
+                        }
 
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label for="PersianStartDate" class="form-label">تاریخ شروع (شمسی) *</label>
-                                    <input type="text" id="PersianStartDate" class="form-control persian-date" 
-                                           placeholder="مثال: 1403/01/15" maxlength="10" />
+                                    <input type="text" id="PersianStartDate" class="form-control persian-datepicker" 
+                                           placeholder="انتخاب تاریخ شروع" />
                                     <input asp-for="StartDate" type="hidden" />
                                     <span asp-validation-for="StartDate" class="text-danger"></span>
-                                    <small class="form-text text-muted">فرمت: سال/ماه/روز</small>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label for="PersianEndDate" class="form-label">تاریخ پایان (شمسی)</label>
-                                    <input type="text" id="PersianEndDate" class="form-control persian-date" 
-                                           placeholder="مثال: 1403/06/31" maxlength="10" />
+                                    <input type="text" id="PersianEndDate" class="form-control persian-datepicker" 
+                                           placeholder="انتخاب تاریخ پایان" />
                                     <input asp-for="EndDate" type="hidden" />
                                     <span asp-validation-for="EndDate" class="text-danger"></span>
-                                    <small class="form-text text-muted">فرمت: سال/ماه/روز</small>
                                 </div>
                             </div>
                         </div>
@@ -80,167 +92,156 @@
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
-    <script src="~/js/persian-date.js"></script>
+    <script src="~/js/persian-date-working.js"></script>
+    <script src="~/js/persian-datepicker.js"></script>
     <script src="~/js/form-validation.js"></script>
-    <script src="~/js/test-class-creation.js"></script>
     
     <script>
         $(document).ready(function() {
-            // Initialize Persian date inputs
-            initializePersianDateInputs();
+            // Test Persian date conversion
+            console.log('Testing Persian date conversion...');
+            const testToday = window.persianDate.getTodayPersian();
+            console.log('Today Persian:', testToday);
+            
+            // Test with a known date: 2024/10/2 should be around 1403/07/11
+            const testGregorianDate = new Date(2024, 9, 2); // October 2, 2024
+            const testPersianFromGregorian = window.persianDate.gregorianDateToPersianString(testGregorianDate);
+            console.log('2024/10/2 in Persian:', testPersianFromGregorian);
+            
+            const testTodayString = window.persianDate.formatPersian(testToday.year, testToday.month, testToday.day);
+            console.log('Today Persian String:', testTodayString);
+            const testGregorian = window.persianDate.persianStringToGregorianDate(testTodayString);
+            console.log('Converted back to Gregorian:', testGregorian);
+            
+            // Test specific Persian date: 1403/07/15
+            const testPersianString = '1403/07/15';
+            const testConvertedGregorian = window.persianDate.persianStringToGregorianDate(testPersianString);
+            console.log('1403/07/15 in Gregorian:', testConvertedGregorian);
+            
+            // Initialize Persian DatePickers
+            initializePersianDatePickers();
             
             // Initialize form validation
             window.formValidator.initializeForm('#create-class-form');
-            
-            // Custom validation rules for Persian dates
-            setupPersianDateValidation();
         });
 
-        function initializePersianDateInputs() {
+        function initializePersianDatePickers() {
             const startDateInput = document.getElementById('PersianStartDate');
             const endDateInput = document.getElementById('PersianEndDate');
             const hiddenStartDate = document.querySelector('input[name="StartDate"]');
             const hiddenEndDate = document.querySelector('input[name="EndDate"]');
 
-            // Format Persian date input
-            function formatPersianInput(input) {
-                let value = input.value.replace(/[^\d]/g, '');
-                if (value.length >= 4) {
-                    value = value.substring(0, 4) + '/' + value.substring(4);
-                }
-                if (value.length >= 7) {
-                    value = value.substring(0, 7) + '/' + value.substring(7, 9);
-                }
-                input.value = value;
-            }
+            // Get today's Persian date for minimum date
+            const today = window.persianDate.getTodayPersian();
+            const todayString = window.persianDate.formatPersian(today.year, today.month, today.day);
 
-            // Convert Persian to Gregorian and update hidden field
-            function updateHiddenDate(persianInput, hiddenInput) {
-                const persianValue = persianInput.value;
-                if (persianValue && window.persianDate.parsePersian(persianValue)) {
-                    const gregorianDate = window.persianDate.persianStringToGregorianDate(persianValue);
+            // Initialize start date picker
+            const startDatePicker = new PersianDatePicker(startDateInput, {
+                placeholder: 'انتخاب تاریخ شروع',
+                minDate: todayString,
+                onSelect: function(date, dateString) {
+                    // Update hidden field with Gregorian date in correct format
+                    const gregorianDate = window.persianDate.persianStringToGregorianDate(dateString);
                     if (gregorianDate) {
-                        hiddenInput.value = gregorianDate.toISOString();
+                        // Format as MM/dd/yyyy for ASP.NET Core model binding
+                        const year = gregorianDate.getFullYear();
+                        const month = (gregorianDate.getMonth() + 1).toString().padStart(2, '0');
+                        const day = gregorianDate.getDate().toString().padStart(2, '0');
+                        hiddenStartDate.value = `${month}/${day}/${year}`;
+                        
+                        console.log('Start date set to:', hiddenStartDate.value);
+                        console.log('Gregorian date object:', gregorianDate);
                     }
-                } else {
-                    hiddenInput.value = '';
+                    
+                    // Update end date picker minimum date
+                    endDatePicker.options.minDate = dateString;
+                    
+                    // Clear end date if it's before start date
+                    if (endDateInput.value && endDateInput.value < dateString) {
+                        endDatePicker.clearDate();
+                    }
                 }
-            }
-
-            // Setup event listeners for start date
-            startDateInput.addEventListener('input', function() {
-                formatPersianInput(this);
-                updateHiddenDate(this, hiddenStartDate);
             });
 
-            startDateInput.addEventListener('blur', function() {
-                updateHiddenDate(this, hiddenStartDate);
-            });
-
-            // Setup event listeners for end date
-            endDateInput.addEventListener('input', function() {
-                formatPersianInput(this);
-                updateHiddenDate(this, hiddenEndDate);
-            });
-
-            endDateInput.addEventListener('blur', function() {
-                updateHiddenDate(this, hiddenEndDate);
+            // Initialize end date picker
+            const endDatePicker = new PersianDatePicker(endDateInput, {
+                placeholder: 'انتخاب تاریخ پایان',
+                minDate: todayString,
+                onSelect: function(date, dateString) {
+                    // Update hidden field with Gregorian date in correct format
+                    const gregorianDate = window.persianDate.persianStringToGregorianDate(dateString);
+                    if (gregorianDate) {
+                        // Format as MM/dd/yyyy for ASP.NET Core model binding
+                        const year = gregorianDate.getFullYear();
+                        const month = (gregorianDate.getMonth() + 1).toString().padStart(2, '0');
+                        const day = gregorianDate.getDate().toString().padStart(2, '0');
+                        hiddenEndDate.value = `${month}/${day}/${year}`;
+                        
+                        console.log('End date set to:', hiddenEndDate.value);
+                        console.log('Gregorian date object:', gregorianDate);
+                    }
+                }
             });
 
             // Initialize with current values if any
             if (hiddenStartDate.value) {
                 const startDate = new Date(hiddenStartDate.value);
-                startDateInput.value = window.persianDate.gregorianDateToPersianString(startDate);
+                const persianStartDate = window.persianDate.gregorianDateToPersianString(startDate);
+                startDatePicker.setDate(persianStartDate);
             }
 
             if (hiddenEndDate.value) {
                 const endDate = new Date(hiddenEndDate.value);
-                endDateInput.value = window.persianDate.gregorianDateToPersianString(endDate);
+                const persianEndDate = window.persianDate.gregorianDateToPersianString(endDate);
+                endDatePicker.setDate(persianEndDate);
             }
         }
 
-        function setupPersianDateValidation() {
-            // Override default validation for Persian date fields
-            const startDateInput = document.getElementById('PersianStartDate');
-            const endDateInput = document.getElementById('PersianEndDate');
-
-            // Add validation attributes
-            startDateInput.setAttribute('name', 'StartDate');
-            endDateInput.setAttribute('name', 'EndDate');
-
-            // Custom validation messages
-            const validationMessages = {
-                'StartDate': 'تاریخ شروع الزامی است و باید در آینده باشد',
-                'EndDate': 'تاریخ پایان باید بعد از تاریخ شروع باشد'
-            };
-
-            // Real-time validation feedback
-            function showValidationFeedback(input, isValid, message = '') {
-                const feedbackElement = input.parentElement.querySelector('.text-danger');
-                
-                if (isValid) {
-                    input.classList.remove('is-invalid');
-                    input.classList.add('is-valid');
-                    if (feedbackElement) {
-                        feedbackElement.textContent = '';
-                        feedbackElement.style.display = 'none';
-                    }
-                } else {
-                    input.classList.add('is-invalid');
-                    input.classList.remove('is-valid');
-                    if (feedbackElement) {
-                        feedbackElement.textContent = message;
-                        feedbackElement.style.display = 'block';
-                    }
-                }
-            }
-
-            // Validate start date
-            startDateInput.addEventListener('blur', function() {
-                const value = this.value.trim();
-                let isValid = true;
-                let message = '';
-
-                if (!value) {
-                    isValid = false;
-                    message = 'تاریخ شروع الزامی است';
-                } else if (!window.formValidator.isValidPersianDate(value)) {
-                    isValid = false;
-                    message = 'فرمت تاریخ صحیح نیست';
-                } else if (!window.formValidator.isFutureDate(value)) {
-                    isValid = false;
-                    message = 'تاریخ شروع باید در آینده باشد';
-                }
-
-                showValidationFeedback(this, isValid, message);
-            });
-
-            // Validate end date
-            endDateInput.addEventListener('blur', function() {
-                const value = this.value.trim();
-                const startValue = startDateInput.value.trim();
-                let isValid = true;
-                let message = '';
-
-                if (value) {
-                    if (!window.formValidator.isValidPersianDate(value)) {
-                        isValid = false;
-                        message = 'فرمت تاریخ صحیح نیست';
-                    } else if (startValue && window.formValidator.isValidPersianDate(startValue)) {
-                        if (!window.formValidator.validateDateRange(startDateInput, this)) {
-                            isValid = false;
-                            message = 'تاریخ پایان باید بعد از تاریخ شروع باشد';
-                        }
-                    }
-                }
-
-                showValidationFeedback(this, isValid, message);
-            });
-        }
 
         // Form submission handling
         document.getElementById('create-class-form').addEventListener('submit', function(e) {
+            debugger
             const submitBtn = document.getElementById('submit-btn');
+            const hiddenStartDate = document.querySelector('input[name="StartDate"]');
+            const hiddenEndDate = document.querySelector('input[name="EndDate"]');
+            
+            // Validate dates before submission
+            if (!hiddenStartDate.value || !hiddenEndDate.value) {
+                e.preventDefault();
+                alert('لطفاً تاریخ شروع و پایان را انتخاب کنید.');
+                return;
+            }
+            
+            // Validate date format - try different parsing methods
+            let startDate, endDate;
+            
+            try {
+                startDate = new Date(hiddenStartDate.value);
+                endDate = new Date(hiddenEndDate.value);
+                
+                // Additional validation for MM/dd/yyyy format
+                if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+                    throw new Error('Invalid date format');
+                }
+            } catch (error) {
+                e.preventDefault();
+                alert('فرمت تاریخ صحیح نیست. لطفاً دوباره انتخاب کنید.');
+                console.error('Date parsing error:', error);
+                console.log('Start date value:', hiddenStartDate.value);
+                console.log('End date value:', hiddenEndDate.value);
+                return;
+            }
+            
+            if (startDate >= endDate) {
+                e.preventDefault();
+                alert('تاریخ پایان باید بعد از تاریخ شروع باشد.');
+                return;
+            }
+            
+            console.log('Submitting with dates:', {
+                startDate: hiddenStartDate.value,
+                endDate: hiddenEndDate.value
+            });
             
             // Disable submit button and show loading
             submitBtn.disabled = true;

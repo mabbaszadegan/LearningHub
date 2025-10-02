@@ -2,9 +2,12 @@ using EduTrack.Application.Features.Classroom.Commands;
 using EduTrack.Application.Features.Classroom.Queries;
 using EduTrack.Application.Features.Users.Queries;
 using EduTrack.Application.Common.Models;
+using EduTrack.Application.Common.Interfaces;
+using EduTrack.Domain.Enums;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Authorization;
 
 namespace EduTrack.WebApp.Controllers;
 
@@ -12,11 +15,13 @@ public class ClassroomController : Controller
 {
     private readonly IMediator _mediator;
     private readonly ILogger<ClassroomController> _logger;
+    private readonly ICurrentUserService _currentUserService;
 
-    public ClassroomController(IMediator mediator, ILogger<ClassroomController> logger)
+    public ClassroomController(IMediator mediator, ILogger<ClassroomController> logger, ICurrentUserService currentUserService)
     {
         _mediator = mediator;
         _logger = logger;
+        _currentUserService = currentUserService;
     }
 
     // GET: Classes
@@ -39,6 +44,7 @@ public class ClassroomController : Controller
     }
 
     // GET: Classes/Create
+    [Authorize(Roles = "Admin,Teacher")]
     public async Task<IActionResult> Create()
     {
         await LoadCreateViewData();
@@ -48,8 +54,15 @@ public class ClassroomController : Controller
     // POST: Classes/Create
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = "Admin,Teacher")]
     public async Task<IActionResult> Create(CreateClassCommand command)
     {
+        // If user is a teacher, automatically set them as the teacher
+        if (_currentUserService.Role == UserRole.Teacher)
+        {
+            command = command with { TeacherId = _currentUserService.UserId! };
+        }
+
         if (ModelState.IsValid)
         {
             var result = await _mediator.Send(command);
@@ -80,15 +93,34 @@ public class ClassroomController : Controller
         
         try
         {
-            // Load teachers from database
-            var teachersQuery = new GetTeachersQuery();
-            var teachers = await _mediator.Send(teachersQuery);
-            ViewBag.Teachers = new SelectList(teachers, "Id", "FullName");
+            // Load teachers based on user role
+            if (_currentUserService.Role == UserRole.Admin)
+            {
+                // Admin can select any teacher
+                var teachersQuery = new GetTeachersQuery();
+                var teachers = await _mediator.Send(teachersQuery);
+                ViewBag.Teachers = new SelectList(teachers, "Id", "FullName");
+                ViewBag.ShowTeacherSelection = true;
+            }
+            else if (_currentUserService.Role == UserRole.Teacher)
+            {
+                // Teacher is automatically selected, no need to show dropdown
+                ViewBag.Teachers = new SelectList(new List<object>(), "Id", "FullName");
+                ViewBag.ShowTeacherSelection = false;
+                ViewBag.CurrentTeacherName = _currentUserService.UserName;
+            }
+            else
+            {
+                // Students shouldn't access this, but just in case
+                ViewBag.Teachers = new SelectList(new List<object>(), "Id", "FullName");
+                ViewBag.ShowTeacherSelection = false;
+            }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error loading teachers for class creation");
             ViewBag.Teachers = new SelectList(new List<object>(), "Id", "FullName");
+            ViewBag.ShowTeacherSelection = false;
         }
     }
 

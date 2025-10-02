@@ -51,6 +51,7 @@ public static class DependencyInjection
         services.AddScoped<IFileStorageService, FileStorageService>();
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IClock, SystemClock>();
+        services.AddScoped<ICurrentUserService, CurrentUserService>();
 
         return services;
     }

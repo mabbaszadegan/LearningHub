@@ -1,8 +1,11 @@
 using EduTrack.Application.Features.Courses.Commands;
 using EduTrack.Application.Features.Courses.Queries;
 using EduTrack.Application.Common.Models;
+using EduTrack.Application.Common.Interfaces;
+using EduTrack.Domain.Enums;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace EduTrack.WebApp.Controllers;
 
@@ -10,11 +13,13 @@ public class CatalogController : Controller
 {
     private readonly IMediator _mediator;
     private readonly ILogger<CatalogController> _logger;
+    private readonly ICurrentUserService _currentUserService;
 
-    public CatalogController(IMediator mediator, ILogger<CatalogController> logger)
+    public CatalogController(IMediator mediator, ILogger<CatalogController> logger, ICurrentUserService currentUserService)
     {
         _mediator = mediator;
         _logger = logger;
+        _currentUserService = currentUserService;
     }
 
     // GET: Courses
@@ -37,6 +42,7 @@ public class CatalogController : Controller
     }
 
     // GET: Courses/Create
+    [Authorize(Roles = "Admin,Teacher")]
     public IActionResult Create()
     {
         return View();
@@ -45,6 +51,7 @@ public class CatalogController : Controller
     // POST: Courses/Create
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = "Admin,Teacher")]
     public async Task<IActionResult> Create(CreateCourseCommand command)
     {
         if (ModelState.IsValid)
@@ -61,6 +68,7 @@ public class CatalogController : Controller
     }
 
     // GET: Courses/Edit/5
+    [Authorize(Roles = "Admin,Teacher")]
     public async Task<IActionResult> Edit(int id)
     {
         var result = await _mediator.Send(new GetCourseByIdQuery(id));
@@ -84,6 +92,7 @@ public class CatalogController : Controller
     // POST: Courses/Edit/5
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = "Admin,Teacher")]
     public async Task<IActionResult> Edit(UpdateCourseCommand command)
     {
         if (ModelState.IsValid)
@@ -100,6 +109,7 @@ public class CatalogController : Controller
     }
 
     // GET: Courses/Delete/5
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Delete(int id)
     {
         var result = await _mediator.Send(new GetCourseByIdQuery(id));
@@ -114,6 +124,7 @@ public class CatalogController : Controller
     // POST: Courses/Delete/5
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
         var result = await _mediator.Send(new DeleteCourseCommand(id));
@@ -153,6 +164,7 @@ public class CatalogController : Controller
     }
 
     // GET: Create Module
+    [Authorize(Roles = "Admin,Teacher")]
     public IActionResult CreateModule(int courseId)
     {
         var command = new CreateModuleCommand(courseId, string.Empty, string.Empty, 0);
@@ -162,6 +174,7 @@ public class CatalogController : Controller
     // POST: Create Module
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = "Admin,Teacher")]
     public async Task<IActionResult> CreateModule(CreateModuleCommand command)
     {
         if (ModelState.IsValid)
@@ -178,6 +191,7 @@ public class CatalogController : Controller
     }
 
     // GET: Create Lesson
+    [Authorize(Roles = "Admin,Teacher")]
     public IActionResult CreateLesson(int moduleId)
     {
         var command = new CreateLessonCommand(moduleId, string.Empty, string.Empty, string.Empty, 0, 0);
@@ -187,6 +201,7 @@ public class CatalogController : Controller
     // POST: Create Lesson
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = "Admin,Teacher")]
     public async Task<IActionResult> CreateLesson(CreateLessonCommand command)
     {
         if (ModelState.IsValid)
@@ -203,6 +218,7 @@ public class CatalogController : Controller
     }
 
     // GET: Create Resource
+    [Authorize(Roles = "Admin,Teacher")]
     public IActionResult CreateResource(int lessonId)
     {
         var command = new CreateResourceCommand(lessonId, string.Empty, string.Empty, Domain.Enums.ResourceType.Document, string.Empty, string.Empty, null, string.Empty, 0);
@@ -212,6 +228,7 @@ public class CatalogController : Controller
     // POST: Create Resource
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = "Admin,Teacher")]
     public async Task<IActionResult> CreateResource(CreateResourceCommand command)
     {
         if (ModelState.IsValid)
