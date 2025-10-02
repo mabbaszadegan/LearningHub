@@ -1,0 +1,589 @@
+@model EduTrack.Application.Common.Models.DashboardViewModel
+@{
+    ViewData["Title"] = "داشبورد معلم";
+}
+
+<!-- Teacher Welcome Header -->
+<div class="dashboard-header bg-gradient-success text-white py-4 mb-4">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <div class="d-flex align-items-center">
+                    <div class="dashboard-avatar me-3">
+                        <i class="fas fa-chalkboard-teacher"></i>
+                    </div>
+                    <div>
+                        <h1 class="h3 mb-1">خوش آمدید، استاد محترم!</h1>
+                        <p class="mb-0 opacity-75">آماده آموزش و هدایت دانش‌آموزان هستید؟</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 text-end">
+                <div class="dashboard-time">
+                    <div class="time-display" id="currentTime"></div>
+                    <div class="date-display" id="currentDate"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Teacher Stats -->
+    <div class="row mb-5">
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="stats-card teacher-stats">
+                <div class="stats-card-header">
+                    <div class="dashboard-card-icon success">
+                        <i class="fas fa-book"></i>
+                    </div>
+                    <div class="stats-trend positive">
+                        <i class="fas fa-arrow-up"></i>
+                        <span>+@Model.TotalCourses</span>
+                    </div>
+                </div>
+                <div class="stats-content">
+                    <div class="stats-number">@Model.TotalCourses</div>
+                    <div class="stats-label">دوره فعال</div>
+                    <div class="stats-description">دوره‌های تدریس</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="stats-card teacher-stats">
+                <div class="stats-card-header">
+                    <div class="dashboard-card-icon primary">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stats-trend positive">
+                        <i class="fas fa-arrow-up"></i>
+                        <span>+25</span>
+                    </div>
+                </div>
+                <div class="stats-content">
+                    <div class="stats-number">125</div>
+                    <div class="stats-label">دانش‌آموز</div>
+                    <div class="stats-description">تحت تدریس</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="stats-card teacher-stats">
+                <div class="stats-card-header">
+                    <div class="dashboard-card-icon warning">
+                        <i class="fas fa-clipboard-list"></i>
+                    </div>
+                    <div class="stats-trend positive">
+                        <i class="fas fa-arrow-up"></i>
+                        <span>+@Model.RecentExams.TotalCount</span>
+                    </div>
+                </div>
+                <div class="stats-content">
+                    <div class="stats-number">@Model.RecentExams.TotalCount</div>
+                    <div class="stats-label">آزمون فعال</div>
+                    <div class="stats-description">آزمون‌های ایجاد شده</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="stats-card teacher-stats">
+                <div class="stats-card-header">
+                    <div class="dashboard-card-icon info">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="stats-trend positive">
+                        <i class="fas fa-arrow-up"></i>
+                        <span>85%</span>
+                    </div>
+                </div>
+                <div class="stats-content">
+                    <div class="stats-number">85%</div>
+                    <div class="stats-label">میانگین نمرات</div>
+                    <div class="stats-description">عملکرد کلاس</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Dashboard Content -->
+    <div class="row">
+        <!-- Left Column - Main Content -->
+        <div class="col-lg-8">
+            <!-- Teacher Quick Actions -->
+            <div class="dashboard-panel mb-4">
+                <div class="panel-header">
+                    <h3 class="panel-title">
+                        <i class="fas fa-tools me-2"></i>ابزارهای تدریس
+                    </h3>
+                </div>
+                <div class="panel-body">
+                    <div class="row g-3">
+                        <div class="col-md-3 col-sm-6">
+                            <a asp-controller="Catalog" asp-action="Create" class="quick-action-card teacher-action">
+                                <div class="quick-action-icon success">
+                                    <i class="fas fa-plus"></i>
+                                </div>
+                                <div class="quick-action-text">ایجاد دوره</div>
+                            </a>
+                        </div>
+                        <div class="col-md-3 col-sm-6">
+                            <a asp-controller="Exam" asp-action="Create" class="quick-action-card teacher-action">
+                                <div class="quick-action-icon primary">
+                                    <i class="fas fa-clipboard-list"></i>
+                                </div>
+                                <div class="quick-action-text">ساخت آزمون</div>
+                            </a>
+                        </div>
+                        <div class="col-md-3 col-sm-6">
+                            <a asp-controller="Classroom" asp-action="Create" class="quick-action-card teacher-action">
+                                <div class="quick-action-icon warning">
+                                    <i class="fas fa-users"></i>
+                                </div>
+                                <div class="quick-action-text">ایجاد کلاس</div>
+                            </a>
+                        </div>
+                        <div class="col-md-3 col-sm-6">
+                            <a asp-controller="Progress" asp-action="Index" class="quick-action-card teacher-action">
+                                <div class="quick-action-icon info">
+                                    <i class="fas fa-chart-bar"></i>
+                                </div>
+                                <div class="quick-action-text">گزارش‌گیری</div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- My Courses -->
+            <div class="dashboard-panel mb-4">
+                <div class="panel-header">
+                    <h3 class="panel-title">
+                        <i class="fas fa-chalkboard me-2"></i>دوره‌های من
+                    </h3>
+                    <a asp-controller="Catalog" asp-action="Index" class="btn btn-outline-success btn-sm">
+                        <i class="fas fa-eye me-1"></i>مدیریت همه
+                    </a>
+                </div>
+                <div class="panel-body">
+                    @if (Model.Courses.Items.Any())
+                    {
+                        <div class="row g-3">
+                            @foreach (var course in Model.Courses.Items.Take(4))
+                            {
+                                <div class="col-md-6">
+                                    <div class="course-card teacher-course">
+                                        <div class="course-card-header">
+                                            <div class="course-card-image">
+                                                <i class="fas fa-chalkboard"></i>
+                                            </div>
+                                            <div class="course-status-badge">
+                                                <span class="badge badge-success">فعال</span>
+                                            </div>
+                                        </div>
+                                        <div class="course-card-content">
+                                            <h4 class="course-title">@course.Title</h4>
+                                            <p class="course-description">@course.Description</p>
+                                            <div class="course-progress">
+                                                <div class="progress">
+                                                    <div class="progress-bar bg-success" style="width: 75%"></div>
+                                                </div>
+                                                <small class="text-muted">75% دانش‌آموزان تکمیل کرده‌اند</small>
+                                            </div>
+                                            <div class="course-stats">
+                                                <div class="course-stat">
+                                                    <div class="course-stat-number">@course.ModuleCount</div>
+                                                    <div class="course-stat-label">ماژول</div>
+                                                </div>
+                                                <div class="course-stat">
+                                                    <div class="course-stat-number">@course.LessonCount</div>
+                                                    <div class="course-stat-label">درس</div>
+                                                </div>
+                                                <div class="course-stat">
+                                                    <a asp-controller="Catalog" asp-action="Edit" asp-route-id="@course.Id" class="btn btn-success btn-sm">
+                                                        <i class="fas fa-edit me-1"></i>ویرایش
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="empty-state">
+                            <div class="empty-state-icon">
+                                <i class="fas fa-chalkboard"></i>
+                            </div>
+                            <h4 class="empty-state-title">هنوز دوره‌ای ایجاد نکرده‌اید</h4>
+                            <p class="empty-state-description">اولین دوره خود را ایجاد کنید و شروع به تدریس کنید.</p>
+                            <a asp-controller="Catalog" asp-action="Create" class="btn btn-success">
+                                <i class="fas fa-plus me-2"></i>ایجاد دوره جدید
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+        
+        <!-- Right Sidebar -->
+        <div class="col-lg-4">
+            <!-- Class Performance -->
+            <div class="dashboard-panel mb-4">
+                <div class="panel-header">
+                    <h3 class="panel-title">
+                        <i class="fas fa-chart-pie me-2"></i>عملکرد کلاس‌ها
+                    </h3>
+                </div>
+                <div class="panel-body">
+                    <div class="performance-chart">
+                        <canvas id="classPerformanceChart" width="300" height="200"></canvas>
+                    </div>
+                    
+                    <div class="performance-summary">
+                        <div class="performance-item">
+                            <div class="performance-label">میانگین کلی</div>
+                            <div class="performance-value success">85%</div>
+                        </div>
+                        <div class="performance-item">
+                            <div class="performance-label">بهترین کلاس</div>
+                            <div class="performance-value primary">ریاضی پایه</div>
+                        </div>
+                        <div class="performance-item">
+                            <div class="performance-label">نیاز به توجه</div>
+                            <div class="performance-value warning">فیزیک پیشرفته</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activities -->
+            <div class="dashboard-panel mb-4">
+                <div class="panel-header">
+                    <h3 class="panel-title">
+                        <i class="fas fa-bell me-2"></i>فعالیت‌های اخیر
+                    </h3>
+                </div>
+                <div class="panel-body">
+                    <div class="activity-timeline">
+                        <div class="activity-item">
+                            <div class="activity-icon success">
+                                <i class="fas fa-user-plus"></i>
+                            </div>
+                            <div class="activity-content">
+                                <div class="activity-title">دانش‌آموز جدید</div>
+                                <div class="activity-description">علی احمدی به کلاس ریاضی پیوست</div>
+                                <div class="activity-time">2 ساعت پیش</div>
+                            </div>
+                        </div>
+                        <div class="activity-item">
+                            <div class="activity-icon primary">
+                                <i class="fas fa-clipboard-check"></i>
+                            </div>
+                            <div class="activity-content">
+                                <div class="activity-title">آزمون تکمیل شد</div>
+                                <div class="activity-description">آزمون فصل 3 ریاضی</div>
+                                <div class="activity-time">5 ساعت پیش</div>
+                            </div>
+                        </div>
+                        <div class="activity-item">
+                            <div class="activity-icon warning">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                            <div class="activity-content">
+                                <div class="activity-title">نیاز به بررسی</div>
+                                <div class="activity-description">نمرات پایین در آزمون فیزیک</div>
+                                <div class="activity-time">1 روز پیش</div>
+                            </div>
+                        </div>
+                        <div class="activity-item">
+                            <div class="activity-icon info">
+                                <i class="fas fa-book"></i>
+                            </div>
+                            <div class="activity-content">
+                                <div class="activity-title">درس جدید</div>
+                                <div class="activity-description">درس 5 شیمی آلی اضافه شد</div>
+                                <div class="activity-time">2 روز پیش</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Teaching Tips -->
+            <div class="dashboard-panel mb-4">
+                <div class="panel-header">
+                    <h3 class="panel-title">
+                        <i class="fas fa-lightbulb me-2"></i>نکات تدریس
+                    </h3>
+                </div>
+                <div class="panel-body">
+                    <div class="tips-list">
+                        <div class="tip-item">
+                            <div class="tip-icon">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="tip-text">تعامل با دانش‌آموزان را افزایش دهید</div>
+                        </div>
+                        <div class="tip-item">
+                            <div class="tip-icon">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <div class="tip-text">پیشرفت دانش‌آموزان را پیگیری کنید</div>
+                        </div>
+                        <div class="tip-item">
+                            <div class="tip-icon">
+                                <i class="fas fa-video"></i>
+                            </div>
+                            <div class="tip-text">از محتوای تصویری استفاده کنید</div>
+                        </div>
+                        <div class="tip-item">
+                            <div class="tip-icon">
+                                <i class="fas fa-comments"></i>
+                            </div>
+                            <div class="tip-text">بازخورد سازنده ارائه دهید</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        /* Teacher-specific styles */
+        .bg-gradient-success {
+            background: linear-gradient(135deg, #28a745, #20c997) !important;
+        }
+
+        .teacher-stats {
+            border-left: 4px solid #28a745;
+        }
+
+        .teacher-action:hover {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+        }
+
+        .teacher-course {
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .teacher-course:hover {
+            border-color: #28a745;
+            transform: translateY(-5px);
+        }
+
+        .performance-chart {
+            margin-bottom: 1.5rem;
+        }
+
+        .performance-summary {
+            space-y: 1rem;
+        }
+
+        .performance-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 0.75rem;
+        }
+
+        .performance-label {
+            font-weight: 500;
+            color: #333;
+        }
+
+        .performance-value {
+            font-weight: 600;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+        }
+
+        .performance-value.success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .performance-value.primary {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .performance-value.warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .activity-timeline {
+            space-y: 1rem;
+        }
+
+        .activity-item {
+            display: flex;
+            align-items: flex-start;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+        }
+
+        .activity-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 1rem;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .activity-icon.success {
+            background: #28a745;
+        }
+
+        .activity-icon.primary {
+            background: #007bff;
+        }
+
+        .activity-icon.warning {
+            background: #ffc107;
+        }
+
+        .activity-icon.info {
+            background: #17a2b8;
+        }
+
+        .activity-content {
+            flex: 1;
+        }
+
+        .activity-title {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .activity-description {
+            font-size: 0.875rem;
+            color: #6c757d;
+            margin-bottom: 0.25rem;
+        }
+
+        .activity-time {
+            font-size: 0.75rem;
+            color: #999;
+        }
+
+        .tips-list {
+            space-y: 1rem;
+        }
+
+        .tip-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 0.75rem;
+        }
+
+        .tip-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: #28a745;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 0.75rem;
+            font-size: 0.875rem;
+        }
+
+        .tip-text {
+            font-size: 0.875rem;
+            color: #333;
+        }
+    </style>
+}
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        $(document).ready(function() {
+            // Update time and date
+            function updateDateTime() {
+                const now = new Date();
+                const timeString = now.toLocaleTimeString('fa-IR', { 
+                    hour: '2-digit', 
+                    minute: '2-digit',
+                    second: '2-digit'
+                });
+                const dateString = now.toLocaleDateString('fa-IR', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+                
+                $('#currentTime').text(timeString);
+                $('#currentDate').text(dateString);
+            }
+            
+            updateDateTime();
+            setInterval(updateDateTime, 1000);
+
+            // Class Performance Chart
+            const ctx = document.getElementById('classPerformanceChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['عالی', 'خوب', 'متوسط', 'نیاز به بهبود'],
+                    datasets: [{
+                        data: [35, 40, 20, 5],
+                        backgroundColor: [
+                            '#28a745',
+                            '#17a2b8',
+                            '#ffc107',
+                            '#dc3545'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                usePointStyle: true
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Animate stats cards
+            $('.stats-card').each(function(index) {
+                $(this).css('animation-delay', (index * 0.1) + 's');
+                $(this).addClass('animate-fade-in-up');
+            });
+
+            // Animate course cards
+            $('.course-card').each(function(index) {
+                $(this).css('animation-delay', (index * 0.1) + 's');
+                $(this).addClass('animate-fade-in-up');
+            });
+        });
+    </script>
+}

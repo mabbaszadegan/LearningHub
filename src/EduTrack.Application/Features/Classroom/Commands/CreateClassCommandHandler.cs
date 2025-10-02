@@ -56,6 +56,11 @@ public class CreateClassCommandHandler : IRequestHandler<CreateClassCommand, Res
             return Result<ClassDto>.Failure("دوره مورد نظر یافت نشد");
         }
 
+        if (string.IsNullOrWhiteSpace(request.TeacherId))
+        {
+            return Result<ClassDto>.Failure("معلم مورد نظر یافت نشد یا نقش صحیح ندارد");
+        }
+
         var teacher = await _userService.GetUserByIdAsync(request.TeacherId, cancellationToken);
         if (teacher == null || teacher.Role != Domain.Enums.UserRole.Teacher)
         {

@@ -1,0 +1,448 @@
+@model Class
+@{
+    ViewData["Title"] = "جزئیات کلاس";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-0 text-gray-800">جزئیات کلاس: @Model.Name</h1>
+                    <p class="mb-0 text-muted">مشاهده اطلاعات کامل کلاس و مدیریت دانش‌آموزان</p>
+                </div>
+                <div>
+                    <a href="@Url.Action("Classes", "Admin")" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> بازگشت به لیست کلاس‌ها
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Class Information -->
+    <div class="row mb-4">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">اطلاعات کلاس</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label font-weight-bold">نام کلاس:</label>
+                            <p class="mb-0">@Model.Name</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label font-weight-bold">وضعیت:</label>
+                            <p class="mb-0">
+                                <span class="badge badge-@(Model.IsActive ? "success" : "secondary")">
+                                    @(Model.IsActive ? "فعال" : "غیرفعال")
+                                </span>
+                            </p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label font-weight-bold">دوره:</label>
+                            <p class="mb-0">@Model.Course.Title</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label font-weight-bold">معلم:</label>
+                            <p class="mb-0">@Model.Teacher.FullName</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label font-weight-bold">تاریخ شروع:</label>
+                            <p class="mb-0">@Model.StartDate.ToString("yyyy/MM/dd")</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label font-weight-bold">تاریخ پایان:</label>
+                            <p class="mb-0">
+                                @if (Model.EndDate.HasValue)
+                                {
+                                    @Model.EndDate.Value.ToString("yyyy/MM/dd")
+                                }
+                                else
+                                {
+                                    <span class="text-muted">نامحدود</span>
+                                }
+                            </p>
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label class="form-label font-weight-bold">توضیحات:</label>
+                            <p class="mb-0">
+                                @if (!string.IsNullOrEmpty(Model.Description))
+                                {
+                                    @Model.Description
+                                }
+                                else
+                                {
+                                    <span class="text-muted">توضیحاتی ارائه نشده است.</span>
+                                }
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">آمار کلاس</h6>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-3">
+                        <div class="h2 mb-0 font-weight-bold text-primary">@Model.Enrollments.Count</div>
+                        <div class="text-xs font-weight-bold text-uppercase text-muted">دانش‌آموز ثبت‌نام شده</div>
+                    </div>
+                    <hr>
+                    <div class="text-center mb-3">
+                        <div class="h4 mb-0 font-weight-bold text-success">@Model.Enrollments.Count(e => e.IsActive)</div>
+                        <div class="text-xs font-weight-bold text-uppercase text-muted">دانش‌آموز فعال</div>
+                    </div>
+                    <hr>
+                    <div class="text-center mb-3">
+                        <div class="h4 mb-0 font-weight-bold text-info">@Model.Enrollments.Count(e => e.CompletedAt.HasValue)</div>
+                        <div class="text-xs font-weight-bold text-uppercase text-muted">تکمیل شده</div>
+                    </div>
+                    <hr>
+                    <div class="text-center">
+                        <div class="h4 mb-0 font-weight-bold text-warning">
+                            @{
+                                var duration = Model.EndDate.HasValue ? 
+                                    (Model.EndDate.Value - Model.StartDate).Days : 
+                                    (DateTimeOffset.UtcNow - Model.StartDate).Days;
+                            }
+                            @duration
+                        </div>
+                        <div class="text-xs font-weight-bold text-uppercase text-muted">روز از شروع</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Students List -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">لیست دانش‌آموزان</h6>
+                    <button type="button" class="btn btn-sm btn-primary" onclick="showAddStudentModal()">
+                        <i class="fas fa-user-plus"></i> افزودن دانش‌آموز
+                    </button>
+                </div>
+                <div class="card-body">
+                    @if (Model.Enrollments.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>دانش‌آموز</th>
+                                        <th>تاریخ ثبت‌نام</th>
+                                        <th>تاریخ تکمیل</th>
+                                        <th>وضعیت</th>
+                                        <th>عملیات</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var enrollment in Model.Enrollments.OrderByDescending(e => e.EnrolledAt))
+                                    {
+                                        <tr id="enrollment-@enrollment.Id">
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <div class="mr-3">
+                                                        <div class="icon-circle bg-info">
+                                                            <i class="fas fa-user-graduate text-white"></i>
+                                                        </div>
+                                                    </div>
+                                                    <div>
+                                                        <div class="font-weight-bold">@enrollment.Student.FullName</div>
+                                                        <div class="text-muted small">@enrollment.Student.Email</div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>@enrollment.EnrolledAt.ToString("yyyy/MM/dd")</td>
+                                            <td>
+                                                @if (enrollment.CompletedAt.HasValue)
+                                                {
+                                                    @enrollment.CompletedAt.Value.ToString("yyyy/MM/dd")
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">در حال انجام</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <span class="badge badge-@(enrollment.IsActive ? "success" : "secondary")" id="enrollment-status-@enrollment.Id">
+                                                    @(enrollment.IsActive ? "فعال" : "غیرفعال")
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group" role="group">
+                                                    <button type="button" class="btn btn-sm btn-outline-info" 
+                                                            onclick="showStudentProgress('@enrollment.StudentId')" title="مشاهده پیشرفت">
+                                                        <i class="fas fa-chart-line"></i>
+                                                    </button>
+                                                    <button type="button" class="btn btn-sm btn-outline-@(enrollment.IsActive ? "secondary" : "success")" 
+                                                            onclick="toggleEnrollmentStatus(@enrollment.Id, '@enrollment.Student.FullName', @enrollment.IsActive.ToString().ToLower())" 
+                                                            title="@(enrollment.IsActive ? "غیرفعال کردن" : "فعال کردن")" id="toggle-enrollment-@enrollment.Id">
+                                                        <i class="fas fa-@(enrollment.IsActive ? "user-slash" : "user-check")"></i>
+                                                    </button>
+                                                    <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                            onclick="removeEnrollment(@enrollment.Id, '@enrollment.Student.FullName')" title="حذف از کلاس">
+                                                        <i class="fas fa-user-times"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-5">
+                            <i class="fas fa-user-graduate fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">هنوز دانش‌آموزی ثبت‌نام نکرده است</h5>
+                            <p class="text-muted">برای شروع، دانش‌آموزان را به کلاس اضافه کنید.</p>
+                            <button type="button" class="btn btn-primary" onclick="showAddStudentModal()">
+                                <i class="fas fa-user-plus"></i> افزودن دانش‌آموز
+                            </button>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Student Modal -->
+<div class="modal fade" id="addStudentModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">افزودن دانش‌آموز به کلاس</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <form id="addStudentForm">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="studentSelect">انتخاب دانش‌آموز</label>
+                        <select class="form-control" id="studentSelect" name="studentId" required>
+                            <option value="">در حال بارگذاری...</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">انصراف</button>
+                    <button type="submit" class="btn btn-primary">افزودن به کلاس</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Student Progress Modal -->
+<div class="modal fade" id="studentProgressModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">پیشرفت دانش‌آموز</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="studentProgressContent">
+                <div class="text-center">
+                    <div class="spinner-border" role="status">
+                        <span class="sr-only">در حال بارگذاری...</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">بستن</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function showAddStudentModal() {
+            $('#addStudentModal').modal('show');
+            loadAvailableStudents();
+        }
+
+        function loadAvailableStudents() {
+            // Load students who are not already enrolled in this class
+            $.get('@Url.Action("GetAvailableStudents", "Admin")', { classId: @Model.Id })
+                .done(function(students) {
+                    var select = $('#studentSelect');
+                    select.empty();
+                    select.append('<option value="">انتخاب کنید...</option>');
+                    
+                    students.forEach(function(student) {
+                        select.append(`<option value="${student.id}">${student.fullName} (${student.email})</option>`);
+                    });
+                })
+                .fail(function() {
+                    $('#studentSelect').html('<option value="">خطا در بارگذاری لیست دانش‌آموزان</option>');
+                });
+        }
+
+        function showStudentProgress(studentId) {
+            $('#studentProgressModal').modal('show');
+            
+            // Load student progress
+            $.get('@Url.Action("GetStudentProgress", "Admin")', { studentId: studentId, classId: @Model.Id })
+                .done(function(data) {
+                    $('#studentProgressContent').html(data);
+                })
+                .fail(function() {
+                    $('#studentProgressContent').html('<p class="text-danger">خطا در بارگذاری پیشرفت دانش‌آموز.</p>');
+                });
+        }
+
+        function toggleEnrollmentStatus(enrollmentId, studentName, isActive) {
+            var action = isActive ? 'غیرفعال' : 'فعال';
+            if (confirm(`آیا مطمئن هستید که می‌خواهید ثبت‌نام "${studentName}" را ${action} کنید؟`)) {
+                $.post('@Url.Action("ToggleEnrollmentStatus", "Admin")', {
+                    enrollmentId: enrollmentId,
+                    __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                })
+                .done(function(response) {
+                    if (response.success) {
+                        // Update UI
+                        var statusBadge = $('#enrollment-status-' + enrollmentId);
+                        var toggleButton = $('#toggle-enrollment-' + enrollmentId);
+                        
+                        if (response.isActive) {
+                            statusBadge.removeClass('badge-secondary').addClass('badge-success').text('فعال');
+                            toggleButton.removeClass('btn-outline-success').addClass('btn-outline-secondary')
+                                       .attr('title', 'غیرفعال کردن')
+                                       .html('<i class="fas fa-user-slash"></i>');
+                        } else {
+                            statusBadge.removeClass('badge-success').addClass('badge-secondary').text('غیرفعال');
+                            toggleButton.removeClass('btn-outline-secondary').addClass('btn-outline-success')
+                                       .attr('title', 'فعال کردن')
+                                       .html('<i class="fas fa-user-check"></i>');
+                        }
+                        
+                        showAlert('success', response.message);
+                    } else {
+                        showAlert('error', response.message);
+                    }
+                })
+                .fail(function() {
+                    showAlert('error', 'خطا در تغییر وضعیت ثبت‌نام');
+                });
+            }
+        }
+
+        function removeEnrollment(enrollmentId, studentName) {
+            if (confirm(`آیا مطمئن هستید که می‌خواهید "${studentName}" را از کلاس حذف کنید؟`)) {
+                $.post('@Url.Action("RemoveEnrollment", "Admin")', {
+                    enrollmentId: enrollmentId,
+                    __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                })
+                .done(function(response) {
+                    if (response.success) {
+                        $('#enrollment-' + enrollmentId).fadeOut(function() {
+                            $(this).remove();
+                        });
+                        showAlert('success', response.message);
+                    } else {
+                        showAlert('error', response.message);
+                    }
+                })
+                .fail(function() {
+                    showAlert('error', 'خطا در حذف دانش‌آموز از کلاس');
+                });
+            }
+        }
+
+        $('#addStudentForm').on('submit', function(e) {
+            e.preventDefault();
+            
+            var studentId = $('#studentSelect').val();
+            if (!studentId) {
+                showAlert('error', 'لطفاً دانش‌آموزی را انتخاب کنید');
+                return;
+            }
+            
+            $.post('@Url.Action("AddStudentToClass", "Admin")', {
+                classId: @Model.Id,
+                studentId: studentId,
+                __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+            })
+            .done(function(response) {
+                if (response.success) {
+                    $('#addStudentModal').modal('hide');
+                    showAlert('success', response.message);
+                    // Refresh the page to show the new enrollment
+                    setTimeout(function() {
+                        location.reload();
+                    }, 2000);
+                } else {
+                    showAlert('error', response.message);
+                }
+            })
+            .fail(function() {
+                showAlert('error', 'خطا در افزودن دانش‌آموز به کلاس');
+            });
+        });
+
+        function showAlert(type, message) {
+            var alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+            var alertHtml = `
+                <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+                    ${message}
+                    <button type="button" class="close" data-dismiss="alert">
+                        <span>&times;</span>
+                    </button>
+                </div>
+            `;
+            
+            // Remove existing alerts
+            $('.alert').remove();
+            
+            // Add new alert at the top of the container
+            $('.container-fluid').prepend(alertHtml);
+            
+            // Auto-dismiss after 5 seconds
+            setTimeout(function() {
+                $('.alert').fadeOut();
+            }, 5000);
+        }
+
+        // Add CSRF token to all AJAX requests
+        $.ajaxSetup({
+            beforeSend: function(xhr, settings) {
+                if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain) {
+                    xhr.setRequestHeader("RequestVerificationToken", $('input[name="__RequestVerificationToken"]').val());
+                }
+            }
+        });
+    </script>
+}
+
+<style>
+    .icon-circle {
+        height: 2.5rem;
+        width: 2.5rem;
+        border-radius: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .text-gray-800 {
+        color: #5a5c69 !important;
+    }
+</style>

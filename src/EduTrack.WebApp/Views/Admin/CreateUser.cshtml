@@ -1,0 +1,314 @@
+@model EduTrack.WebApp.Models.CreateUserViewModel
+@{
+    ViewData["Title"] = "افزودن کاربر جدید";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-0 text-gray-800">افزودن کاربر جدید</h1>
+                    <p class="mb-0 text-muted">ایجاد حساب کاربری جدید در سیستم</p>
+                </div>
+                <div>
+                    <a href="@Url.Action("Users", "Admin")" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> بازگشت به لیست کاربران
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create User Form -->
+    <div class="row justify-content-center">
+        <div class="col-xl-8 col-lg-10">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">اطلاعات کاربر جدید</h6>
+                </div>
+                <div class="card-body">
+                    <form asp-action="CreateUser" method="post">
+                        @Html.AntiForgeryToken()
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="FirstName" class="form-label">نام *</label>
+                                <input asp-for="FirstName" class="form-control" placeholder="نام کاربر را وارد کنید">
+                                <span asp-validation-for="FirstName" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="LastName" class="form-label">نام خانوادگی *</label>
+                                <input asp-for="LastName" class="form-control" placeholder="نام خانوادگی کاربر را وارد کنید">
+                                <span asp-validation-for="LastName" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Email" class="form-label">ایمیل *</label>
+                                <input asp-for="Email" type="email" class="form-control" placeholder="example@domain.com">
+                                <span asp-validation-for="Email" class="text-danger"></span>
+                                <small class="form-text text-muted">این ایمیل به عنوان نام کاربری استفاده خواهد شد</small>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Role" class="form-label">نقش کاربر *</label>
+                                <select asp-for="Role" class="form-control">
+                                    <option value="">انتخاب کنید...</option>
+                                    <option value="@UserRole.Admin">مدیر سیستم</option>
+                                    <option value="@UserRole.Teacher">معلم</option>
+                                    <option value="@UserRole.Student">دانش‌آموز</option>
+                                </select>
+                                <span asp-validation-for="Role" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Password" class="form-label">رمز عبور *</label>
+                                <div class="input-group">
+                                    <input asp-for="Password" type="password" class="form-control" id="password" placeholder="رمز عبور را وارد کنید">
+                                    <div class="input-group-append">
+                                        <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('password')">
+                                            <i class="fas fa-eye" id="password-icon"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <span asp-validation-for="Password" class="text-danger"></span>
+                                <small class="form-text text-muted">رمز عبور باید حداقل ۶ کاراکتر باشد</small>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">تولید رمز عبور تصادفی</label>
+                                <div>
+                                    <button type="button" class="btn btn-outline-info" onclick="generateRandomPassword()">
+                                        <i class="fas fa-random"></i> تولید رمز عبور
+                                    </button>
+                                </div>
+                                <small class="form-text text-muted">رمز عبور امن و تصادفی تولید می‌کند</small>
+                            </div>
+                        </div>
+
+                        <!-- Role Description -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h6 class="card-title">توضیحات نقش‌ها:</h6>
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <div class="d-flex align-items-center mb-2">
+                                                    <i class="fas fa-user-shield text-danger mr-2"></i>
+                                                    <strong>مدیر سیستم</strong>
+                                                </div>
+                                                <small class="text-muted">دسترسی کامل به تمام بخش‌های سیستم، مدیریت کاربران، دوره‌ها و تنظیمات</small>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="d-flex align-items-center mb-2">
+                                                    <i class="fas fa-chalkboard-teacher text-warning mr-2"></i>
+                                                    <strong>معلم</strong>
+                                                </div>
+                                                <small class="text-muted">ایجاد و مدیریت کلاس‌ها، آزمون‌ها و نظارت بر پیشرفت دانش‌آموزان</small>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="d-flex align-items-center mb-2">
+                                                    <i class="fas fa-user-graduate text-info mr-2"></i>
+                                                    <strong>دانش‌آموز</strong>
+                                                </div>
+                                                <small class="text-muted">شرکت در کلاس‌ها، مطالعه دروس و شرکت در آزمون‌ها</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="d-flex justify-content-between">
+                                    <a href="@Url.Action("Users", "Admin")" class="btn btn-secondary">
+                                        <i class="fas fa-times"></i> انصراف
+                                    </a>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-user-plus"></i> ایجاد کاربر
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    
+    <script>
+        function togglePassword(inputId) {
+            var input = document.getElementById(inputId);
+            var icon = document.getElementById(inputId + '-icon');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+
+        function generateRandomPassword() {
+            var length = 12;
+            var charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@@#$%^&*";
+            var password = "";
+            
+            // Ensure at least one character from each required type
+            password += "ABCDEFGHIJKLMNOPQRSTUVWXYZ"[Math.floor(Math.random() * 26)]; // uppercase
+            password += "abcdefghijklmnopqrstuvwxyz"[Math.floor(Math.random() * 26)]; // lowercase
+            password += "0123456789"[Math.floor(Math.random() * 10)]; // digit
+            password += "!@@#$%^&*"[Math.floor(Math.random() * 9)]; // special char
+            
+            // Fill the rest randomly
+            for (var i = password.length; i < length; i++) {
+                password += charset[Math.floor(Math.random() * charset.length)];
+            }
+            
+            // Shuffle the password
+            password = password.split('').sort(() => Math.random() - 0.5).join('');
+            
+            document.getElementById('password').value = password;
+            
+            // Show the password temporarily
+            var passwordInput = document.getElementById('password');
+            var originalType = passwordInput.type;
+            passwordInput.type = 'text';
+            
+            // Show success message
+            showAlert('success', 'رمز عبور تصادفی تولید شد: ' + password);
+            
+            // Hide password after 5 seconds
+            setTimeout(function() {
+                passwordInput.type = originalType;
+            }, 5000);
+        }
+
+        function showAlert(type, message) {
+            var alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+            var alertHtml = `
+                <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+                    ${message}
+                    <button type="button" class="close" data-dismiss="alert">
+                        <span>&times;</span>
+                    </button>
+                </div>
+            `;
+            
+            // Remove existing alerts
+            $('.alert').remove();
+            
+            // Add new alert at the top of the container
+            $('.container-fluid').prepend(alertHtml);
+            
+            // Auto-dismiss after 8 seconds for password display
+            setTimeout(function() {
+                $('.alert').fadeOut();
+            }, 8000);
+        }
+
+        // Role selection change handler
+        $(document).ready(function() {
+            $('#Role').on('change', function() {
+                var selectedRole = $(this).val();
+                var roleCards = $('.card.bg-light .col-md-4');
+                
+                // Reset all cards
+                roleCards.removeClass('border border-primary border-danger border-warning border-info');
+                
+                // Highlight selected role
+                if (selectedRole === '1') { // Admin
+                    roleCards.eq(0).addClass('border border-danger');
+                } else if (selectedRole === '2') { // Teacher
+                    roleCards.eq(1).addClass('border border-warning');
+                } else if (selectedRole === '3') { // Student
+                    roleCards.eq(2).addClass('border border-info');
+                }
+            });
+        });
+
+        // Form validation
+        $('form').on('submit', function(e) {
+            var isValid = true;
+            var errors = [];
+
+            // Check required fields
+            var firstName = $('#FirstName').val().trim();
+            var lastName = $('#LastName').val().trim();
+            var email = $('#Email').val().trim();
+            var password = $('#Password').val();
+            var role = $('#Role').val();
+
+            if (!firstName) {
+                errors.push('نام الزامی است');
+                isValid = false;
+            }
+
+            if (!lastName) {
+                errors.push('نام خانوادگی الزامی است');
+                isValid = false;
+            }
+
+            if (!email) {
+                errors.push('ایمیل الزامی است');
+                isValid = false;
+            } else if (!/^[^\s@@]+@@[^\s@@]+\.[^\s@@]+$/.test(email)) {
+                errors.push('فرمت ایمیل صحیح نیست');
+                isValid = false;
+            }
+
+            if (!password) {
+                errors.push('رمز عبور الزامی است');
+                isValid = false;
+            } else if (password.length < 6) {
+                errors.push('رمز عبور باید حداقل ۶ کاراکتر باشد');
+                isValid = false;
+            }
+
+            if (!role) {
+                errors.push('انتخاب نقش الزامی است');
+                isValid = false;
+            }
+
+            if (!isValid) {
+                e.preventDefault();
+                showAlert('error', errors.join('<br>'));
+                return false;
+            }
+        });
+    </script>
+}
+
+<style>
+    .text-gray-800 {
+        color: #5a5c69 !important;
+    }
+    
+    .border-left-primary {
+        border-left: 0.25rem solid #4e73df !important;
+    }
+    
+    .card.bg-light .col-md-4 {
+        transition: all 0.3s ease;
+        padding: 10px;
+        border-radius: 5px;
+    }
+    
+    .card.bg-light .col-md-4.border {
+        background-color: rgba(0,123,255,0.1);
+    }
+</style>

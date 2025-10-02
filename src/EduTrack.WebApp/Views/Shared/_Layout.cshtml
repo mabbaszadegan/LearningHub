@@ -9,9 +9,10 @@
     <link rel="icon" type="image/png" sizes="24x24" href="~/favicon-24x24.png" />
     <link rel="icon" type="image/png" sizes="32x32" href="~/favicon-32x32.png" />
     <link rel="icon" type="image/png" sizes="48x48" href="~/favicon-48x48.png" />
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/lib/fontawesome/css/all.css" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.rtl.min.css" />
+    <link rel="stylesheet" href="~/lib/fontawesome/css/all.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/EduTrack.WebApp.styles.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/persian-datepicker.css" asp-append-version="true" />
     <link rel="manifest" href="~/manifest.webmanifest" />
     <meta name="theme-color" content="#6366f1" />
@@ -45,6 +46,39 @@
                                 <i class="fas fa-book me-1"></i>دوره‌ها
                             </a>
                         </li>
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-cog me-1"></i>پنل مدیریت
+                                </a>
+                                <ul class="dropdown-menu" aria-labelledby="adminDropdown">
+                                    <li><a class="dropdown-item" asp-controller="Admin" asp-action="Index">
+                                        <i class="fas fa-tachometer-alt me-2"></i>داشبورد
+                                    </a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" asp-controller="Admin" asp-action="Users">
+                                        <i class="fas fa-users me-2"></i>مدیریت کاربران
+                                    </a></li>
+                                    <li><a class="dropdown-item" asp-controller="Admin" asp-action="Courses">
+                                        <i class="fas fa-book me-2"></i>مدیریت دوره‌ها
+                                    </a></li>
+                                    <li><a class="dropdown-item" asp-controller="Admin" asp-action="Classes">
+                                        <i class="fas fa-school me-2"></i>مدیریت کلاس‌ها
+                                    </a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" asp-controller="Admin" asp-action="Sessions">
+                                        <i class="fas fa-user-clock me-2"></i>نشست‌های فعال
+                                    </a></li>
+                                    <li><a class="dropdown-item" asp-controller="Admin" asp-action="Analytics">
+                                        <i class="fas fa-chart-bar me-2"></i>آمار و تحلیل
+                                    </a></li>
+                                    <li><a class="dropdown-item" asp-controller="Admin" asp-action="ActivityLogs">
+                                        <i class="fas fa-history me-2"></i>لاگ فعالیت‌ها
+                                    </a></li>
+                                </ul>
+                            </li>
+                        }
                         @if (User.IsInRole("Admin") || User.IsInRole("Teacher"))
                         {
                             <li class="nav-item">

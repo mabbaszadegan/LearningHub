@@ -10,17 +10,22 @@ public class AppDbContext : IdentityDbContext<User>
 
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
     {
-        // Try to get provider name from Database, fallback to SqlServer if not available (design-time)
-        string providerName;
+        // Initialize provider config with a safe default
+        _providerConfig = new SqlServerConfiguration();
+        
+        // Try to get provider name from Database and update config if possible
         try
         {
-            providerName = Database?.ProviderName ?? "Microsoft.EntityFrameworkCore.SqlServer";
+            var providerName = Database?.ProviderName;
+            if (!string.IsNullOrEmpty(providerName))
+            {
+                _providerConfig = DatabaseProviderFactory.GetConfiguration(providerName);
+            }
         }
         catch
         {
-            providerName = "Microsoft.EntityFrameworkCore.SqlServer";
+            // Keep the default SqlServer configuration
         }
-        _providerConfig = DatabaseProviderFactory.GetConfiguration(providerName);
     }
 
     public AppDbContext(DbContextOptions<AppDbContext> options, string databaseProvider) : base(options)
@@ -107,7 +112,7 @@ public class AppDbContext : IdentityDbContext<User>
         builder.Entity<Lesson>(entity =>
         {
             entity.Property(e => e.Title).HasMaxLength(200).IsRequired();
-            _providerConfig.ConfigureLongText<Lesson>(entity.Property(e => e.Content));
+            (_providerConfig ?? new SqlServerConfiguration()).ConfigureLongText<Lesson>(entity.Property(e => e.Content));
             entity.Property(e => e.VideoUrl).HasMaxLength(500);
             entity.HasOne(e => e.Module)
                 .WithMany(e => e.Lessons)

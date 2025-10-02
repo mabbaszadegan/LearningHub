@@ -1,4 +1,5 @@
 using EduTrack.Domain.Entities;
+using EduTrack.Domain.Enums;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
@@ -57,6 +58,12 @@ public class AccountController : Controller
                 }
 
                 _logger.LogInformation("User {Email} logged in.", model.Email);
+                
+                // Redirect to role-based dashboard after login
+                if (string.IsNullOrEmpty(returnUrl))
+                {
+                    return RedirectToAction("Index", "Home");
+                }
                 return RedirectToLocal(returnUrl);
             }
 
@@ -88,6 +95,59 @@ public class AccountController : Controller
         return RedirectToAction(nameof(HomeController.Index), "Home");
     }
 
+    // GET: Account/Register
+    public IActionResult Register(string? role = null)
+    {
+        var model = new RegisterViewModel();
+        
+        // Set role if provided
+        if (!string.IsNullOrEmpty(role) && Enum.TryParse<UserRole>(role, true, out var userRole))
+        {
+            model.Role = userRole;
+        }
+        
+        return View(model);
+    }
+
+    // POST: Account/Register
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Register(RegisterViewModel model)
+    {
+        if (ModelState.IsValid)
+        {
+            var user = new User
+            {
+                UserName = model.Email,
+                Email = model.Email,
+                FirstName = model.FirstName,
+                LastName = model.LastName,
+                Role = model.Role,
+                IsActive = true,
+                CreatedAt = DateTimeOffset.UtcNow
+            };
+
+            var result = await _userManager.CreateAsync(user, model.Password);
+
+            if (result.Succeeded)
+            {
+                _logger.LogInformation("User {Email} created a new account with role {Role}.", model.Email, model.Role);
+
+                // Sign in the user immediately after registration
+                await _signInManager.SignInAsync(user, isPersistent: false);
+                
+                return RedirectToAction("Index", "Home");
+            }
+
+            foreach (var error in result.Errors)
+            {
+                ModelState.AddModelError(string.Empty, error.Description);
+            }
+        }
+
+        return View(model);
+    }
+
     // GET: Account/AccessDenied
     public IActionResult AccessDenied()
     {
@@ -109,13 +169,49 @@ public class AccountController : Controller
 
 public class LoginViewModel
 {
-    [Required]
+    [Required(ErrorMessage = "ایمیل الزامی است")]
+    [EmailAddress(ErrorMessage = "فرمت ایمیل صحیح نیست")]
+    [Display(Name = "ایمیل")]
     public string Email { get; set; } = string.Empty;
 
-    [Required]
+    [Required(ErrorMessage = "رمز عبور الزامی است")]
     [DataType(DataType.Password)]
+    [Display(Name = "رمز عبور")]
     public string Password { get; set; } = string.Empty;
 
-    [Display(Name = "Remember me?")]
+    [Display(Name = "مرا به خاطر بسپار")]
     public bool RememberMe { get; set; }
+}
+
+public class RegisterViewModel
+{
+    [Required(ErrorMessage = "نام الزامی است")]
+    [StringLength(100, ErrorMessage = "نام نباید بیش از 100 کاراکتر باشد")]
+    [Display(Name = "نام")]
+    public string FirstName { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "نام خانوادگی الزامی است")]
+    [StringLength(100, ErrorMessage = "نام خانوادگی نباید بیش از 100 کاراکتر باشد")]
+    [Display(Name = "نام خانوادگی")]
+    public string LastName { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "ایمیل الزامی است")]
+    [EmailAddress(ErrorMessage = "فرمت ایمیل صحیح نیست")]
+    [Display(Name = "ایمیل")]
+    public string Email { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "رمز عبور الزامی است")]
+    [StringLength(100, ErrorMessage = "رمز عبور باید حداقل {2} و حداکثر {1} کاراکتر باشد", MinimumLength = 6)]
+    [DataType(DataType.Password)]
+    [Display(Name = "رمز عبور")]
+    public string Password { get; set; } = string.Empty;
+
+    [DataType(DataType.Password)]
+    [Display(Name = "تکرار رمز عبور")]
+    [Compare("Password", ErrorMessage = "رمز عبور و تکرار آن مطابقت ندارند")]
+    public string ConfirmPassword { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "انتخاب نقش الزامی است")]
+    [Display(Name = "نقش")]
+    public UserRole Role { get; set; } = UserRole.Student;
 }

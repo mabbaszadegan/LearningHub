@@ -1,0 +1,235 @@
+@model EduTrack.WebApp.Models.CreateCourseViewModel
+@{
+    ViewData["Title"] = "افزودن دوره جدید";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-0 text-gray-800">افزودن دوره جدید</h1>
+                    <p class="mb-0 text-muted">ایجاد دوره آموزشی جدید در سیستم</p>
+                </div>
+                <div>
+                    <a href="@Url.Action("Courses", "Admin")" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> بازگشت به لیست دوره‌ها
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Course Form -->
+    <div class="row justify-content-center">
+        <div class="col-xl-8 col-lg-10">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">اطلاعات دوره جدید</h6>
+                </div>
+                <div class="card-body">
+                    <form asp-action="CreateCourse" method="post">
+                        @Html.AntiForgeryToken()
+                        
+                        <div class="row">
+                            <div class="col-md-8 mb-3">
+                                <label asp-for="Title" class="form-label">عنوان دوره *</label>
+                                <input asp-for="Title" class="form-control" placeholder="عنوان دوره را وارد کنید">
+                                <span asp-validation-for="Title" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label asp-for="Order" class="form-label">ترتیب نمایش</label>
+                                <input asp-for="Order" type="number" class="form-control" placeholder="1" min="1">
+                                <small class="form-text text-muted">ترتیب نمایش دوره در لیست</small>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12 mb-3">
+                                <label asp-for="Description" class="form-label">توضیحات دوره</label>
+                                <textarea asp-for="Description" class="form-control" rows="4" 
+                                          placeholder="توضیحات کاملی از دوره ارائه دهید..."></textarea>
+                                <span asp-validation-for="Description" class="text-danger"></span>
+                                <small class="form-text text-muted">توضیحات دوره برای نمایش در صفحه اصلی استفاده می‌شود</small>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="IsActive" class="form-label">وضعیت دوره</label>
+                                <div class="form-check">
+                                    <input asp-for="IsActive" class="form-check-input" type="checkbox" id="isActiveCheck" checked>
+                                    <label class="form-check-label" for="isActiveCheck">
+                                        دوره فعال است
+                                    </label>
+                                </div>
+                                <small class="form-text text-muted">دوره‌های غیرفعال در سایت نمایش داده نمی‌شوند</small>
+                            </div>
+                        </div>
+
+                        <!-- Course Features -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h6 class="card-title">ویژگی‌های دوره:</h6>
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <div class="d-flex align-items-center mb-2">
+                                                    <i class="fas fa-book text-primary mr-2"></i>
+                                                    <strong>ماژول‌های آموزشی</strong>
+                                                </div>
+                                                <small class="text-muted">پس از ایجاد دوره، می‌توانید ماژول‌ها و درس‌های مختلف اضافه کنید</small>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="d-flex align-items-center mb-2">
+                                                    <i class="fas fa-school text-success mr-2"></i>
+                                                    <strong>کلاس‌های آموزشی</strong>
+                                                </div>
+                                                <small class="text-muted">معلمان می‌توانند بر اساس این دوره کلاس‌های جدید تشکیل دهند</small>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="d-flex align-items-center mb-2">
+                                                    <i class="fas fa-clipboard-check text-info mr-2"></i>
+                                                    <strong>آزمون‌ها و ارزیابی</strong>
+                                                </div>
+                                                <small class="text-muted">امکان ایجاد آزمون‌های مختلف برای ارزیابی یادگیری</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Course Guidelines -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="alert alert-info">
+                                    <h6><i class="fas fa-info-circle"></i> راهنمای ایجاد دوره:</h6>
+                                    <ul class="mb-0">
+                                        <li>عنوان دوره باید واضح و مفهوم باشد</li>
+                                        <li>توضیحات کاملی از محتوای دوره ارائه دهید</li>
+                                        <li>ترتیب نمایش برای مرتب‌سازی دوره‌ها در صفحه اصلی استفاده می‌شود</li>
+                                        <li>پس از ایجاد دوره، می‌توانید ماژول‌ها و درس‌ها را اضافه کنید</li>
+                                        <li>دوره‌های غیرفعال فقط برای مدیران قابل مشاهده هستند</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="d-flex justify-content-between">
+                                    <a href="@Url.Action("Courses", "Admin")" class="btn btn-secondary">
+                                        <i class="fas fa-times"></i> انصراف
+                                    </a>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-plus"></i> ایجاد دوره
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    
+    <script>
+        // Form validation
+        $('form').on('submit', function(e) {
+            var isValid = true;
+            var errors = [];
+
+            // Check required fields
+            var title = $('#Title').val().trim();
+
+            if (!title) {
+                errors.push('عنوان دوره الزامی است');
+                isValid = false;
+            }
+
+            if (!isValid) {
+                e.preventDefault();
+                showAlert('error', errors.join('<br>'));
+                return false;
+            }
+        });
+
+        function showAlert(type, message) {
+            var alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+            var alertHtml = `
+                <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+                    ${message}
+                    <button type="button" class="close" data-dismiss="alert">
+                        <span>&times;</span>
+                    </button>
+                </div>
+            `;
+            
+            // Remove existing alerts
+            $('.alert:not(.alert-info)').remove();
+            
+            // Add new alert at the top of the container
+            $('.container-fluid').prepend(alertHtml);
+            
+            // Auto-dismiss after 5 seconds
+            setTimeout(function() {
+                $('.alert-success, .alert-danger').fadeOut();
+            }, 5000);
+        }
+
+        // Auto-generate order number based on existing courses
+        $(document).ready(function() {
+            if ($('#Order').val() === '' || $('#Order').val() === '0') {
+                // You could make an AJAX call to get the next order number
+                // For now, we'll just set it to 1
+                $('#Order').val('1');
+            }
+        });
+
+        // Character counter for description
+        $('#Description').on('input', function() {
+            var length = $(this).val().length;
+            var maxLength = 1000; // Assuming max length
+            
+            if (length > maxLength * 0.8) {
+                $(this).addClass('border-warning');
+            } else {
+                $(this).removeClass('border-warning');
+            }
+        });
+
+        // Title validation
+        $('#Title').on('blur', function() {
+            var title = $(this).val().trim();
+            if (title.length < 3) {
+                $(this).addClass('border-danger');
+                showAlert('error', 'عنوان دوره باید حداقل ۳ کاراکتر باشد');
+            } else {
+                $(this).removeClass('border-danger');
+            }
+        });
+    </script>
+}
+
+<style>
+    .text-gray-800 {
+        color: #5a5c69 !important;
+    }
+    
+    .border-left-primary {
+        border-left: 0.25rem solid #4e73df !important;
+    }
+    
+    .card.bg-light {
+        background-color: #f8f9fc !important;
+    }
+</style>

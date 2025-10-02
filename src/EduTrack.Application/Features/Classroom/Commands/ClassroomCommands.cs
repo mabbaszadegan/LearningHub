@@ -7,7 +7,7 @@ public record CreateClassCommand(
     int CourseId,
     string Name,
     string? Description,
-    string TeacherId,
+    string? TeacherId,
     DateTimeOffset StartDate,
     DateTimeOffset? EndDate) : IRequest<Result<ClassDto>>;
 
@@ -16,7 +16,7 @@ public record UpdateClassCommand(
     int CourseId,
     string Name,
     string? Description,
-    string TeacherId,
+    string? TeacherId,
     DateTimeOffset StartDate,
     DateTimeOffset? EndDate,
     bool IsActive) : IRequest<Result<ClassDto>>;

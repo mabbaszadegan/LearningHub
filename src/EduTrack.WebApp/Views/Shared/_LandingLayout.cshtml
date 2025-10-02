@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - EduTrack</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.rtl.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/EduTrack.WebApp.styles.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="سیستم مدیریت یادگیری EduTrack - پلتفرم جامع آموزشی برای معلمان و دانش‌آموزان">
+    <meta name="keywords" content="آموزش آنلاین, سیستم مدیریت یادگیری, LMS, EduTrack">
+    <meta name="author" content="EduTrack Team">
+    
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="@ViewData["Title"] - EduTrack">
+    <meta property="og:description" content="سیستم مدیریت یادگیری هوشمند و مدرن">
+    <meta property="og:type" content="website">
+    
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top landing-navbar">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-graduation-cap me-2"></i>
+                <strong>EduTrack</strong>
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#features">ویژگی‌ها</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#about">درباره ما</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#contact">تماس</a>
+                    </li>
+                </ul>
+                
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" asp-controller="Account" asp-action="Login">
+                            <i class="fas fa-sign-in-alt me-1"></i>ورود
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user-plus me-1"></i>ثبت نام
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a class="dropdown-item" asp-controller="Account" asp-action="Register" asp-route-role="Student">
+                                    <i class="fas fa-user-graduate me-2"></i>دانش‌آموز
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" asp-controller="Account" asp-action="Register" asp-route-role="Teacher">
+                                    <i class="fas fa-chalkboard-teacher me-2"></i>معلم
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main>
+        @RenderBody()
+    </main>
+
+    <!-- Footer -->
+    <footer class="landing-footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="footer-section">
+                        <h5 class="footer-title">
+                            <i class="fas fa-graduation-cap me-2"></i>EduTrack
+                        </h5>
+                        <p class="footer-description">
+                            سیستم مدیریت یادگیری هوشمند که تجربه آموزش و یادگیری را متحول می‌کند.
+                        </p>
+                        <div class="social-links">
+                            <a href="#" class="social-link">
+                                <i class="fab fa-telegram"></i>
+                            </a>
+                            <a href="#" class="social-link">
+                                <i class="fab fa-instagram"></i>
+                            </a>
+                            <a href="#" class="social-link">
+                                <i class="fab fa-linkedin"></i>
+                            </a>
+                            <a href="#" class="social-link">
+                                <i class="fab fa-twitter"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-2 col-md-6 mb-4">
+                    <div class="footer-section">
+                        <h6 class="footer-title">لینک‌های مفید</h6>
+                        <ul class="footer-links">
+                            <li><a href="#features">ویژگی‌ها</a></li>
+                            <li><a href="#pricing">قیمت‌گذاری</a></li>
+                            <li><a href="#support">پشتیبانی</a></li>
+                            <li><a href="#docs">مستندات</a></li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="col-lg-2 col-md-6 mb-4">
+                    <div class="footer-section">
+                        <h6 class="footer-title">خدمات</h6>
+                        <ul class="footer-links">
+                            <li><a href="#">مدیریت دوره</a></li>
+                            <li><a href="#">آزمون‌سازی</a></li>
+                            <li><a href="#">گزارش‌گیری</a></li>
+                            <li><a href="#">پشتیبانی فنی</a></li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="col-lg-2 col-md-6 mb-4">
+                    <div class="footer-section">
+                        <h6 class="footer-title">شرکت</h6>
+                        <ul class="footer-links">
+                            <li><a href="#">درباره ما</a></li>
+                            <li><a href="#">تیم ما</a></li>
+                            <li><a href="#">فرصت‌های شغلی</a></li>
+                            <li><a href="#">تماس با ما</a></li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="col-lg-2 col-md-6 mb-4">
+                    <div class="footer-section">
+                        <h6 class="footer-title">قانونی</h6>
+                        <ul class="footer-links">
+                            <li><a href="#">شرایط استفاده</a></li>
+                            <li><a href="#">حریم خصوصی</a></li>
+                            <li><a href="#">قوانین</a></li>
+                            <li><a href="#">کوکی‌ها</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <hr class="footer-divider">
+            
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <p class="footer-copyright">
+                        © @DateTime.Now.Year EduTrack. تمامی حقوق محفوظ است.
+                    </p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p class="footer-version">
+                        نسخه 1.0.0 | ساخته شده با ❤️ در ایران
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    
+    @await RenderSectionAsync("Scripts", required: false)
+
+    <style>
+        /* Landing Navbar */
+        .landing-navbar {
+            background: rgba(0, 0, 0, 0.1) !important;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            padding: 1rem 0;
+        }
+
+        .landing-navbar.scrolled {
+            background: rgba(0, 0, 0, 0.9) !important;
+            padding: 0.5rem 0;
+        }
+
+        .navbar-brand {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .navbar-nav .nav-link {
+            font-weight: 500;
+            margin: 0 0.5rem;
+            transition: color 0.3s ease;
+        }
+
+        .navbar-nav .nav-link:hover {
+            color: #007bff !important;
+        }
+
+        /* Landing Footer */
+        .landing-footer {
+            background: #1a1a1a;
+            color: white;
+            padding: 3rem 0 1rem;
+        }
+
+        .footer-section {
+            margin-bottom: 2rem;
+        }
+
+        .footer-title {
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: white;
+        }
+
+        .footer-description {
+            color: #ccc;
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+
+        .footer-links {
+            list-style: none;
+            padding: 0;
+        }
+
+        .footer-links li {
+            margin-bottom: 0.5rem;
+        }
+
+        .footer-links a {
+            color: #ccc;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .footer-links a:hover {
+            color: #007bff;
+        }
+
+        .social-links {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .social-link {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #333;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .social-link:hover {
+            background: #007bff;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .footer-divider {
+            border-color: #333;
+            margin: 2rem 0 1rem;
+        }
+
+        .footer-copyright,
+        .footer-version {
+            color: #999;
+            margin: 0;
+            font-size: 0.875rem;
+        }
+
+        /* Responsive */
+        @@media (max-width: 768px) {
+            .landing-navbar {
+                padding: 0.5rem 0;
+            }
+
+            .social-links {
+                justify-content: center;
+            }
+
+            .footer-section {
+                text-align: center;
+            }
+        }
+    </style>
+
+    <script>
+        // Navbar scroll effect
+        $(window).scroll(function() {
+            if ($(window).scrollTop() > 50) {
+                $('.landing-navbar').addClass('scrolled');
+            } else {
+                $('.landing-navbar').removeClass('scrolled');
+            }
+        });
+    </script>
+</body>
+</html>

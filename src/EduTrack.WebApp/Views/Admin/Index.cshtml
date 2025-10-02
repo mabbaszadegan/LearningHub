@@ -1,0 +1,493 @@
+@model EduTrack.WebApp.Models.AdminDashboardViewModel
+@{
+    ViewData["Title"] = "پنل مدیریت";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-0 text-gray-800">پنل مدیریت سیستم</h1>
+                    <p class="mb-0 text-muted">مدیریت کامل سیستم آموزشی</p>
+                </div>
+                <div>
+                    <span class="badge badge-success">آنلاین</span>
+                    <small class="text-muted">آخرین بروزرسانی: @DateTime.Now.ToString("HH:mm")</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                کل کاربران
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.TotalUsers</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-users fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                معلمان
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.TotalTeachers</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-chalkboard-teacher fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                دانش‌آموزان
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.TotalStudents</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-user-graduate fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                دوره‌های آموزشی
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.TotalCourses</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-book fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Additional Statistics -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-secondary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-secondary text-uppercase mb-1">
+                                کل کلاس‌ها
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.TotalClasses</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-school fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                کلاس‌های فعال
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.ActiveClasses</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-play-circle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                ثبت‌نام‌ها
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.TotalEnrollments</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-user-plus fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-dark shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-dark text-uppercase mb-1">
+                                آزمون‌ها
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.TotalExams</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clipboard-check fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">عملیات سریع</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <a href="@Url.Action("Users", "Admin")" class="btn btn-primary btn-block">
+                                <i class="fas fa-users"></i> مدیریت کاربران
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="@Url.Action("Courses", "Admin")" class="btn btn-success btn-block">
+                                <i class="fas fa-book"></i> مدیریت دوره‌ها
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="@Url.Action("Classes", "Admin")" class="btn btn-info btn-block">
+                                <i class="fas fa-school"></i> مدیریت کلاس‌ها
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="@Url.Action("Analytics", "Admin")" class="btn btn-warning btn-block">
+                                <i class="fas fa-chart-bar"></i> گزارشات و آمار
+                            </a>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <a href="@Url.Action("Sessions", "Admin")" class="btn btn-secondary btn-block">
+                                <i class="fas fa-user-clock"></i> نشست‌های فعال
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="@Url.Action("ActivityLogs", "Admin")" class="btn btn-dark btn-block">
+                                <i class="fas fa-history"></i> لاگ فعالیت‌ها
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="@Url.Action("Reports", "Admin")" class="btn btn-outline-primary btn-block">
+                                <i class="fas fa-file-alt"></i> گزارش‌های تفصیلی
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="@Url.Action("CreateUser", "Admin")" class="btn btn-outline-success btn-block">
+                                <i class="fas fa-user-plus"></i> افزودن کاربر جدید
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts and Recent Activity -->
+    <div class="row">
+        <!-- User Registration Chart -->
+        <div class="col-xl-8 col-lg-7">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">ثبت‌نام کاربران در ۶ ماه گذشته</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-area">
+                        <canvas id="userRegistrationChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Courses -->
+        <div class="col-xl-4 col-lg-5">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">محبوب‌ترین دوره‌ها</h6>
+                </div>
+                <div class="card-body">
+                    @if (Model.TopCourses.Any())
+                    {
+                        @foreach (var course in Model.TopCourses.Take(5))
+                        {
+                            <div class="mb-3">
+                                <div class="small text-gray-500">@course.Name</div>
+                                <div class="progress">
+                                    <div class="progress-bar" role="progressbar" style="width: @(Model.TopCourses.Max(c => c.Count) > 0 ? (course.Count * 100 / Model.TopCourses.Max(c => c.Count)) : 0)%">
+                                        @course.Count ثبت‌نام
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <p class="text-muted">هنوز دوره‌ای ثبت نشده است.</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Users and Classes -->
+    <div class="row">
+        <!-- Recent Users -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">کاربران جدید</h6>
+                </div>
+                <div class="card-body">
+                    @if (Model.RecentUsers.Any())
+                    {
+                        @foreach (var user in Model.RecentUsers)
+                        {
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="mr-3">
+                                    <div class="icon-circle bg-primary">
+                                        <i class="fas fa-user text-white"></i>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="small text-gray-500">@user.CreatedAt.ToString("yyyy/MM/dd")</div>
+                                    <div class="font-weight-bold">@user.FullName</div>
+                                    <div class="text-muted small">@user.Role.ToString() - @user.Email</div>
+                                </div>
+                                <div>
+                                    <span class="badge badge-@(user.IsActive ? "success" : "secondary")">
+                                        @(user.IsActive ? "فعال" : "غیرفعال")
+                                    </span>
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <p class="text-muted">کاربر جدیدی وجود ندارد.</p>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Classes -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">کلاس‌های جدید</h6>
+                </div>
+                <div class="card-body">
+                    @if (Model.RecentClasses.Any())
+                    {
+                        @foreach (var classItem in Model.RecentClasses)
+                        {
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="mr-3">
+                                    <div class="icon-circle bg-success">
+                                        <i class="fas fa-school text-white"></i>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="small text-gray-500">@classItem.CreatedAt.ToString("yyyy/MM/dd")</div>
+                                    <div class="font-weight-bold">@classItem.Name</div>
+                                    <div class="text-muted small">@classItem.Course.Title - @classItem.Teacher.FullName</div>
+                                </div>
+                                <div>
+                                    <span class="badge badge-@(classItem.IsActive ? "success" : "secondary")">
+                                        @(classItem.IsActive ? "فعال" : "غیرفعال")
+                                    </span>
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <p class="text-muted">کلاس جدیدی وجود ندارد.</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Users -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">فعال‌ترین کاربران (هفته گذشته)</h6>
+                </div>
+                <div class="card-body">
+                    @if (Model.ActiveUsers.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>نام کاربر</th>
+                                        <th>نقش</th>
+                                        <th>تعداد فعالیت</th>
+                                        <th>آخرین فعالیت</th>
+                                        <th>وضعیت</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var activeUser in Model.ActiveUsers.Take(10))
+                                    {
+                                        <tr>
+                                            <td>@activeUser.User.FullName</td>
+                                            <td>
+                                                <span class="badge badge-info">@activeUser.User.Role.ToString()</span>
+                                            </td>
+                                            <td>@activeUser.ActivityCount</td>
+                                            <td>@activeUser.LastActivity.ToString("yyyy/MM/dd HH:mm")</td>
+                                            <td>
+                                                <span class="badge badge-@(activeUser.User.IsActive ? "success" : "secondary")">
+                                                    @(activeUser.User.IsActive ? "فعال" : "غیرفعال")
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-muted">فعالیتی در هفته گذشته ثبت نشده است.</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // User Registration Chart
+        var ctx = document.getElementById('userRegistrationChart').getContext('2d');
+        var userRegistrationChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [@Html.Raw(string.Join(",", Model.UserRegistrationsByMonth.Select(m => $"'{m.MonthName}'")))],
+                datasets: [{
+                    label: 'ثبت‌نام کاربران',
+                    data: [@string.Join(",", Model.UserRegistrationsByMonth.Select(m => m.Count))],
+                    borderColor: 'rgb(75, 192, 192)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'روند ثبت‌نام کاربران'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        // Auto refresh every 5 minutes
+        setTimeout(function() {
+            location.reload();
+        }, 300000);
+    </script>
+}
+
+<style>
+    .icon-circle {
+        height: 2.5rem;
+        width: 2.5rem;
+        border-radius: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .border-left-primary {
+        border-left: 0.25rem solid #4e73df !important;
+    }
+    
+    .border-left-success {
+        border-left: 0.25rem solid #1cc88a !important;
+    }
+    
+    .border-left-info {
+        border-left: 0.25rem solid #36b9cc !important;
+    }
+    
+    .border-left-warning {
+        border-left: 0.25rem solid #f6c23e !important;
+    }
+    
+    .border-left-secondary {
+        border-left: 0.25rem solid #858796 !important;
+    }
+    
+    .border-left-dark {
+        border-left: 0.25rem solid #5a5c69 !important;
+    }
+    
+    .text-gray-800 {
+        color: #5a5c69 !important;
+    }
+    
+    .text-gray-500 {
+        color: #858796 !important;
+    }
+    
+    .text-gray-300 {
+        color: #dddfeb !important;
+    }
+</style>

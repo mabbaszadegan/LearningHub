@@ -1,0 +1,364 @@
+@model EduTrack.WebApp.Models.EditUserViewModel
+@{
+    ViewData["Title"] = "ویرایش کاربر";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-0 text-gray-800">ویرایش کاربر</h1>
+                    <p class="mb-0 text-muted">ویرایش اطلاعات کاربر در سیستم</p>
+                </div>
+                <div>
+                    <a href="@Url.Action("Users", "Admin")" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> بازگشت به لیست کاربران
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit User Form -->
+    <div class="row justify-content-center">
+        <div class="col-xl-8 col-lg-10">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">ویرایش اطلاعات کاربر</h6>
+                </div>
+                <div class="card-body">
+                    <form asp-action="EditUser" method="post">
+                        @Html.AntiForgeryToken()
+                        <input asp-for="Id" type="hidden" />
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="FirstName" class="form-label">نام *</label>
+                                <input asp-for="FirstName" class="form-control" placeholder="نام کاربر را وارد کنید">
+                                <span asp-validation-for="FirstName" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="LastName" class="form-label">نام خانوادگی *</label>
+                                <input asp-for="LastName" class="form-control" placeholder="نام خانوادگی کاربر را وارد کنید">
+                                <span asp-validation-for="LastName" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Email" class="form-label">ایمیل *</label>
+                                <input asp-for="Email" type="email" class="form-control" placeholder="example@domain.com">
+                                <span asp-validation-for="Email" class="text-danger"></span>
+                                <small class="form-text text-muted">این ایمیل به عنوان نام کاربری استفاده خواهد شد</small>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Role" class="form-label">نقش کاربر *</label>
+                                <select asp-for="Role" class="form-control">
+                                    <option value="">انتخاب کنید...</option>
+                                    <option value="@UserRole.Admin">مدیر سیستم</option>
+                                    <option value="@UserRole.Teacher">معلم</option>
+                                    <option value="@UserRole.Student">دانش‌آموز</option>
+                                </select>
+                                <span asp-validation-for="Role" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="IsActive" class="form-label">وضعیت کاربر</label>
+                                <div class="form-check">
+                                    <input asp-for="IsActive" class="form-check-input" type="checkbox" id="isActiveCheck">
+                                    <label class="form-check-label" for="isActiveCheck">
+                                        کاربر فعال است
+                                    </label>
+                                </div>
+                                <small class="form-text text-muted">کاربران غیرفعال نمی‌توانند وارد سیستم شوند</small>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">تغییر رمز عبور</label>
+                                <div>
+                                    <button type="button" class="btn btn-outline-warning" onclick="showResetPasswordModal()">
+                                        <i class="fas fa-key"></i> تغییر رمز عبور
+                                    </button>
+                                </div>
+                                <small class="form-text text-muted">برای تغییر رمز عبور کاربر کلیک کنید</small>
+                            </div>
+                        </div>
+
+                        <!-- Role Description -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h6 class="card-title">توضیحات نقش‌ها:</h6>
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <div class="d-flex align-items-center mb-2">
+                                                    <i class="fas fa-user-shield text-danger mr-2"></i>
+                                                    <strong>مدیر سیستم</strong>
+                                                </div>
+                                                <small class="text-muted">دسترسی کامل به تمام بخش‌های سیستم، مدیریت کاربران، دوره‌ها و تنظیمات</small>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="d-flex align-items-center mb-2">
+                                                    <i class="fas fa-chalkboard-teacher text-warning mr-2"></i>
+                                                    <strong>معلم</strong>
+                                                </div>
+                                                <small class="text-muted">ایجاد و مدیریت کلاس‌ها، آزمون‌ها و نظارت بر پیشرفت دانش‌آموزان</small>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="d-flex align-items-center mb-2">
+                                                    <i class="fas fa-user-graduate text-info mr-2"></i>
+                                                    <strong>دانش‌آموز</strong>
+                                                </div>
+                                                <small class="text-muted">شرکت در کلاس‌ها، مطالعه دروس و شرکت در آزمون‌ها</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="d-flex justify-content-between">
+                                    <a href="@Url.Action("Users", "Admin")" class="btn btn-secondary">
+                                        <i class="fas fa-times"></i> انصراف
+                                    </a>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save"></i> ذخیره تغییرات
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Reset Password Modal -->
+<div class="modal fade" id="resetPasswordModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">تغییر رمز عبور</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <form id="resetPasswordForm">
+                <div class="modal-body">
+                    <p>رمز عبور جدید برای این کاربر را وارد کنید:</p>
+                    <div class="form-group">
+                        <label for="newPassword">رمز عبور جدید</label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="newPassword" name="newPassword" required minlength="6">
+                            <div class="input-group-append">
+                                <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('newPassword')">
+                                    <i class="fas fa-eye" id="newPassword-icon"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <small class="form-text text-muted">رمز عبور باید حداقل ۶ کاراکتر باشد</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="confirmPassword">تکرار رمز عبور</label>
+                        <input type="password" class="form-control" id="confirmPassword" required>
+                    </div>
+                    <div class="form-group">
+                        <button type="button" class="btn btn-outline-info btn-sm" onclick="generateRandomPassword()">
+                            <i class="fas fa-random"></i> تولید رمز عبور تصادفی
+                        </button>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">انصراف</button>
+                    <button type="submit" class="btn btn-warning">تغییر رمز عبور</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    
+    <script>
+        function showResetPasswordModal() {
+            $('#newPassword').val('');
+            $('#confirmPassword').val('');
+            $('#resetPasswordModal').modal('show');
+        }
+
+        function togglePassword(inputId) {
+            var input = document.getElementById(inputId);
+            var icon = document.getElementById(inputId + '-icon');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+
+        function generateRandomPassword() {
+            var length = 12;
+            var charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@@#$%^&*";
+            var password = "";
+            
+            // Ensure at least one character from each required type
+            password += "ABCDEFGHIJKLMNOPQRSTUVWXYZ"[Math.floor(Math.random() * 26)]; // uppercase
+            password += "abcdefghijklmnopqrstuvwxyz"[Math.floor(Math.random() * 26)]; // lowercase
+            password += "0123456789"[Math.floor(Math.random() * 10)]; // digit
+            password += "!@@#$%^&*"[Math.floor(Math.random() * 9)]; // special char
+            
+            // Fill the rest randomly
+            for (var i = password.length; i < length; i++) {
+                password += charset[Math.floor(Math.random() * charset.length)];
+            }
+            
+            // Shuffle the password
+            password = password.split('').sort(() => Math.random() - 0.5).join('');
+            
+            document.getElementById('newPassword').value = password;
+            document.getElementById('confirmPassword').value = password;
+            
+            // Show the password temporarily
+            var passwordInput = document.getElementById('newPassword');
+            passwordInput.type = 'text';
+            
+            // Show success message
+            showAlert('success', 'رمز عبور تصادفی تولید شد');
+            
+            // Hide password after 3 seconds
+            setTimeout(function() {
+                passwordInput.type = 'password';
+            }, 3000);
+        }
+
+        $('#resetPasswordForm').on('submit', function(e) {
+            e.preventDefault();
+            
+            var newPassword = $('#newPassword').val();
+            var confirmPassword = $('#confirmPassword').val();
+            
+            if (newPassword !== confirmPassword) {
+                showAlert('error', 'رمز عبور و تکرار آن مطابقت ندارند');
+                return;
+            }
+            
+            if (newPassword.length < 6) {
+                showAlert('error', 'رمز عبور باید حداقل ۶ کاراکتر باشد');
+                return;
+            }
+            
+            $.post('@Url.Action("ResetPassword", "Admin")', {
+                userId: '@Model.Id',
+                newPassword: newPassword,
+                __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+            })
+            .done(function(response) {
+                if (response.success) {
+                    $('#resetPasswordModal').modal('hide');
+                    showAlert('success', response.message);
+                } else {
+                    showAlert('error', response.message);
+                }
+            })
+            .fail(function() {
+                showAlert('error', 'خطا در تغییر رمز عبور');
+            });
+        });
+
+        function showAlert(type, message) {
+            var alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+            var alertHtml = `
+                <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+                    ${message}
+                    <button type="button" class="close" data-dismiss="alert">
+                        <span>&times;</span>
+                    </button>
+                </div>
+            `;
+            
+            // Remove existing alerts
+            $('.alert').remove();
+            
+            // Add new alert at the top of the container
+            $('.container-fluid').prepend(alertHtml);
+            
+            // Auto-dismiss after 5 seconds
+            setTimeout(function() {
+                $('.alert').fadeOut();
+            }, 5000);
+        }
+
+        // Role selection change handler
+        $(document).ready(function() {
+            $('#Role').on('change', function() {
+                var selectedRole = $(this).val();
+                var roleCards = $('.card.bg-light .col-md-4');
+                
+                // Reset all cards
+                roleCards.removeClass('border border-primary border-danger border-warning border-info');
+                
+                // Highlight selected role
+                if (selectedRole === '1') { // Admin
+                    roleCards.eq(0).addClass('border border-danger');
+                } else if (selectedRole === '2') { // Teacher
+                    roleCards.eq(1).addClass('border border-warning');
+                } else if (selectedRole === '3') { // Student
+                    roleCards.eq(2).addClass('border border-info');
+                }
+            });
+
+            // Initialize role highlighting on page load
+            $('#Role').trigger('change');
+        });
+
+        // Show success message if exists
+        @if (TempData["Success"] != null)
+        {
+            <text>
+            $(document).ready(function() {
+                showAlert('success', '@TempData["Success"]');
+            });
+            </text>
+        }
+
+        // Add CSRF token to all AJAX requests
+        $.ajaxSetup({
+            beforeSend: function(xhr, settings) {
+                if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain) {
+                    xhr.setRequestHeader("RequestVerificationToken", $('input[name="__RequestVerificationToken"]').val());
+                }
+            }
+        });
+    </script>
+}
+
+<style>
+    .text-gray-800 {
+        color: #5a5c69 !important;
+    }
+    
+    .card.bg-light .col-md-4 {
+        transition: all 0.3s ease;
+        padding: 10px;
+        border-radius: 5px;
+    }
+    
+    .card.bg-light .col-md-4.border {
+        background-color: rgba(0,123,255,0.1);
+    }
+</style>

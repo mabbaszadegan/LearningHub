@@ -1,0 +1,383 @@
+@model List<EduTrack.WebApp.Models.ActiveSessionData>
+@{
+    ViewData["Title"] = "نشست‌های فعال";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-0 text-gray-800">نشست‌های فعال</h1>
+                    <p class="mb-0 text-muted">مدیریت و نظارت بر نشست‌های کاربران</p>
+                </div>
+                <div>
+                    <button type="button" class="btn btn-info" onclick="refreshSessions()">
+                        <i class="fas fa-sync-alt"></i> بروزرسانی
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                کاربران آنلاین
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.Count(s => s.IsOnline)</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-circle text-success fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                کل نشست‌ها
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.Count</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-users fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                معلمان آنلاین
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.Count(s => s.IsOnline && s.User.Role == UserRole.Teacher)</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-chalkboard-teacher fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                دانش‌آموزان آنلاین
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.Count(s => s.IsOnline && s.User.Role == UserRole.Student)</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-user-graduate fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sessions Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">نشست‌های کاربران</h6>
+                </div>
+                <div class="card-body">
+                    @if (Model.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-bordered" id="sessionsTable">
+                                <thead>
+                                    <tr>
+                                        <th>کاربر</th>
+                                        <th>نقش</th>
+                                        <th>آخرین ورود</th>
+                                        <th>مدت زمان</th>
+                                        <th>وضعیت</th>
+                                        <th>عملیات</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var session in Model.OrderByDescending(s => s.LastLogin))
+                                    {
+                                        <tr id="session-@session.User.Id">
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <div class="mr-3">
+                                                        <div class="icon-circle bg-@(session.User.Role == UserRole.Admin ? "danger" : session.User.Role == UserRole.Teacher ? "warning" : "info")">
+                                                            <i class="fas fa-@(session.User.Role == UserRole.Admin ? "user-shield" : session.User.Role == UserRole.Teacher ? "chalkboard-teacher" : "user-graduate") text-white"></i>
+                                                        </div>
+                                                    </div>
+                                                    <div>
+                                                        <div class="font-weight-bold">@session.User.FullName</div>
+                                                        <div class="text-muted small">@session.User.Email</div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span class="badge badge-@(session.User.Role == UserRole.Admin ? "danger" : session.User.Role == UserRole.Teacher ? "warning" : "info")">
+                                                    @(session.User.Role == UserRole.Admin ? "مدیر" : session.User.Role == UserRole.Teacher ? "معلم" : "دانش‌آموز")
+                                                </span>
+                                            </td>
+                                            <td>@session.LastLogin.ToString("yyyy/MM/dd HH:mm")</td>
+                                            <td>
+                                                @{
+                                                    var duration = DateTimeOffset.UtcNow - session.LastLogin;
+                                                    var durationText = "";
+                                                    if (duration.TotalMinutes < 60)
+                                                    {
+                                                        durationText = $"{(int)duration.TotalMinutes} دقیقه پیش";
+                                                    }
+                                                    else if (duration.TotalHours < 24)
+                                                    {
+                                                        durationText = $"{(int)duration.TotalHours} ساعت پیش";
+                                                    }
+                                                    else
+                                                    {
+                                                        durationText = $"{(int)duration.TotalDays} روز پیش";
+                                                    }
+                                                }
+                                                @durationText
+                                            </td>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <div class="status-indicator bg-@(session.IsOnline ? "success" : "secondary") mr-2"></div>
+                                                    <span class="badge badge-@(session.IsOnline ? "success" : "secondary")">
+                                                        @(session.IsOnline ? "آنلاین" : "آفلاین")
+                                                    </span>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                @if (session.IsOnline)
+                                                {
+                                                    <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                            onclick="logoutUser('@session.User.Id', '@session.User.FullName')" 
+                                                            title="خروج اجباری">
+                                                        <i class="fas fa-sign-out-alt"></i> خروج
+                                                    </button>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">-</span>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-5">
+                            <i class="fas fa-user-clock fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">نشست فعالی یافت نشد</h5>
+                            <p class="text-muted">هیچ کاربری در ۲۴ ساعت گذشته وارد سیستم نشده است.</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Online Users Chart -->
+    @if (Model.Any())
+    {
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card shadow">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">توزیع کاربران آنلاین بر اساس نقش</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-pie pt-4 pb-2">
+                            <canvas id="onlineUsersChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        function refreshSessions() {
+            location.reload();
+        }
+
+        function logoutUser(userId, userName) {
+            if (confirm(`آیا مطمئن هستید که می‌خواهید کاربر "${userName}" را از سیستم خارج کنید؟`)) {
+                $.post('@Url.Action("LogoutUser", "Admin")', {
+                    userId: userId,
+                    __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                })
+                .done(function(response) {
+                    if (response.success) {
+                        // Update the row to show offline status
+                        var row = $('#session-' + userId);
+                        row.find('.status-indicator').removeClass('bg-success').addClass('bg-secondary');
+                        row.find('.badge').removeClass('badge-success').addClass('badge-secondary').text('آفلاین');
+                        row.find('button').remove();
+                        row.find('td:last').html('<span class="text-muted">-</span>');
+                        
+                        showAlert('success', response.message);
+                        
+                        // Update statistics
+                        setTimeout(function() {
+                            refreshSessions();
+                        }, 2000);
+                    } else {
+                        showAlert('error', response.message);
+                    }
+                })
+                .fail(function() {
+                    showAlert('error', 'خطا در خروج کاربر از سیستم');
+                });
+            }
+        }
+
+        function showAlert(type, message) {
+            var alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+            var alertHtml = `
+                <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+                    ${message}
+                    <button type="button" class="close" data-dismiss="alert">
+                        <span>&times;</span>
+                    </button>
+                </div>
+            `;
+            
+            // Remove existing alerts
+            $('.alert').remove();
+            
+            // Add new alert at the top of the container
+            $('.container-fluid').prepend(alertHtml);
+            
+            // Auto-dismiss after 5 seconds
+            setTimeout(function() {
+                $('.alert').fadeOut();
+            }, 5000);
+        }
+
+        // Online Users Chart
+        @if (Model.Any())
+        {
+            <text>
+            var ctx = document.getElementById('onlineUsersChart').getContext('2d');
+            var onlineUsersChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['مدیران', 'معلمان', 'دانش‌آموزان'],
+                    datasets: [{
+                        data: [
+                            @Model.Count(s => s.IsOnline && s.User.Role == UserRole.Admin),
+                            @Model.Count(s => s.IsOnline && s.User.Role == UserRole.Teacher),
+                            @Model.Count(s => s.IsOnline && s.User.Role == UserRole.Student)
+                        ],
+                        backgroundColor: ['#dc3545', '#ffc107', '#17a2b8'],
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                        },
+                        title: {
+                            display: true,
+                            text: 'کاربران آنلاین'
+                        }
+                    }
+                }
+            });
+            </text>
+        }
+
+        // Auto refresh every 30 seconds
+        setInterval(function() {
+            refreshSessions();
+        }, 30000);
+
+        // Add CSRF token to all AJAX requests
+        $.ajaxSetup({
+            beforeSend: function(xhr, settings) {
+                if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain) {
+                    xhr.setRequestHeader("RequestVerificationToken", $('input[name="__RequestVerificationToken"]').val());
+                }
+            }
+        });
+    </script>
+}
+
+<style>
+    .icon-circle {
+        height: 2.5rem;
+        width: 2.5rem;
+        border-radius: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .status-indicator {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+    
+    .border-left-primary {
+        border-left: 0.25rem solid #4e73df !important;
+    }
+    
+    .border-left-success {
+        border-left: 0.25rem solid #1cc88a !important;
+    }
+    
+    .border-left-info {
+        border-left: 0.25rem solid #36b9cc !important;
+    }
+    
+    .border-left-warning {
+        border-left: 0.25rem solid #f6c23e !important;
+    }
+    
+    .text-gray-800 {
+        color: #5a5c69 !important;
+    }
+    
+    .text-gray-300 {
+        color: #dddfeb !important;
+    }
+    
+    .chart-pie {
+        position: relative;
+        height: 15rem;
+    }
+</style>
