@@ -1,0 +1,170 @@
+@using EduTrack.Application.Common.Models
+@model List<SubChapterDto>
+
+@{
+    ViewData["Title"] = "مدیریت زیرمباحث";
+    var chapterId = ViewBag.ChapterId as int?;
+    var chapterTitle = ViewBag.ChapterTitle as string;
+    var courseId = ViewBag.CourseId as int?;
+    var courseTitle = ViewBag.CourseTitle as string;
+}
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-list me-2"></i>
+                        مدیریت زیرمباحث
+                    </h5>
+                    <small class="text-muted">
+                        دوره: @courseTitle | مبحث: @chapterTitle
+                    </small>
+                </div>
+                <div>
+                    <a href="@Url.Action("CreateSubChapter", new { chapterId = chapterId })" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>
+                        ایجاد زیرمبحث جدید
+                    </a>
+                    <a href="@Url.Action("Index", new { courseId = courseId })" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-right me-2"></i>
+                        بازگشت به مباحث
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                @if (Model != null && Model.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>عنوان</th>
+                                    <th>توضیحات</th>
+                                    <th>هدف</th>
+                                    <th>ترتیب</th>
+                                    <th>وضعیت</th>
+                                    <th>تاریخ ایجاد</th>
+                                    <th>عملیات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var subChapter in Model)
+                                {
+                                    <tr>
+                                        <td>
+                                            <strong>@subChapter.Title</strong>
+                                        </td>
+                                        <td>
+                                            @if (!string.IsNullOrEmpty(subChapter.Description))
+                                            {
+                                                <span class="text-truncate d-inline-block" style="max-width: 200px;" title="@subChapter.Description">
+                                                    @subChapter.Description
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">-</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (!string.IsNullOrEmpty(subChapter.Objective))
+                                            {
+                                                <span class="text-truncate d-inline-block" style="max-width: 200px;" title="@subChapter.Objective">
+                                                    @subChapter.Objective
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">-</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-info">@subChapter.Order</span>
+                                        </td>
+                                        <td>
+                                            @if (subChapter.IsActive)
+                                            {
+                                                <span class="badge bg-success">فعال</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-secondary">غیرفعال</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">@subChapter.CreatedAt.ToString("yyyy/MM/dd")</small>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <a href="@Url.Action("Index", "EducationalContent", new { subChapterId = subChapter.Id })" 
+                                                   class="btn btn-sm btn-outline-primary" title="مدیریت محتوا">
+                                                    <i class="fas fa-file-alt"></i>
+                                                </a>
+                                                <a href="@Url.Action("EditSubChapter", new { id = subChapter.Id })" 
+                                                   class="btn btn-sm btn-outline-warning" title="ویرایش">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                        onclick="deleteSubChapter(@subChapter.Id)" title="حذف">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-5">
+                        <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">هیچ زیرمبحثی یافت نشد</h5>
+                        <p class="text-muted">برای شروع، زیرمبحث جدیدی ایجاد کنید.</p>
+                        <a href="@Url.Action("CreateSubChapter", new { chapterId = chapterId })" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>
+                            ایجاد زیرمبحث جدید
+                        </a>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">تأیید حذف</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                آیا از حذف این زیرمبحث اطمینان دارید؟ این عمل قابل بازگشت نیست.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">انصراف</button>
+                <form id="deleteForm" method="post" style="display: inline;">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-danger">حذف</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function deleteSubChapter(id) {
+            const deleteForm = document.getElementById('deleteForm');
+            deleteForm.action = '@Url.Action("DeleteSubChapter")/' + id;
+            
+            const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+            modal.show();
+        }
+    </script>
+}

@@ -110,6 +110,64 @@ public class FileUploadController : Controller
         }
     }
 
+    // GET: Serve educational content files
+    [HttpGet("api/files/{*filePath}")]
+    public async Task<IActionResult> ServeFile(string filePath)
+    {
+        try
+        {
+            // Decode the file path
+            filePath = Uri.UnescapeDataString(filePath);
+            
+            // Ensure the file path is relative to the storage root
+            if (Path.IsPathRooted(filePath))
+            {
+                _logger.LogWarning("Absolute path not allowed: {FilePath}", filePath);
+                return BadRequest("Invalid file path");
+            }
+            
+            // Check if file exists
+            if (!await _fileStorageService.FileExistsAsync(filePath))
+            {
+                _logger.LogWarning("File not found: {FilePath}", filePath);
+                return NotFound("File not found");
+            }
+
+            // Get file stream
+            var fileStream = await _fileStorageService.GetFileAsync(filePath);
+            var fileName = Path.GetFileName(filePath);
+            var contentType = GetContentType(fileName);
+
+            return File(fileStream, contentType, fileName);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error serving file: {FilePath}", filePath);
+            return StatusCode(500, "Error serving file");
+        }
+    }
+
+    private static string GetContentType(string fileName)
+    {
+        var extension = Path.GetExtension(fileName).ToLowerInvariant();
+        return extension switch
+        {
+            ".jpg" or ".jpeg" => "image/jpeg",
+            ".png" => "image/png",
+            ".gif" => "image/gif",
+            ".webp" => "image/webp",
+            ".mp4" => "video/mp4",
+            ".avi" => "video/avi",
+            ".mov" => "video/quicktime",
+            ".webm" => "video/webm",
+            ".mp3" => "audio/mpeg",
+            ".wav" => "audio/wav",
+            ".ogg" => "audio/ogg",
+            ".pdf" => "application/pdf",
+            _ => "application/octet-stream"
+        };
+    }
+
     private static bool IsValidFileType(string contentType, ResourceType resourceType)
     {
         return resourceType switch

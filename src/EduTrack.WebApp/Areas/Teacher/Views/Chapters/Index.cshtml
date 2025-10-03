@@ -1,11 +1,11 @@
 @model List<EduTrack.Application.Common.Models.ChapterDto>
 @{
-    ViewData["Title"] = "مدیریت فصول";
+    ViewData["Title"] = "مدیریت مباحث";
 }
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-        <h2 class="h4 mb-0">مدیریت فصول</h2>
+        <h2 class="h4 mb-0">مدیریت مباحث</h2>
         <p class="text-muted mb-0">@ViewBag.CourseTitle</p>
     </div>
     <div>
@@ -13,7 +13,7 @@
             <i class="fas fa-arrow-right me-2"></i>بازگشت به دوره‌ها
         </a>
         <a asp-action="Create" asp-route-courseId="@ViewBag.CourseId" class="btn btn-modern-primary">
-            <i class="fas fa-plus me-2"></i>افزودن فصل جدید
+            <i class="fas fa-plus me-2"></i>افزودن مبحث جدید
         </a>
     </div>
 </div>
@@ -58,13 +58,13 @@
                                     </li>
                                     <li>
                                         <a class="dropdown-item" asp-action="CreateSubChapter" asp-route-chapterId="@chapter.Id">
-                                            <i class="fas fa-plus me-2"></i>افزودن زیرفصل
+                                            <i class="fas fa-plus me-2"></i>افزودن زیرمبحث
                                         </a>
                                     </li>
                                     <li><hr class="dropdown-divider"></li>
                                     <li>
                                         <form asp-action="Delete" asp-route-id="@chapter.Id" method="post" 
-                                              onsubmit="return confirm('آیا از حذف این فصل اطمینان دارید؟')">
+                                              onsubmit="return confirm('آیا از حذف این مبحث اطمینان دارید؟')">
                                             <button type="submit" class="dropdown-item text-danger">
                                                 <i class="fas fa-trash me-2"></i>حذف
                                             </button>
@@ -81,7 +81,7 @@
                         
                         <div class="objective-section mb-3">
                             <h6 class="text-primary mb-2">
-                                <i class="fas fa-target me-2"></i>هدف فصل:
+                                <i class="fas fa-target me-2"></i>هدف مبحث:
                             </h6>
                             <p class="objective-text">@chapter.Objective</p>
                         </div>
@@ -89,7 +89,7 @@
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <span class="badge bg-info">
                                 <i class="fas fa-list me-1"></i>
-                                @chapter.SubChapterCount زیرفصل
+                                @chapter.SubChapterCount زیرمبحث
                             </span>
                             <small class="text-muted">
                                 <i class="fas fa-sort-numeric-up me-1"></i>
@@ -101,7 +101,7 @@
                         {
                             <div class="subchapters-section">
                                 <h6 class="text-secondary mb-2">
-                                    <i class="fas fa-list-ul me-2"></i>زیرفصل‌ها:
+                                    <i class="fas fa-list-ul me-2"></i>زیرمبحث‌ها:
                                 </h6>
                                 <div class="subchapters-list">
                                     @foreach (var subChapter in chapter.SubChapters.Take(3))
@@ -135,7 +135,7 @@
                                                     <li><hr class="dropdown-divider"></li>
                                                     <li>
                                                         <form asp-action="DeleteSubChapter" asp-route-id="@subChapter.Id" method="post" 
-                                                              onsubmit="return confirm('آیا از حذف این زیرفصل اطمینان دارید؟')">
+                                                              onsubmit="return confirm('آیا از حذف این زیرمبحث اطمینان دارید؟')">
                                                             <button type="submit" class="dropdown-item text-danger">
                                                                 <i class="fas fa-trash me-2"></i>حذف
                                                             </button>
@@ -149,7 +149,7 @@
                                     {
                                         <div class="text-center">
                                             <small class="text-muted">
-                                                و @(chapter.SubChapters.Count - 3) زیرفصل دیگر...
+                                                و @(chapter.SubChapters.Count - 3) زیرمبحث دیگر...
                                             </small>
                                         </div>
                                     }
@@ -160,10 +160,10 @@
                         {
                             <div class="text-center py-3">
                                 <i class="fas fa-list-ul text-muted mb-2" style="font-size: 2rem;"></i>
-                                <p class="text-muted mb-0">هنوز زیرفصلی اضافه نشده</p>
+                                <p class="text-muted mb-0">هنوز زیرمبحثی اضافه نشده</p>
                                 <div class="mt-3">
                                     <a asp-action="CreateSubChapter" asp-route-chapterId="@chapter.Id" class="btn btn-sm btn-outline-primary me-2">
-                                        <i class="fas fa-plus me-1"></i>افزودن زیرفصل
+                                        <i class="fas fa-plus me-1"></i>افزودن زیرمبحث
                                     </a>
                                 </div>
                             </div>
@@ -178,10 +178,10 @@ else
 {
     <div class="empty-state text-center py-5">
         <i class="fas fa-book-open text-muted mb-3" style="font-size: 4rem;"></i>
-        <h4 class="text-muted mb-3">هنوز فصلی اضافه نشده</h4>
-        <p class="text-muted mb-4">برای شروع، اولین فصل دوره خود را ایجاد کنید.</p>
+        <h4 class="text-muted mb-3">هنوز مبحثی اضافه نشده</h4>
+        <p class="text-muted mb-4">برای شروع، اولین مبحث دوره خود را ایجاد کنید.</p>
         <a asp-action="Create" asp-route-courseId="@ViewBag.CourseId" class="btn btn-modern-primary">
-            <i class="fas fa-plus me-2"></i>افزودن فصل جدید
+            <i class="fas fa-plus me-2"></i>افزودن مبحث جدید
         </a>
     </div>
 }

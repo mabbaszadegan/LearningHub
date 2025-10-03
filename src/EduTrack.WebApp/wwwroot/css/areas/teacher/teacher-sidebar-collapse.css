@@ -1,0 +1,31 @@
+/* Sidebar Collapse Toggle Button in Topbar */
+.sidebar-collapse-toggle {
+    background: none;
+    border: none;
+    color: #6c757d;
+    font-size: 1.25rem;
+    padding: 0.5rem;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.sidebar-collapse-toggle:hover {
+    background: #f8f9fa;
+    color: #667eea;
+}
+
+/* Mobile Sidebar Open State */
+.teacher-sidebar.mobile-open {
+    transform: translateX(0);
+}
+
+/* Responsive Design for Collapsed Sidebar */
+@media (max-width: 991.98px) {
+    .teacher-sidebar.collapsed {
+        width: 280px;
+    }
+    
+    .teacher-main.sidebar-collapsed {
+        margin-right: 0;
+    }
+}

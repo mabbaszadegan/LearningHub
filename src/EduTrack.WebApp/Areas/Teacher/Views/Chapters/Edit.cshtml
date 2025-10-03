@@ -1,11 +1,11 @@
 @model EduTrack.Application.Features.Chapters.Commands.UpdateChapterCommand
 @{
-    ViewData["Title"] = "ویرایش فصل";
+    ViewData["Title"] = "ویرایش مبحث";
 }
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-        <h2 class="h4 mb-0">ویرایش فصل</h2>
+        <h2 class="h4 mb-0">ویرایش مبحث</h2>
         <p class="text-muted mb-0">@ViewBag.CourseTitle</p>
     </div>
     <a asp-action="Index" asp-route-courseId="@ViewBag.CourseId" class="btn btn-outline-secondary">
@@ -26,9 +26,9 @@
                         <div class="col-md-8">
                             <div class="form-group mb-3">
                                 <label asp-for="Title" class="form-label">
-                                    <i class="fas fa-heading me-2"></i>عنوان فصل
+                                    <i class="fas fa-heading me-2"></i>عنوان مبحث
                                 </label>
-                                <input asp-for="Title" class="form-control" placeholder="عنوان فصل را وارد کنید" />
+                                <input asp-for="Title" class="form-control" placeholder="عنوان مبحث را وارد کنید" />
                                 <span asp-validation-for="Title" class="text-danger"></span>
                             </div>
                         </div>
@@ -48,19 +48,19 @@
                             <i class="fas fa-align-right me-2"></i>توضیحات (اختیاری)
                         </label>
                         <textarea asp-for="Description" class="form-control" rows="3" 
-                                  placeholder="توضیحات کوتاه در مورد این فصل"></textarea>
+                                  placeholder="توضیحات کوتاه در مورد این مبحث"></textarea>
                         <span asp-validation-for="Description" class="text-danger"></span>
                     </div>
                     
                     <div class="form-group mb-4">
                         <label asp-for="Objective" class="form-label">
-                            <i class="fas fa-target me-2"></i>هدف فصل <span class="text-danger">*</span>
+                            <i class="fas fa-target me-2"></i>هدف مبحث <span class="text-danger">*</span>
                         </label>
                         <textarea asp-for="Objective" class="form-control" rows="4" 
-                                  placeholder="هدف این فصل چیست؟ دانش‌آموزان پس از مطالعه این فصل چه چیزی یاد خواهند گرفت؟"></textarea>
+                                  placeholder="هدف این مبحث چیست؟ دانش‌آموزان پس از مطالعه این مبحث چه چیزی یاد خواهند گرفت؟"></textarea>
                         <div class="form-text">
                             <i class="fas fa-info-circle me-1"></i>
-                            هدف فصل باید به طور شفاف مشخص کند که دانش‌آموزان پس از مطالعه این فصل چه مهارت‌ها یا دانشی کسب خواهند کرد.
+                            هدف مبحث باید به طور شفاف مشخص کند که دانش‌آموزان پس از مطالعه این مبحث چه مهارت‌ها یا دانشی کسب خواهند کرد.
                         </div>
                         <span asp-validation-for="Objective" class="text-danger"></span>
                     </div>
@@ -69,12 +69,12 @@
                         <div class="form-check">
                             <input asp-for="IsActive" class="form-check-input" type="checkbox" />
                             <label asp-for="IsActive" class="form-check-label">
-                                <i class="fas fa-toggle-on me-2"></i>فصل فعال است
+                                <i class="fas fa-toggle-on me-2"></i>مبحث فعال است
                             </label>
                         </div>
                         <div class="form-text">
                             <i class="fas fa-info-circle me-1"></i>
-                            فصول غیرفعال در لیست دانش‌آموزان نمایش داده نمی‌شوند.
+                            مباحث غیرفعال در لیست دانش‌آموزان نمایش داده نمی‌شوند.
                         </div>
                     </div>
                     

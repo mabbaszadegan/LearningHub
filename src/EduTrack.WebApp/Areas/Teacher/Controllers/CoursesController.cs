@@ -75,4 +75,32 @@ public class CoursesController : Controller
 
         return View(command);
     }
+
+    [HttpGet]
+    public async Task<IActionResult> GetHierarchy()
+    {
+        var currentUser = await _userManager.GetUserAsync(User);
+        if (currentUser == null)
+        {
+            return Json(new { success = false, error = "کاربر یافت نشد" });
+        }
+
+        try
+        {
+            var result = await _mediator.Send(new GetTeacherCoursesHierarchyQuery(currentUser.Id));
+            if (result.IsSuccess)
+            {
+                return Json(new { success = true, data = result.Value });
+            }
+            else
+            {
+                return Json(new { success = false, error = result.Error });
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting teacher courses hierarchy");
+            return Json(new { success = false, error = "خطا در دریافت اطلاعات" });
+        }
+    }
 }
