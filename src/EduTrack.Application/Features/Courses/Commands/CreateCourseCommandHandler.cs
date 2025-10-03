@@ -1,6 +1,7 @@
 using EduTrack.Application.Common.Interfaces;
 using EduTrack.Application.Common.Models;
 using EduTrack.Domain.Entities;
+using EduTrack.Domain.Repositories;
 using FluentValidation;
 using MediatR;
 
@@ -43,16 +44,12 @@ public class CreateCourseCommandHandler : IRequestHandler<CreateCourseCommand, R
 
     public async Task<Result<CourseDto>> Handle(CreateCourseCommand request, CancellationToken cancellationToken)
     {
-        var course = new Course
-        {
-            Title = request.Title,
-            Description = request.Description,
-            Thumbnail = request.Thumbnail,
-            Order = request.Order,
-            CreatedAt = _clock.UtcNow,
-            UpdatedAt = _clock.UtcNow,
-            CreatedBy = _currentUserService.UserId ?? "system"
-        };
+        var course = Course.Create(
+            request.Title,
+            request.Description,
+            request.Thumbnail,
+            request.Order,
+            _currentUserService.UserId ?? "system");
 
         await _courseRepository.AddAsync(course, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);

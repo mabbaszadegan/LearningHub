@@ -1,5 +1,6 @@
 using EduTrack.Application.Common.Interfaces;
 using EduTrack.Domain.Entities;
+using EduTrack.Domain.Repositories;
 using EduTrack.Infrastructure.Data;
 using EduTrack.Infrastructure.Repositories;
 using EduTrack.Infrastructure.Services;
@@ -45,13 +46,26 @@ public static class DependencyInjection
             }
         });
 
-        // Register repositories
+        // Register generic repositories
         services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
         services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+        // Register specific repositories
+        services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<ICourseRepository, CourseRepository>();
+        services.AddScoped<IClassRepository, ClassRepository>();
+        services.AddScoped<IProgressRepository, ProgressRepository>();
+        services.AddScoped<IQuestionRepository, QuestionRepository>();
+        services.AddScoped<IExamRepository, ExamRepository>();
+        services.AddScoped<IChapterRepository, ChapterRepository>();
+        services.AddScoped<IEducationalContentRepository, EducationalContentRepository>();
+
+        // Register infrastructure services
         services.AddScoped<IFileStorageService, FileStorageService>();
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IClock, SystemClock>();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
+        services.AddScoped<IDomainEventService, DomainEventService>();
 
         return services;
     }

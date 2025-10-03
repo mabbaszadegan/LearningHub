@@ -1,6 +1,7 @@
 using EduTrack.Application.Common.Interfaces;
 using EduTrack.Application.Common.Models;
 using EduTrack.Domain.Entities;
+using EduTrack.Domain.Repositories;
 using FluentValidation;
 using MediatR;
 
@@ -67,17 +68,13 @@ public class CreateClassCommandHandler : IRequestHandler<CreateClassCommand, Res
             return Result<ClassDto>.Failure("معلم مورد نظر یافت نشد یا نقش صحیح ندارد");
         }
 
-        var classEntity = new Class
-        {
-            CourseId = request.CourseId,
-            Name = request.Name,
-            Description = request.Description,
-            TeacherId = request.TeacherId,
-            StartDate = request.StartDate,
-            EndDate = request.EndDate,
-            CreatedAt = _clock.UtcNow,
-            UpdatedAt = _clock.UtcNow
-        };
+        var classEntity = Class.Create(
+            request.CourseId,
+            request.Name,
+            request.Description,
+            request.TeacherId,
+            request.StartDate,
+            request.EndDate);
 
         await _classRepository.AddAsync(classEntity, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);

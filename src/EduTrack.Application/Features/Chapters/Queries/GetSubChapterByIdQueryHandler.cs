@@ -1,6 +1,7 @@
 using EduTrack.Application.Common.Interfaces;
 using EduTrack.Application.Common.Models;
 using EduTrack.Domain.Entities;
+using EduTrack.Domain.Repositories;
 using MediatR;
 
 namespace EduTrack.Application.Features.Chapters.Queries;

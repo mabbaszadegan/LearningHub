@@ -3,6 +3,7 @@ using EduTrack.Domain.Entities;
 using EduTrack.Infrastructure;
 using EduTrack.Infrastructure.Data;
 using EduTrack.WebApp.Data;
+using EduTrack.WebApp.Filters;
 using EduTrack.WebApp.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
@@ -24,45 +25,15 @@ Log.Logger = new LoggerConfiguration()
 builder.Host.UseSerilog();
 
 // Add services to the container
-builder.Services.AddControllersWithViews()
+builder.Services.AddControllersWithViews(options =>
+{
+    options.Filters.Add<DomainExceptionFilter>();
+})
     .AddRazorRuntimeCompilation();
 
 // Add Application and Infrastructure services
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
-
-// Configure database
-var databaseProvider = builder.Configuration["Database:Provider"] ?? "Sqlite";
-var connectionString = builder.Configuration.GetConnectionString(databaseProvider);
-
-builder.Services.AddDbContext<AppDbContext>(options =>
-{
-    switch (databaseProvider.ToLowerInvariant())
-    {
-        case "sqlite":
-            options.UseSqlite(connectionString, sqliteOptions =>
-            {
-                sqliteOptions.CommandTimeout(30);
-            });
-            break;
-        case "sqlserver":
-            options.UseSqlServer(connectionString, sqlServerOptions =>
-            {
-                sqlServerOptions.CommandTimeout(30);
-                sqlServerOptions.EnableRetryOnFailure(3);
-            });
-            break;
-        case "postgres":
-            options.UseNpgsql(connectionString, postgresOptions =>
-            {
-                postgresOptions.CommandTimeout(30);
-                postgresOptions.EnableRetryOnFailure(3);
-            });
-            break;
-        default:
-            throw new InvalidOperationException($"Unsupported database provider: {databaseProvider}");
-    }
-});
 
 // Configure Identity
 builder.Services.AddIdentity<User, IdentityRole>(options =>
@@ -126,6 +97,7 @@ Directory.CreateDirectory(storagePath);
 Directory.CreateDirectory(logsPath);
 
 // Configure SQLite pragmas
+var databaseProvider = builder.Configuration.GetValue<string>("Database:Provider", "SQLite");
 if (databaseProvider.ToLowerInvariant() == "sqlite")
 {
     using var scope = app.Services.CreateScope();

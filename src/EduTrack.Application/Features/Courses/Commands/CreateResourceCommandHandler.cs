@@ -1,6 +1,7 @@
 using EduTrack.Application.Common.Interfaces;
 using EduTrack.Application.Common.Models;
 using EduTrack.Domain.Entities;
+using EduTrack.Domain.Repositories;
 using FluentValidation;
 using MediatR;
 
@@ -53,19 +54,15 @@ public class CreateResourceCommandHandler : IRequestHandler<CreateResourceComman
             return Result<ResourceDto>.Failure("Lesson not found");
         }
 
-        var resource = new Resource
-        {
-            LessonId = request.LessonId,
-            Title = request.Title,
-            Description = request.Description,
-            Type = request.Type,
-            FilePath = request.FilePath,
-            Url = request.Url,
-            FileSizeBytes = request.FileSizeBytes,
-            MimeType = request.MimeType,
-            Order = request.Order,
-            CreatedAt = _clock.UtcNow
-        };
+        var resource = Resource.Create(
+            request.LessonId,
+            request.Title,
+            request.Type,
+            request.FilePath,
+            request.Url,
+            request.FileSizeBytes,
+            request.MimeType,
+            request.Order);
 
         await _resourceRepository.AddAsync(resource, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);

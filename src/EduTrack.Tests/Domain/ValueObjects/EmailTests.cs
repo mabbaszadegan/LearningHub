@@ -13,7 +13,7 @@ public class EmailTests
     public void Constructor_WithValidEmail_ShouldCreateEmail(string email)
     {
         // Act
-        var result = new Email(email);
+        var result = Email.Create(email);
 
         // Assert
         result.Value.Should().Be(email.ToLowerInvariant());
@@ -26,7 +26,7 @@ public class EmailTests
     public void Constructor_WithInvalidEmail_ShouldThrowArgumentException(string? email)
     {
         // Act & Assert
-        var action = () => new Email(email!);
+        var action = () => Email.Create(email!);
         action.Should().Throw<ArgumentException>();
     }
 
@@ -38,7 +38,7 @@ public class EmailTests
     public void Constructor_WithMalformedEmail_ShouldThrowArgumentException(string email)
     {
         // Act & Assert
-        var action = () => new Email(email);
+        var action = () => Email.Create(email);
         action.Should().Throw<ArgumentException>();
     }
 
@@ -59,7 +59,7 @@ public class EmailTests
     public void ImplicitConversion_ToString_ShouldWork()
     {
         // Arrange
-        var email = new Email("test@example.com");
+        var email = Email.Create("test@example.com");
 
         // Act
         string result = email;
@@ -72,7 +72,7 @@ public class EmailTests
     public void ToString_ShouldReturnValue()
     {
         // Arrange
-        var email = new Email("test@example.com");
+        var email = Email.Create("test@example.com");
 
         // Act
         var result = email.ToString();

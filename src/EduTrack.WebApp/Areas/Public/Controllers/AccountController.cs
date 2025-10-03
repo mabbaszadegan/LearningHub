@@ -55,10 +55,32 @@ public class AccountController : Controller
                 _logger.LogInformation("User logged in.");
                 
                 // Update last login time
-                user.LastLoginAt = DateTimeOffset.UtcNow;
+                user.UpdateLastLogin();
                 await _userManager.UpdateAsync(user);
                 
-                return RedirectToLocal(returnUrl);
+                // Get user roles from Identity system
+                var userRoles = await _userManager.GetRolesAsync(user);
+                _logger.LogInformation("User {UserName} has roles: {Roles}", user.UserName, string.Join(", ", userRoles));
+                
+                // Redirect based on user role - check both entity role and Identity roles
+                var primaryRole = user.Role.ToString();
+                if (userRoles.Contains("Admin") || primaryRole == "Admin")
+                {
+                    return RedirectToAction("Index", "Home", new { area = "Admin" });
+                }
+                else if (userRoles.Contains("Teacher") || primaryRole == "Teacher")
+                {
+                    return RedirectToAction("Index", "Home", new { area = "Teacher" });
+                }
+                else if (userRoles.Contains("Student") || primaryRole == "Student")
+                {
+                    return RedirectToAction("Index", "Home", new { area = "Student" });
+                }
+                else
+                {
+                    // Default fallback
+                    return RedirectToAction("Index", "Home", new { area = "Student" });
+                }
             }
             
             if (result.IsLockedOut)
@@ -118,16 +140,12 @@ public class AccountController : Controller
             }
 
             // For students, email is optional
-            var user = new User
-            {
-                UserName = model.Username,
-                Email = model.Email ?? $"{model.Username}@edutrack.local", // Default email for students
-                FirstName = model.FirstName,
-                LastName = model.LastName,
-                Role = model.Role == "Teacher" ? UserRole.Teacher : UserRole.Student,
-                IsActive = true,
-                CreatedAt = DateTimeOffset.UtcNow
-            };
+            var user = EduTrack.Domain.Entities.User.Create(
+                model.FirstName,
+                model.LastName,
+                model.Email ?? $"{model.Username}@edutrack.local", // Default email for students
+                model.Role == "Teacher" ? UserRole.Teacher : UserRole.Student);
+            user.UserName = model.Username;
 
             var result = await _userManager.CreateAsync(user, model.Password);
             

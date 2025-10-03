@@ -1,6 +1,7 @@
 using EduTrack.Application.Common.Interfaces;
 using EduTrack.Application.Common.Models;
 using EduTrack.Domain.Entities;
+using EduTrack.Domain.Repositories;
 using FluentValidation;
 using MediatR;
 
@@ -54,16 +55,12 @@ public class CreateChapterCommandHandler : IRequestHandler<CreateChapterCommand,
             return Result<ChapterDto>.Failure("Course not found");
         }
 
-        var chapter = new Chapter
-        {
-            CourseId = request.CourseId,
-            Title = request.Title,
-            Description = request.Description,
-            Objective = request.Objective,
-            Order = request.Order,
-            CreatedAt = _clock.UtcNow,
-            UpdatedAt = _clock.UtcNow
-        };
+        var chapter = Chapter.Create(
+            request.CourseId,
+            request.Title,
+            request.Description,
+            request.Objective,
+            request.Order);
 
         await _chapterRepository.AddAsync(chapter, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);

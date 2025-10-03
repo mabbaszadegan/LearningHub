@@ -1,6 +1,7 @@
 using EduTrack.Application.Common.Interfaces;
 using EduTrack.Application.Common.Models;
 using EduTrack.Domain.Entities;
+using EduTrack.Domain.Repositories;
 using FluentValidation;
 using MediatR;
 
@@ -52,15 +53,11 @@ public class CreateModuleCommandHandler : IRequestHandler<CreateModuleCommand, R
             return Result<ModuleDto>.Failure("Course not found");
         }
 
-        var module = new Module
-        {
-            CourseId = request.CourseId,
-            Title = request.Title,
-            Description = request.Description,
-            Order = request.Order,
-            CreatedAt = _clock.UtcNow,
-            UpdatedAt = _clock.UtcNow
-        };
+        var module = Module.Create(
+            request.CourseId,
+            request.Title,
+            request.Description,
+            request.Order);
 
         await _moduleRepository.AddAsync(module, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);

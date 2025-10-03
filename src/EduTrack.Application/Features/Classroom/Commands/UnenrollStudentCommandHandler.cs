@@ -1,6 +1,7 @@
 using EduTrack.Application.Common.Interfaces;
 using EduTrack.Application.Common.Models;
 using EduTrack.Domain.Entities;
+using EduTrack.Domain.Repositories;
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -66,8 +67,8 @@ public class UnenrollStudentCommandHandler : IRequestHandler<UnenrollStudentComm
         }
 
         // Soft delete - mark as inactive instead of deleting
-        enrollment.IsActive = false;
-        enrollment.CompletedAt = _clock.UtcNow;
+        enrollment.Deactivate();
+        enrollment.Complete();
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 

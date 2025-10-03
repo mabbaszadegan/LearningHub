@@ -20,14 +20,6 @@ public class ClaimsTransformer : IClaimsTransformation
         if (identity == null || !identity.IsAuthenticated)
             return principal;
 
-        // Check if role claim already exists
-        if (identity.HasClaim(ClaimTypes.Role, "Admin") ||
-            identity.HasClaim(ClaimTypes.Role, "Teacher") ||
-            identity.HasClaim(ClaimTypes.Role, "Student"))
-        {
-            return principal;
-        }
-
         // Get user from database
         var userId = identity.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (string.IsNullOrEmpty(userId))
@@ -37,9 +29,28 @@ public class ClaimsTransformer : IClaimsTransformation
         if (user == null)
             return principal;
 
-        // Add role claim based on user's role
-        var roleName = user.Role.ToString();
-        identity.AddClaim(new Claim(ClaimTypes.Role, roleName));
+        // Get user roles from Identity system
+        var userRoles = await _userManager.GetRolesAsync(user);
+        
+        // Remove existing role claims
+        var roleClaims = identity.FindAll(ClaimTypes.Role).ToList();
+        foreach (var claim in roleClaims)
+        {
+            identity.RemoveClaim(claim);
+        }
+
+        // Add all user roles as claims
+        foreach (var role in userRoles)
+        {
+            identity.AddClaim(new Claim(ClaimTypes.Role, role));
+        }
+
+        // Also add the role from the User entity as a fallback
+        var entityRole = user.Role.ToString();
+        if (!userRoles.Contains(entityRole))
+        {
+            identity.AddClaim(new Claim(ClaimTypes.Role, entityRole));
+        }
 
         return principal;
     }

@@ -1,6 +1,7 @@
 using EduTrack.Application.Common.Interfaces;
 using EduTrack.Application.Common.Models;
 using EduTrack.Domain.Entities;
+using EduTrack.Domain.Repositories;
 using FluentValidation;
 using MediatR;
 
@@ -50,12 +51,15 @@ public class UpdateChapterCommandHandler : IRequestHandler<UpdateChapterCommand,
             return Result<ChapterDto>.Failure("Chapter not found");
         }
 
-        chapter.Title = request.Title;
-        chapter.Description = request.Description;
-        chapter.Objective = request.Objective;
-        chapter.IsActive = request.IsActive;
-        chapter.Order = request.Order;
-        chapter.UpdatedAt = _clock.UtcNow;
+        chapter.UpdateTitle(request.Title);
+        chapter.UpdateDescription(request.Description);
+        chapter.UpdateObjective(request.Objective);
+        chapter.UpdateOrder(request.Order);
+        
+        if (request.IsActive)
+            chapter.Activate();
+        else
+            chapter.Deactivate();
 
         await _chapterRepository.UpdateAsync(chapter, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);

@@ -1,6 +1,7 @@
 using EduTrack.Application.Common.Interfaces;
 using EduTrack.Application.Common.Models;
 using EduTrack.Domain.Entities;
+using EduTrack.Domain.Repositories;
 using EduTrack.Domain.Enums;
 using FluentValidation;
 using MediatR;
@@ -100,7 +101,7 @@ public class UpdateEducationalContentCommandHandler : IRequestHandler<UpdateEduc
                 var oldFile = await _fileRepository.GetByIdAsync(content.FileId.Value, cancellationToken);
                 if (oldFile != null)
                 {
-                    oldFile.ReferenceCount--;
+                    oldFile.DecrementReferenceCount();
                     if (oldFile.ReferenceCount <= 0)
                     {
                         await _fileStorageService.DeleteFileAsync(oldFile.FilePath, cancellationToken);
@@ -124,9 +125,9 @@ public class UpdateEducationalContentCommandHandler : IRequestHandler<UpdateEduc
             if (existingFile != null)
             {
                 // File already exists, increment reference count and use existing file
-                existingFile.ReferenceCount++;
+                existingFile.IncrementReferenceCount();
                 await _fileRepository.UpdateAsync(existingFile, cancellationToken);
-                content.FileId = existingFile.Id;
+                content.UpdateFileId(existingFile.Id);
 
                 // Delete the newly uploaded file since we're using the existing one
                 await _fileStorageService.DeleteFileAsync(filePath, cancellationToken);
@@ -134,35 +135,32 @@ public class UpdateEducationalContentCommandHandler : IRequestHandler<UpdateEduc
             else
             {
                 // Create new file record
-                var fileCreatedAt = _clock.UtcNow;
-                var newFile = new Domain.Entities.File
-                {
-                    FileName = Path.GetFileName(filePath),
-                    OriginalFileName = request.File.FileName,
-                    FilePath = filePath,
-                    MimeType = request.File.ContentType,
-                    FileSizeBytes = fileSize,
-                    MD5Hash = md5Hash,
-                    CreatedAt = fileCreatedAt,
-                    CreatedBy = _currentUserService.UserId ?? "system",
-                    ReferenceCount = 1
-                };
+                var newFile = Domain.Entities.File.Create(
+                    Path.GetFileName(filePath),
+                    request.File.FileName,
+                    filePath,
+                    request.File.ContentType,
+                    fileSize,
+                    md5Hash,
+                    _currentUserService.UserId ?? "system");
 
                 await _fileRepository.AddAsync(newFile, cancellationToken);
                 await _unitOfWork.SaveChangesAsync(cancellationToken); // Save the file first
-                content.FileId = newFile.Id;
+                content.UpdateFileId(newFile.Id);
             }
         }
 
         // Update content properties
-        content.Title = request.Title;
-        content.Description = request.Description;
-        content.Type = request.Type;
-        content.TextContent = request.TextContent;
-        content.ExternalUrl = request.ExternalUrl;
-        content.IsActive = request.IsActive;
-        content.Order = request.Order;
-        content.UpdatedAt = _clock.UtcNow;
+        content.UpdateTitle(request.Title);
+        content.UpdateDescription(request.Description);
+        content.UpdateTextContent(request.TextContent);
+        content.UpdateExternalUrl(request.ExternalUrl);
+        content.UpdateOrder(request.Order);
+        
+        if (request.IsActive)
+            content.Activate();
+        else
+            content.Deactivate();
 
         await _contentRepository.UpdateAsync(content, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);

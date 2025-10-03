@@ -72,17 +72,14 @@ public class SessionsController : Controller
         var currentUser = await _userManager.GetUserAsync(User);
         if (currentUser == null) return;
 
-        var log = new ActivityLog
-        {
-            UserId = currentUser.Id,
-            Action = action,
-            EntityType = entityType,
-            EntityId = entityId?.ToString() != null ? int.TryParse(entityId.ToString(), out var id) ? id : null : null,
-            Details = details,
-            IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString(),
-            UserAgent = HttpContext.Request.Headers["User-Agent"].ToString(),
-            Timestamp = DateTimeOffset.UtcNow
-        };
+        var log = ActivityLog.Create(
+            currentUser.Id,
+            action,
+            entityType,
+            entityId?.ToString() != null ? int.TryParse(entityId.ToString(), out var id) ? id : null : null,
+            details,
+            HttpContext.Connection.RemoteIpAddress?.ToString(),
+            HttpContext.Request.Headers["User-Agent"].ToString());
 
         _context.ActivityLogs.Add(log);
         await _context.SaveChangesAsync();

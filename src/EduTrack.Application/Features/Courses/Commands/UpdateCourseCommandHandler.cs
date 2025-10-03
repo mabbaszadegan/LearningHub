@@ -1,6 +1,7 @@
 using EduTrack.Application.Common.Interfaces;
 using EduTrack.Application.Common.Models;
 using EduTrack.Domain.Entities;
+using EduTrack.Domain.Repositories;
 using FluentValidation;
 using MediatR;
 
@@ -49,12 +50,15 @@ public class UpdateCourseCommandHandler : IRequestHandler<UpdateCourseCommand, R
             return Result<CourseDto>.Failure("Course not found");
         }
 
-        course.Title = request.Title;
-        course.Description = request.Description;
-        course.Thumbnail = request.Thumbnail;
-        course.IsActive = request.IsActive;
-        course.Order = request.Order;
-        course.UpdatedAt = _clock.UtcNow;
+        course.UpdateTitle(request.Title);
+        course.UpdateDescription(request.Description);
+        course.UpdateThumbnail(request.Thumbnail);
+        course.UpdateOrder(request.Order);
+        
+        if (request.IsActive)
+            course.Activate();
+        else
+            course.Deactivate();
 
         await _courseRepository.UpdateAsync(course, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);

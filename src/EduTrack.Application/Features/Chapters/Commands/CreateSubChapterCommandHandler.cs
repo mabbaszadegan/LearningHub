@@ -1,6 +1,7 @@
 using EduTrack.Application.Common.Interfaces;
 using EduTrack.Application.Common.Models;
 using EduTrack.Domain.Entities;
+using EduTrack.Domain.Repositories;
 using FluentValidation;
 using MediatR;
 
@@ -54,16 +55,12 @@ public class CreateSubChapterCommandHandler : IRequestHandler<CreateSubChapterCo
             return Result<SubChapterDto>.Failure("Chapter not found");
         }
 
-        var subChapter = new SubChapter
-        {
-            ChapterId = request.ChapterId,
-            Title = request.Title,
-            Description = request.Description,
-            Objective = request.Objective,
-            Order = request.Order,
-            CreatedAt = _clock.UtcNow,
-            UpdatedAt = _clock.UtcNow
-        };
+        var subChapter = SubChapter.Create(
+            request.ChapterId,
+            request.Title,
+            request.Description,
+            request.Objective,
+            request.Order);
 
         await _subChapterRepository.AddAsync(subChapter, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);

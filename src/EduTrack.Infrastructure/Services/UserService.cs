@@ -27,4 +27,12 @@ public class UserService : IUserService
             .Where(u => u.Role == role)
             .ToListAsync(cancellationToken);
     }
+
+    public async Task<bool> IsUserActiveAsync(string userId, CancellationToken cancellationToken = default)
+    {
+        var user = await _context.Users
+            .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+        
+        return user?.IsActive ?? false;
+    }
 }

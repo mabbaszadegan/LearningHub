@@ -1,6 +1,7 @@
 using EduTrack.Application.Common.Interfaces;
 using EduTrack.Application.Common.Models;
 using EduTrack.Domain.Entities;
+using EduTrack.Domain.Repositories;
 using FluentValidation;
 using MediatR;
 
@@ -52,17 +53,13 @@ public class CreateLessonCommandHandler : IRequestHandler<CreateLessonCommand, R
             return Result<LessonDto>.Failure("Module not found");
         }
 
-        var lesson = new Lesson
-        {
-            ModuleId = request.ModuleId,
-            Title = request.Title,
-            Content = request.Content,
-            VideoUrl = request.VideoUrl,
-            Order = request.Order,
-            DurationMinutes = request.DurationMinutes,
-            CreatedAt = _clock.UtcNow,
-            UpdatedAt = _clock.UtcNow
-        };
+        var lesson = Lesson.Create(
+            request.ModuleId,
+            request.Title,
+            request.Content,
+            request.VideoUrl,
+            request.DurationMinutes,
+            request.Order);
 
         await _lessonRepository.AddAsync(lesson, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);

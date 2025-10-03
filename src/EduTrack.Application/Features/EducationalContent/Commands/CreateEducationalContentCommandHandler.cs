@@ -1,6 +1,7 @@
 using EduTrack.Application.Common.Interfaces;
 using EduTrack.Application.Common.Models;
 using EduTrack.Domain.Entities;
+using EduTrack.Domain.Repositories;
 using EduTrack.Domain.Enums;
 using FluentValidation;
 using MediatR;
@@ -142,7 +143,7 @@ public class CreateEducationalContentCommandHandler : IRequestHandler<CreateEduc
             if (existingFile != null)
             {
                 // File already exists, increment reference count and use existing file
-                existingFile.ReferenceCount++;
+                existingFile.IncrementReferenceCount();
                 await _fileRepository.UpdateAsync(existingFile, cancellationToken);
                 file = existingFile;
 
@@ -152,19 +153,14 @@ public class CreateEducationalContentCommandHandler : IRequestHandler<CreateEduc
             else
             {
                 // Create new file record
-                var fileCreatedAt = _clock.UtcNow;
-                file = new Domain.Entities.File
-                {
-                    FileName = Path.GetFileName(filePath),
-                    OriginalFileName = request.File.FileName,
-                    FilePath = filePath,
-                    MimeType = request.File.ContentType,
-                    FileSizeBytes = fileSize,
-                    MD5Hash = md5Hash,
-                    CreatedAt = fileCreatedAt,
-                    CreatedBy = currentUser,
-                    ReferenceCount = 1
-                };
+                file = Domain.Entities.File.Create(
+                    Path.GetFileName(filePath),
+                    request.File.FileName,
+                    filePath,
+                    request.File.ContentType,
+                    fileSize,
+                    md5Hash,
+                    currentUser);
 
                 await _fileRepository.AddAsync(file, cancellationToken);
                 await _unitOfWork.SaveChangesAsync(cancellationToken); // Save the file first
@@ -181,22 +177,15 @@ public class CreateEducationalContentCommandHandler : IRequestHandler<CreateEduc
             order = existingContents.Any() ? existingContents.Max(ec => ec.Order) + 1 : 1;
         }
 
-        var now = _clock.UtcNow;
-        var content = new Domain.Entities.EducationalContent
-        {
-            SubChapterId = request.SubChapterId,
-            Title = request.Title,
-            Description = request.Description,
-            Type = request.Type,
-            TextContent = request.TextContent,
-            FileId = file?.Id,
-            ExternalUrl = request.ExternalUrl,
-            IsActive = true,
-            Order = order,
-            CreatedAt = now,
-            UpdatedAt = now,
-            CreatedBy = currentUser
-        };
+        var content = Domain.Entities.EducationalContent.Create(
+            request.SubChapterId,
+            request.Title,
+            request.Type,
+            request.TextContent,
+            file?.Id,
+            request.ExternalUrl,
+            order,
+            currentUser);
 
         await _contentRepository.AddAsync(content, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);

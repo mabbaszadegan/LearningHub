@@ -1,6 +1,7 @@
 using EduTrack.Application.Common.Interfaces;
 using EduTrack.Application.Common.Models;
 using EduTrack.Domain.Entities;
+using EduTrack.Domain.Repositories;
 using MediatR;
 
 namespace EduTrack.Application.Features.EducationalContent.Commands;
@@ -38,7 +39,7 @@ public class DeleteEducationalContentCommandHandler : IRequestHandler<DeleteEduc
             var file = await _fileRepository.GetByIdAsync(content.FileId.Value, cancellationToken);
             if (file != null)
             {
-                file.ReferenceCount--;
+                file.DecrementReferenceCount();
                 
                 if (file.ReferenceCount <= 0)
                 {

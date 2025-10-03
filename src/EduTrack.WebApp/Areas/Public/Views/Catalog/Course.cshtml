@@ -1,0 +1,36 @@
+@{
+    ViewData["Title"] = "جزئیات دوره";
+}
+
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-header">
+                <h1 class="page-title">جزئیات دوره</h1>
+                <p class="page-description">اطلاعات کامل دوره</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">اطلاعات دوره</h3>
+                </div>
+                <div class="card-body">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">
+                            <i class="fas fa-book"></i>
+                        </div>
+                        <h4 class="empty-state-title">دوره یافت نشد</h4>
+                        <p class="empty-state-description">دوره مورد نظر وجود ندارد یا حذف شده است.</p>
+                        <a href="@Url.Action("Index", "Catalog")" class="btn btn-primary">
+                            <i class="fas fa-arrow-right me-2"></i>بازگشت به لیست دوره‌ها
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

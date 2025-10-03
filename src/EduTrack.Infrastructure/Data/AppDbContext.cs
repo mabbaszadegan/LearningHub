@@ -1,4 +1,5 @@
 using EduTrack.Domain.Entities;
+using EduTrack.Domain.Enums;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -44,10 +45,6 @@ public class AppDbContext : IdentityDbContext<User>
     public DbSet<Module> Modules { get; set; }
     public DbSet<Lesson> Lessons { get; set; }
     public DbSet<Resource> Resources { get; set; }
-    public DbSet<Chapter> Chapters { get; set; }
-    public DbSet<SubChapter> SubChapters { get; set; }
-    public DbSet<Domain.Entities.File> Files { get; set; }
-    public DbSet<EducationalContent> EducationalContents { get; set; }
     public DbSet<Class> Classes { get; set; }
     public DbSet<Enrollment> Enrollments { get; set; }
     public DbSet<Question> Questions { get; set; }
@@ -57,6 +54,10 @@ public class AppDbContext : IdentityDbContext<User>
     public DbSet<Attempt> Attempts { get; set; }
     public DbSet<Answer> Answers { get; set; }
     public DbSet<Progress> Progresses { get; set; }
+    public DbSet<Chapter> Chapters { get; set; }
+    public DbSet<SubChapter> SubChapters { get; set; }
+    public DbSet<Domain.Entities.File> Files { get; set; }
+    public DbSet<EducationalContent> EducationalContents { get; set; }
     public DbSet<ActivityLog> ActivityLogs { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)

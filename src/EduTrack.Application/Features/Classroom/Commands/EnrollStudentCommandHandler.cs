@@ -1,6 +1,7 @@
 using EduTrack.Application.Common.Interfaces;
 using EduTrack.Application.Common.Models;
 using EduTrack.Domain.Entities;
+using EduTrack.Domain.Repositories;
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -64,12 +65,7 @@ public class EnrollStudentCommandHandler : IRequestHandler<EnrollStudentCommand,
             return Result<bool>.Failure("Student is already enrolled in this class");
         }
 
-        var enrollment = new Enrollment
-        {
-            ClassId = request.ClassId,
-            StudentId = request.StudentId,
-            EnrolledAt = _clock.UtcNow
-        };
+        var enrollment = Enrollment.Create(request.ClassId, request.StudentId);
 
         await _enrollmentRepository.AddAsync(enrollment, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);

@@ -78,16 +78,12 @@ public class UsersController : Controller
     {
         if (ModelState.IsValid)
         {
-            var user = new User
-            {
-                UserName = model.Email,
-                Email = model.Email,
-                FirstName = model.FirstName,
-                LastName = model.LastName,
-                Role = model.Role,
-                IsActive = true,
-                CreatedAt = DateTimeOffset.UtcNow
-            };
+            var user = EduTrack.Domain.Entities.User.Create(
+                model.FirstName,
+                model.LastName,
+                model.Email,
+                model.Role);
+            user.UserName = model.Email;
 
             var result = await _userManager.CreateAsync(user, model.Password);
 
@@ -144,12 +140,14 @@ public class UsersController : Controller
                 return NotFound();
             }
 
-            user.FirstName = model.FirstName;
-            user.LastName = model.LastName;
+            user.UpdateProfile(model.FirstName, model.LastName);
             user.Email = model.Email;
             user.UserName = model.Email;
-            user.Role = model.Role;
-            user.IsActive = model.IsActive;
+            
+            if (model.IsActive)
+                user.Activate();
+            else
+                user.Deactivate();
 
             var result = await _userManager.UpdateAsync(user);
 
@@ -204,7 +202,10 @@ public class UsersController : Controller
             return Json(new { success = false, message = "کاربر یافت نشد" });
         }
 
-        user.IsActive = !user.IsActive;
+        if (user.IsActive)
+            user.Deactivate();
+        else
+            user.Activate();
         var result = await _userManager.UpdateAsync(user);
 
         if (result.Succeeded)
@@ -222,17 +223,14 @@ public class UsersController : Controller
         var currentUser = await _userManager.GetUserAsync(User);
         if (currentUser == null) return;
 
-        var log = new ActivityLog
-        {
-            UserId = currentUser.Id,
-            Action = action,
-            EntityType = entityType,
-            EntityId = entityId?.ToString() != null ? int.TryParse(entityId.ToString(), out var id) ? id : null : null,
-            Details = details,
-            IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString(),
-            UserAgent = HttpContext.Request.Headers["User-Agent"].ToString(),
-            Timestamp = DateTimeOffset.UtcNow
-        };
+        var log = ActivityLog.Create(
+            currentUser.Id,
+            action,
+            entityType,
+            entityId?.ToString() != null ? int.TryParse(entityId.ToString(), out var id) ? id : null : null,
+            details,
+            HttpContext.Connection.RemoteIpAddress?.ToString(),
+            HttpContext.Request.Headers["User-Agent"].ToString());
 
         _context.ActivityLogs.Add(log);
         await _context.SaveChangesAsync();
