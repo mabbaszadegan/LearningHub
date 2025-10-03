@@ -45,7 +45,6 @@ public interface IFileStorageService
 public interface IUserService
 {
     Task<User?> GetUserByIdAsync(string userId, CancellationToken cancellationToken = default);
-    Task<IEnumerable<User>> GetUsersByRoleAsync(UserRole role, CancellationToken cancellationToken = default);
     Task<bool> IsUserActiveAsync(string userId, CancellationToken cancellationToken = default);
 }
 

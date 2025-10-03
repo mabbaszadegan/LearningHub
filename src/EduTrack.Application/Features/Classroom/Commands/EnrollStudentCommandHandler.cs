@@ -5,6 +5,7 @@ using EduTrack.Domain.Repositories;
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
 
 namespace EduTrack.Application.Features.Classroom.Commands;
 
@@ -27,19 +28,22 @@ public class EnrollStudentCommandHandler : IRequestHandler<EnrollStudentCommand,
     private readonly IUserService _userService;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IClock _clock;
+    private readonly UserManager<User> _userManager;
 
     public EnrollStudentCommandHandler(
         IRepository<Enrollment> enrollmentRepository,
         IRepository<Class> classRepository,
         IUserService userService,
         IUnitOfWork unitOfWork,
-        IClock clock)
+        IClock clock,
+        UserManager<User> userManager)
     {
         _enrollmentRepository = enrollmentRepository;
         _classRepository = classRepository;
         _userService = userService;
         _unitOfWork = unitOfWork;
         _clock = clock;
+        _userManager = userManager;
     }
 
     public async Task<Result<bool>> Handle(EnrollStudentCommand request, CancellationToken cancellationToken)
@@ -51,9 +55,15 @@ public class EnrollStudentCommandHandler : IRequestHandler<EnrollStudentCommand,
         }
 
         var student = await _userService.GetUserByIdAsync(request.StudentId, cancellationToken);
-        if (student == null || student.Role != Domain.Enums.UserRole.Student)
+        if (student == null)
         {
-            return Result<bool>.Failure("Student not found or invalid role");
+            return Result<bool>.Failure("Student not found");
+        }
+
+        var studentRoles = await _userManager.GetRolesAsync(student);
+        if (!studentRoles.Contains("Student"))
+        {
+            return Result<bool>.Failure("User does not have student role");
         }
 
         // Check if student is already enrolled

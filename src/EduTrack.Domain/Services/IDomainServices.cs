@@ -11,12 +11,12 @@ public interface IUserDomainService
     /// <summary>
     /// Validates if a user can be assigned to a specific role
     /// </summary>
-    bool CanAssignRole(User user, UserRole newRole);
+    Task<bool> CanAssignRoleAsync(User user, UserRole newRole);
     
     /// <summary>
     /// Validates if a user can be enrolled in a class
     /// </summary>
-    bool CanEnrollInClass(User user, Class classEntity);
+    Task<bool> CanEnrollInClassAsync(User user, Class classEntity);
     
     /// <summary>
     /// Calculates user's overall progress percentage

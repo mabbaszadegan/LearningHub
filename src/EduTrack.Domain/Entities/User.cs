@@ -17,7 +17,6 @@ public class User : IdentityUser
 
     public string FirstName { get; private set; } = string.Empty;
     public string LastName { get; private set; } = string.Empty;
-    public UserRole Role { get; private set; }
     public DateTimeOffset CreatedAt { get; private set; }
     public DateTimeOffset? LastLoginAt { get; private set; }
     public bool IsActive { get; private set; } = true;
@@ -35,7 +34,7 @@ public class User : IdentityUser
     // Private constructor for EF Core
     private User() { }
 
-    public static User Create(string firstName, string lastName, string email, UserRole role)
+    public static User Create(string firstName, string lastName, string email)
     {
         if (string.IsNullOrWhiteSpace(firstName))
             throw new ArgumentException("First name cannot be null or empty", nameof(firstName));
@@ -52,7 +51,6 @@ public class User : IdentityUser
             LastName = lastName,
             Email = email,
             UserName = email,
-            Role = role,
             CreatedAt = DateTimeOffset.UtcNow,
             IsActive = true
         };

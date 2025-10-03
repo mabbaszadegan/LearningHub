@@ -34,13 +34,16 @@ public class HomeController : Controller
         var user = await _userManager.GetUserAsync(User);
         if (user != null)
         {
-            return user.Role switch
-            {
-                UserRole.Teacher => RedirectToAction("Index", "Home", new { area = "Teacher" }),
-                UserRole.Student => RedirectToAction("Index", "Home", new { area = "Student" }),
-                UserRole.Admin => RedirectToAction("Index", "Home", new { area = "Admin" }),
-                _ => RedirectToAction("Index", "Home", new { area = "Student" })
-            };
+            var userRoles = await _userManager.GetRolesAsync(user);
+            
+            if (userRoles.Contains("Admin"))
+                return RedirectToAction("Index", "Home", new { area = "Admin" });
+            else if (userRoles.Contains("Teacher"))
+                return RedirectToAction("Index", "Home", new { area = "Teacher" });
+            else if (userRoles.Contains("Student"))
+                return RedirectToAction("Index", "Home", new { area = "Student" });
+            else
+                return RedirectToAction("Index", "Home", new { area = "Student" });
         }
 
         // Fallback to landing page

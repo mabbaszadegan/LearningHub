@@ -27,13 +27,6 @@ public class UserRepository : Repository<User>, IUserRepository
             .FirstOrDefaultAsync(u => u.UserName == userName, cancellationToken);
     }
 
-    public async Task<IEnumerable<User>> GetByRoleAsync(UserRole role, CancellationToken cancellationToken = default)
-    {
-        return await _dbSet
-            .Where(u => u.Role == role)
-            .ToListAsync(cancellationToken);
-    }
-
     public async Task<IEnumerable<User>> GetActiveUsersAsync(CancellationToken cancellationToken = default)
     {
         return await _dbSet

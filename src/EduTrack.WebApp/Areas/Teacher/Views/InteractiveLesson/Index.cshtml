@@ -1,0 +1,79 @@
+@model List<EduTrack.Application.Features.InteractiveLesson.DTOs.InteractiveLessonDto>
+
+@{
+    ViewData["Title"] = "درس‌های تعاملی";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">درس‌های تعاملی</h3>
+                    <div class="card-tools">
+                        <a asp-action="Create" asp-route-courseId="@ViewBag.CourseId" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> ایجاد درس تعاملی جدید
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    @if (Model.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>عنوان</th>
+                                        <th>توضیحات</th>
+                                        <th>تعداد محتوا</th>
+                                        <th>تعداد سوال</th>
+                                        <th>ترتیب</th>
+                                        <th>وضعیت</th>
+                                        <th>عملیات</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var lesson in Model)
+                                    {
+                                        <tr>
+                                            <td>@lesson.Title</td>
+                                            <td>@lesson.Description</td>
+                                            <td>@lesson.ContentItems.Count(ci => ci.EducationalContentId.HasValue)</td>
+                                            <td>@lesson.ContentItems.Count(ci => ci.InteractiveQuestionId.HasValue)</td>
+                                            <td>@lesson.Order</td>
+                                            <td>
+                                                @if (lesson.IsActive)
+                                                {
+                                                    <span class="badge badge-success">فعال</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge badge-secondary">غیرفعال</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <a asp-action="Edit" asp-route-id="@lesson.Id" class="btn btn-sm btn-primary">
+                                                    <i class="fas fa-edit"></i> ویرایش
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center">
+                            <p class="text-muted">هیچ درس تعاملی ایجاد نشده است.</p>
+                            <a asp-action="Create" asp-route-courseId="@ViewBag.CourseId" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> ایجاد اولین درس تعاملی
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

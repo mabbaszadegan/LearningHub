@@ -29,27 +29,20 @@ public class ClaimsTransformer : IClaimsTransformation
         if (user == null)
             return principal;
 
-        // Get user roles from Identity system
-        var userRoles = await _userManager.GetRolesAsync(user);
-        
-        // Remove existing role claims
+        // Remove ALL existing role claims
         var roleClaims = identity.FindAll(ClaimTypes.Role).ToList();
         foreach (var claim in roleClaims)
         {
             identity.RemoveClaim(claim);
         }
 
-        // Add all user roles as claims
+        // Get user roles from AspNetUserRoles table
+        var userRoles = await _userManager.GetRolesAsync(user);
+        
+        // Add only the user's actual roles as claims
         foreach (var role in userRoles)
         {
             identity.AddClaim(new Claim(ClaimTypes.Role, role));
-        }
-
-        // Also add the role from the User entity as a fallback
-        var entityRole = user.Role.ToString();
-        if (!userRoles.Contains(entityRole))
-        {
-            identity.AddClaim(new Claim(ClaimTypes.Role, entityRole));
         }
 
         return principal;

@@ -1,0 +1,50 @@
+@model EduTrack.Application.Features.InteractiveLesson.Commands.CreateInteractiveLessonCommand
+
+@{
+    ViewData["Title"] = "ایجاد درس تعاملی";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">ایجاد درس تعاملی جدید</h3>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Create" method="post">
+                        <input asp-for="CourseId" type="hidden" value="@ViewBag.CourseId" />
+                        <input asp-for="CreatedBy" type="hidden" value="@User.Identity?.Name" />
+                        
+                        <div class="form-group">
+                            <label asp-for="Title">عنوان درس</label>
+                            <input asp-for="Title" class="form-control" placeholder="عنوان درس تعاملی را وارد کنید" />
+                            <span asp-validation-for="Title" class="text-danger"></span>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label asp-for="Description">توضیحات</label>
+                            <textarea asp-for="Description" class="form-control" rows="3" placeholder="توضیحات درس را وارد کنید"></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label asp-for="Order">ترتیب</label>
+                            <input asp-for="Order" class="form-control" type="number" min="0" value="0" />
+                            <span asp-validation-for="Order" class="text-danger"></span>
+                        </div>
+                        
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> ایجاد درس
+                            </button>
+                            <a asp-action="ByCourse" asp-route-courseId="@ViewBag.CourseId" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> بازگشت
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

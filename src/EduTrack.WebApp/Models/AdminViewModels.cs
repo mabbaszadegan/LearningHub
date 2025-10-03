@@ -24,6 +24,23 @@ public class AdminDashboardViewModel
     public List<ActiveUserData> ActiveUsers { get; set; } = new();
 }
 
+public class UserWithRolesViewModel
+{
+    public User User { get; set; } = null!;
+    public List<string> Roles { get; set; } = new();
+}
+
+public class UsersIndexViewModel
+{
+    public List<UserWithRolesViewModel> Users { get; set; } = new();
+    public string? Search { get; set; }
+    public string? Role { get; set; }
+    public int CurrentPage { get; set; }
+    public int PageSize { get; set; }
+    public int TotalUsers { get; set; }
+    public int TotalPages { get; set; }
+}
+
 public class UserManagementViewModel
 {
     public List<User> Users { get; set; } = new();

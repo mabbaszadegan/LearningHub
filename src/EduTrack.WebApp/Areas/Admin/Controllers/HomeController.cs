@@ -33,11 +33,14 @@ public class HomeController : Controller
     // GET: Admin Dashboard
     public async Task<IActionResult> Index()
     {
+        var teachers = await _userManager.GetUsersInRoleAsync("Teacher");
+        var students = await _userManager.GetUsersInRoleAsync("Student");
+        
         var dashboardData = new AdminDashboardViewModel
         {
             TotalUsers = await _userManager.Users.CountAsync(),
-            TotalTeachers = await _userManager.Users.CountAsync(u => u.Role == UserRole.Teacher),
-            TotalStudents = await _userManager.Users.CountAsync(u => u.Role == UserRole.Student),
+            TotalTeachers = teachers.Count,
+            TotalStudents = students.Count,
             TotalCourses = await _context.Courses.CountAsync(),
             TotalClasses = await _context.Classes.CountAsync(),
             ActiveClasses = await _context.Classes.CountAsync(c => c.IsActive),
@@ -195,13 +198,17 @@ public class HomeController : Controller
 
     private async Task<UserStatistics> GetUserStatistics()
     {
+        var admins = await _userManager.GetUsersInRoleAsync("Admin");
+        var teachers = await _userManager.GetUsersInRoleAsync("Teacher");
+        var students = await _userManager.GetUsersInRoleAsync("Student");
+        
         return new UserStatistics
         {
             TotalUsers = await _userManager.Users.CountAsync(),
             ActiveUsers = await _userManager.Users.CountAsync(u => u.IsActive),
-            TotalAdmins = await _userManager.Users.CountAsync(u => u.Role == UserRole.Admin),
-            TotalTeachers = await _userManager.Users.CountAsync(u => u.Role == UserRole.Teacher),
-            TotalStudents = await _userManager.Users.CountAsync(u => u.Role == UserRole.Student),
+            TotalAdmins = admins.Count,
+            TotalTeachers = teachers.Count,
+            TotalStudents = students.Count,
             NewUsersThisMonth = await _userManager.Users.CountAsync(u => u.CreatedAt >= DateTimeOffset.UtcNow.AddDays(-30))
         };
     }
@@ -293,10 +300,22 @@ public class HomeController : Controller
     {
         var users = await _userManager.Users.ToListAsync();
         
+        // Get role counts using UserManager
+        var admins = await _userManager.GetUsersInRoleAsync("Admin");
+        var teachers = await _userManager.GetUsersInRoleAsync("Teacher");
+        var students = await _userManager.GetUsersInRoleAsync("Student");
+        
+        var usersByRole = new Dictionary<string, int>
+        {
+            ["Admin"] = admins.Count,
+            ["Teacher"] = teachers.Count,
+            ["Student"] = students.Count
+        };
+        
         return new UserReport
         {
             TotalUsers = users.Count,
-            UsersByRole = users.GroupBy(u => u.Role).ToDictionary(g => g.Key.ToString(), g => g.Count()),
+            UsersByRole = usersByRole,
             ActiveUsers = users.Count(u => u.IsActive),
             InactiveUsers = users.Count(u => !u.IsActive),
             UsersRegisteredThisMonth = users.Count(u => u.CreatedAt >= DateTimeOffset.UtcNow.AddDays(-30)),

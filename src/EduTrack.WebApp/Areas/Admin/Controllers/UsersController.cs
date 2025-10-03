@@ -28,7 +28,7 @@ public class UsersController : Controller
     }
 
     // GET: Admin/Users
-    public async Task<IActionResult> Index(string? search, UserRole? role, int page = 1, int pageSize = 20)
+    public async Task<IActionResult> Index(string? search, string? role, int page = 1, int pageSize = 20)
     {
         var query = _userManager.Users.AsQueryable();
 
@@ -39,9 +39,12 @@ public class UsersController : Controller
                                    u.Email!.Contains(search));
         }
 
-        if (role.HasValue)
+        if (!string.IsNullOrEmpty(role))
         {
-            query = query.Where(u => u.Role == role.Value);
+            // Filter by role using UserManager
+            var usersInRole = await _userManager.GetUsersInRoleAsync(role);
+            var userIds = usersInRole.Select(u => u.Id).ToList();
+            query = query.Where(u => userIds.Contains(u.Id));
         }
 
         var totalUsers = await query.CountAsync();
@@ -51,11 +54,23 @@ public class UsersController : Controller
             .Take(pageSize)
             .ToListAsync();
 
-        var model = new UserManagementViewModel
+        // Get roles for each user
+        var usersWithRoles = new List<UserWithRolesViewModel>();
+        foreach (var user in users)
         {
-            Users = users,
+            var userRoles = await _userManager.GetRolesAsync(user);
+            usersWithRoles.Add(new UserWithRolesViewModel
+            {
+                User = user,
+                Roles = userRoles.ToList()
+            });
+        }
+
+        var model = new UsersIndexViewModel
+        {
+            Users = usersWithRoles,
             Search = search,
-            SelectedRole = role,
+            Role = role,
             CurrentPage = page,
             PageSize = pageSize,
             TotalUsers = totalUsers,
@@ -81,16 +96,18 @@ public class UsersController : Controller
             var user = EduTrack.Domain.Entities.User.Create(
                 model.FirstName,
                 model.LastName,
-                model.Email,
-                model.Role);
+                model.Email);
             user.UserName = model.Email;
 
             var result = await _userManager.CreateAsync(user, model.Password);
 
             if (result.Succeeded)
             {
+                // Add user to role
+                await _userManager.AddToRoleAsync(user, model.Role.ToString());
+                
                 // Log activity
-                await LogActivity("CreateUser", "User", user.Id, $"Created user: {user.FullName} ({user.Role})");
+                await LogActivity("CreateUser", "User", user.Id, $"Created user: {user.FullName} ({model.Role})");
                 
                 TempData["Success"] = $"کاربر {user.FullName} با موفقیت ایجاد شد";
                 return RedirectToAction(nameof(Index));
@@ -114,13 +131,16 @@ public class UsersController : Controller
             return NotFound();
         }
 
+        var userRoles = await _userManager.GetRolesAsync(user);
+        var primaryRole = userRoles.FirstOrDefault() ?? "Student";
+        
         var model = new EditUserViewModel
         {
             Id = user.Id,
             FirstName = user.FirstName,
             LastName = user.LastName,
             Email = user.Email ?? "",
-            Role = user.Role,
+            Role = Enum.Parse<UserRole>(primaryRole),
             IsActive = user.IsActive
         };
 
@@ -153,6 +173,14 @@ public class UsersController : Controller
 
             if (result.Succeeded)
             {
+                // Update user role
+                var currentRoles = await _userManager.GetRolesAsync(user);
+                if (currentRoles.Any())
+                {
+                    await _userManager.RemoveFromRolesAsync(user, currentRoles);
+                }
+                await _userManager.AddToRoleAsync(user, model.Role.ToString());
+                
                 await LogActivity("UpdateUser", "User", user.Id, $"Updated user: {user.FullName}");
                 TempData["Success"] = "اطلاعات کاربر با موفقیت بروزرسانی شد";
                 return RedirectToAction(nameof(Index));

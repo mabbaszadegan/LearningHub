@@ -2,6 +2,7 @@ using EduTrack.Application.Common.Interfaces;
 using EduTrack.Domain.Entities;
 using EduTrack.Domain.Enums;
 using MediatR;
+using Microsoft.AspNetCore.Identity;
 
 namespace EduTrack.Application.Features.Users.Queries;
 
@@ -9,15 +10,16 @@ public record GetTeachersQuery() : IRequest<IEnumerable<User>>;
 
 public class GetTeachersQueryHandler : IRequestHandler<GetTeachersQuery, IEnumerable<User>>
 {
-    private readonly IUserService _userService;
+    private readonly UserManager<User> _userManager;
 
-    public GetTeachersQueryHandler(IUserService userService)
+    public GetTeachersQueryHandler(UserManager<User> userManager)
     {
-        _userService = userService;
+        _userManager = userManager;
     }
 
     public async Task<IEnumerable<User>> Handle(GetTeachersQuery request, CancellationToken cancellationToken)
     {
-        return await _userService.GetUsersByRoleAsync(UserRole.Teacher, cancellationToken);
+        var teachers = await _userManager.GetUsersInRoleAsync("Teacher");
+        return teachers;
     }
 }

@@ -21,13 +21,6 @@ public class UserService : IUserService
             .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
     }
 
-    public async Task<IEnumerable<User>> GetUsersByRoleAsync(UserRole role, CancellationToken cancellationToken = default)
-    {
-        return await _context.Users
-            .Where(u => u.Role == role)
-            .ToListAsync(cancellationToken);
-    }
-
     public async Task<bool> IsUserActiveAsync(string userId, CancellationToken cancellationToken = default)
     {
         var user = await _context.Users

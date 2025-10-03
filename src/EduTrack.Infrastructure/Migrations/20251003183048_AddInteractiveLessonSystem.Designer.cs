@@ -4,6 +4,7 @@ using EduTrack.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EduTrack.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251003183048_AddInteractiveLessonSystem")]
+    partial class AddInteractiveLessonSystem
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -617,7 +620,7 @@ namespace EduTrack.Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("CourseId")
+                    b.Property<int>("ClassId")
                         .HasColumnType("int");
 
                     b.Property<DateTimeOffset>("CreatedAt")
@@ -650,51 +653,9 @@ namespace EduTrack.Infrastructure.Migrations
 
                     b.HasIndex("IsActive");
 
-                    b.HasIndex("CourseId", "Order");
+                    b.HasIndex("ClassId", "Order");
 
                     b.ToTable("InteractiveLessons");
-                });
-
-            modelBuilder.Entity("EduTrack.Domain.Entities.InteractiveLessonAssignment", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTimeOffset>("AssignedAt")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<string>("AssignedBy")
-                        .IsRequired()
-                        .HasMaxLength(450)
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<int>("ClassId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTimeOffset?>("DueDate")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<int>("InteractiveLessonId")
-                        .HasColumnType("int");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AssignedAt");
-
-                    b.HasIndex("ClassId");
-
-                    b.HasIndex("IsActive");
-
-                    b.HasIndex("InteractiveLessonId", "ClassId")
-                        .IsUnique();
-
-                    b.ToTable("InteractiveLessonAssignments");
                 });
 
             modelBuilder.Entity("EduTrack.Domain.Entities.InteractiveQuestion", b =>
@@ -1224,6 +1185,9 @@ namespace EduTrack.Infrastructure.Migrations
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("bit");
 
+                    b.Property<int>("Role")
+                        .HasColumnType("int");
+
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("nvarchar(max)");
 
@@ -1247,6 +1211,8 @@ namespace EduTrack.Infrastructure.Migrations
                         .IsUnique()
                         .HasDatabaseName("UserNameIndex")
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
+
+                    b.HasIndex("Role");
 
                     b.ToTable("AspNetUsers", (string)null);
                 });
@@ -1564,32 +1530,13 @@ namespace EduTrack.Infrastructure.Migrations
 
             modelBuilder.Entity("EduTrack.Domain.Entities.InteractiveLesson", b =>
                 {
-                    b.HasOne("EduTrack.Domain.Entities.Course", "Course")
-                        .WithMany()
-                        .HasForeignKey("CourseId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.Navigation("Course");
-                });
-
-            modelBuilder.Entity("EduTrack.Domain.Entities.InteractiveLessonAssignment", b =>
-                {
                     b.HasOne("EduTrack.Domain.Entities.Class", "Class")
                         .WithMany()
                         .HasForeignKey("ClassId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("EduTrack.Domain.Entities.InteractiveLesson", "InteractiveLesson")
-                        .WithMany()
-                        .HasForeignKey("InteractiveLessonId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.Navigation("Class");
-
-                    b.Navigation("InteractiveLesson");
                 });
 
             modelBuilder.Entity("EduTrack.Domain.Entities.InteractiveQuestion", b =>

@@ -43,7 +43,7 @@ public static class SeedData
 
         if (adminUser == null)
         {
-            adminUser = User.Create("Admin", "User", adminEmail, UserRole.Admin);
+            adminUser = User.Create("Admin", "User", adminEmail);
             adminUser.EmailConfirmed = true;
 
             var result = await userManager.CreateAsync(adminUser, "Passw0rd!");
@@ -63,7 +63,7 @@ public static class SeedData
         var teacher = await userManager.FindByEmailAsync(teacherEmail);
         if (teacher == null)
         {
-            teacher = User.Create("احمد", "احمدی", teacherEmail, UserRole.Teacher);
+            teacher = User.Create("احمد", "احمدی", teacherEmail);
             teacher.EmailConfirmed = true;
             await userManager.CreateAsync(teacher, "Passw0rd!");
             await userManager.AddToRoleAsync(teacher, "Teacher");
@@ -74,7 +74,7 @@ public static class SeedData
         var teacher2 = await userManager.FindByEmailAsync(teacher2Email);
         if (teacher2 == null)
         {
-            teacher2 = User.Create("فاطمه", "محمدی", teacher2Email, UserRole.Teacher);
+            teacher2 = User.Create("فاطمه", "محمدی", teacher2Email);
             teacher2.EmailConfirmed = true;
             await userManager.CreateAsync(teacher2, "Passw0rd!");
             await userManager.AddToRoleAsync(teacher2, "Teacher");
@@ -84,7 +84,7 @@ public static class SeedData
         var teacher3 = await userManager.FindByEmailAsync(teacher3Email);
         if (teacher3 == null)
         {
-            teacher3 = User.Create("علی", "رضایی", teacher3Email, UserRole.Teacher);
+            teacher3 = User.Create("علی", "رضایی", teacher3Email);
             teacher3.EmailConfirmed = true;
             await userManager.CreateAsync(teacher3, "Passw0rd!");
             await userManager.AddToRoleAsync(teacher3, "Teacher");
@@ -95,7 +95,7 @@ public static class SeedData
         var student1 = await userManager.FindByEmailAsync(student1Email);
         if (student1 == null)
         {
-            student1 = User.Create("Alice", "Student", student1Email, UserRole.Student);
+            student1 = User.Create("Alice", "Student", student1Email);
             student1.EmailConfirmed = true;
             await userManager.CreateAsync(student1, "Passw0rd!");
             await userManager.AddToRoleAsync(student1, "Student");
@@ -105,7 +105,7 @@ public static class SeedData
         var student2 = await userManager.FindByEmailAsync(student2Email);
         if (student2 == null)
         {
-            student2 = User.Create("Bob", "Student", student2Email, UserRole.Student);
+            student2 = User.Create("Bob", "Student", student2Email);
             student2.EmailConfirmed = true;
             await userManager.CreateAsync(student2, "Passw0rd!");
             await userManager.AddToRoleAsync(student2, "Student");

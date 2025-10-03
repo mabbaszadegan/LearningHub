@@ -1,5 +1,6 @@
 using EduTrack.Domain.Entities;
 using EduTrack.Domain.Enums;
+using Microsoft.AspNetCore.Identity;
 
 namespace EduTrack.Domain.Services;
 
@@ -8,29 +9,41 @@ namespace EduTrack.Domain.Services;
 /// </summary>
 public class UserDomainService : IUserDomainService
 {
-    public bool CanAssignRole(User user, UserRole newRole)
+    private readonly UserManager<User> _userManager;
+
+    public UserDomainService(UserManager<User> userManager)
+    {
+        _userManager = userManager;
+    }
+
+    public async Task<bool> CanAssignRoleAsync(User user, UserRole newRole)
     {
         if (user == null)
             return false;
 
+        var userRoles = await _userManager.GetRolesAsync(user);
+        var currentRole = userRoles.FirstOrDefault();
+
         // Business rule: Only admins can assign admin role
-        if (newRole == UserRole.Admin && user.Role != UserRole.Admin)
+        if (newRole == UserRole.Admin && currentRole != "Admin")
             return false;
 
         // Business rule: Users can only be promoted, not demoted
-        if ((int)newRole < (int)user.Role)
+        if (currentRole != null && (int)newRole < (int)Enum.Parse<UserRole>(currentRole))
             return false;
 
         return true;
     }
 
-    public bool CanEnrollInClass(User user, Class classEntity)
+    public async Task<bool> CanEnrollInClassAsync(User user, Class classEntity)
     {
         if (user == null || classEntity == null)
             return false;
 
+        var userRoles = await _userManager.GetRolesAsync(user);
+        
         // Business rule: Only students can enroll in classes
-        if (user.Role != UserRole.Student)
+        if (!userRoles.Contains("Student"))
             return false;
 
         // Business rule: User must be active

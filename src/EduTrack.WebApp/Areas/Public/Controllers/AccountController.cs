@@ -62,17 +62,16 @@ public class AccountController : Controller
                 var userRoles = await _userManager.GetRolesAsync(user);
                 _logger.LogInformation("User {UserName} has roles: {Roles}", user.UserName, string.Join(", ", userRoles));
                 
-                // Redirect based on user role - check both entity role and Identity roles
-                var primaryRole = user.Role.ToString();
-                if (userRoles.Contains("Admin") || primaryRole == "Admin")
+                // Redirect based on user role from Identity system
+                if (userRoles.Contains("Admin"))
                 {
                     return RedirectToAction("Index", "Home", new { area = "Admin" });
                 }
-                else if (userRoles.Contains("Teacher") || primaryRole == "Teacher")
+                else if (userRoles.Contains("Teacher"))
                 {
                     return RedirectToAction("Index", "Home", new { area = "Teacher" });
                 }
-                else if (userRoles.Contains("Student") || primaryRole == "Student")
+                else if (userRoles.Contains("Student"))
                 {
                     return RedirectToAction("Index", "Home", new { area = "Student" });
                 }
@@ -143,8 +142,7 @@ public class AccountController : Controller
             var user = EduTrack.Domain.Entities.User.Create(
                 model.FirstName,
                 model.LastName,
-                model.Email ?? $"{model.Username}@edutrack.local", // Default email for students
-                model.Role == "Teacher" ? UserRole.Teacher : UserRole.Student);
+                model.Email ?? $"{model.Username}@edutrack.local"); // Default email for students
             user.UserName = model.Username;
 
             var result = await _userManager.CreateAsync(user, model.Password);
@@ -154,7 +152,7 @@ public class AccountController : Controller
                 _logger.LogInformation("User created a new account with password.");
                 
                 // Add user to the appropriate role
-                var roleName = user.Role.ToString();
+                var roleName = model.Role == "Teacher" ? "Teacher" : "Student";
                 var roleResult = await _userManager.AddToRoleAsync(user, roleName);
                 
                 if (roleResult.Succeeded)
@@ -170,10 +168,10 @@ public class AccountController : Controller
                 await _signInManager.SignInAsync(user, isPersistent: false);
                 
                 // Redirect based on role
-                return user.Role switch
+                return roleName switch
                 {
-                    UserRole.Teacher => RedirectToAction("Index", "Home", new { area = "Teacher" }),
-                    UserRole.Student => RedirectToAction("Index", "Home", new { area = "Student" }),
+                    "Teacher" => RedirectToAction("Index", "Home", new { area = "Teacher" }),
+                    "Student" => RedirectToAction("Index", "Home", new { area = "Student" }),
                     _ => RedirectToAction("Index", "Home", new { area = "Student" })
                 };
             }

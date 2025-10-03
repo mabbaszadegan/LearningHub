@@ -4,6 +4,7 @@ using EduTrack.Domain.Entities;
 using EduTrack.Domain.Repositories;
 using FluentValidation;
 using MediatR;
+using Microsoft.AspNetCore.Identity;
 
 namespace EduTrack.Application.Features.Classroom.Commands;
 
@@ -34,19 +35,22 @@ public class CreateClassCommandHandler : IRequestHandler<CreateClassCommand, Res
     private readonly IUserService _userService;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IClock _clock;
+    private readonly UserManager<User> _userManager;
 
     public CreateClassCommandHandler(
         IRepository<Class> classRepository,
         IRepository<Course> courseRepository,
         IUserService userService,
         IUnitOfWork unitOfWork,
-        IClock clock)
+        IClock clock,
+        UserManager<User> userManager)
     {
         _classRepository = classRepository;
         _courseRepository = courseRepository;
         _userService = userService;
         _unitOfWork = unitOfWork;
         _clock = clock;
+        _userManager = userManager;
     }
 
     public async Task<Result<ClassDto>> Handle(CreateClassCommand request, CancellationToken cancellationToken)
@@ -63,9 +67,15 @@ public class CreateClassCommandHandler : IRequestHandler<CreateClassCommand, Res
         }
 
         var teacher = await _userService.GetUserByIdAsync(request.TeacherId, cancellationToken);
-        if (teacher == null || teacher.Role != Domain.Enums.UserRole.Teacher)
+        if (teacher == null)
         {
-            return Result<ClassDto>.Failure("معلم مورد نظر یافت نشد یا نقش صحیح ندارد");
+            return Result<ClassDto>.Failure("معلم مورد نظر یافت نشد");
+        }
+
+        var teacherRoles = await _userManager.GetRolesAsync(teacher);
+        if (!teacherRoles.Contains("Teacher"))
+        {
+            return Result<ClassDto>.Failure("کاربر انتخاب شده نقش معلم ندارد");
         }
 
         var classEntity = Class.Create(
