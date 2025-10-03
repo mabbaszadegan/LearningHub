@@ -67,6 +67,11 @@ public class AppDbContext : IdentityDbContext<User>
     public DbSet<QuestionChoice> QuestionChoices { get; set; }
     public DbSet<StudentAnswer> StudentAnswers { get; set; }
     public DbSet<InteractiveLessonAssignment> InteractiveLessonAssignments { get; set; }
+    
+    // Enhanced Interactive Lesson System
+    public DbSet<InteractiveLessonStage> InteractiveLessonStages { get; set; }
+    public DbSet<StageContentItem> StageContentItems { get; set; }
+    public DbSet<InteractiveLessonSubChapter> InteractiveLessonSubChapters { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -467,6 +472,57 @@ public class AppDbContext : IdentityDbContext<User>
             entity.HasIndex(e => new { e.InteractiveLessonId, e.ClassId }).IsUnique();
             entity.HasIndex(e => e.IsActive);
             entity.HasIndex(e => e.AssignedAt);
+        });
+
+        // Configure InteractiveLessonStage entity
+        builder.Entity<InteractiveLessonStage>(entity =>
+        {
+            entity.Property(e => e.Title).HasMaxLength(200).IsRequired();
+            entity.Property(e => e.Description).HasMaxLength(1000);
+            (_providerConfig ?? new SqlServerConfiguration()).ConfigureLongText<InteractiveLessonStage>(entity.Property(e => e.TextContent));
+            entity.HasOne(e => e.InteractiveLesson)
+                .WithMany(e => e.Stages)
+                .HasForeignKey(e => e.InteractiveLessonId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasIndex(e => new { e.InteractiveLessonId, e.Order });
+            entity.HasIndex(e => e.IsActive);
+            entity.HasIndex(e => e.StageType);
+            entity.HasIndex(e => e.ArrangementType);
+        });
+
+        // Configure StageContentItem entity
+        builder.Entity<StageContentItem>(entity =>
+        {
+            entity.HasOne(e => e.InteractiveLessonStage)
+                .WithMany(e => e.ContentItems)
+                .HasForeignKey(e => e.InteractiveLessonStageId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.EducationalContent)
+                .WithMany()
+                .HasForeignKey(e => e.EducationalContentId)
+                .OnDelete(DeleteBehavior.NoAction);
+            entity.HasOne(e => e.InteractiveQuestion)
+                .WithMany()
+                .HasForeignKey(e => e.InteractiveQuestionId)
+                .OnDelete(DeleteBehavior.NoAction);
+            entity.HasIndex(e => new { e.InteractiveLessonStageId, e.Order });
+            entity.HasIndex(e => e.IsActive);
+        });
+
+        // Configure InteractiveLessonSubChapter entity
+        builder.Entity<InteractiveLessonSubChapter>(entity =>
+        {
+            entity.HasOne(e => e.InteractiveLesson)
+                .WithMany(e => e.SubChapters)
+                .HasForeignKey(e => e.InteractiveLessonId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.SubChapter)
+                .WithMany()
+                .HasForeignKey(e => e.SubChapterId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasIndex(e => new { e.InteractiveLessonId, e.SubChapterId }).IsUnique();
+            entity.HasIndex(e => new { e.InteractiveLessonId, e.Order });
+            entity.HasIndex(e => e.IsActive);
         });
 
     }

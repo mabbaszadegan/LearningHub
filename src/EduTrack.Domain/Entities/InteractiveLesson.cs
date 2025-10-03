@@ -6,6 +6,8 @@ namespace EduTrack.Domain.Entities;
 public class InteractiveLesson
 {
     private readonly List<InteractiveContentItem> _contentItems = new();
+    private readonly List<InteractiveLessonStage> _stages = new();
+    private readonly List<InteractiveLessonSubChapter> _subChapters = new();
 
     public int Id { get; private set; }
     public int CourseId { get; private set; }
@@ -20,6 +22,8 @@ public class InteractiveLesson
     // Navigation properties
     public Course Course { get; private set; } = null!;
     public IReadOnlyCollection<InteractiveContentItem> ContentItems => _contentItems.AsReadOnly();
+    public IReadOnlyCollection<InteractiveLessonStage> Stages => _stages.AsReadOnly();
+    public IReadOnlyCollection<InteractiveLessonSubChapter> SubChapters => _subChapters.AsReadOnly();
 
     // Private constructor for EF Core
     private InteractiveLesson() { }
@@ -131,5 +135,87 @@ public class InteractiveLesson
     public int GetTotalEducationalContent()
     {
         return _contentItems.Count(ci => ci.EducationalContentId.HasValue);
+    }
+
+    // Stage management methods
+    public void AddStage(InteractiveLessonStage stage)
+    {
+        if (stage == null)
+            throw new ArgumentNullException(nameof(stage));
+
+        if (_stages.Any(s => s.Id == stage.Id))
+            throw new InvalidOperationException("Stage already exists in this lesson");
+
+        _stages.Add(stage);
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
+    public void RemoveStage(InteractiveLessonStage stage)
+    {
+        if (stage == null)
+            throw new ArgumentNullException(nameof(stage));
+
+        var stageToRemove = _stages.FirstOrDefault(s => s.Id == stage.Id);
+        if (stageToRemove != null)
+        {
+            _stages.Remove(stageToRemove);
+            UpdatedAt = DateTimeOffset.UtcNow;
+        }
+    }
+
+    public bool HasStages()
+    {
+        return _stages.Any();
+    }
+
+    public int GetTotalStages()
+    {
+        return _stages.Count;
+    }
+
+    // Sub-chapter management methods
+    public void AddSubChapter(InteractiveLessonSubChapter subChapter)
+    {
+        if (subChapter == null)
+            throw new ArgumentNullException(nameof(subChapter));
+
+        if (_subChapters.Any(sc => sc.Id == subChapter.Id))
+            throw new InvalidOperationException("Sub-chapter already exists in this lesson");
+
+        _subChapters.Add(subChapter);
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
+    public void RemoveSubChapter(InteractiveLessonSubChapter subChapter)
+    {
+        if (subChapter == null)
+            throw new ArgumentNullException(nameof(subChapter));
+
+        var subChapterToRemove = _subChapters.FirstOrDefault(sc => sc.Id == subChapter.Id);
+        if (subChapterToRemove != null)
+        {
+            _subChapters.Remove(subChapterToRemove);
+            UpdatedAt = DateTimeOffset.UtcNow;
+        }
+    }
+
+    public bool HasSubChapters()
+    {
+        return _subChapters.Any();
+    }
+
+    public int GetTotalSubChapters()
+    {
+        return _subChapters.Count;
+    }
+
+    public bool UsesStages()
+    {
+        return HasStages();
+    }
+
+    public bool UsesLegacyContentItems()
+    {
+        return HasContentItems() && !HasStages();
     }
 }

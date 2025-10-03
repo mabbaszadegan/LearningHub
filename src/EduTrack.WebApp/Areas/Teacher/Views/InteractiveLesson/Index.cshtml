@@ -2,78 +2,302 @@
 
 @{
     ViewData["Title"] = "درس‌های تعاملی";
-    Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">درس‌های تعاملی</h3>
-                    <div class="card-tools">
-                        <a asp-action="Create" asp-route-courseId="@ViewBag.CourseId" class="btn btn-primary">
-                            <i class="fas fa-plus"></i> ایجاد درس تعاملی جدید
-                        </a>
+<div class="interactive-lesson-management">
+    <!-- Header Section -->
+    <div class="management-header">
+        <div class="header-content">
+            <div class="header-icon">
+                <i class="fas fa-play-circle"></i>
+            </div>
+            <div class="header-text">
+                <h2>مدیریت درس‌های تعاملی</h2>
+                <p>دوره: @ViewBag.CourseTitle</p>
+            </div>
+        </div>
+        <div class="header-actions">
+            <a asp-action="CreateWithStages" asp-route-courseId="@ViewBag.CourseId" class="btn btn-primary">
+                <i class="fas fa-layer-group"></i>
+                ایجاد درس با مراحل
+            </a>
+            <a asp-action="Create" asp-route-courseId="@ViewBag.CourseId" class="btn btn-outline-primary">
+                <i class="fas fa-plus"></i>
+                ایجاد درس ساده
+            </a>
+            <a asp-area="Teacher" asp-controller="Courses" asp-action="Index" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-right"></i>
+                بازگشت به دوره‌ها
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="management-content">
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="card-title">
+                            <i class="fas fa-list me-2"></i>
+                            لیست درس‌های تعاملی
+                        </h4>
+                        <div class="card-tools">
+                            <span class="badge bg-primary">@Model.Count درس</span>
+                        </div>
                     </div>
-                </div>
-                <div class="card-body">
-                    @if (Model.Any())
-                    {
-                        <div class="table-responsive">
-                            <table class="table table-bordered table-striped">
-                                <thead>
-                                    <tr>
-                                        <th>عنوان</th>
-                                        <th>توضیحات</th>
-                                        <th>تعداد محتوا</th>
-                                        <th>تعداد سوال</th>
-                                        <th>ترتیب</th>
-                                        <th>وضعیت</th>
-                                        <th>عملیات</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (var lesson in Model)
-                                    {
-                                        <tr>
-                                            <td>@lesson.Title</td>
-                                            <td>@lesson.Description</td>
-                                            <td>@lesson.ContentItems.Count(ci => ci.EducationalContentId.HasValue)</td>
-                                            <td>@lesson.ContentItems.Count(ci => ci.InteractiveQuestionId.HasValue)</td>
-                                            <td>@lesson.Order</td>
-                                            <td>
-                                                @if (lesson.IsActive)
-                                                {
-                                                    <span class="badge badge-success">فعال</span>
-                                                }
-                                                else
-                                                {
-                                                    <span class="badge badge-secondary">غیرفعال</span>
-                                                }
-                                            </td>
-                                            <td>
-                                                <a asp-action="Edit" asp-route-id="@lesson.Id" class="btn btn-sm btn-primary">
-                                                    <i class="fas fa-edit"></i> ویرایش
+                    <div class="card-body">
+                        @if (Model.Any())
+                        {
+                            <div class="row">
+                                @foreach (var lesson in Model)
+                                {
+                                    <div class="col-md-6 col-lg-4 mb-4">
+                                        <div class="lesson-card">
+                                            <div class="lesson-header">
+                                                <div class="lesson-icon">
+                                                    <i class="fas fa-play-circle"></i>
+                                                </div>
+                                                <div class="lesson-info">
+                                                    <h5 class="lesson-title">@lesson.Title</h5>
+                                                    <p class="lesson-description">@lesson.Description</p>
+                                                </div>
+                                                <div class="lesson-status">
+                                                    @if (lesson.IsActive)
+                                                    {
+                                                        <span class="badge bg-success">فعال</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge bg-secondary">غیرفعال</span>
+                                                    }
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="lesson-stats">
+                                                <div class="stat-item">
+                                                    <i class="fas fa-file-alt"></i>
+                                                    <span>@lesson.ContentItems.Count(ci => ci.EducationalContentId.HasValue) محتوا</span>
+                                                </div>
+                                                <div class="stat-item">
+                                                    <i class="fas fa-question-circle"></i>
+                                                    <span>@lesson.ContentItems.Count(ci => ci.InteractiveQuestionId.HasValue) سوال</span>
+                                                </div>
+                                                <div class="stat-item">
+                                                    <i class="fas fa-sort-numeric-up"></i>
+                                                    <span>ترتیب: @lesson.Order</span>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="lesson-actions">
+                                                <a asp-action="Details" asp-route-id="@lesson.Id" class="btn btn-sm btn-outline-primary">
+                                                    <i class="fas fa-eye"></i>
+                                                    مشاهده
                                                 </a>
-                                            </td>
-                                        </tr>
-                                    }
-                                </tbody>
-                            </table>
-                        </div>
-                    }
-                    else
-                    {
-                        <div class="text-center">
-                            <p class="text-muted">هیچ درس تعاملی ایجاد نشده است.</p>
-                            <a asp-action="Create" asp-route-courseId="@ViewBag.CourseId" class="btn btn-primary">
-                                <i class="fas fa-plus"></i> ایجاد اولین درس تعاملی
-                            </a>
-                        </div>
-                    }
+                                                <a asp-action="Edit" asp-route-id="@lesson.Id" class="btn btn-sm btn-primary">
+                                                    <i class="fas fa-edit"></i>
+                                                    ویرایش
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="empty-state">
+                                <div class="empty-icon">
+                                    <i class="fas fa-play-circle"></i>
+                                </div>
+                                <h4>هیچ درس تعاملی ایجاد نشده</h4>
+                                <p>برای شروع، اولین درس تعاملی خود را ایجاد کنید</p>
+                                <div class="empty-actions">
+                                    <a asp-action="CreateWithStages" asp-route-courseId="@ViewBag.CourseId" class="btn btn-primary">
+                                        <i class="fas fa-layer-group"></i>
+                                        ایجاد درس با مراحل
+                                    </a>
+                                    <a asp-action="Create" asp-route-courseId="@ViewBag.CourseId" class="btn btn-outline-primary">
+                                        <i class="fas fa-plus"></i>
+                                        ایجاد درس ساده
+                                    </a>
+                                </div>
+                            </div>
+                        }
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+.interactive-lesson-management {
+    padding: 0;
+}
+
+.management-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 2rem;
+    border-radius: 0.5rem;
+    margin-bottom: 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.header-icon {
+    font-size: 2.5rem;
+    opacity: 0.9;
+}
+
+.header-text h2 {
+    margin: 0;
+    font-size: 1.8rem;
+    font-weight: 600;
+}
+
+.header-text p {
+    margin: 0.25rem 0 0 0;
+    opacity: 0.9;
+    font-size: 1rem;
+}
+
+.header-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.lesson-card {
+    background: white;
+    border: 1px solid #e3e6f0;
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.lesson-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    border-color: #667eea;
+}
+
+.lesson-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.lesson-icon {
+    font-size: 1.5rem;
+    color: #667eea;
+    margin-top: 0.25rem;
+}
+
+.lesson-info {
+    flex: 1;
+}
+
+.lesson-title {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #2d3748;
+}
+
+.lesson-description {
+    margin: 0;
+    color: #718096;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.lesson-status {
+    margin-top: 0.25rem;
+}
+
+.lesson-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    padding: 1rem;
+    background: #f7fafc;
+    border-radius: 0.375rem;
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: #4a5568;
+}
+
+.stat-item i {
+    color: #667eea;
+    width: 16px;
+}
+
+.lesson-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: auto;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem 2rem;
+}
+
+.empty-icon {
+    font-size: 4rem;
+    color: #cbd5e0;
+    margin-bottom: 1rem;
+}
+
+.empty-state h4 {
+    color: #4a5568;
+    margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+    color: #718096;
+    margin-bottom: 2rem;
+}
+
+.empty-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+}
+
+@@media (max-width: 768px) {
+    .management-header {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+    
+    .header-actions {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    .empty-actions {
+        flex-direction: column;
+        align-items: center;
+    }
+}
+</style>

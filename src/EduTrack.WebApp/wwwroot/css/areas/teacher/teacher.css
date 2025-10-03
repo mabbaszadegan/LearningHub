@@ -891,6 +891,51 @@
     border-color: rgba(102, 126, 234, 0.4);
 }
 
+/* Special styling for Interactive Lesson Management Link */
+.course-management-links .content-management-link[href*="InteractiveLesson"] {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    font-weight: 600;
+    border: none;
+    margin: 0.5rem 0;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.course-management-links .content-management-link[href*="InteractiveLesson"]::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s;
+}
+
+.course-management-links .content-management-link[href*="InteractiveLesson"]:hover::before {
+    left: 100%;
+}
+
+.course-management-links .content-management-link[href*="InteractiveLesson"]:hover {
+    background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+    color: white;
+    transform: translateX(-2px) translateY(-1px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.course-management-links .content-management-link[href*="InteractiveLesson"].active {
+    background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.course-management-links .content-management-link[href*="InteractiveLesson"] i {
+    font-size: 0.8rem;
+    margin-left: 0.4rem;
+}
+
 .loading-placeholder {
     display: flex;
     align-items: center;
