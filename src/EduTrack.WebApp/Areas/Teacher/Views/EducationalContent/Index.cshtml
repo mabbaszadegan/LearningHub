@@ -1,0 +1,349 @@
+@model List<EduTrack.Application.Common.Models.EducationalContentDto>
+@{
+    ViewData["Title"] = "مدیریت محتوای آموزشی";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="h4 mb-0">مدیریت محتوای آموزشی</h2>
+        <p class="text-muted mb-0">@ViewBag.SubChapterTitle</p>
+        <small class="text-muted">فصل: @ViewBag.ChapterTitle - دوره: @ViewBag.CourseTitle</small>
+    </div>
+    <div>
+        <a asp-controller="Chapters" asp-action="Index" asp-route-courseId="@ViewBag.CourseId" class="btn btn-outline-secondary me-2">
+            <i class="fas fa-arrow-right me-2"></i>بازگشت به فصول
+        </a>
+        <a asp-action="Create" asp-route-subChapterId="@ViewBag.SubChapterId" class="btn btn-modern-primary">
+            <i class="fas fa-plus me-2"></i>افزودن محتوای جدید
+        </a>
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="fas fa-check-circle me-2"></i>
+        @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="fas fa-exclamation-circle me-2"></i>
+        @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (Model.Any())
+{
+    <div class="row">
+        @foreach (var content in Model)
+        {
+            <div class="col-lg-6 col-xl-4 mb-4">
+                <div class="modern-card content-card">
+                    <div class="modern-card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <h5 class="modern-card-title">@content.Title</h5>
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-ellipsis-v"></i>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <a class="dropdown-item" asp-action="Edit" asp-route-id="@content.Id">
+                                            <i class="fas fa-edit me-2"></i>ویرایش
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <form asp-action="Delete" asp-route-id="@content.Id" method="post" 
+                                              onsubmit="return confirm('آیا از حذف این محتوا اطمینان دارید؟')">
+                                            <button type="submit" class="dropdown-item text-danger">
+                                                <i class="fas fa-trash me-2"></i>حذف
+                                            </button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        @if (!string.IsNullOrEmpty(content.Description))
+                        {
+                            <p class="text-muted mb-3">@content.Description</p>
+                        }
+                        
+                        <div class="content-type-section mb-3">
+                            <span class="badge content-type-badge @GetContentTypeClass(content.Type)">
+                                <i class="@GetContentTypeIcon(content.Type) me-1"></i>
+                                @GetContentTypeName(content.Type)
+                            </span>
+                        </div>
+                        
+                        <div class="content-preview mb-3">
+                            @switch (content.Type)
+                            {
+                                case EduTrack.Domain.Enums.EducationalContentType.Text:
+                                    <div class="text-preview">
+                                        @if (!string.IsNullOrEmpty(content.TextContent))
+                                        {
+                                            <p class="preview-text">@(content.TextContent.Length > 100 ? content.TextContent.Substring(0, 100) + "..." : content.TextContent)</p>
+                                        }
+                                    </div>
+                                    break;
+                                    
+                                case EduTrack.Domain.Enums.EducationalContentType.Image:
+                                    @if (content.File != null && !string.IsNullOrEmpty(content.File.FileUrl))
+                                    {
+                                        <div class="image-preview">
+                                            <img src="@content.File.FileUrl" alt="@content.Title" class="img-fluid rounded" style="max-height: 150px; width: 100%; object-fit: cover;">
+                                        </div>
+                                    }
+                                    break;
+                                    
+                                case EduTrack.Domain.Enums.EducationalContentType.Video:
+                                    @if (content.File != null && !string.IsNullOrEmpty(content.File.FileUrl))
+                                    {
+                                        <div class="video-preview">
+                                            <video controls class="w-100" style="max-height: 150px;">
+                                                <source src="@content.File.FileUrl" type="@content.File.MimeType">
+                                                مرورگر شما از پخش ویدیو پشتیبانی نمی‌کند.
+                                            </video>
+                                        </div>
+                                    }
+                                    else if (!string.IsNullOrEmpty(content.ExternalUrl))
+                                    {
+                                        <div class="external-video-preview">
+                                            <div class="embed-responsive embed-responsive-16by9">
+                                                <iframe class="embed-responsive-item" src="@content.ExternalUrl" allowfullscreen></iframe>
+                                            </div>
+                                        </div>
+                                    }
+                                    break;
+                                    
+                                case EduTrack.Domain.Enums.EducationalContentType.Audio:
+                                    @if (content.File != null && !string.IsNullOrEmpty(content.File.FileUrl))
+                                    {
+                                        <div class="audio-preview">
+                                            <audio controls class="w-100">
+                                                <source src="@content.File.FileUrl" type="@content.File.MimeType">
+                                                مرورگر شما از پخش صدا پشتیبانی نمی‌کند.
+                                            </audio>
+                                        </div>
+                                    }
+                                    break;
+                                    
+                                case EduTrack.Domain.Enums.EducationalContentType.PDF:
+                                case EduTrack.Domain.Enums.EducationalContentType.File:
+                                    @if (content.File != null && !string.IsNullOrEmpty(content.File.OriginalFileName))
+                                    {
+                                        <div class="file-preview">
+                                            <div class="file-info">
+                                                <i class="fas fa-file me-2"></i>
+                                                <span>@content.File.OriginalFileName</span>
+                                                <small class="text-muted d-block">@FormatFileSize(content.File.FileSizeBytes)</small>
+                                            </div>
+                                        </div>
+                                    }
+                                    break;
+                                    
+                                case EduTrack.Domain.Enums.EducationalContentType.ExternalUrl:
+                                    @if (!string.IsNullOrEmpty(content.ExternalUrl))
+                                    {
+                                        <div class="external-url-preview">
+                                            <div class="url-info">
+                                                <i class="fas fa-external-link-alt me-2"></i>
+                                                <a href="@content.ExternalUrl" target="_blank" class="text-decoration-none">
+                                                    @content.ExternalUrl
+                                                </a>
+                                            </div>
+                                        </div>
+                                    }
+                                    break;
+                            }
+                        </div>
+                        
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">
+                                <i class="fas fa-sort-numeric-up me-1"></i>
+                                ترتیب: @content.Order
+                            </small>
+                            <small class="text-muted">
+                                <i class="fas fa-calendar me-1"></i>
+                                @content.CreatedAt.ToString("yyyy/MM/dd")
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <div class="empty-state text-center py-5">
+        <i class="fas fa-file-alt text-muted mb-3" style="font-size: 4rem;"></i>
+        <h4 class="text-muted mb-3">هنوز محتوایی اضافه نشده</h4>
+        <p class="text-muted mb-4">برای شروع، اولین محتوای آموزشی خود را ایجاد کنید.</p>
+        <a asp-action="Create" asp-route-subChapterId="@ViewBag.SubChapterId" class="btn btn-modern-primary">
+            <i class="fas fa-plus me-2"></i>افزودن محتوای جدید
+        </a>
+    </div>
+}
+
+@functions {
+    string GetContentTypeClass(EduTrack.Domain.Enums.EducationalContentType type)
+    {
+        return type switch
+        {
+            EduTrack.Domain.Enums.EducationalContentType.Text => "bg-info",
+            EduTrack.Domain.Enums.EducationalContentType.Image => "bg-success",
+            EduTrack.Domain.Enums.EducationalContentType.Video => "bg-danger",
+            EduTrack.Domain.Enums.EducationalContentType.Audio => "bg-warning",
+            EduTrack.Domain.Enums.EducationalContentType.PDF => "bg-primary",
+            EduTrack.Domain.Enums.EducationalContentType.File => "bg-secondary",
+            EduTrack.Domain.Enums.EducationalContentType.ExternalUrl => "bg-dark",
+            _ => "bg-secondary"
+        };
+    }
+
+    string GetContentTypeIcon(EduTrack.Domain.Enums.EducationalContentType type)
+    {
+        return type switch
+        {
+            EduTrack.Domain.Enums.EducationalContentType.Text => "fas fa-font",
+            EduTrack.Domain.Enums.EducationalContentType.Image => "fas fa-image",
+            EduTrack.Domain.Enums.EducationalContentType.Video => "fas fa-video",
+            EduTrack.Domain.Enums.EducationalContentType.Audio => "fas fa-volume-up",
+            EduTrack.Domain.Enums.EducationalContentType.PDF => "fas fa-file-pdf",
+            EduTrack.Domain.Enums.EducationalContentType.File => "fas fa-file",
+            EduTrack.Domain.Enums.EducationalContentType.ExternalUrl => "fas fa-external-link-alt",
+            _ => "fas fa-file"
+        };
+    }
+
+    string GetContentTypeName(EduTrack.Domain.Enums.EducationalContentType type)
+    {
+        return type switch
+        {
+            EduTrack.Domain.Enums.EducationalContentType.Text => "متن",
+            EduTrack.Domain.Enums.EducationalContentType.Image => "تصویر",
+            EduTrack.Domain.Enums.EducationalContentType.Video => "ویدیو",
+            EduTrack.Domain.Enums.EducationalContentType.Audio => "صدا",
+            EduTrack.Domain.Enums.EducationalContentType.PDF => "PDF",
+            EduTrack.Domain.Enums.EducationalContentType.File => "فایل",
+            EduTrack.Domain.Enums.EducationalContentType.ExternalUrl => "لینک خارجی",
+            _ => "نامشخص"
+        };
+    }
+
+    string FormatFileSize(long bytes)
+    {
+        string[] sizes = { "B", "KB", "MB", "GB" };
+        double len = bytes;
+        int order = 0;
+        while (len >= 1024 && order < sizes.Length - 1)
+        {
+            order++;
+            len = len / 1024;
+        }
+        return $"{len:0.##} {sizes[order]}";
+    }
+}
+
+<style>
+.modern-card {
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    height: 100%;
+}
+
+.modern-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transform: translateY(-2px);
+}
+
+.modern-card-body {
+    padding: 20px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.modern-card-title {
+    font-weight: 600;
+    color: #2c3e50;
+    margin: 0;
+}
+
+.content-type-badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+}
+
+.content-preview {
+    min-height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.preview-text {
+    font-size: 0.9rem;
+    line-height: 1.4;
+    color: #6c757d;
+    margin: 0;
+}
+
+.image-preview img {
+    border-radius: 8px;
+}
+
+.file-info {
+    text-align: center;
+    padding: 1rem;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+}
+
+.url-info {
+    text-align: center;
+    padding: 1rem;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+}
+
+.embed-responsive {
+    position: relative;
+    display: block;
+    width: 100%;
+    padding: 0;
+    overflow: hidden;
+}
+
+.embed-responsive::before {
+    content: "";
+    display: block;
+    padding-top: 56.25%;
+}
+
+.embed-responsive-item {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+}
+
+.empty-state {
+    background-color: #f8f9fa;
+    border-radius: 12px;
+    border: 2px dashed #dee2e6;
+}
+</style>

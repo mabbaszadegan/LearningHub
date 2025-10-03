@@ -46,6 +46,8 @@ public class AppDbContext : IdentityDbContext<User>
     public DbSet<Resource> Resources { get; set; }
     public DbSet<Chapter> Chapters { get; set; }
     public DbSet<SubChapter> SubChapters { get; set; }
+    public DbSet<Domain.Entities.File> Files { get; set; }
+    public DbSet<EducationalContent> EducationalContents { get; set; }
     public DbSet<Class> Classes { get; set; }
     public DbSet<Enrollment> Enrollments { get; set; }
     public DbSet<Question> Questions { get; set; }
@@ -305,6 +307,42 @@ public class AppDbContext : IdentityDbContext<User>
                 .OnDelete(DeleteBehavior.Cascade);
             entity.HasIndex(e => new { e.ChapterId, e.Order });
             entity.HasIndex(e => e.IsActive);
+        });
+
+        // Configure File entity
+        builder.Entity<Domain.Entities.File>(entity =>
+        {
+            entity.Property(e => e.FileName).HasMaxLength(255).IsRequired();
+            entity.Property(e => e.OriginalFileName).HasMaxLength(255).IsRequired();
+            entity.Property(e => e.FilePath).HasMaxLength(1000).IsRequired();
+            entity.Property(e => e.MimeType).HasMaxLength(100).IsRequired();
+            entity.Property(e => e.MD5Hash).HasMaxLength(32).IsRequired();
+            entity.Property(e => e.CreatedBy).HasMaxLength(450);
+            entity.HasIndex(e => e.MD5Hash).IsUnique();
+            entity.HasIndex(e => e.FileName);
+            entity.HasIndex(e => e.CreatedAt);
+        });
+
+        // Configure EducationalContent entity
+        builder.Entity<EducationalContent>(entity =>
+        {
+            entity.Property(e => e.Title).HasMaxLength(200).IsRequired();
+            entity.Property(e => e.Description).HasMaxLength(1000);
+            entity.Property(e => e.ExternalUrl).HasMaxLength(1000);
+            entity.Property(e => e.CreatedBy).HasMaxLength(450);
+            (_providerConfig ?? new SqlServerConfiguration()).ConfigureLongText<EducationalContent>(entity.Property(e => e.TextContent));
+            entity.HasOne(e => e.SubChapter)
+                .WithMany(e => e.EducationalContents)
+                .HasForeignKey(e => e.SubChapterId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.File)
+                .WithMany(e => e.EducationalContents)
+                .HasForeignKey(e => e.FileId)
+                .OnDelete(DeleteBehavior.SetNull);
+            entity.HasIndex(e => new { e.SubChapterId, e.Order });
+            entity.HasIndex(e => e.IsActive);
+            entity.HasIndex(e => e.Type);
+            entity.HasIndex(e => e.FileId);
         });
 
         // Configure ActivityLog entity

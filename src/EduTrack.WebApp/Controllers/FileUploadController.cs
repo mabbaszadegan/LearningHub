@@ -47,7 +47,7 @@ public class FileUploadController : Controller
 
             // Save file
             using var stream = file.OpenReadStream();
-            var filePath = await _fileStorageService.SaveFileAsync(stream, file.FileName, file.ContentType);
+            var (filePath, _, _) = await _fileStorageService.SaveFileAsync(stream, file.FileName, file.ContentType);
 
             // Create resource record
             var command = new CreateResourceCommand(

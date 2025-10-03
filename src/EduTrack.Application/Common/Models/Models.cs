@@ -232,6 +232,41 @@ public class SubChapterDto
     public int Order { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
+    public int ContentCount { get; set; }
+    public List<EducationalContentDto> EducationalContents { get; set; } = new();
+}
+
+public class FileDto
+{
+    public int Id { get; set; }
+    public string FileName { get; set; } = string.Empty;
+    public string OriginalFileName { get; set; } = string.Empty;
+    public string FilePath { get; set; } = string.Empty;
+    public string MimeType { get; set; } = string.Empty;
+    public long FileSizeBytes { get; set; }
+    public string MD5Hash { get; set; } = string.Empty;
+    public DateTimeOffset CreatedAt { get; set; }
+    public string CreatedBy { get; set; } = string.Empty;
+    public int ReferenceCount { get; set; }
+    public string? FileUrl { get; set; }
+}
+
+public class EducationalContentDto
+{
+    public int Id { get; set; }
+    public int SubChapterId { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public EducationalContentType Type { get; set; }
+    public string? TextContent { get; set; }
+    public int? FileId { get; set; }
+    public string? ExternalUrl { get; set; }
+    public bool IsActive { get; set; }
+    public int Order { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
+    public DateTimeOffset UpdatedAt { get; set; }
+    public string CreatedBy { get; set; } = string.Empty;
+    public FileDto? File { get; set; }
 }
 
 public class DashboardViewModel

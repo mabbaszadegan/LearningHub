@@ -1,6 +1,7 @@
 using EduTrack.Application.Common.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using System.Security.Cryptography;
 
 namespace EduTrack.Infrastructure.Services;
 
@@ -15,12 +16,13 @@ public class FileStorageService : IFileStorageService
         _logger = logger;
     }
 
-    public async Task<string> SaveFileAsync(Stream fileStream, string fileName, string contentType, CancellationToken cancellationToken = default)
+    public async Task<(string FilePath, string MD5Hash, long FileSize)> SaveFileAsync(Stream fileStream, string originalFileName, string contentType, CancellationToken cancellationToken = default)
     {
         try
         {
-            var sanitizedFileName = SanitizeFileName(fileName);
-            var filePath = Path.Combine(_storageRoot, sanitizedFileName);
+            // Generate unique filename
+            var uniqueFileName = GenerateUniqueFileName(originalFileName);
+            var filePath = Path.Combine(_storageRoot, uniqueFileName);
             var directory = Path.GetDirectoryName(filePath);
 
             if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
@@ -28,15 +30,23 @@ public class FileStorageService : IFileStorageService
                 Directory.CreateDirectory(directory);
             }
 
+            // Calculate MD5 hash while saving
+            using var md5 = MD5.Create();
             using var fileStreamWriter = new FileStream(filePath, FileMode.Create);
-            await fileStream.CopyToAsync(fileStreamWriter, cancellationToken);
+            using var cryptoStream = new CryptoStream(fileStreamWriter, md5, CryptoStreamMode.Write);
+            
+            await fileStream.CopyToAsync(cryptoStream, cancellationToken);
+            await cryptoStream.FlushFinalBlockAsync(cancellationToken);
+            
+            var md5Hash = Convert.ToHexString(md5.Hash!).ToLowerInvariant();
+            var fileSize = fileStreamWriter.Length;
 
-            _logger.LogInformation("File saved successfully: {FilePath}", filePath);
-            return filePath;
+            _logger.LogInformation("File saved successfully: {FilePath}, MD5: {MD5Hash}, Size: {FileSize}", filePath, md5Hash, fileSize);
+            return (filePath, md5Hash, fileSize);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error saving file: {FileName}", fileName);
+            _logger.LogError(ex, "Error saving file: {FileName}", originalFileName);
             throw;
         }
     }
@@ -81,6 +91,16 @@ public class FileStorageService : IFileStorageService
     public Task<bool> FileExistsAsync(string filePath, CancellationToken cancellationToken = default)
     {
         return Task.FromResult(File.Exists(filePath));
+    }
+
+    private static string GenerateUniqueFileName(string originalFileName)
+    {
+        var extension = Path.GetExtension(originalFileName);
+        var sanitizedBaseName = SanitizeFileName(Path.GetFileNameWithoutExtension(originalFileName));
+        var timestamp = DateTimeOffset.UtcNow.ToString("yyyyMMdd_HHmmss");
+        var guid = Guid.NewGuid().ToString("N")[..8]; // First 8 characters of GUID
+        
+        return $"{sanitizedBaseName}_{timestamp}_{guid}{extension}";
     }
 
     private static string SanitizeFileName(string fileName)

@@ -170,14 +170,25 @@ using (var scope = app.Services.CreateScope())
         var userManager = services.GetRequiredService<UserManager<User>>();
         var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
         
-        // Ensure database is created
-        await context.Database.EnsureCreatedAsync();
+        // Apply pending migrations automatically if enabled
+        var autoMigrate = builder.Configuration.GetValue<bool>("Database:AutoMigrate", true);
+        if (autoMigrate)
+        {
+            Log.Information("Applying database migrations...");
+            await context.Database.MigrateAsync();
+            Log.Information("Database migrations applied successfully");
+        }
+        else
+        {
+            Log.Information("Auto-migration is disabled. Please apply migrations manually.");
+        }
         
         await SeedData.InitializeAsync(context, userManager, roleManager);
     }
     catch (Exception ex)
     {
-        Log.Error(ex, "An error occurred while seeding the database");
+        Log.Error(ex, "An error occurred while applying migrations or seeding the database");
+        throw; // Re-throw to prevent app from starting with inconsistent database
     }
 }
 

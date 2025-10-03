@@ -290,6 +290,45 @@ public class SubChapter
 
     // Navigation properties
     public Chapter Chapter { get; set; } = null!;
+    public ICollection<EducationalContent> EducationalContents { get; set; } = new List<EducationalContent>();
+}
+
+public class File
+{
+    public int Id { get; set; }
+    public string FileName { get; set; } = string.Empty;
+    public string OriginalFileName { get; set; } = string.Empty;
+    public string FilePath { get; set; } = string.Empty;
+    public string MimeType { get; set; } = string.Empty;
+    public long FileSizeBytes { get; set; }
+    public string MD5Hash { get; set; } = string.Empty;
+    public DateTimeOffset CreatedAt { get; set; }
+    public string CreatedBy { get; set; } = string.Empty;
+    public int ReferenceCount { get; set; } = 1;
+
+    // Navigation properties
+    public ICollection<EducationalContent> EducationalContents { get; set; } = new List<EducationalContent>();
+}
+
+public class EducationalContent
+{
+    public int Id { get; set; }
+    public int SubChapterId { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public EducationalContentType Type { get; set; }
+    public string? TextContent { get; set; }
+    public int? FileId { get; set; }
+    public string? ExternalUrl { get; set; }
+    public bool IsActive { get; set; } = true;
+    public int Order { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
+    public DateTimeOffset UpdatedAt { get; set; }
+    public string CreatedBy { get; set; } = string.Empty;
+
+    // Navigation properties
+    public SubChapter SubChapter { get; set; } = null!;
+    public File? File { get; set; }
 }
 
 public class ActivityLog

@@ -409,3 +409,11 @@ dist
 .angular/
 */logs/*
 /src/EduTrack.WebApp/App_Data/logs
+/src/EduTrack.WebApp/wwwroot/storage
+
+# Uploaded files and user content
+uploads/
+files/
+content/
+media/
+temp/

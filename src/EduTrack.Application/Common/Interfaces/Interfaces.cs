@@ -38,7 +38,7 @@ public interface ICurrentUserService
 
 public interface IFileStorageService
 {
-    Task<string> SaveFileAsync(Stream fileStream, string fileName, string contentType, CancellationToken cancellationToken = default);
+    Task<(string FilePath, string MD5Hash, long FileSize)> SaveFileAsync(Stream fileStream, string originalFileName, string contentType, CancellationToken cancellationToken = default);
     Task<Stream> GetFileAsync(string filePath, CancellationToken cancellationToken = default);
     Task DeleteFileAsync(string filePath, CancellationToken cancellationToken = default);
     Task<bool> FileExistsAsync(string filePath, CancellationToken cancellationToken = default);

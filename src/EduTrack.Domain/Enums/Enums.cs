@@ -30,3 +30,14 @@ public enum ResourceType
     URL = 4,
     Document = 5
 }
+
+public enum EducationalContentType
+{
+    Text = 1,
+    Image = 2,
+    Video = 3,
+    Audio = 4,
+    PDF = 5,
+    ExternalUrl = 6,
+    File = 7
+}

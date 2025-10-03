@@ -1,0 +1,337 @@
+@model EduTrack.Application.Features.EducationalContent.Commands.CreateEducationalContentCommand
+@{
+    ViewData["Title"] = "ایجاد محتوای آموزشی جدید";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="h4 mb-0">ایجاد محتوای آموزشی جدید</h2>
+        <p class="text-muted mb-0">@ViewBag.SubChapterTitle</p>
+        <small class="text-muted">فصل: @ViewBag.ChapterTitle - دوره: @ViewBag.CourseTitle</small>
+    </div>
+    <a asp-action="Index" asp-route-subChapterId="@ViewBag.SubChapterId" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-right me-2"></i>بازگشت
+    </a>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="modern-card">
+            <div class="modern-card-body">
+                <form asp-action="Create" method="post" enctype="multipart/form-data">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+                    
+                    <input asp-for="SubChapterId" type="hidden" />
+                    
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="form-group mb-3">
+                                <label asp-for="Title" class="form-label">
+                                    <i class="fas fa-heading me-2"></i>عنوان محتوا
+                                </label>
+                                <input asp-for="Title" class="form-control" placeholder="عنوان محتوا را وارد کنید" />
+                                <span asp-validation-for="Title" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group mb-3">
+                                <label asp-for="Order" class="form-label">
+                                    <i class="fas fa-sort-numeric-up me-2"></i>ترتیب
+                                </label>
+                                <input asp-for="Order" type="number" class="form-control" min="0" placeholder="0" />
+                                <span asp-validation-for="Order" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group mb-3">
+                        <label asp-for="Description" class="form-label">
+                            <i class="fas fa-align-right me-2"></i>توضیحات (اختیاری)
+                        </label>
+                        <textarea asp-for="Description" class="form-control" rows="3" 
+                                  placeholder="توضیحات کوتاه در مورد این محتوا"></textarea>
+                        <span asp-validation-for="Description" class="text-danger"></span>
+                    </div>
+                    
+                    <div class="form-group mb-4">
+                        <label asp-for="Type" class="form-label">
+                            <i class="fas fa-tags me-2"></i>نوع محتوا <span class="text-danger">*</span>
+                        </label>
+                        <select asp-for="Type" class="form-control" id="contentTypeSelect">
+                            <option value="@((int)EduTrack.Domain.Enums.EducationalContentType.Text)">متن</option>
+                            <option value="@((int)EduTrack.Domain.Enums.EducationalContentType.Image)">تصویر</option>
+                            <option value="@((int)EduTrack.Domain.Enums.EducationalContentType.Video)">ویدیو</option>
+                            <option value="@((int)EduTrack.Domain.Enums.EducationalContentType.Audio)">صدا</option>
+                            <option value="@((int)EduTrack.Domain.Enums.EducationalContentType.PDF)">PDF</option>
+                            <option value="@((int)EduTrack.Domain.Enums.EducationalContentType.File)">فایل</option>
+                            <option value="@((int)EduTrack.Domain.Enums.EducationalContentType.ExternalUrl)">لینک خارجی</option>
+                        </select>
+                        <span asp-validation-for="Type" class="text-danger"></span>
+                    </div>
+                    
+                    <!-- Text Content -->
+                    <div class="form-group mb-4" id="textContentGroup">
+                        <label asp-for="TextContent" class="form-label">
+                            <i class="fas fa-font me-2"></i>محتوای متن <span class="text-danger">*</span>
+                        </label>
+                        <textarea asp-for="TextContent" class="form-control" rows="8" 
+                                  placeholder="محتوای متنی را وارد کنید..."></textarea>
+                        <div class="form-text">
+                            <i class="fas fa-info-circle me-1"></i>
+                            می‌توانید از HTML برای فرمت‌بندی متن استفاده کنید.
+                        </div>
+                        <span asp-validation-for="TextContent" class="text-danger"></span>
+                    </div>
+                    
+                    <!-- File Upload -->
+                    <div class="form-group mb-4" id="fileUploadGroup" style="display: none;">
+                        <label asp-for="File" class="form-label">
+                            <i class="fas fa-upload me-2"></i>انتخاب فایل <span class="text-danger">*</span>
+                        </label>
+                        <input asp-for="File" type="file" class="form-control" accept="image/*,video/*,audio/*,.pdf" id="fileInput" />
+                        <div class="form-text" id="fileHelpText">
+                            <i class="fas fa-info-circle me-1"></i>
+                            فایل‌های مجاز: تصویر، ویدیو، صدا، PDF
+                        </div>
+                        <span asp-validation-for="File" class="text-danger"></span>
+                        
+                        <!-- File Preview -->
+                        <div id="filePreview" class="mt-3" style="display: none;">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h6 class="card-title">
+                                        <i class="fas fa-eye me-2"></i>پیش‌نمایش فایل
+                                    </h6>
+                                    <div id="previewContent"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- External URL -->
+                    <div class="form-group mb-4" id="externalUrlGroup" style="display: none;">
+                        <label asp-for="ExternalUrl" class="form-label">
+                            <i class="fas fa-external-link-alt me-2"></i>آدرس خارجی <span class="text-danger">*</span>
+                        </label>
+                        <input asp-for="ExternalUrl" class="form-control" placeholder="https://example.com" />
+                        <div class="form-text">
+                            <i class="fas fa-info-circle me-1"></i>
+                            آدرس کامل لینک خارجی را وارد کنید (مثال: https://youtube.com/watch?v=...)
+                        </div>
+                        <span asp-validation-for="ExternalUrl" class="text-danger"></span>
+                    </div>
+                    
+                    <div class="d-flex justify-content-end gap-2">
+                        <a asp-action="Index" asp-route-subChapterId="@ViewBag.SubChapterId" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-2"></i>انصراف
+                        </a>
+                        <button type="submit" class="btn btn-modern-primary">
+                            <i class="fas fa-save me-2"></i>ایجاد محتوا
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.modern-card {
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.modern-card-body {
+    padding: 30px;
+}
+
+.form-label {
+    font-weight: 500;
+    color: #495057;
+    margin-bottom: 8px;
+}
+
+.form-control {
+    border-radius: 8px;
+    border: 1px solid #ced4da;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.btn-modern-primary {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-modern-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+}
+
+.form-text {
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin-top: 5px;
+}
+</style>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const contentTypeSelect = document.getElementById('contentTypeSelect');
+            const textContentGroup = document.getElementById('textContentGroup');
+            const fileUploadGroup = document.getElementById('fileUploadGroup');
+            const externalUrlGroup = document.getElementById('externalUrlGroup');
+            const fileHelpText = document.getElementById('fileHelpText');
+
+            function toggleContentGroups() {
+                const selectedType = parseInt(contentTypeSelect.value);
+                
+                // Hide all groups
+                textContentGroup.style.display = 'none';
+                fileUploadGroup.style.display = 'none';
+                externalUrlGroup.style.display = 'none';
+                
+                // Show relevant group based on type
+                switch(selectedType) {
+                    case @((int)EduTrack.Domain.Enums.EducationalContentType.Text):
+                        textContentGroup.style.display = 'block';
+                        break;
+                    case @((int)EduTrack.Domain.Enums.EducationalContentType.Image):
+                    case @((int)EduTrack.Domain.Enums.EducationalContentType.Video):
+                    case @((int)EduTrack.Domain.Enums.EducationalContentType.Audio):
+                    case @((int)EduTrack.Domain.Enums.EducationalContentType.PDF):
+                    case @((int)EduTrack.Domain.Enums.EducationalContentType.File):
+                        fileUploadGroup.style.display = 'block';
+                        updateFileHelpText(selectedType);
+                        break;
+                    case @((int)EduTrack.Domain.Enums.EducationalContentType.ExternalUrl):
+                        externalUrlGroup.style.display = 'block';
+                        break;
+                }
+            }
+
+            function updateFileHelpText(type) {
+                const helpTexts = {
+                    @((int)EduTrack.Domain.Enums.EducationalContentType.Image): 'فایل‌های مجاز: JPG, PNG, GIF, WebP (حداکثر 10MB)',
+                    @((int)EduTrack.Domain.Enums.EducationalContentType.Video): 'فایل‌های مجاز: MP4, AVI, MOV, WebM (حداکثر 100MB)',
+                    @((int)EduTrack.Domain.Enums.EducationalContentType.Audio): 'فایل‌های مجاز: MP3, WAV, OGG (حداکثر 50MB)',
+                    @((int)EduTrack.Domain.Enums.EducationalContentType.PDF): 'فایل‌های مجاز: PDF (حداکثر 20MB)',
+                    @((int)EduTrack.Domain.Enums.EducationalContentType.File): 'فایل‌های مجاز: انواع مختلف (حداکثر 50MB)'
+                };
+                
+                fileHelpText.innerHTML = '<i class="fas fa-info-circle me-1"></i>' + (helpTexts[type] || 'فایل‌های مجاز: تصویر، ویدیو، صدا، PDF');
+            }
+
+            contentTypeSelect.addEventListener('change', toggleContentGroups);
+            toggleContentGroups(); // Initialize on page load
+
+            // File preview functionality
+            const fileInput = document.getElementById('fileInput');
+            const filePreview = document.getElementById('filePreview');
+            const previewContent = document.getElementById('previewContent');
+
+            fileInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    showFilePreview(file);
+                } else {
+                    hideFilePreview();
+                }
+            });
+
+            function showFilePreview(file) {
+                const fileType = file.type;
+                const fileName = file.name;
+                const fileSize = formatFileSize(file.size);
+
+                let previewHtml = `
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="fas fa-file me-2 text-primary"></i>
+                        <strong>${fileName}</strong>
+                        <span class="badge bg-secondary ms-2">${fileSize}</span>
+                    </div>
+                `;
+
+                if (fileType.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        previewHtml += `
+                            <div class="image-preview">
+                                <img src="${e.target.result}" alt="Preview" class="img-fluid rounded" style="max-height: 200px; max-width: 100%;">
+                            </div>
+                        `;
+                        previewContent.innerHTML = previewHtml;
+                    };
+                    reader.readAsDataURL(file);
+                } else if (fileType.startsWith('video/')) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        previewHtml += `
+                            <div class="video-preview">
+                                <video controls class="w-100" style="max-height: 200px;">
+                                    <source src="${e.target.result}" type="${fileType}">
+                                    مرورگر شما از پخش ویدیو پشتیبانی نمی‌کند.
+                                </video>
+                            </div>
+                        `;
+                        previewContent.innerHTML = previewHtml;
+                    };
+                    reader.readAsDataURL(file);
+                } else if (fileType.startsWith('audio/')) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        previewHtml += `
+                            <div class="audio-preview">
+                                <audio controls class="w-100">
+                                    <source src="${e.target.result}" type="${fileType}">
+                                    مرورگر شما از پخش صدا پشتیبانی نمی‌کند.
+                                </audio>
+                            </div>
+                        `;
+                        previewContent.innerHTML = previewHtml;
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    // For PDF and other files
+                    previewHtml += `
+                        <div class="file-preview">
+                            <div class="text-center p-3">
+                                <i class="fas fa-file-pdf fa-3x text-danger mb-2"></i>
+                                <p class="mb-0">فایل PDF انتخاب شده است</p>
+                                <small class="text-muted">پیش‌نمایش PDF در مرورگر نمایش داده نمی‌شود</small>
+                            </div>
+                        </div>
+                    `;
+                    previewContent.innerHTML = previewHtml;
+                }
+
+                filePreview.style.display = 'block';
+            }
+
+            function hideFilePreview() {
+                filePreview.style.display = 'none';
+                previewContent.innerHTML = '';
+            }
+
+            function formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+        });
+    </script>
+}
