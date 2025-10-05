@@ -166,7 +166,7 @@ public static class SeedData
             lesson2.Id,
             "Numbers Video",
             ResourceType.Video,
-            "",
+            "-",
             "https://example.com/numbers-video",
             null,
             null,
