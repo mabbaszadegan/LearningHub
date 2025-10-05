@@ -19,7 +19,7 @@ public class GetSubChaptersByChapterIdQueryHandler : IRequestHandler<GetSubChapt
     public async Task<Result<List<SubChapterDto>>> Handle(GetSubChaptersByChapterIdQuery request, CancellationToken cancellationToken)
     {
         var subChapters = await _subChapterRepository.GetAll()
-            .Where(sc => sc.ChapterId == request.ChapterId && sc.IsActive)
+            .Where(sc => sc.ChapterId == request.ChapterId)
             .OrderBy(sc => sc.Order)
             .ToListAsync(cancellationToken);
 

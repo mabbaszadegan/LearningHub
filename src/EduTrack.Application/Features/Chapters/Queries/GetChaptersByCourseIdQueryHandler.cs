@@ -19,9 +19,9 @@ public class GetChaptersByCourseIdQueryHandler : IRequestHandler<GetChaptersByCo
     public async Task<Result<List<ChapterDto>>> Handle(GetChaptersByCourseIdQuery request, CancellationToken cancellationToken)
     {
         var chapters = await _chapterRepository.GetAll()
-            .Where(c => c.CourseId == request.CourseId && c.IsActive)
-            .Include(c => c.SubChapters.Where(sc => sc.IsActive))
-                .ThenInclude(sc => sc.EducationalContents.Where(ec => ec.IsActive))
+            .Where(c => c.CourseId == request.CourseId)
+            .Include(c => c.SubChapters)
+                .ThenInclude(sc => sc.EducationalContents)
                     .ThenInclude(ec => ec.File)
             .OrderBy(c => c.Order)
             .ToListAsync(cancellationToken);

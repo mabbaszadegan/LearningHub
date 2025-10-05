@@ -467,43 +467,152 @@ public class ChaptersController : Controller
         return RedirectToAction("Index", new { courseId = chapter.CourseId });
     }
 
-    // SubChapter Management Page
-    public async Task<IActionResult> ManageSubChapters(int chapterId)
+    [HttpPost]
+    public async Task<IActionResult> ToggleActive(int id)
     {
-        var currentUser = await _userManager.GetUserAsync(User);
-        if (currentUser == null)
+        try
         {
-            return RedirectToAction("Login", "Account", new { area = "Public" });
-        }
+            var chapterResult = await _mediator.Send(new GetChapterByIdQuery(id));
+            if (!chapterResult.IsSuccess || chapterResult.Value == null)
+            {
+                return Json(new { success = false, error = "مبحث یافت نشد" });
+            }
 
-        var chapterResult = await _mediator.Send(new GetChapterByIdQuery(chapterId));
-        if (!chapterResult.IsSuccess || chapterResult.Value == null)
+            var chapter = chapterResult.Value;
+            var updateCommand = new UpdateChapterCommand(
+                chapter.Id,
+                chapter.Title,
+                chapter.Description,
+                chapter.Objective,
+                !chapter.IsActive,
+                chapter.Order
+            );
+
+            var result = await _mediator.Send(updateCommand);
+            if (result.IsSuccess)
+            {
+                return Json(new { success = true, isActive = !chapter.IsActive });
+            }
+
+            return Json(new { success = false, error = result.Error });
+        }
+        catch (Exception ex)
         {
-            return NotFound();
+            _logger.LogError(ex, "Error toggling chapter active status");
+            return Json(new { success = false, error = "خطا در تغییر وضعیت" });
         }
+    }
 
-        var chapter = chapterResult.Value;
-
-        // Verify course belongs to teacher
-        var courseResult = await _mediator.Send(new GetCourseByIdQuery(chapter.CourseId));
-        if (!courseResult.IsSuccess || courseResult.Value?.CreatedBy != currentUser.Id)
+    [HttpPost]
+    public async Task<IActionResult> ReorderChapters([FromBody] List<int> chapterIds)
+    {
+        try
         {
-            return NotFound();
-        }
+            if (chapterIds == null || !chapterIds.Any())
+            {
+                return Json(new { success = false, error = "لیست مباحث خالی است" });
+            }
 
-        // Get subchapters for this chapter
-        var subChaptersResult = await _mediator.Send(new GetSubChaptersByChapterIdQuery(chapterId));
-        if (!subChaptersResult.IsSuccess)
+            // Get all chapters and verify they exist
+            foreach (var chapterId in chapterIds)
+            {
+                var chapterResult = await _mediator.Send(new GetChapterByIdQuery(chapterId));
+                if (!chapterResult.IsSuccess || chapterResult.Value == null)
+                {
+                    continue;
+                }
+
+                var chapter = chapterResult.Value;
+                var newOrder = chapterIds.IndexOf(chapterId);
+
+                var updateCommand = new UpdateChapterCommand(
+                    chapter.Id,
+                    chapter.Title,
+                    chapter.Description,
+                    chapter.Objective,
+                    chapter.IsActive,
+                    newOrder
+                );
+
+                await _mediator.Send(updateCommand);
+            }
+
+            return Json(new { success = true });
+        }
+        catch (Exception ex)
         {
-            return NotFound();
+            _logger.LogError(ex, "Error reordering chapters");
+            return Json(new { success = false, error = "خطا در تغییر ترتیب" });
         }
+    }
 
-        ViewBag.ChapterId = chapterId;
-        ViewBag.ChapterTitle = chapter.Title;
-        ViewBag.CourseId = chapter.CourseId;
-        ViewBag.CourseTitle = courseResult.Value?.Title;
+    [HttpPost]
+    public async Task<IActionResult> MoveChapter(int id, string direction)
+    {
+        try
+        {
+            var chapterResult = await _mediator.Send(new GetChapterByIdQuery(id));
+            if (!chapterResult.IsSuccess || chapterResult.Value == null)
+            {
+                return Json(new { success = false, error = "مبحث یافت نشد" });
+            }
 
-        return View(subChaptersResult.Value);
+            var currentChapter = chapterResult.Value;
+
+            // Get all chapters for the same course
+            var allChaptersResult = await _mediator.Send(new GetChaptersByCourseIdQuery(currentChapter.CourseId));
+            if (!allChaptersResult.IsSuccess || allChaptersResult.Value == null)
+            {
+                return Json(new { success = false, error = "خطا در دریافت مباحث" });
+            }
+
+            var allChapters = allChaptersResult.Value.OrderBy(c => c.Order).ToList();
+            var currentIndex = allChapters.FindIndex(c => c.Id == id);
+
+            if (currentIndex == -1)
+            {
+                return Json(new { success = false, error = "مبحث یافت نشد" });
+            }
+
+            var newIndex = direction == "up" ? currentIndex - 1 : currentIndex + 1;
+
+            if (newIndex < 0 || newIndex >= allChapters.Count)
+            {
+                return Json(new { success = false, error = "امکان جابجایی وجود ندارد" });
+            }
+
+            // Swap orders
+            var otherChapter = allChapters[newIndex];
+            var tempOrder = currentChapter.Order;
+
+            var updateCurrent = new UpdateChapterCommand(
+                currentChapter.Id,
+                currentChapter.Title,
+                currentChapter.Description,
+                currentChapter.Objective,
+                currentChapter.IsActive,
+                otherChapter.Order
+            );
+
+            var updateOther = new UpdateChapterCommand(
+                otherChapter.Id,
+                otherChapter.Title,
+                otherChapter.Description,
+                otherChapter.Objective,
+                otherChapter.IsActive,
+                tempOrder
+            );
+
+            await _mediator.Send(updateCurrent);
+            await _mediator.Send(updateOther);
+
+            return Json(new { success = true });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error moving chapter");
+            return Json(new { success = false, error = "خطا در جابجایی" });
+        }
     }
 
     // API endpoint to get chapter info from subChapterId

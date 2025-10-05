@@ -20,6 +20,13 @@ public record UpdateCourseCommand(
 
 public record DeleteCourseCommand(int Id) : IRequest<Result<bool>>;
 
+public record ToggleCourseActiveCommand(int Id) : IRequest<Result<bool>>;
+
+public record ReorderCoursesCommand : IRequest<Result<bool>>
+{
+    public List<int> CourseIds { get; set; } = new();
+}
+
 public record CreateModuleCommand(
     int CourseId,
     string Title,

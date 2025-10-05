@@ -24,152 +24,98 @@
     
     @await RenderSectionAsync("Styles", required: false)
 </head>
-<body class="teacher-body">
+<body class="teacher-body modern-minimal">
     <div class="teacher-wrapper">
-        <!-- Modern Teacher Sidebar -->
-        <nav class="teacher-sidebar" id="teacherSidebar">
-            <div class="teacher-sidebar-header">
-                <div class="teacher-logo">
+        <!-- Modern Top Navigation -->
+        <nav class="modern-topnav" id="modernTopNav">
+            <div class="topnav-container">
+                <!-- Logo Section -->
+                <div class="topnav-logo">
                     <div class="logo-icon">
                         <i class="fas fa-graduation-cap"></i>
                     </div>
-                    <div class="logo-text">
-                        <h5>EduTrack</h5>
-                        <span>پنل معلم</span>
-                    </div>
+                    <span class="logo-text">EduTrack</span>
                 </div>
-                <button class="sidebar-collapse-btn" id="sidebarCollapseBtn">
-                    <i class="fas fa-angle-right"></i>
-                </button>
-            </div>
-            
-            <div class="teacher-sidebar-menu">
-                <!-- Dashboard -->
-                <a asp-area="Teacher" asp-controller="Home" asp-action="Index" class="teacher-nav-link">
-                    <div class="nav-icon">
-                        <i class="fas fa-home"></i>
-                    </div>
-                    <span class="nav-text">داشبورد</span>
-                </a>
                 
-                <!-- Course Hierarchy Section -->
-                <div class="nav-section" id="courseHierarchySection">
-                    <div class="nav-section-header">
+                <!-- Main Navigation -->
+                <div class="topnav-menu" id="topnavMenu">
+                    <a asp-area="Teacher" asp-controller="Home" asp-action="Index" class="topnav-link">
+                        <i class="fas fa-home"></i>
+                        <span>داشبورد</span>
+                    </a>
+                    
+                    <div class="topnav-link has-dropdown" id="coursesDropdown">
                         <i class="fas fa-book"></i>
                         <span>دوره‌ها</span>
+                        <i class="fas fa-chevron-down dropdown-icon"></i>
+                        <div class="topnav-dropdown">
+                            <a asp-area="Teacher" asp-controller="Courses" asp-action="Index" class="dropdown-item">
+                                <i class="fas fa-list"></i>همه دوره‌ها
+                            </a>
+                            <a asp-area="Teacher" asp-controller="Courses" asp-action="Create" class="dropdown-item">
+                                <i class="fas fa-plus"></i>ایجاد دوره
+                            </a>
+                        </div>
                     </div>
-                    <div class="nav-section-items" id="courseHierarchyItems">
-                        <!-- Course management links -->
-                        <div class="course-management-links">
-                            <a asp-area="Teacher" asp-controller="Courses" asp-action="Index" class="content-management-link">
-                                <i class="fas fa-list"></i>
-                                همه دوره‌ها
-                        </a>
-                            <a asp-area="Teacher" asp-controller="Courses" asp-action="Create" class="content-management-link">
-                                <i class="fas fa-plus"></i>
-                                ایجاد دوره جدید
-                        </a>
-                    </div>
-                        <!-- Course hierarchy will be loaded here dynamically -->
-                        <div class="loading-placeholder">
-                            <div class="nav-icon">
-                                <i class="fas fa-spinner fa-spin"></i>
-                            </div>
-                            <span class="nav-text">در حال بارگذاری...</span>
-                            </div>
-                    </div>
-                </div>
-                
-                
-                <!-- Classes Section -->
-                <div class="nav-section">
-                    <div class="nav-section-header">
+                    
+                    <div class="topnav-link has-dropdown" id="classesDropdown">
                         <i class="fas fa-chalkboard"></i>
                         <span>کلاس‌ها</span>
+                        <i class="fas fa-chevron-down dropdown-icon"></i>
+                        <div class="topnav-dropdown">
+                            <a asp-area="Teacher" asp-controller="Classes" asp-action="Index" class="dropdown-item">
+                                <i class="fas fa-list"></i>همه کلاس‌ها
+                            </a>
+                            <a asp-area="Teacher" asp-controller="Classes" asp-action="Create" class="dropdown-item">
+                                <i class="fas fa-plus"></i>ایجاد کلاس
+                            </a>
+                        </div>
                     </div>
-                    <div class="nav-section-items">
-                        <a asp-area="Teacher" asp-controller="Classes" asp-action="Index" class="teacher-nav-link sub-link">
-                            <div class="nav-icon">
-                                <i class="fas fa-list"></i>
-                            </div>
-                            <span class="nav-text">همه کلاس‌ها</span>
-                        </a>
-                        <a asp-area="Teacher" asp-controller="Classes" asp-action="Create" class="teacher-nav-link sub-link">
-                            <div class="nav-icon">
-                                <i class="fas fa-plus"></i>
-                            </div>
-                            <span class="nav-text">ایجاد کلاس</span>
-                        </a>
-                    </div>
-                </div>
-                
-                <!-- Students -->
-                <a asp-area="Teacher" asp-controller="Home" asp-action="MyStudents" class="teacher-nav-link">
-                    <div class="nav-icon">
+                    
+                    <a asp-area="Teacher" asp-controller="Home" asp-action="MyStudents" class="topnav-link">
                         <i class="fas fa-users"></i>
-                    </div>
-                    <span class="nav-text">دانش‌آموزان</span>
-                </a>
-                
-                <!-- Interactive Lessons Section -->
-                <div class="nav-section">
-                    <div class="nav-section-header">
+                        <span>دانش‌آموزان</span>
+                    </a>
+                    
+                    <div class="topnav-link has-dropdown" id="lessonsDropdown">
                         <i class="fas fa-play-circle"></i>
-                        <span>درس‌های تعاملی</span>
+                        <span>درس‌ها</span>
+                        <i class="fas fa-chevron-down dropdown-icon"></i>
+                        <div class="topnav-dropdown">
+                            <a asp-area="Teacher" asp-controller="InteractiveLesson" asp-action="Index" class="dropdown-item">
+                                <i class="fas fa-list"></i>همه درس‌ها
+                            </a>
+                            <a asp-area="Teacher" asp-controller="InteractiveLesson" asp-action="Create" class="dropdown-item">
+                                <i class="fas fa-plus"></i>ایجاد درس
+                            </a>
+                        </div>
                     </div>
-                    <div class="nav-section-items">
-                        <a asp-area="Teacher" asp-controller="InteractiveLesson" asp-action="Index" class="teacher-nav-link sub-link">
-                            <div class="nav-icon">
-                                <i class="fas fa-list"></i>
-                            </div>
-                            <span class="nav-text">همه درس‌های تعاملی</span>
-                        </a>
-                        <a asp-area="Teacher" asp-controller="InteractiveLesson" asp-action="Create" class="teacher-nav-link sub-link">
-                            <div class="nav-icon">
-                                <i class="fas fa-plus"></i>
-                            </div>
-                            <span class="nav-text">ایجاد درس تعاملی</span>
-                        </a>
-                        <a asp-area="Teacher" asp-controller="InteractiveLesson" asp-action="CreateWithStages" class="teacher-nav-link sub-link">
-                            <div class="nav-icon">
-                                <i class="fas fa-layer-group"></i>
-                            </div>
-                            <span class="nav-text">ایجاد درس با مراحل</span>
-                        </a>
-                    </div>
+                    
+                    <a asp-area="Teacher" asp-controller="Exam" asp-action="Index" class="topnav-link">
+                        <i class="fas fa-clipboard-list"></i>
+                        <span>آزمون‌ها</span>
+                    </a>
+                    
+                    <a asp-area="Teacher" asp-controller="Progress" asp-action="Index" class="topnav-link">
+                        <i class="fas fa-chart-line"></i>
+                        <span>گزارش‌ها</span>
+                    </a>
                 </div>
                 
-                <!-- Exams -->
-                <a asp-area="Teacher" asp-controller="Exam" asp-action="Index" class="teacher-nav-link">
-                    <div class="nav-icon">
-                        <i class="fas fa-clipboard-list"></i>
-                    </div>
-                    <span class="nav-text">آزمون‌ها</span>
-                </a>
-                
-                <!-- Progress -->
-                <a asp-area="Teacher" asp-controller="Progress" asp-action="Index" class="teacher-nav-link">
-                    <div class="nav-icon">
-                        <i class="fas fa-chart-line"></i>
-                    </div>
-                    <span class="nav-text">گزارش‌ها</span>
-                </a>
-            </div>
-            
-            <!-- User Profile -->
-            <div class="teacher-sidebar-footer">
-                <div class="user-profile">
-                    <div class="user-avatar">
-                        <i class="fas fa-user"></i>
-                    </div>
-                    <div class="user-info">
-                        <div class="user-name">@User.Identity?.Name</div>
-                        <div class="user-role">معلم</div>
-                    </div>
-                    <div class="user-actions">
+                <!-- Right Side Actions -->
+                <div class="topnav-actions">
+                    <button class="topnav-btn" id="notificationsBtn">
+                        <i class="fas fa-bell"></i>
+                        <span class="badge">3</span>
+                    </button>
+                    <div class="topnav-user-menu">
                         <div class="dropdown">
-                            <button class="btn btn-link" data-bs-toggle="dropdown">
-                                <i class="fas fa-ellipsis-v"></i>
+                            <button class="user-btn" data-bs-toggle="dropdown">
+                                <div class="user-avatar-small">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <span class="user-name-text">@User.Identity?.Name</span>
+                                <i class="fas fa-chevron-down"></i>
                             </button>
                             <ul class="dropdown-menu dropdown-menu-end">
                                 <li><a class="dropdown-item" asp-area="Public" asp-controller="Account" asp-action="Profile">
@@ -186,50 +132,21 @@
                             </ul>
                         </div>
                     </div>
+                    <button class="mobile-menu-toggle d-lg-none" id="mobileMenuToggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
                 </div>
             </div>
         </nav>
         
         <!-- Main Content -->
-        <div class="teacher-main">
-            <!-- Top Navigation -->
-            <nav class="teacher-topbar">
-                <div class="topbar-left">
-                    <button class="sidebar-toggle d-lg-none">
-                        <i class="fas fa-bars"></i>
-                    </button>
-                    <button class="sidebar-collapse-toggle d-none d-lg-block" id="sidebarCollapseToggle">
-                        <i class="fas fa-bars"></i>
-                    </button>
-                    <div class="breadcrumb-nav">
-                        <span class="breadcrumb-item">@ViewData["Title"]</span>
-                    </div>
-                </div>
-                
-                <div class="topbar-right">
-                    <div class="topbar-actions">
-                        <button class="btn btn-outline-primary btn-sm">
-                            <i class="fas fa-bell"></i>
-                            <span class="badge bg-danger">3</span>
-                        </button>
-                        <button class="btn btn-outline-secondary btn-sm">
-                            <i class="fas fa-cog"></i>
-                        </button>
-                    </div>
-                </div>
-            </nav>
-            
-            <!-- Horizontal Breadcrumb -->
-            <div class="horizontal-breadcrumb" id="horizontalBreadcrumb">
-                <!-- Breadcrumb will be loaded here -->
-            </div>
-            
+        <div class="teacher-main modern-main">
             <!-- Page Content -->
-            <div class="teacher-content">
+            <div class="teacher-content modern-content">
                 <div class="container-fluid">
                     @if (TempData["Success"] != null)
                     {
-                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <div class="alert alert-success alert-dismissible fade show modern-alert" role="alert">
                             <i class="fas fa-check-circle me-2"></i>
                             @TempData["Success"]
                             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
@@ -238,7 +155,7 @@
                     
                     @if (TempData["Error"] != null)
                     {
-                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <div class="alert alert-danger alert-dismissible fade show modern-alert" role="alert">
                             <i class="fas fa-exclamation-circle me-2"></i>
                             @TempData["Error"]
                             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
@@ -272,755 +189,89 @@
     <!-- Teacher Area JS -->
     <script src="~/js/areas/teacher/teacher.js" asp-append-version="true"></script>
     
-    <!-- Sidebar Collapse Script -->
+    <!-- Modern Navigation Script -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const sidebar = document.getElementById('teacherSidebar');
-            const collapseBtn = document.getElementById('sidebarCollapseBtn');
-            const collapseToggle = document.getElementById('sidebarCollapseToggle');
-            const mainContent = document.querySelector('.teacher-main');
-            
-            // Check localStorage for sidebar state
-            const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
-            if (isCollapsed) {
-                sidebar.classList.add('collapsed');
-                mainContent.classList.add('sidebar-collapsed');
-            }
-            
-            // Toggle sidebar collapse
-            function toggleSidebar() {
-                sidebar.classList.toggle('collapsed');
-                mainContent.classList.toggle('sidebar-collapsed');
-                
-                // Save state to localStorage
-                const isCollapsed = sidebar.classList.contains('collapsed');
-                localStorage.setItem('sidebarCollapsed', isCollapsed);
-                
-                // Update collapse button icon
-                const icon = collapseBtn.querySelector('i');
-                if (isCollapsed) {
-                    icon.className = 'fas fa-angle-left';
-                } else {
-                    icon.className = 'fas fa-angle-right';
-                }
-            }
-            
-            // Event listeners
-            collapseBtn.addEventListener('click', toggleSidebar);
-            collapseToggle.addEventListener('click', toggleSidebar);
-            
-            // Mobile sidebar toggle
-            const mobileToggle = document.querySelector('.sidebar-toggle');
-            mobileToggle.addEventListener('click', function() {
-                sidebar.classList.toggle('mobile-open');
+            // Dropdown handling for top navigation
+            const dropdowns = document.querySelectorAll('.topnav-link.has-dropdown');
+            dropdowns.forEach(dropdown => {
+                dropdown.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const isOpen = this.classList.contains('active');
+                    // Close all dropdowns
+                    dropdowns.forEach(d => d.classList.remove('active'));
+                    // Toggle current dropdown
+                    if (!isOpen) {
+                        this.classList.add('active');
+                    }
+                });
             });
             
-            // Close mobile sidebar when clicking outside
-            document.addEventListener('click', function(e) {
-                if (window.innerWidth < 992 && 
-                    !sidebar.contains(e.target) && 
-                    !mobileToggle.contains(e.target)) {
-                    sidebar.classList.remove('mobile-open');
-                }
+            // Close dropdowns when clicking outside
+            document.addEventListener('click', function() {
+                dropdowns.forEach(d => d.classList.remove('active'));
             });
-
-            // Load course hierarchy
-            loadCourseHierarchy();
             
-            // Set active states based on current page
-            setActiveStates();
+            // Mobile menu toggle
+            const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+            const topnavMenu = document.getElementById('topnavMenu');
+            if (mobileMenuToggle) {
+                mobileMenuToggle.addEventListener('click', function() {
+                    topnavMenu.classList.toggle('mobile-open');
+                });
+            }
             
-            // Update breadcrumb navigation
-            updateBreadcrumb();
+            // Set active navigation item
+            setActiveNavItem();
         });
 
-        // Course Hierarchy Management
-        function loadCourseHierarchy() {
-            fetch('/Teacher/Courses/GetHierarchy')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        renderCourseHierarchy(data.data);
-                    } else {
-                        showError('خطا در بارگذاری اطلاعات دوره‌ها: ' + data.error);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error loading course hierarchy:', error);
-                    showError('خطا در بارگذاری اطلاعات دوره‌ها');
-                });
-        }
-
-        function renderCourseHierarchy(courses) {
-            const container = document.getElementById('courseHierarchyItems');
-            
-            if (courses.length === 0) {
-                container.innerHTML = `
-                    <div class="course-management-links">
-                        <a href="/Teacher/Courses" class="content-management-link">
-                            <i class="fas fa-list"></i>
-                            همه دوره‌ها
-                        </a>
-                        <a href="/Teacher/Courses/Create" class="content-management-link">
-                            <i class="fas fa-plus"></i>
-                            ایجاد دوره جدید
-                        </a>
-                    </div>
-                    <div class="loading-placeholder">
-                        <div class="nav-icon">
-                            <i class="fas fa-info-circle"></i>
-                        </div>
-                        <span class="nav-text">هیچ دوره‌ای یافت نشد</span>
-                    </div>
-                `;
-                return;
-            }
-
-            let html = `
-                <div class="course-management-links">
-                    <a href="/Teacher/Courses" class="content-management-link">
-                        <i class="fas fa-list"></i>
-                        همه دوره‌ها
-                    </a>
-                    <a href="/Teacher/Courses/Create" class="content-management-link">
-                        <i class="fas fa-plus"></i>
-                        ایجاد دوره جدید
-                    </a>
-                </div>
-            `;
-            
-            courses.forEach(course => {
-                html += `
-                    <div class="course-item">
-                        <div class="course-header" onclick="toggleCourse(${course.id})">
-                            <div class="course-toggle">
-                                <i class="fas fa-chevron-right"></i>
-                            </div>
-                            <span class="course-title">${course.title}</span>
-                            <span class="course-count">${course.chapterCount}</span>
-                        </div>
-                        <div class="chapter-list" id="course-${course.id}-chapters">
-                            <div class="course-management-links">
-                                <a href="/Teacher/Chapters/Create?courseId=${course.id}" class="content-management-link">
-                                    <i class="fas fa-plus"></i>
-                                    ایجاد مبحث جدید
-                                </a>
-                                <a href="/Teacher/Chapters/Index?courseId=${course.id}" class="content-management-link">
-                                    <i class="fas fa-folder"></i>
-                                    مدیریت مباحث
-                                </a>
-                                <a href="/Teacher/InteractiveLesson/ByCourse/${course.id}" class="content-management-link">
-                                    <i class="fas fa-play-circle"></i>
-                                    مدیریت درس‌های تعاملی
-                                </a>
-                            </div>
-                            ${renderChapters(course.chapters)}
-                        </div>
-                    </div>
-                `;
-            });
-
-            container.innerHTML = html;
-            
-            // Set active states after rendering
-            setTimeout(() => setActiveStates(), 100);
-        }
-
-        function renderChapters(chapters) {
-            if (chapters.length === 0) {
-                return '<div class="loading-placeholder"><span class="nav-text">هیچ مبحثی یافت نشد</span></div>';
-            }
-
-            let html = '';
-            chapters.forEach(chapter => {
-                html += `
-                    <div class="chapter-item">
-                        <div class="chapter-header" onclick="toggleChapter(${chapter.id})">
-                            <div class="chapter-toggle">
-                                <i class="fas fa-chevron-right"></i>
-                            </div>
-                            <span class="chapter-title">${chapter.title}</span>
-                            <span class="chapter-count">${chapter.subChapterCount}</span>
-                        </div>
-                        <div class="subchapter-list" id="chapter-${chapter.id}-subchapters">
-                            <div class="chapter-management-links">
-                                <a href="/Teacher/Chapters/CreateSubChapter?chapterId=${chapter.id}" class="content-management-link">
-                                    <i class="fas fa-plus"></i>
-                                    ایجاد زیرمبحث جدید
-                                </a>
-                                <a href="/Teacher/Chapters/ManageSubChapters?chapterId=${chapter.id}" class="content-management-link">
-                                    <i class="fas fa-list"></i>
-                                    مدیریت زیرمباحث
-                                </a>
-                            </div>
-                            ${renderSubChapters(chapter.subChapters)}
-                        </div>
-                    </div>
-                `;
-            });
-
-            return html;
-        }
-
-        function renderSubChapters(subChapters) {
-            if (subChapters.length === 0) {
-                return '<div class="loading-placeholder"><span class="nav-text">هیچ زیرمبحثی یافت نشد</span></div>';
-            }
-
-            let html = '';
-            subChapters.forEach(subChapter => {
-                html += `
-                    <div class="subchapter-item">
-                        <div class="subchapter-header" onclick="toggleSubChapter(${subChapter.id})">
-                            <div class="subchapter-toggle">
-                                <i class="fas fa-chevron-right"></i>
-                            </div>
-                            <span class="subchapter-title">${subChapter.title}</span>
-                            <span class="subchapter-count">${subChapter.contentCount}</span>
-                        </div>
-                        <div class="subchapter-content" id="subchapter-${subChapter.id}-content">
-                            <a href="/Teacher/EducationalContent/Index?subChapterId=${subChapter.id}" class="content-management-link">
-                                <i class="fas fa-cog"></i>
-                                مدیریت محتوا
-                            </a>
-                        </div>
-                    </div>
-                `;
-            });
-
-            return html;
-        }
-
-        function toggleCourse(courseId) {
-            const chaptersList = document.getElementById(`course-${courseId}-chapters`);
-            const toggle = document.querySelector(`[onclick="toggleCourse(${courseId})"] .course-toggle`);
-            
-            if (chaptersList.classList.contains('expanded')) {
-                chaptersList.classList.remove('expanded');
-                toggle.classList.remove('expanded');
-            } else {
-                chaptersList.classList.add('expanded');
-                toggle.classList.add('expanded');
-            }
-        }
-
-        function toggleChapter(chapterId) {
-            const subChaptersList = document.getElementById(`chapter-${chapterId}-subchapters`);
-            const toggle = document.querySelector(`[onclick="toggleChapter(${chapterId})"] .chapter-toggle`);
-            
-            if (subChaptersList.classList.contains('expanded')) {
-                subChaptersList.classList.remove('expanded');
-                toggle.classList.remove('expanded');
-            } else {
-                subChaptersList.classList.add('expanded');
-                toggle.classList.add('expanded');
-            }
-        }
-
-        function toggleSubChapter(subChapterId) {
-            const contentDiv = document.getElementById(`subchapter-${subChapterId}-content`);
-            const toggle = document.querySelector(`[onclick="toggleSubChapter(${subChapterId})"] .subchapter-toggle`);
-            
-            if (contentDiv.style.display === 'block') {
-                contentDiv.style.display = 'none';
-                toggle.classList.remove('expanded');
-            } else {
-                contentDiv.style.display = 'block';
-                toggle.classList.add('expanded');
-            }
-        }
-
-        function showError(message) {
-            const container = document.getElementById('courseHierarchyItems');
-            container.innerHTML = `
-                <div class="loading-placeholder">
-                    <div class="nav-icon">
-                        <i class="fas fa-exclamation-triangle"></i>
-                    </div>
-                    <span class="nav-text">${message}</span>
-                </div>
-            `;
-        }
-
-        // Active State Management
-        async function setActiveStates() {
+        // Set active navigation item based on current path
+        function setActiveNavItem() {
             const currentPath = window.location.pathname;
-            const pageInfo = await getCurrentPageInfo();
-            const { courseId, chapterId, subChapterId } = pageInfo;
+            const navLinks = document.querySelectorAll('.topnav-link, .dropdown-item');
             
-            // Remove all active states first
-            document.querySelectorAll('.teacher-nav-link.active').forEach(link => {
+            navLinks.forEach(link => {
                 link.classList.remove('active');
             });
             
-            document.querySelectorAll('.course-header.active, .chapter-header.active, .subchapter-header.active').forEach(header => {
-                header.classList.remove('active');
-            });
-            
-            document.querySelectorAll('.content-management-link.active').forEach(link => {
-                link.classList.remove('active');
-            });
-            
-            // Set active states based on current page
-            if (currentPath.includes('/Teacher/Home') && !currentPath.includes('/MyStudents')) {
-                document.querySelector('a[href*="/Teacher/Home"]')?.classList.add('active');
+            // Find and set active navigation item
+            if (currentPath.includes('/Teacher/Home/Index') || currentPath === '/Teacher/Home' || currentPath === '/Teacher') {
+                document.querySelector('.topnav-link[href*="/Teacher/Home/Index"]')?.classList.add('active');
             }
             else if (currentPath.includes('/Teacher/Courses')) {
-                if (currentPath.includes('/Create')) {
-                    document.querySelector('a[href*="/Teacher/Courses/Create"]')?.classList.add('active');
-                } else {
-                    document.querySelector('a[href*="/Teacher/Courses"]')?.classList.add('active');
+                // Add active class to the parent dropdown link (visual indicator only, don't open dropdown)
+                const coursesParent = document.querySelector('#coursesDropdown');
+                if (coursesParent) {
+                    coursesParent.style.color = '#667eea';
+                    coursesParent.style.fontWeight = '500';
                 }
             }
             else if (currentPath.includes('/Teacher/Classes')) {
-                if (currentPath.includes('/Create')) {
-                    document.querySelector('a[href*="/Teacher/Classes/Create"]')?.classList.add('active');
-                } else {
-                    document.querySelector('a[href*="/Teacher/Classes"]')?.classList.add('active');
+                // Add active class to the parent dropdown link (visual indicator only, don't open dropdown)
+                const classesParent = document.querySelector('#classesDropdown');
+                if (classesParent) {
+                    classesParent.style.color = '#667eea';
+                    classesParent.style.fontWeight = '500';
                 }
             }
             else if (currentPath.includes('/Teacher/Home/MyStudents')) {
-                document.querySelector('a[href*="/Teacher/Home/MyStudents"]')?.classList.add('active');
-            }
-            else if (currentPath.includes('/Teacher/Exam') || currentPath.includes('/Exam')) {
-                document.querySelector('a[href*="/Teacher/Exam"]')?.classList.add('active');
-            }
-            else if (currentPath.includes('/Teacher/Progress')) {
-                document.querySelector('a[href*="/Teacher/Progress"]')?.classList.add('active');
-            }
-            else if (currentPath.includes('/Teacher/Chapters') || currentPath.includes('/Teacher/EducationalContent')) {
-                // These will be handled by hierarchy active states
+                document.querySelector('.topnav-link[href*="/MyStudents"]')?.classList.add('active');
             }
             else if (currentPath.includes('/Teacher/InteractiveLesson')) {
-                // These will be handled by hierarchy active states
-            }
-            else if (currentPath.includes('/Teacher/Classes') || currentPath.includes('/Classroom')) {
-                document.querySelector('a[href*="/Teacher/Classes"]')?.classList.add('active');
-            }
-            
-            if (courseId) {
-                // Expand course and set active
-                const courseHeader = document.querySelector(`[onclick="toggleCourse(${courseId})"]`);
-                if (courseHeader) {
-                    courseHeader.classList.add('active');
-                    const chaptersList = document.getElementById(`course-${courseId}-chapters`);
-                    if (chaptersList) {
-                        chaptersList.classList.add('expanded');
-                        courseHeader.querySelector('.course-toggle').classList.add('expanded');
-                    }
-                }
-                
-                // Set active management links
-                if (currentPath.includes('/Teacher/Chapters/Create') && !currentPath.includes('SubChapter')) {
-                    document.querySelector(`a[href*="/Teacher/Chapters/Create?courseId=${courseId}"]`)?.classList.add('active');
-                } else if (currentPath.includes('/Teacher/Chapters/Index')) {
-                    document.querySelector(`a[href*="/Teacher/Chapters/Index?courseId=${courseId}"]`)?.classList.add('active');
-                } else if (currentPath.includes('/Teacher/Chapters/Edit') && !currentPath.includes('SubChapter')) {
-                    document.querySelector(`a[href*="/Teacher/Chapters/Index?courseId=${courseId}"]`)?.classList.add('active');
-                } else if (currentPath.includes('/Teacher/InteractiveLesson/ByCourse')) {
-                    document.querySelector(`a[href*="/Teacher/InteractiveLesson/ByCourse/${courseId}"]`)?.classList.add('active');
-                } else if (currentPath.includes('/Teacher/InteractiveLesson/Create') || currentPath.includes('/Teacher/InteractiveLesson/CreateWithStages')) {
-                    document.querySelector(`a[href*="/Teacher/InteractiveLesson/ByCourse/${courseId}"]`)?.classList.add('active');
-                } else if (currentPath.includes('/Teacher/InteractiveLesson/Details') || currentPath.includes('/Teacher/InteractiveLesson/ManageStages')) {
-                    document.querySelector(`a[href*="/Teacher/InteractiveLesson/ByCourse/${courseId}"]`)?.classList.add('active');
+                // Add active class to the parent dropdown link (visual indicator only, don't open dropdown)
+                const lessonsParent = document.querySelector('#lessonsDropdown');
+                if (lessonsParent) {
+                    lessonsParent.style.color = '#667eea';
+                    lessonsParent.style.fontWeight = '500';
                 }
             }
-            
-            if (chapterId) {
-                // Expand chapter and set active
-                const chapterHeader = document.querySelector(`[onclick="toggleChapter(${chapterId})"]`);
-                if (chapterHeader) {
-                    chapterHeader.classList.add('active');
-                    const subChaptersList = document.getElementById(`chapter-${chapterId}-subchapters`);
-                    if (subChaptersList) {
-                        subChaptersList.classList.add('expanded');
-                        chapterHeader.querySelector('.chapter-toggle').classList.add('expanded');
-                    }
-                }
-                
-                // Set active management links
-                if (currentPath.includes('/Teacher/Chapters/CreateSubChapter')) {
-                    document.querySelector(`a[href*="/Teacher/Chapters/CreateSubChapter?chapterId=${chapterId}"]`)?.classList.add('active');
-                } else if (currentPath.includes('/Teacher/Chapters/ManageSubChapters')) {
-                    document.querySelector(`a[href*="/Teacher/Chapters/ManageSubChapters?chapterId=${chapterId}"]`)?.classList.add('active');
-                } else if (currentPath.includes('/Teacher/Chapters/EditSubChapter')) {
-                    document.querySelector(`a[href*="/Teacher/Chapters/ManageSubChapters?chapterId=${chapterId}"]`)?.classList.add('active');
-                }
-            }
-            
-            if (subChapterId) {
-                // Set active subchapter
-                const subChapterHeader = document.querySelector(`[onclick="toggleSubChapter(${subChapterId})"]`);
-                if (subChapterHeader) {
-                    subChapterHeader.classList.add('active');
-                }
-                
-                // Set active management links
-                if (currentPath.includes('/Teacher/EducationalContent')) {
-                    if (currentPath.includes('/Create')) {
-                        document.querySelector(`a[href*="/Teacher/EducationalContent/Create?subChapterId=${subChapterId}"]`)?.classList.add('active');
-                    } else if (currentPath.includes('/Edit')) {
-                        document.querySelector(`a[href*="/Teacher/EducationalContent/Index?subChapterId=${subChapterId}"]`)?.classList.add('active');
-                    } else {
-                        document.querySelector(`a[href*="/Teacher/EducationalContent/Index?subChapterId=${subChapterId}"]`)?.classList.add('active');
-                    }
-                }
-            }
-        }
-
-        // Helper function to get course and chapter info from current page
-        async function getCurrentPageInfo() {
-            const currentPath = window.location.pathname;
-            const urlParams = new URLSearchParams(window.location.search);
-            
-            // Try to get IDs from URL params first
-            let courseId = urlParams.get('courseId');
-            let chapterId = urlParams.get('chapterId');
-            let subChapterId = urlParams.get('subChapterId');
-            
-            // Try to get from hidden fields or data attributes if not in URL
-            if (!courseId) {
-                const courseIdField = document.querySelector('input[name="CourseId"], input[name="courseId"]');
-                if (courseIdField) {
-                    courseId = courseIdField.value;
-                }
-            }
-            
-            if (!chapterId) {
-                const chapterIdField = document.querySelector('input[name="ChapterId"], input[name="chapterId"]');
-                if (chapterIdField) {
-                    chapterId = chapterIdField.value;
-                }
-            }
-            
-            // Special handling for EducationalContent pages
-            if (currentPath.includes('/Teacher/EducationalContent') && subChapterId && !chapterId) {
-                // Try to get chapterId from page data or make API call
-                const chapterIdFromPage = document.querySelector('[data-chapter-id]');
-                if (chapterIdFromPage) {
-                    chapterId = chapterIdFromPage.getAttribute('data-chapter-id');
-                }
-                
-                // If still not found, try to get from ViewBag or other sources
-                if (!chapterId) {
-                    // Make API call to get chapter info from subChapterId
-                    try {
-                        const response = await fetch(`/Teacher/Chapters/GetChapterInfoBySubChapter?subChapterId=${subChapterId}`);
-                        const result = await response.json();
-                        if (result.success) {
-                            chapterId = result.data.chapterId;
-                            courseId = result.data.courseId;
-                        }
-                    } catch (error) {
-                        console.warn('Failed to get chapter info:', error);
-                    }
-                }
-            }
-            
-            // Special handling for ManageSubChapters pages
-            if (currentPath.includes('/Teacher/Chapters/ManageSubChapters') && chapterId && !courseId) {
-                // Try to get courseId from page data or make API call
-                const courseIdFromPage = document.querySelector('[data-course-id]');
-                if (courseIdFromPage) {
-                    courseId = courseIdFromPage.getAttribute('data-course-id');
-                }
-                
-                // If still not found, make API call to get course info from chapterId
-                if (!courseId) {
-                    try {
-                        const response = await fetch(`/Teacher/Chapters/GetCourseInfoByChapter?chapterId=${chapterId}`);
-                        const result = await response.json();
-                        if (result.success) {
-                            courseId = result.data.courseId;
-                        }
-                    } catch (error) {
-                        console.warn('Failed to get course info:', error);
-                    }
-                }
-            }
-            
-            return { courseId, chapterId, subChapterId };
-        }
-
-        // Horizontal Breadcrumb Navigation
-        async function updateBreadcrumb() {
-            const currentPath = window.location.pathname;
-            const pageInfo = await getCurrentPageInfo();
-            const { courseId, chapterId, subChapterId } = pageInfo;
-            
-            let breadcrumb = '';
-            
-            if (currentPath.includes('/Teacher/Home') && !currentPath.includes('/MyStudents')) {
-                breadcrumb = createBreadcrumbItem('داشبورد', '/Teacher/Home', true);
-            }
-            else if (currentPath.includes('/Teacher/Courses')) {
-                if (currentPath.includes('/Create')) {
-                    breadcrumb = createBreadcrumbItem('ایجاد دوره جدید', '/Teacher/Courses/Create', true);
-                } else if (currentPath.includes('/Edit')) {
-                    breadcrumb = createBreadcrumbItem('دوره‌ها', '/Teacher/Courses', false);
-                    breadcrumb += createBreadcrumbItem('ویرایش دوره', '', true);
-                } else {
-                    breadcrumb = createBreadcrumbItem('مدیریت دوره‌ها', '/Teacher/Courses', true);
-                }
-            }
-            else if (currentPath.includes('/Teacher/Classes')) {
-                if (currentPath.includes('/Create')) {
-                    breadcrumb = createBreadcrumbItem('ایجاد کلاس جدید', '/Teacher/Classes/Create', true);
-                } else if (currentPath.includes('/Edit')) {
-                    breadcrumb = createBreadcrumbItem('کلاس‌ها', '/Teacher/Classes', false);
-                    breadcrumb += createBreadcrumbItem('ویرایش کلاس', '', true);
-                } else {
-                    breadcrumb = createBreadcrumbItem('مدیریت کلاس‌ها', '/Teacher/Classes', true);
-                }
-            }
-            else if (currentPath.includes('/Teacher/Chapters')) {
-                breadcrumb += createBreadcrumbItem('دوره‌ها', '/Teacher/Courses', false);
-                
-                if (currentPath.includes('/Create') && !currentPath.includes('SubChapter')) {
-                    if (courseId) {
-                        breadcrumb += createBreadcrumbItem('ایجاد مبحث جدید', `/Teacher/Chapters/Create?courseId=${courseId}`, true);
-                    } else {
-                        breadcrumb += createBreadcrumbItem('ایجاد مبحث جدید', '', true);
-                    }
-                } 
-                else if (currentPath.includes('/Index')) {
-                    if (courseId) {
-                        breadcrumb += createBreadcrumbItem('مدیریت مباحث', `/Teacher/Chapters/Index?courseId=${courseId}`, true);
-                    } else {
-                        breadcrumb += createBreadcrumbItem('مدیریت مباحث', '', true);
-                    }
-                } 
-                else if (currentPath.includes('/Edit') && !currentPath.includes('SubChapter')) {
-                    if (courseId) {
-                        breadcrumb += createBreadcrumbItem('مباحث', `/Teacher/Chapters/Index?courseId=${courseId}`, false);
-                    } else {
-                        breadcrumb += createBreadcrumbItem('مباحث', '/Teacher/Courses', false);
-                    }
-                    breadcrumb += createBreadcrumbItem('ویرایش مبحث', '', true);
-                }
-                else if (currentPath.includes('/CreateSubChapter')) {
-                    if (courseId) {
-                        breadcrumb += createBreadcrumbItem('مباحث', `/Teacher/Chapters/Index?courseId=${courseId}`, false);
-                    } else {
-                        breadcrumb += createBreadcrumbItem('مباحث', '/Teacher/Courses', false);
-                    }
-                    if (chapterId) {
-                        breadcrumb += createBreadcrumbItem('ایجاد زیرمبحث جدید', `/Teacher/Chapters/CreateSubChapter?chapterId=${chapterId}`, true);
-                    } else {
-                        breadcrumb += createBreadcrumbItem('ایجاد زیرمبحث جدید', '', true);
-                    }
-                } 
-                else if (currentPath.includes('/ManageSubChapters')) {
-                    if (courseId) {
-                        breadcrumb += createBreadcrumbItem('مباحث', `/Teacher/Chapters/Index?courseId=${courseId}`, false);
-                    } else {
-                        breadcrumb += createBreadcrumbItem('مباحث', '/Teacher/Courses', false);
-                    }
-                    if (chapterId) {
-                        breadcrumb += createBreadcrumbItem('زیرمباحث', `/Teacher/Chapters/ManageSubChapters?chapterId=${chapterId}`, true);
-                    } else {
-                        breadcrumb += createBreadcrumbItem('زیرمباحث', '', true);
-                    }
-                }
-                else if (currentPath.includes('/EditSubChapter')) {
-                    if (courseId) {
-                        breadcrumb += createBreadcrumbItem('مباحث', `/Teacher/Chapters/Index?courseId=${courseId}`, false);
-                    } else {
-                        breadcrumb += createBreadcrumbItem('مباحث', '/Teacher/Courses', false);
-                    }
-                    if (chapterId) {
-                        breadcrumb += createBreadcrumbItem('زیرمباحث', `/Teacher/Chapters/ManageSubChapters?chapterId=${chapterId}`, false);
-                    } else {
-                        breadcrumb += createBreadcrumbItem('زیرمباحث', '', false);
-                    }
-                    breadcrumb += createBreadcrumbItem('ویرایش زیرمبحث', '', true);
-                }
-                else {
-                    // Fallback for any other chapter pages
-                    breadcrumb += createBreadcrumbItem('مباحث', '', true);
-                }
-            }
-            else if (currentPath.includes('/Teacher/EducationalContent')) {
-                if (subChapterId) {
-                    breadcrumb += createBreadcrumbItem('دوره‌ها', '/Teacher/Courses', false);
-                    breadcrumb += createBreadcrumbItem('مباحث', `/Teacher/Chapters/Index?courseId=${courseId}`, false);
-                    breadcrumb += createBreadcrumbItem('زیرمباحث', `/Teacher/Chapters/ManageSubChapters?chapterId=${chapterId}`, false);
-                    
-                    if (currentPath.includes('/Create')) {
-                        breadcrumb += createBreadcrumbItem('ایجاد محتوا', `/Teacher/EducationalContent/Create?subChapterId=${subChapterId}`, true);
-                    } else if (currentPath.includes('/Edit')) {
-                        breadcrumb += createBreadcrumbItem('مدیریت محتوا', `/Teacher/EducationalContent/Index?subChapterId=${subChapterId}`, false);
-                        breadcrumb += createBreadcrumbItem('ویرایش محتوا', '', true);
-                    } else {
-                        breadcrumb += createBreadcrumbItem('مدیریت محتوا', `/Teacher/EducationalContent/Index?subChapterId=${subChapterId}`, true);
-                    }
-                }
-            }
-            else if (currentPath.includes('/Teacher/InteractiveLesson')) {
-                breadcrumb += createBreadcrumbItem('دوره‌ها', '/Teacher/Courses', false);
-                
-                if (currentPath.includes('/ByCourse')) {
-                    if (courseId) {
-                        breadcrumb += createBreadcrumbItem('درس‌های تعاملی', `/Teacher/InteractiveLesson/ByCourse/${courseId}`, true);
-                    } else {
-                        breadcrumb += createBreadcrumbItem('درس‌های تعاملی', '', true);
-                    }
-                }
-                else if (currentPath.includes('/Create') || currentPath.includes('/CreateWithStages')) {
-                    if (courseId) {
-                        breadcrumb += createBreadcrumbItem('درس‌های تعاملی', `/Teacher/InteractiveLesson/ByCourse/${courseId}`, false);
-                    } else {
-                        breadcrumb += createBreadcrumbItem('درس‌های تعاملی', '/Teacher/InteractiveLesson', false);
-                    }
-                    
-                    if (currentPath.includes('/CreateWithStages')) {
-                        breadcrumb += createBreadcrumbItem('ایجاد درس با مراحل', '', true);
-                    } else {
-                        breadcrumb += createBreadcrumbItem('ایجاد درس تعاملی', '', true);
-                    }
-                }
-                else if (currentPath.includes('/Details')) {
-                    if (courseId) {
-                        breadcrumb += createBreadcrumbItem('درس‌های تعاملی', `/Teacher/InteractiveLesson/ByCourse/${courseId}`, false);
-                    } else {
-                        breadcrumb += createBreadcrumbItem('درس‌های تعاملی', '/Teacher/InteractiveLesson', false);
-                    }
-                    breadcrumb += createBreadcrumbItem('جزئیات درس', '', true);
-                }
-                else if (currentPath.includes('/ManageStages')) {
-                    if (courseId) {
-                        breadcrumb += createBreadcrumbItem('درس‌های تعاملی', `/Teacher/InteractiveLesson/ByCourse/${courseId}`, false);
-                    } else {
-                        breadcrumb += createBreadcrumbItem('درس‌های تعاملی', '/Teacher/InteractiveLesson', false);
-                    }
-                    breadcrumb += createBreadcrumbItem('مدیریت مراحل', '', true);
-                }
-                else if (currentPath.includes('/Edit')) {
-                    if (courseId) {
-                        breadcrumb += createBreadcrumbItem('درس‌های تعاملی', `/Teacher/InteractiveLesson/ByCourse/${courseId}`, false);
-                    } else {
-                        breadcrumb += createBreadcrumbItem('درس‌های تعاملی', '/Teacher/InteractiveLesson', false);
-                    }
-                    breadcrumb += createBreadcrumbItem('ویرایش درس', '', true);
-                }
-                else {
-                    // Fallback for any other interactive lesson pages
-                    breadcrumb += createBreadcrumbItem('درس‌های تعاملی', '', true);
-                }
-            }
-            else if (currentPath.includes('/Teacher/Home/MyStudents')) {
-                breadcrumb = createBreadcrumbItem('دانش‌آموزان', '/Teacher/Home/MyStudents', true);
-            }
-            else if (currentPath.includes('/Teacher/Exam') || currentPath.includes('/Exam')) {
-                if (currentPath.includes('/Create')) {
-                    breadcrumb = createBreadcrumbItem('آزمون‌ها', '/Teacher/Exam', false);
-                    breadcrumb += createBreadcrumbItem('ایجاد آزمون جدید', '/Teacher/Exam/Create', true);
-                } else if (currentPath.includes('/CreateQuestion')) {
-                    breadcrumb = createBreadcrumbItem('آزمون‌ها', '/Teacher/Exam', false);
-                    breadcrumb += createBreadcrumbItem('سوالات', '/Teacher/Exam/Questions', false);
-                    breadcrumb += createBreadcrumbItem('ایجاد سوال جدید', '/Teacher/Exam/CreateQuestion', true);
-                } else if (currentPath.includes('/Questions')) {
-                    breadcrumb = createBreadcrumbItem('آزمون‌ها', '/Teacher/Exam', false);
-                    breadcrumb += createBreadcrumbItem('سوالات', '/Teacher/Exam/Questions', true);
-                } else if (currentPath.includes('/Details')) {
-                    breadcrumb = createBreadcrumbItem('آزمون‌ها', '/Teacher/Exam', false);
-                    breadcrumb += createBreadcrumbItem('جزئیات آزمون', '', true);
-                } else if (currentPath.includes('/Start')) {
-                    breadcrumb = createBreadcrumbItem('آزمون‌ها', '/Teacher/Exam', false);
-                    breadcrumb += createBreadcrumbItem('شروع آزمون', '', true);
-                } else if (currentPath.includes('/Take')) {
-                    breadcrumb = createBreadcrumbItem('آزمون‌ها', '/Teacher/Exam', false);
-                    breadcrumb += createBreadcrumbItem('انجام آزمون', '', true);
-                } else if (currentPath.includes('/Review')) {
-                    breadcrumb = createBreadcrumbItem('آزمون‌ها', '/Teacher/Exam', false);
-                    breadcrumb += createBreadcrumbItem('بررسی آزمون', '', true);
-                } else if (currentPath.includes('/Edit')) {
-                    breadcrumb = createBreadcrumbItem('آزمون‌ها', '/Teacher/Exam', false);
-                    breadcrumb += createBreadcrumbItem('ویرایش آزمون', '', true);
-                } else {
-                    breadcrumb = createBreadcrumbItem('آزمون‌ها', '/Teacher/Exam', true);
-                }
-            }
-            else if (currentPath.includes('/Teacher/Classes') || currentPath.includes('/Classroom')) {
-                if (currentPath.includes('/Create')) {
-                    breadcrumb = createBreadcrumbItem('کلاس‌ها', '/Teacher/Classes', false);
-                    breadcrumb += createBreadcrumbItem('ایجاد کلاس جدید', '/Teacher/Classes/Create', true);
-                } else if (currentPath.includes('/Details')) {
-                    breadcrumb = createBreadcrumbItem('کلاس‌ها', '/Teacher/Classes', false);
-                    breadcrumb += createBreadcrumbItem('جزئیات کلاس', '', true);
-                } else if (currentPath.includes('/Enroll')) {
-                    breadcrumb = createBreadcrumbItem('کلاس‌ها', '/Teacher/Classes', false);
-                    breadcrumb += createBreadcrumbItem('ثبت‌نام دانش‌آموز', '', true);
-                } else if (currentPath.includes('/Summary')) {
-                    breadcrumb = createBreadcrumbItem('کلاس‌ها', '/Teacher/Classes', false);
-                    breadcrumb += createBreadcrumbItem('خلاصه کلاس', '', true);
-                } else if (currentPath.includes('/Export')) {
-                    breadcrumb = createBreadcrumbItem('کلاس‌ها', '/Teacher/Classes', false);
-                    breadcrumb += createBreadcrumbItem('خروجی کلاس', '', true);
-                } else if (currentPath.includes('/Edit')) {
-                    breadcrumb = createBreadcrumbItem('کلاس‌ها', '/Teacher/Classes', false);
-                    breadcrumb += createBreadcrumbItem('ویرایش کلاس', '', true);
-                } else {
-                    breadcrumb = createBreadcrumbItem('مدیریت کلاس‌ها', '/Teacher/Classes', true);
-                }
+            else if (currentPath.includes('/Teacher/Exam')) {
+                document.querySelector('.topnav-link[href*="/Exam"]')?.classList.add('active');
             }
             else if (currentPath.includes('/Teacher/Progress')) {
-                breadcrumb = createBreadcrumbItem('گزارش‌ها', '/Teacher/Progress', true);
-            }
-            else if (currentPath.includes('/Teacher/Home/MyStudents')) {
-                breadcrumb = createBreadcrumbItem('دانش‌آموزان', '/Teacher/Home/MyStudents', true);
-            }
-            else {
-                // Fallback for any other pages
-                breadcrumb = createBreadcrumbItem('داشبورد', '/Teacher/Home', true);
-            }
-            
-            // Add breadcrumb to horizontal container
-            const breadcrumbContainer = document.getElementById('horizontalBreadcrumb');
-            if (breadcrumbContainer) {
-                breadcrumbContainer.innerHTML = breadcrumb;
+                document.querySelector('.topnav-link[href*="/Progress"]')?.classList.add('active');
             }
         }
-
-        function createBreadcrumbItem(text, url, isActive) {
-            const activeClass = isActive ? 'active' : '';
-            const clickable = url ? `onclick="window.location.href='${url}'"` : '';
-            return `
-                <span class="breadcrumb-item ${activeClass}" ${clickable}>
-                    ${text}
-                </span>
-                <i class="fas fa-chevron-left breadcrumb-separator"></i>
-            `;
-        }
-
-        // AJAX Navigation
-        function navigateToPage(url) {
-            if (!url) return;
-            
-            // For now, use normal navigation to avoid issues
-            // TODO: Implement proper AJAX navigation later
-            window.location.href = url;
-        }
-
-        function showLoadingIndicator() {
-            const contentArea = document.querySelector('.teacher-content');
-            if (contentArea) {
-                contentArea.innerHTML = `
-                    <div class="d-flex justify-content-center align-items-center" style="height: 200px;">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">در حال بارگذاری...</span>
-                        </div>
-                    </div>
-                `;
-            }
-        }
-
-        function hideLoadingIndicator() {
-            // Loading indicator will be replaced by actual content
-        }
-
-        // Navigation will use normal page refresh for now
-        // TODO: Implement AJAX navigation properly later
     </script>
     
     @await RenderSectionAsync("Scripts", required: false)

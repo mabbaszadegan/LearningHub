@@ -35,6 +35,13 @@ public record UpdateEducationalContentCommand(
 
 public record DeleteEducationalContentCommand(int Id) : IRequest<Result<bool>>;
 
+public record ToggleEducationalContentActiveCommand(int Id) : IRequest<Result<bool>>;
+
+public record ReorderEducationalContentsCommand : IRequest<Result<bool>>
+{
+    public List<int> ContentIds { get; set; } = new();
+}
+
 public class CreateEducationalContentCommandValidator : AbstractValidator<CreateEducationalContentCommand>
 {
     public CreateEducationalContentCommandValidator()

@@ -3,74 +3,59 @@
     ViewData["Title"] = "ایجاد مبحث جدید";
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h2 class="h4 mb-0">ایجاد مبحث جدید</h2>
-        <p class="text-muted mb-0">@ViewBag.CourseTitle</p>
+<!-- Minimal Page Header -->
+<div class="page-header-minimal">
+    <div class="header-content-minimal">
+        <div>
+            <h1 class="page-title-minimal">ایجاد مبحث جدید</h1>
+            <p class="page-subtitle-minimal">@ViewBag.CourseTitle</p>
+        </div>
+        <div class="header-actions-minimal">
+            <a asp-action="Index" asp-route-courseId="@ViewBag.CourseId" class="btn-minimal btn-secondary-minimal">
+                <i class="fas fa-arrow-right"></i>
+                <span>بازگشت</span>
+            </a>
+        </div>
     </div>
-    <a asp-action="Index" asp-route-courseId="@ViewBag.CourseId" class="btn btn-outline-secondary">
-        <i class="fas fa-arrow-right me-2"></i>بازگشت
-    </a>
 </div>
 
 <div class="row justify-content-center">
     <div class="col-lg-8">
-        <div class="modern-card">
-            <div class="modern-card-body">
+        <div class="card-minimal">
+            <div class="card-body-minimal">
                 <form asp-action="Create" method="post">
                     <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
                     
                     <input asp-for="CourseId" type="hidden" />
                     
-                    <div class="row">
-                        <div class="col-md-8">
-                            <div class="form-group mb-3">
-                                <label asp-for="Title" class="form-label">
-                                    <i class="fas fa-heading me-2"></i>عنوان مبحث
-                                </label>
-                                <input asp-for="Title" class="form-control" placeholder="عنوان مبحث را وارد کنید" />
-                                <span asp-validation-for="Title" class="text-danger"></span>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-group mb-3">
-                                <label asp-for="Order" class="form-label">
-                                    <i class="fas fa-sort-numeric-up me-2"></i>ترتیب
-                                </label>
-                                <input asp-for="Order" type="number" class="form-control" min="0" placeholder="0" />
-                                <span asp-validation-for="Order" class="text-danger"></span>
-                            </div>
-                        </div>
+                    <div class="form-group-minimal">
+                        <label class="form-label-minimal">عنوان مبحث</label>
+                        <input asp-for="Title" class="form-control-minimal" placeholder="عنوان مبحث را وارد کنید" />
+                        <span asp-validation-for="Title" class="text-danger"></span>
                     </div>
                     
-                    <div class="form-group mb-3">
-                        <label asp-for="Description" class="form-label">
-                            <i class="fas fa-align-right me-2"></i>توضیحات (اختیاری)
-                        </label>
-                        <textarea asp-for="Description" class="form-control" rows="3" 
-                                  placeholder="توضیحات کوتاه در مورد این مبحث"></textarea>
+                    <div class="form-group-minimal">
+                        <label class="form-label-minimal">توضیحات</label>
+                        <textarea asp-for="Description" class="form-control-minimal" rows="3" 
+                                  placeholder="توضیحات کوتاه در مورد این مبحث (اختیاری)"></textarea>
                         <span asp-validation-for="Description" class="text-danger"></span>
                     </div>
                     
-                    <div class="form-group mb-4">
-                        <label asp-for="Objective" class="form-label">
-                            <i class="fas fa-target me-2"></i>هدف مبحث <span class="text-danger">*</span>
-                        </label>
-                        <textarea asp-for="Objective" class="form-control" rows="4" 
-                                  placeholder="هدف این مبحث چیست؟ دانش‌آموزان پس از مطالعه این مبحث چه چیزی یاد خواهند گرفت؟"></textarea>
-                        <div class="form-text">
-                            <i class="fas fa-info-circle me-1"></i>
-                            هدف مبحث باید به طور شفاف مشخص کند که دانش‌آموزان پس از مطالعه این مبحث چه مهارت‌ها یا دانشی کسب خواهند کرد.
-                        </div>
+                    <div class="form-group-minimal">
+                        <label class="form-label-minimal">هدف مبحث</label>
+                        <textarea asp-for="Objective" class="form-control-minimal" rows="4" 
+                                  placeholder="هدف این مبحث چیست؟ دانش‌آموزان چه چیزی یاد خواهند گرفت؟"></textarea>
                         <span asp-validation-for="Objective" class="text-danger"></span>
                     </div>
                     
-                    <div class="d-flex justify-content-end gap-2">
-                        <a asp-action="Index" asp-route-courseId="@ViewBag.CourseId" class="btn btn-outline-secondary">
-                            <i class="fas fa-times me-2"></i>انصراف
+                    <div class="form-actions-minimal">
+                        <a asp-action="Index" asp-route-courseId="@ViewBag.CourseId" class="btn-minimal btn-secondary-minimal">
+                            <i class="fas fa-times"></i>
+                            <span>انصراف</span>
                         </a>
-                        <button type="submit" class="btn btn-modern-primary">
-                            <i class="fas fa-save me-2"></i>ایجاد مبحث
+                        <button type="submit" class="btn-minimal btn-primary-minimal">
+                            <i class="fas fa-save"></i>
+                            <span>ایجاد مبحث</span>
                         </button>
                     </div>
                 </form>
@@ -80,54 +65,151 @@
 </div>
 
 <style>
-.modern-card {
-    border: 1px solid #e9ecef;
-    border-radius: 12px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
+    /* Page Header Minimal */
+    .page-header-minimal {
+        background: white;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border: 1px solid #e9ecef;
+    }
 
-.modern-card-body {
-    padding: 30px;
-}
+    .header-content-minimal {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+    }
 
-.form-label {
-    font-weight: 500;
-    color: #495057;
-    margin-bottom: 8px;
-}
+    .page-title-minimal {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #2d3748;
+        margin: 0;
+    }
 
-.form-control {
-    border-radius: 8px;
-    border: 1px solid #ced4da;
-    transition: all 0.3s ease;
-}
+    .page-subtitle-minimal {
+        font-size: 0.875rem;
+        color: #718096;
+        margin: 0.25rem 0 0 0;
+    }
 
-.form-control:focus {
-    border-color: #007bff;
-    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-}
+    .header-actions-minimal {
+        display: flex;
+        gap: 0.75rem;
+    }
 
-.btn-modern-primary {
-    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
-    border: none;
-    border-radius: 8px;
-    padding: 10px 20px;
-    font-weight: 500;
-    transition: all 0.3s ease;
-}
+    /* Card Minimal */
+    .card-minimal {
+        background: white;
+        border-radius: 8px;
+        border: 1px solid #e9ecef;
+        overflow: hidden;
+    }
 
-.btn-modern-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
-}
+    .card-body-minimal {
+        padding: 2rem;
+    }
 
-.form-text {
-    font-size: 0.875rem;
-    color: #6c757d;
-    margin-top: 5px;
-}
+    /* Form Minimal */
+    .form-group-minimal {
+        margin-bottom: 1.25rem;
+    }
+
+    .form-label-minimal {
+        display: block;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #4a5568;
+        margin-bottom: 0.5rem;
+    }
+
+    .form-control-minimal {
+        width: 100%;
+        padding: 0.625rem 0.875rem;
+        font-size: 0.875rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        transition: all 0.2s;
+    }
+
+    .form-control-minimal:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    /* Form Actions */
+    .form-actions-minimal {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.75rem;
+        margin-top: 2rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid #e9ecef;
+    }
+
+    /* Buttons Minimal */
+    .btn-minimal {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.625rem 1.25rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+        border-radius: 6px;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-decoration: none;
+    }
+
+    .btn-primary-minimal {
+        background: #667eea;
+        color: white;
+    }
+
+    .btn-primary-minimal:hover {
+        background: #5568d3;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+
+    .btn-secondary-minimal {
+        background: white;
+        color: #718096;
+        border: 1px solid #e2e8f0;
+    }
+
+    .btn-secondary-minimal:hover {
+        background: #f7fafc;
+        color: #2d3748;
+        border-color: #cbd5e0;
+    }
 </style>
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    
+    <script>
+        $(document).ready(function() {
+            // Handle form submission to prevent button staying in loading state
+            $('form').on('submit', function() {
+                const $submitBtn = $(this).find('button[type="submit"]');
+                const $form = $(this);
+                
+                // Add loading state
+                $submitBtn.prop('disabled', true);
+                $submitBtn.html('<i class="fas fa-spinner fa-spin"></i><span>در حال ایجاد...</span>');
+                
+                // Remove loading state after a delay (in case of validation errors)
+                setTimeout(function() {
+                    if ($form.find('.text-danger').length > 0) {
+                        $submitBtn.prop('disabled', false);
+                        $submitBtn.html('<i class="fas fa-save"></i><span>ایجاد مبحث</span>');
+                    }
+                }, 100);
+            });
+        });
+    </script>
 }

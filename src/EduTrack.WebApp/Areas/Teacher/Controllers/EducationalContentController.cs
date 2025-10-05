@@ -20,7 +20,7 @@ public class EducationalContentController : Controller
     private readonly IMediator _mediator;
 
     public EducationalContentController(
-        ILogger<EducationalContentController> logger, 
+        ILogger<EducationalContentController> logger,
         UserManager<User> userManager,
         IMediator mediator)
     {
@@ -69,7 +69,7 @@ public class EducationalContentController : Controller
         ViewBag.ChapterTitle = chapterResult.Value.Title;
         ViewBag.CourseTitle = courseResult.Value?.Title;
         ViewBag.CourseId = chapterResult.Value.CourseId;
-        
+
         return View(contentsResult.Value);
     }
 
@@ -335,5 +335,197 @@ public class EducationalContentController : Controller
         }
 
         return RedirectToAction("Index", new { subChapterId = content.SubChapterId });
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> ToggleActive(int id)
+    {
+        var currentUser = await _userManager.GetUserAsync(User);
+        if (currentUser == null)
+        {
+            return Json(new { success = false, error = "کاربر یافت نشد" });
+        }
+
+        // Get content to verify ownership
+        var contentResult = await _mediator.Send(new GetEducationalContentByIdQuery(id));
+        if (!contentResult.IsSuccess || contentResult.Value == null)
+        {
+            return Json(new { success = false, error = "محتوا یافت نشد" });
+        }
+
+        var content = contentResult.Value;
+
+        // Verify subchapter and ownership
+        var subChapterResult = await _mediator.Send(new GetSubChapterByIdQuery(content.SubChapterId));
+        if (!subChapterResult.IsSuccess || subChapterResult.Value == null)
+        {
+            return Json(new { success = false, error = "زیرمبحث یافت نشد" });
+        }
+
+        // Get chapter to verify course ownership
+        var chapterResult = await _mediator.Send(new GetChapterByIdQuery(subChapterResult.Value.ChapterId));
+        if (!chapterResult.IsSuccess || chapterResult.Value == null)
+        {
+            return Json(new { success = false, error = "مبحث یافت نشد" });
+        }
+
+        // Verify course belongs to teacher
+        var courseResult = await _mediator.Send(new GetCourseByIdQuery(chapterResult.Value.CourseId));
+        if (!courseResult.IsSuccess || courseResult.Value?.CreatedBy != currentUser.Id)
+        {
+            return Json(new { success = false, error = "دسترسی غیرمجاز" });
+        }
+
+        var result = await _mediator.Send(new ToggleEducationalContentActiveCommand(id));
+        if (result.IsSuccess)
+        {
+            return Json(new { success = true, isActive = result.Value });
+        }
+        else
+        {
+            return Json(new { success = false, error = result.Error ?? "خطا در تغییر وضعیت" });
+        }
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> ReorderContents([FromBody] List<int> contentIds)
+    {
+        var currentUser = await _userManager.GetUserAsync(User);
+        if (currentUser == null)
+        {
+            return Json(new { success = false, error = "کاربر یافت نشد" });
+        }
+
+        if (contentIds == null || !contentIds.Any())
+        {
+            return Json(new { success = false, error = "لیست محتوا خالی است" });
+        }
+
+        // Verify ownership of first content to ensure teacher has access
+        var firstContentResult = await _mediator.Send(new GetEducationalContentByIdQuery(contentIds.First()));
+        if (!firstContentResult.IsSuccess || firstContentResult.Value == null)
+        {
+            return Json(new { success = false, error = "محتوا یافت نشد" });
+        }
+
+        var firstContent = firstContentResult.Value;
+
+        // Verify subchapter and ownership
+        var subChapterResult = await _mediator.Send(new GetSubChapterByIdQuery(firstContent.SubChapterId));
+        if (!subChapterResult.IsSuccess || subChapterResult.Value == null)
+        {
+            return Json(new { success = false, error = "زیرمبحث یافت نشد" });
+        }
+
+        // Get chapter to verify course ownership
+        var chapterResult = await _mediator.Send(new GetChapterByIdQuery(subChapterResult.Value.ChapterId));
+        if (!chapterResult.IsSuccess || chapterResult.Value == null)
+        {
+            return Json(new { success = false, error = "مبحث یافت نشد" });
+        }
+
+        // Verify course belongs to teacher
+        var courseResult = await _mediator.Send(new GetCourseByIdQuery(chapterResult.Value.CourseId));
+        if (!courseResult.IsSuccess || courseResult.Value?.CreatedBy != currentUser.Id)
+        {
+            return Json(new { success = false, error = "دسترسی غیرمجاز" });
+        }
+
+        var result = await _mediator.Send(new ReorderEducationalContentsCommand { ContentIds = contentIds });
+        if (result.IsSuccess)
+        {
+            return Json(new { success = true });
+        }
+        else
+        {
+            return Json(new { success = false, error = result.Error ?? "خطا در تغییر ترتیب" });
+        }
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> MoveContent(int id, string direction)
+    {
+        var currentUser = await _userManager.GetUserAsync(User);
+        if (currentUser == null)
+        {
+            return Json(new { success = false, error = "کاربر یافت نشد" });
+        }
+
+        // Get content to verify ownership
+        var contentResult = await _mediator.Send(new GetEducationalContentByIdQuery(id));
+        if (!contentResult.IsSuccess || contentResult.Value == null)
+        {
+            return Json(new { success = false, error = "محتوا یافت نشد" });
+        }
+
+        var content = contentResult.Value;
+
+        // Verify subchapter and ownership
+        var subChapterResult = await _mediator.Send(new GetSubChapterByIdQuery(content.SubChapterId));
+        if (!subChapterResult.IsSuccess || subChapterResult.Value == null)
+        {
+            return Json(new { success = false, error = "زیرمبحث یافت نشد" });
+        }
+
+        // Get chapter to verify course ownership
+        var chapterResult = await _mediator.Send(new GetChapterByIdQuery(subChapterResult.Value.ChapterId));
+        if (!chapterResult.IsSuccess || chapterResult.Value == null)
+        {
+            return Json(new { success = false, error = "مبحث یافت نشد" });
+        }
+
+        // Verify course belongs to teacher
+        var courseResult = await _mediator.Send(new GetCourseByIdQuery(chapterResult.Value.CourseId));
+        if (!courseResult.IsSuccess || courseResult.Value?.CreatedBy != currentUser.Id)
+        {
+            return Json(new { success = false, error = "دسترسی غیرمجاز" });
+        }
+
+        // Get all contents in the same subchapter
+        var allContentsResult = await _mediator.Send(new GetEducationalContentsBySubChapterIdQuery(content.SubChapterId));
+        if (!allContentsResult.IsSuccess || allContentsResult.Value == null)
+        {
+            return Json(new { success = false, error = "خطا در دریافت لیست محتوا" });
+        }
+
+        var allContents = allContentsResult.Value.OrderBy(c => c.Order).ToList();
+        var currentIndex = allContents.FindIndex(c => c.Id == id);
+
+        if (currentIndex == -1)
+        {
+            return Json(new { success = false, error = "محتوا در لیست یافت نشد" });
+        }
+
+        int newIndex;
+        if (direction == "up" && currentIndex > 0)
+        {
+            newIndex = currentIndex - 1;
+        }
+        else if (direction == "down" && currentIndex < allContents.Count - 1)
+        {
+            newIndex = currentIndex + 1;
+        }
+        else
+        {
+            return Json(new { success = false, error = "امکان جابجایی وجود ندارد" });
+        }
+
+        // Swap orders
+        var currentContent = allContents[currentIndex];
+        var targetContent = allContents[newIndex];
+
+        var contentIds = allContents.Select(c => c.Id).ToList();
+        contentIds[currentIndex] = targetContent.Id;
+        contentIds[newIndex] = currentContent.Id;
+
+        var result = await _mediator.Send(new ReorderEducationalContentsCommand { ContentIds = contentIds });
+        if (result.IsSuccess)
+        {
+            return Json(new { success = true });
+        }
+        else
+        {
+            return Json(new { success = false, error = result.Error ?? "خطا در جابجایی" });
+        }
     }
 }

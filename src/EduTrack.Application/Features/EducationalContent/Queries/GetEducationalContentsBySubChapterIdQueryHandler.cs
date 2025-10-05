@@ -19,7 +19,7 @@ public class GetEducationalContentsBySubChapterIdQueryHandler : IRequestHandler<
     public async Task<Result<List<EducationalContentDto>>> Handle(GetEducationalContentsBySubChapterIdQuery request, CancellationToken cancellationToken)
     {
         var contents = await _contentRepository.GetAll()
-            .Where(c => c.SubChapterId == request.SubChapterId && c.IsActive)
+            .Where(c => c.SubChapterId == request.SubChapterId) // Removed && c.IsActive to show all content
             .Include(c => c.File)
             .OrderBy(c => c.Order)
             .ToListAsync(cancellationToken);

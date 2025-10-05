@@ -1,17 +1,17 @@
-@model EduTrack.Application.Features.EducationalContent.Commands.CreateEducationalContentCommand
+@model EduTrack.Application.Features.Chapters.Commands.UpdateSubChapterCommand
 @{
-    ViewData["Title"] = "ایجاد محتوای آموزشی جدید";
+    ViewData["Title"] = "ویرایش زیرمبحث";
 }
 
 <!-- Minimal Page Header -->
 <div class="page-header-minimal">
     <div class="header-content-minimal">
         <div>
-            <h1 class="page-title-minimal">ایجاد محتوای آموزشی جدید</h1>
-            <p class="page-subtitle-minimal">@ViewBag.SubChapterTitle</p>
+            <h1 class="page-title-minimal">ویرایش زیرمبحث</h1>
+            <p class="page-subtitle-minimal">@ViewBag.ChapterTitle</p>
         </div>
         <div class="header-actions-minimal">
-            <a asp-action="Index" asp-route-subChapterId="@ViewBag.SubChapterId" class="btn-minimal btn-secondary-minimal">
+            <a asp-controller="SubChapters" asp-action="Index" asp-route-chapterId="@ViewBag.ChapterId" class="btn-minimal btn-secondary-minimal">
                 <i class="fas fa-arrow-right"></i>
                 <span>بازگشت</span>
             </a>
@@ -19,80 +19,66 @@
     </div>
 </div>
 
+<!-- Quick Action Buttons -->
+<div class="quick-actions-bar mb-4">
+    <a asp-controller="EducationalContent" asp-action="Index" asp-route-subChapterId="@Model.Id" class="action-btn-minimal">
+        <i class="fas fa-folder-open"></i>
+        <span>مدیریت محتوا</span>
+    </a>
+    <a asp-controller="EducationalContent" asp-action="Create" asp-route-subChapterId="@Model.Id" class="action-btn-minimal">
+        <i class="fas fa-plus"></i>
+        <span>ایجاد محتوا</span>
+    </a>
+</div>
+
 <div class="row justify-content-center">
     <div class="col-lg-8">
         <div class="card-minimal">
             <div class="card-body-minimal">
-                <form asp-action="Create" method="post" enctype="multipart/form-data">
+                <form asp-action="Edit" method="post">
                     <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
                     
-                    <input asp-for="SubChapterId" type="hidden" />
+                    <input asp-for="Id" type="hidden" />
+                    
+                    <!-- Hidden fields -->
+                    <input asp-for="Order" type="hidden" />
                     
                     <div class="form-group-minimal">
-                        <label class="form-label-minimal">عنوان محتوا</label>
-                        <input asp-for="Title" class="form-control-minimal" placeholder="عنوان محتوا را وارد کنید" />
+                        <label class="form-label-minimal">عنوان زیرمبحث</label>
+                        <input asp-for="Title" class="form-control-minimal" placeholder="عنوان زیرمبحث را وارد کنید" />
                         <span asp-validation-for="Title" class="text-danger"></span>
                     </div>
                     
                     <div class="form-group-minimal">
-                        <label class="form-label-minimal">توضیحات (اختیاری)</label>
+                        <label class="form-label-minimal">توضیحات</label>
                         <textarea asp-for="Description" class="form-control-minimal" rows="3" 
-                                  placeholder="توضیحات کوتاه در مورد این محتوا"></textarea>
+                                  placeholder="توضیحات کوتاه در مورد این زیرمبحث (اختیاری)"></textarea>
                         <span asp-validation-for="Description" class="text-danger"></span>
                     </div>
                     
                     <div class="form-group-minimal">
-                        <label class="form-label-minimal">نوع محتوا</label>
-                        <select asp-for="Type" class="form-control-minimal" id="contentType">
-                            <option value="">نوع محتوا را انتخاب کنید</option>
-                            <option value="Text">متن</option>
-                            <option value="Image">تصویر</option>
-                            <option value="Video">ویدیو</option>
-                            <option value="Audio">صدا</option>
-                            <option value="PDF">PDF</option>
-                            <option value="File">فایل</option>
-                            <option value="ExternalUrl">لینک خارجی</option>
-                        </select>
-                        <span asp-validation-for="Type" class="text-danger"></span>
+                        <label class="form-label-minimal">هدف زیرمبحث</label>
+                        <textarea asp-for="Objective" class="form-control-minimal" rows="4" 
+                                  placeholder="هدف این زیرمبحث چیست؟ دانش‌آموزان چه چیزی یاد خواهند گرفت؟"></textarea>
+                        <span asp-validation-for="Objective" class="text-danger"></span>
                     </div>
                     
-                    <!-- Text Content -->
-                    <div class="form-group-minimal" id="textContentGroup" style="display: none;">
-                        <label class="form-label-minimal">محتوای متنی</label>
-                        <textarea asp-for="TextContent" class="form-control-minimal" rows="8" 
-                                  placeholder="محتوای متنی خود را اینجا بنویسید..."></textarea>
-                        <span asp-validation-for="TextContent" class="text-danger"></span>
-                    </div>
-                    
-                    <!-- File Upload -->
-                    <div class="form-group-minimal" id="fileUploadGroup" style="display: none;">
-                        <label class="form-label-minimal">فایل</label>
-                        <input asp-for="File" type="file" class="form-control-minimal" />
-                        <span asp-validation-for="File" class="text-danger"></span>
-                        <small class="form-text text-muted">
-                            فرمت‌های مجاز: JPG, PNG, GIF, MP4, AVI, MP3, WAV, PDF, DOC, DOCX
-                        </small>
-                    </div>
-                    
-                    <!-- External URL -->
-                    <div class="form-group-minimal" id="externalUrlGroup" style="display: none;">
-                        <label class="form-label-minimal">لینک خارجی</label>
-                        <input asp-for="ExternalUrl" class="form-control-minimal" 
-                               placeholder="https://example.com" />
-                        <span asp-validation-for="ExternalUrl" class="text-danger"></span>
-                        <small class="form-text text-muted">
-                            لینک کامل را وارد کنید (مثال: https://www.youtube.com/watch?v=...)
-                        </small>
+                    <div class="form-group-minimal">
+                        <label class="toggle-label-minimal">
+                            <input asp-for="IsActive" type="checkbox" class="toggle-input-minimal" />
+                            <span class="toggle-slider-minimal"></span>
+                            <span class="toggle-text-minimal">زیرمبحث فعال است</span>
+                        </label>
                     </div>
                     
                     <div class="form-actions-minimal">
-                        <a asp-action="Index" asp-route-subChapterId="@ViewBag.SubChapterId" class="btn-minimal btn-secondary-minimal">
+                        <a asp-controller="SubChapters" asp-action="Index" asp-route-chapterId="@ViewBag.ChapterId" class="btn-minimal btn-secondary-minimal">
                             <i class="fas fa-times"></i>
                             <span>انصراف</span>
                         </a>
                         <button type="submit" class="btn-minimal btn-primary-minimal">
                             <i class="fas fa-save"></i>
-                            <span>ایجاد محتوا</span>
+                            <span>ذخیره تغییرات</span>
                         </button>
                     </div>
                 </form>
@@ -136,6 +122,40 @@
         gap: 0.75rem;
     }
 
+    /* Quick Actions Bar */
+    .quick-actions-bar {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    .action-btn-minimal {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.625rem 1rem;
+        background: white;
+        border: 1px solid #e9ecef;
+        border-radius: 6px;
+        color: #667eea;
+        font-size: 0.875rem;
+        font-weight: 500;
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+
+    .action-btn-minimal:hover {
+        background: #667eea;
+        color: white;
+        border-color: #667eea;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+    }
+
+    .action-btn-minimal i {
+        font-size: 0.875rem;
+    }
+
     /* Card Minimal */
     .card-minimal {
         background: white;
@@ -176,10 +196,51 @@
         box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
     }
 
-    .form-text {
-        font-size: 0.75rem;
-        color: #6c757d;
-        margin-top: 0.25rem;
+    /* Toggle Switch Minimal */
+    .toggle-label-minimal {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        cursor: pointer;
+    }
+
+    .toggle-input-minimal {
+        display: none;
+    }
+
+    .toggle-slider-minimal {
+        position: relative;
+        width: 44px;
+        height: 24px;
+        background: #cbd5e0;
+        border-radius: 12px;
+        transition: all 0.2s;
+    }
+
+    .toggle-slider-minimal:before {
+        content: '';
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        background: white;
+        border-radius: 50%;
+        top: 2px;
+        left: 2px;
+        transition: all 0.2s;
+    }
+
+    .toggle-input-minimal:checked + .toggle-slider-minimal {
+        background: #667eea;
+    }
+
+    .toggle-input-minimal:checked + .toggle-slider-minimal:before {
+        transform: translateX(20px);
+    }
+
+    .toggle-text-minimal {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #4a5568;
     }
 
     /* Form Actions */
@@ -236,34 +297,6 @@
     
     <script>
         $(document).ready(function() {
-            // Handle content type change
-            $('#contentType').on('change', function() {
-                const contentType = $(this).val();
-                
-                // Hide all groups
-                $('#textContentGroup, #fileUploadGroup, #externalUrlGroup').hide();
-                
-                // Show relevant group based on type
-                switch(contentType) {
-                    case 'Text':
-                        $('#textContentGroup').show();
-                        break;
-                    case 'Image':
-                    case 'Video':
-                    case 'Audio':
-                    case 'PDF':
-                    case 'File':
-                        $('#fileUploadGroup').show();
-                        break;
-                    case 'ExternalUrl':
-                        $('#externalUrlGroup').show();
-                        break;
-                }
-            });
-            
-            // Trigger change on page load if type is already selected
-            $('#contentType').trigger('change');
-            
             // Handle form submission to prevent button staying in loading state
             $('form').on('submit', function() {
                 const $submitBtn = $(this).find('button[type="submit"]');
@@ -277,7 +310,7 @@
                 setTimeout(function() {
                     if ($form.find('.text-danger').length > 0) {
                         $submitBtn.prop('disabled', false);
-                        $submitBtn.html('<i class="fas fa-save"></i><span>ایجاد محتوا</span>');
+                        $submitBtn.html('<i class="fas fa-save"></i><span>ذخیره تغییرات</span>');
                     }
                 }, 100);
             });

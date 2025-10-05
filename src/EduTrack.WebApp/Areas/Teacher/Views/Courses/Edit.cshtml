@@ -1,6 +1,6 @@
-@model EduTrack.Application.Features.Courses.Commands.CreateCourseCommand
+@model EduTrack.Application.Features.Courses.Commands.UpdateCourseCommand
 @{
-    ViewData["Title"] = "ایجاد دوره جدید";
+    ViewData["Title"] = "ویرایش دوره";
 }
 
 <div class="row justify-content-center">
@@ -16,16 +16,20 @@
         <!-- Form Card -->
         <div class="form-card-minimal">
             <div class="form-header-minimal">
-                <div class="form-icon-minimal">
-                    <i class="fas fa-plus"></i>
+                <div class="form-icon-minimal edit">
+                    <i class="fas fa-edit"></i>
                 </div>
                 <div>
-                    <h2 class="form-title-minimal">ایجاد دوره جدید</h2>
-                    <p class="form-subtitle-minimal">اطلاعات دوره آموزشی را وارد کنید</p>
+                    <h2 class="form-title-minimal">ویرایش دوره</h2>
+                    <p class="form-subtitle-minimal">ویرایش اطلاعات دوره آموزشی</p>
                 </div>
             </div>
 
-            <form asp-action="Create" method="post" class="form-body-minimal">
+            <form asp-action="Edit" method="post" class="form-body-minimal">
+                <input type="hidden" asp-for="Id" />
+                <input type="hidden" asp-for="Order" />
+                <input type="hidden" asp-for="Thumbnail" />
+
                 <!-- Title -->
                 <div class="form-group-minimal">
                     <label asp-for="Title" class="form-label-minimal">
@@ -54,20 +58,61 @@
                     <span asp-validation-for="Description" class="validation-error-minimal"></span>
                 </div>
 
+                <!-- Active Status -->
+                <div class="form-group-minimal">
+                    <label class="form-label-minimal">
+                        <i class="fas fa-toggle-on"></i>
+                        <span>وضعیت</span>
+                    </label>
+                    <div class="custom-switch-container">
+                        <label class="custom-switch-label">
+                            <input type="checkbox" asp-for="IsActive" class="custom-switch-input" />
+                            <span class="custom-switch-slider"></span>
+                            <span class="custom-switch-text">
+                                <span class="switch-active">دوره فعال است</span>
+                                <span class="switch-inactive">دوره غیرفعال است</span>
+                            </span>
+                        </label>
+                    </div>
+                    <small class="form-text-helper">
+                        <i class="fas fa-info-circle"></i>
+                        دوره‌های غیرفعال برای دانش‌آموزان قابل مشاهده نخواهند بود
+                    </small>
+                </div>
+
                 <!-- Info Box -->
                 <div class="info-box-minimal">
                     <i class="fas fa-info-circle"></i>
                     <div>
                         <strong>نکته:</strong>
-                        <p>ترتیب نمایش دوره‌ها را می‌توانید از صفحه لیست با کشیدن و رها کردن کارت‌ها تغییر دهید.</p>
+                        <p>ترتیب نمایش این دوره را می‌توانید از صفحه لیست با کشیدن و رها کردن کارت آن تغییر دهید.</p>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="quick-actions-edit">
+                    <h3 class="quick-actions-title">دسترسی سریع</h3>
+                    <div class="quick-actions-grid-edit">
+                        <a asp-controller="Chapters" asp-action="Index" asp-route-courseId="@Model.Id" class="quick-action-item-edit primary">
+                            <i class="fas fa-book"></i>
+                            <span>مدیریت مباحث</span>
+                        </a>
+                        <a asp-controller="InteractiveLesson" asp-action="ByCourse" asp-route-courseId="@Model.Id" class="quick-action-item-edit success">
+                            <i class="fas fa-play-circle"></i>
+                            <span>مدیریت درس‌ها</span>
+                        </a>
+                        <a href="#" class="quick-action-item-edit warning">
+                            <i class="fas fa-clipboard-list"></i>
+                            <span>مدیریت آزمون‌ها</span>
+                        </a>
                     </div>
                 </div>
 
                 <!-- Action Buttons -->
                 <div class="form-actions-minimal">
                     <button type="submit" class="btn-submit-minimal">
-                        <i class="fas fa-check"></i>
-                        <span>ایجاد دوره</span>
+                        <i class="fas fa-save"></i>
+                        <span>ذخیره تغییرات</span>
                     </button>
                     <a asp-action="Index" class="btn-cancel-minimal">
                         <i class="fas fa-times"></i>
@@ -103,10 +148,6 @@
             border-color: #667eea;
         }
 
-        .btn-back-minimal i {
-            font-size: 0.75rem;
-        }
-
         /* Form Card */
         .form-card-minimal {
             background: white;
@@ -134,6 +175,10 @@
             justify-content: center;
             color: white;
             font-size: 1.25rem;
+        }
+
+        .form-icon-minimal.edit {
+            background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
         }
 
         .form-title-minimal {
@@ -208,6 +253,86 @@
             margin-top: 0.375rem;
         }
 
+        /* Custom Switch */
+        .custom-switch-container {
+            margin-bottom: 0.5rem;
+        }
+
+        .custom-switch-label {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .custom-switch-input {
+            display: none;
+        }
+
+        .custom-switch-slider {
+            position: relative;
+            width: 48px;
+            height: 24px;
+            background: #ccc;
+            border-radius: 24px;
+            transition: 0.3s;
+            flex-shrink: 0;
+        }
+
+        .custom-switch-slider:before {
+            content: "";
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            right: 2px;
+            bottom: 2px;
+            background: white;
+            border-radius: 50%;
+            transition: 0.3s;
+        }
+
+        .custom-switch-input:checked + .custom-switch-slider {
+            background: #28a745;
+        }
+
+        .custom-switch-input:checked + .custom-switch-slider:before {
+            transform: translateX(-24px);
+        }
+
+        .custom-switch-text {
+            font-size: 0.875rem;
+            color: #495057;
+        }
+
+        .switch-inactive {
+            display: inline;
+        }
+
+        .switch-active {
+            display: none;
+        }
+
+        .custom-switch-input:checked ~ .custom-switch-text .switch-inactive {
+            display: none;
+        }
+
+        .custom-switch-input:checked ~ .custom-switch-text .switch-active {
+            display: inline;
+        }
+
+        .form-text-helper {
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
+            font-size: 0.75rem;
+            color: #6c757d;
+        }
+
+        .form-text-helper i {
+            font-size: 0.7rem;
+        }
+
         /* Info Box */
         .info-box-minimal {
             display: flex;
@@ -240,6 +365,82 @@
             line-height: 1.5;
         }
 
+        /* Quick Actions Edit */
+        .quick-actions-edit {
+            padding: 1.25rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+        }
+
+        .quick-actions-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #495057;
+            margin: 0 0 0.875rem 0;
+        }
+
+        .quick-actions-grid-edit {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 0.75rem;
+        }
+
+        .quick-action-item-edit {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 0.813rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            gap: 0.5rem;
+            border: 2px solid;
+        }
+
+        .quick-action-item-edit i {
+            font-size: 1.25rem;
+        }
+
+        .quick-action-item-edit.primary {
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+            border-color: rgba(102, 126, 234, 0.3);
+        }
+
+        .quick-action-item-edit.primary:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .quick-action-item-edit.success {
+            background: rgba(40, 167, 69, 0.1);
+            color: #28a745;
+            border-color: rgba(40, 167, 69, 0.3);
+        }
+
+        .quick-action-item-edit.success:hover {
+            background: #28a745;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .quick-action-item-edit.warning {
+            background: rgba(255, 193, 7, 0.1);
+            color: #ffc107;
+            border-color: rgba(255, 193, 7, 0.3);
+        }
+
+        .quick-action-item-edit.warning:hover {
+            background: #ffc107;
+            color: #212529;
+            transform: translateY(-2px);
+        }
+
         /* Form Actions */
         .form-actions-minimal {
             display: flex;
@@ -253,7 +454,7 @@
             align-items: center;
             gap: 0.5rem;
             padding: 0.75rem 1.5rem;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
             color: white;
             border: none;
             border-radius: 8px;
@@ -265,7 +466,7 @@
 
         .btn-submit-minimal:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 4px 12px rgba(23, 162, 184, 0.3);
         }
 
         .btn-cancel-minimal {
@@ -300,6 +501,10 @@
                 width: 100%;
                 justify-content: center;
             }
+
+            .quick-actions-grid-edit {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 }
@@ -316,13 +521,13 @@
                 
                 // Add loading state
                 $submitBtn.prop('disabled', true);
-                $submitBtn.html('<i class="fas fa-spinner fa-spin"></i><span>در حال ایجاد...</span>');
+                $submitBtn.html('<i class="fas fa-spinner fa-spin"></i><span>در حال ذخیره...</span>');
                 
                 // Remove loading state after a delay (in case of validation errors)
                 setTimeout(function() {
                     if ($form.find('.text-danger').length > 0) {
                         $submitBtn.prop('disabled', false);
-                        $submitBtn.html('<i class="fas fa-save"></i><span>ایجاد دوره</span>');
+                        $submitBtn.html('<i class="fas fa-save"></i><span>ذخیره تغییرات</span>');
                     }
                 }, 100);
             });

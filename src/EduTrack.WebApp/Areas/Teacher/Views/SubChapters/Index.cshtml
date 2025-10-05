@@ -1,13 +1,13 @@
-@model List<EduTrack.Application.Common.Models.EducationalContentDto>
+@model List<EduTrack.Application.Common.Models.SubChapterDto>
 @{
-    ViewData["Title"] = "مدیریت محتوای آموزشی";
+    ViewData["Title"] = "مدیریت زیرمباحث";
 }
 
 <!-- Page Header -->
 <div class="page-header-minimal mb-3">
     <div class="d-flex justify-content-between align-items-center">
         <div>
-            <h1 class="page-title">مدیریت محتوای آموزشی</h1>
+            <h1 class="page-title">زیرمباحث مبحث</h1>
             <p class="page-subtitle mb-0">
                 <a asp-controller="Courses" asp-action="Index" class="breadcrumb-link">
                     <i class="fas fa-chevron-right"></i> دوره‌ها
@@ -17,16 +17,12 @@
                     @ViewBag.CourseTitle
                 </a>
                 <span class="mx-2">/</span>
-                <a asp-controller="SubChapters" asp-action="Index" asp-route-chapterId="@ViewBag.ChapterId" class="breadcrumb-link">
-                    @ViewBag.ChapterTitle
-                </a>
-                <span class="mx-2">/</span>
-                <span>@ViewBag.SubChapterTitle</span>
+                <span>@ViewBag.ChapterTitle</span>
             </p>
         </div>
-        <a asp-action="Create" asp-route-subChapterId="@ViewBag.SubChapterId" class="btn-action-primary">
+        <a asp-action="Create" asp-route-chapterId="@ViewBag.ChapterId" class="btn-action-primary">
             <i class="fas fa-plus"></i>
-            <span>محتوا جدید</span>
+            <span>زیرمبحث جدید</span>
         </a>
     </div>
 </div>
@@ -37,7 +33,7 @@
     <div class="filter-bar-minimal mb-3">
         <div class="filter-group">
             <button class="filter-btn-minimal active" data-filter="all">
-                <i class="fas fa-file-alt"></i>
+                <i class="fas fa-layer-group"></i>
                 <span>همه (@Model.Count)</span>
             </button>
             <button class="filter-btn-minimal" data-filter="active">
@@ -51,49 +47,49 @@
         </div>
         <div class="drag-info">
             <i class="fas fa-grip-lines"></i>
-            <span>برای تغییر ترتیب، محتوا را بکشید و رها کنید</span>
+            <span>برای تغییر ترتیب، زیرمباحث را بکشید و رها کنید</span>
         </div>
     </div>
 }
 
 @if (Model.Any())
 {
-    <!-- Content List with Enhanced Drag & Drop -->
-    <div class="content-sortable-list" id="contentsContainer">
-        @foreach (var content in Model.OrderBy(c => c.Order))
+    <!-- SubChapters List with Enhanced Drag & Drop -->
+    <div class="chapters-sortable-list" id="subchaptersContainer">
+        @foreach (var subChapter in Model.OrderBy(c => c.Order))
         {
-            <div class="content-card-draggable" data-content-id="@content.Id" data-status="@(content.IsActive ? "active" : "inactive")" data-is-active="@(content.IsActive ? "true" : "false")">
+            <div class="chapter-card-draggable" data-subchapter-id="@subChapter.Id" data-status="@(subChapter.IsActive ? "active" : "inactive")" data-is-active="@(subChapter.IsActive ? "true" : "false")">
                 <!-- Enhanced Drag Handle with Up/Down -->
                 <div class="drag-handle-enhanced">
-                    <button class="move-btn-content move-up" data-content-id="@content.Id" data-direction="up" title="انتقال به بالا">
+                    <button class="move-btn-chapter move-up" data-subchapter-id="@subChapter.Id" data-direction="up" title="انتقال به بالا">
                         <i class="fas fa-chevron-up"></i>
                     </button>
                     <div class="drag-lines">
                         <i class="fas fa-grip-lines"></i>
                     </div>
                     <span class="drag-hint">کشیدن</span>
-                    <button class="move-btn-content move-down" data-content-id="@content.Id" data-direction="down" title="انتقال به پایین">
+                    <button class="move-btn-chapter move-down" data-subchapter-id="@subChapter.Id" data-direction="down" title="انتقال به پایین">
                         <i class="fas fa-chevron-down"></i>
                     </button>
                 </div>
                 
                 <!-- Card Content -->
-                <div class="content-card-content">
+                <div class="chapter-card-content">
                     <!-- Header Section -->
-                    <div class="content-header-section">
-                        <div class="content-info">
-                            <h3 class="content-title-main">@content.Title</h3>
-                            @if (!string.IsNullOrEmpty(content.Description))
+                    <div class="chapter-header-section">
+                        <div class="chapter-info">
+                            <h3 class="chapter-title-main">@subChapter.Title</h3>
+                            @if (!string.IsNullOrEmpty(subChapter.Description))
                             {
-                                <p class="content-description">@content.Description</p>
+                                <p class="chapter-description">@subChapter.Description</p>
                             }
                         </div>
-                        <div class="content-actions-top">
+                        <div class="chapter-actions-top">
                             <label class="toggle-switch-minimal" title="فعال/غیرفعال">
                                 <input type="checkbox" 
-                                       class="toggle-content-active" 
-                                       data-content-id="@content.Id" 
-                                       @(content.IsActive ? "checked" : "") />
+                                       class="toggle-subchapter-active" 
+                                       data-subchapter-id="@subChapter.Id" 
+                                       @(subChapter.IsActive ? "checked" : "") />
                                 <span class="toggle-slider-minimal"></span>
                             </label>
                             <div class="dropdown">
@@ -102,136 +98,44 @@
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-end">
                                     <li>
-                                        <a class="dropdown-item" asp-action="Edit" asp-route-id="@content.Id">
-                                            <i class="fas fa-edit"></i>ویرایش محتوا
+                                        <a class="dropdown-item" asp-action="Edit" asp-route-id="@subChapter.Id">
+                                            <i class="fas fa-edit"></i>ویرایش زیرمبحث
                                         </a>
                                     </li>
                                     <li><hr class="dropdown-divider"></li>
                                     <li>
-                                        <form asp-action="Delete" asp-route-id="@content.Id" method="post" 
-                                              onsubmit="return confirm('آیا از حذف این محتوا اطمینان دارید؟')">
-                                            <button type="submit" class="dropdown-item text-danger">
-                                                <i class="fas fa-trash"></i>حذف
-                                            </button>
-                                        </form>
+                                        <a class="dropdown-item" asp-controller="EducationalContent" asp-action="Index" asp-route-subChapterId="@subChapter.Id">
+                                            <i class="fas fa-folder-open"></i>مدیریت محتوا
+                                        </a>
                                     </li>
                                 </ul>
                             </div>
                         </div>
                     </div>
                     
-                    <!-- Content Type Badge -->
-                    <div class="content-type-section mb-3">
-                        <span class="badge content-type-badge @GetContentTypeClass(content.Type)">
-                            <i class="@GetContentTypeIcon(content.Type)"></i>
-                            @GetContentTypeName(content.Type)
-                        </span>
-                    </div>
-                    
-                    <!-- Content Preview -->
-                    <div class="content-preview-section mb-3">
-                        @switch (content.Type)
-                        {
-                            case EduTrack.Domain.Enums.EducationalContentType.Text:
-                                <div class="text-preview">
-                                    @if (!string.IsNullOrEmpty(content.TextContent))
-                                    {
-                                        <p class="preview-text">@(content.TextContent.Length > 150 ? content.TextContent.Substring(0, 150) + "..." : content.TextContent)</p>
-                                    }
-                                </div>
-                                break;
-                                
-                            case EduTrack.Domain.Enums.EducationalContentType.Image:
-                                @if (content.File != null && !string.IsNullOrEmpty(content.File.FileUrl))
-                                {
-                                    <div class="image-preview">
-                                        <img src="@content.File.FileUrl" alt="@content.Title" class="img-fluid rounded" style="max-height: 120px; width: 100%; object-fit: cover;">
-                                    </div>
-                                }
-                                break;
-                                
-                            case EduTrack.Domain.Enums.EducationalContentType.Video:
-                                @if (content.File != null && !string.IsNullOrEmpty(content.File.FileUrl))
-                                {
-                                    <div class="video-preview">
-                                        <video controls class="w-100" style="max-height: 120px;">
-                                            <source src="@content.File.FileUrl" type="@content.File.MimeType">
-                                            مرورگر شما از پخش ویدیو پشتیبانی نمی‌کند.
-                                        </video>
-                                    </div>
-                                }
-                                else if (!string.IsNullOrEmpty(content.ExternalUrl))
-                                {
-                                    <div class="external-video-preview">
-                                        <div class="embed-responsive embed-responsive-16by9">
-                                            <iframe class="embed-responsive-item" src="@content.ExternalUrl" allowfullscreen></iframe>
-                                        </div>
-                                    </div>
-                                }
-                                break;
-                                
-                            case EduTrack.Domain.Enums.EducationalContentType.Audio:
-                                @if (content.File != null && !string.IsNullOrEmpty(content.File.FileUrl))
-                                {
-                                    <div class="audio-preview">
-                                        <audio controls class="w-100">
-                                            <source src="@content.File.FileUrl" type="@content.File.MimeType">
-                                            مرورگر شما از پخش صدا پشتیبانی نمی‌کند.
-                                        </audio>
-                                    </div>
-                                }
-                                break;
-                                
-                            case EduTrack.Domain.Enums.EducationalContentType.PDF:
-                            case EduTrack.Domain.Enums.EducationalContentType.File:
-                                @if (content.File != null && !string.IsNullOrEmpty(content.File.OriginalFileName))
-                                {
-                                    <div class="file-preview">
-                                        <div class="file-info">
-                                            <i class="fas fa-file me-2"></i>
-                                            <span>@content.File.OriginalFileName</span>
-                                            <small class="text-muted d-block">@FormatFileSize(content.File.FileSizeBytes)</small>
-                                        </div>
-                                    </div>
-                                }
-                                break;
-                                
-                            case EduTrack.Domain.Enums.EducationalContentType.ExternalUrl:
-                                @if (!string.IsNullOrEmpty(content.ExternalUrl))
-                                {
-                                    <div class="external-url-preview">
-                                        <div class="url-info">
-                                            <i class="fas fa-external-link-alt me-2"></i>
-                                            <a href="@content.ExternalUrl" target="_blank" class="text-decoration-none">
-                                                @content.ExternalUrl
-                                            </a>
-                                        </div>
-                                    </div>
-                                }
-                                break;
-                        }
-                    </div>
+                    <!-- Objective Section -->
+                    @if (!string.IsNullOrEmpty(subChapter.Objective))
+                    {
+                        <div class="objective-box-minimal">
+                            <i class="fas fa-bullseye"></i>
+                            <span>@subChapter.Objective</span>
+                        </div>
+                    }
                     
                     <!-- Action Buttons -->
-                    <div class="content-actions-footer">
-                        <a asp-action="Edit" asp-route-id="@content.Id" class="action-btn-footer info">
+                    <div class="chapter-actions-footer">
+                        <a asp-controller="EducationalContent" asp-action="Index" asp-route-subChapterId="@subChapter.Id" class="action-btn-footer primary">
+                            <i class="fas fa-folder-open"></i>
+                            <span>مدیریت محتوا</span>
+                        </a>
+                        <a asp-controller="EducationalContent" asp-action="Create" asp-route-subChapterId="@subChapter.Id" class="action-btn-footer success">
+                            <i class="fas fa-plus"></i>
+                            <span>افزودن محتوا</span>
+                        </a>
+                        <a asp-action="Edit" asp-route-id="@subChapter.Id" class="action-btn-footer info">
                             <i class="fas fa-edit"></i>
                             <span>ویرایش</span>
                         </a>
-                        @if (content.File != null && !string.IsNullOrEmpty(content.File.FileUrl))
-                        {
-                            <a href="@content.File.FileUrl" target="_blank" class="action-btn-footer primary">
-                                <i class="fas fa-download"></i>
-                                <span>دانلود</span>
-                            </a>
-                        }
-                        @if (!string.IsNullOrEmpty(content.ExternalUrl))
-                        {
-                            <a href="@content.ExternalUrl" target="_blank" class="action-btn-footer success">
-                                <i class="fas fa-external-link-alt"></i>
-                                <span>مشاهده</span>
-                            </a>
-                        }
                     </div>
                 </div>
             </div>
@@ -243,80 +147,20 @@ else
     <!-- Empty State -->
     <div class="empty-state-minimal">
         <div class="empty-icon">
-            <i class="fas fa-file-alt"></i>
+            <i class="fas fa-layer-group"></i>
         </div>
-        <h3>هنوز محتوایی ایجاد نشده</h3>
-        <p>اولین محتوای آموزشی خود را ایجاد کنید</p>
-        <a asp-action="Create" asp-route-subChapterId="@ViewBag.SubChapterId" class="btn-action-primary">
+        <h3>هنوز زیرمبحثی ایجاد نشده</h3>
+        <p>اولین زیرمبحث خود را ایجاد کنید</p>
+        <a asp-action="Create" asp-route-chapterId="@ViewBag.ChapterId" class="btn-action-primary">
             <i class="fas fa-plus"></i>
-            <span>ایجاد محتوای جدید</span>
+            <span>ایجاد زیرمبحث جدید</span>
         </a>
     </div>
 }
 
-@functions {
-    string GetContentTypeClass(EduTrack.Domain.Enums.EducationalContentType type)
-    {
-        return type switch
-        {
-            EduTrack.Domain.Enums.EducationalContentType.Text => "bg-info",
-            EduTrack.Domain.Enums.EducationalContentType.Image => "bg-success",
-            EduTrack.Domain.Enums.EducationalContentType.Video => "bg-danger",
-            EduTrack.Domain.Enums.EducationalContentType.Audio => "bg-warning",
-            EduTrack.Domain.Enums.EducationalContentType.PDF => "bg-primary",
-            EduTrack.Domain.Enums.EducationalContentType.File => "bg-secondary",
-            EduTrack.Domain.Enums.EducationalContentType.ExternalUrl => "bg-dark",
-            _ => "bg-secondary"
-        };
-    }
-
-    string GetContentTypeIcon(EduTrack.Domain.Enums.EducationalContentType type)
-    {
-        return type switch
-        {
-            EduTrack.Domain.Enums.EducationalContentType.Text => "fas fa-font",
-            EduTrack.Domain.Enums.EducationalContentType.Image => "fas fa-image",
-            EduTrack.Domain.Enums.EducationalContentType.Video => "fas fa-video",
-            EduTrack.Domain.Enums.EducationalContentType.Audio => "fas fa-volume-up",
-            EduTrack.Domain.Enums.EducationalContentType.PDF => "fas fa-file-pdf",
-            EduTrack.Domain.Enums.EducationalContentType.File => "fas fa-file",
-            EduTrack.Domain.Enums.EducationalContentType.ExternalUrl => "fas fa-external-link-alt",
-            _ => "fas fa-file"
-        };
-    }
-
-    string GetContentTypeName(EduTrack.Domain.Enums.EducationalContentType type)
-    {
-        return type switch
-        {
-            EduTrack.Domain.Enums.EducationalContentType.Text => "متن",
-            EduTrack.Domain.Enums.EducationalContentType.Image => "تصویر",
-            EduTrack.Domain.Enums.EducationalContentType.Video => "ویدیو",
-            EduTrack.Domain.Enums.EducationalContentType.Audio => "صدا",
-            EduTrack.Domain.Enums.EducationalContentType.PDF => "PDF",
-            EduTrack.Domain.Enums.EducationalContentType.File => "فایل",
-            EduTrack.Domain.Enums.EducationalContentType.ExternalUrl => "لینک خارجی",
-            _ => "نامشخص"
-        };
-    }
-
-    string FormatFileSize(long bytes)
-    {
-        string[] sizes = { "B", "KB", "MB", "GB" };
-        double len = bytes;
-        int order = 0;
-        while (len >= 1024 && order < sizes.Length - 1)
-        {
-            order++;
-            len = len / 1024;
-        }
-        return $"{len:0.##} {sizes[order]}";
-    }
-}
-
 @section Styles {
     <style>
-        /* Page Header Minimal */
+        /* Use same styles as Chapters/Index but adapted for SubChapters */
         .page-header-minimal {
             background: white;
             border-radius: 8px;
@@ -424,14 +268,14 @@ else
             color: #adb5bd;
         }
 
-        /* Content List */
-        .content-sortable-list {
+        /* Chapters List */
+        .chapters-sortable-list {
             display: flex;
             flex-direction: column;
             gap: 1rem;
         }
 
-        .content-card-draggable {
+        .chapter-card-draggable {
             background: white;
             border-radius: 8px;
             border: 2px solid #e9ecef;
@@ -442,17 +286,17 @@ else
             display: flex;
         }
 
-        .content-card-draggable:hover {
+        .chapter-card-draggable:hover {
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
             border-color: #667eea;
         }
 
-        .content-card-draggable.dragging {
+        .chapter-card-draggable.dragging {
             opacity: 0.5;
             transform: rotate(2deg);
         }
 
-        .content-card-draggable.drag-over {
+        .chapter-card-draggable.drag-over {
             border-color: #667eea;
             background: rgba(102, 126, 234, 0.05);
         }
@@ -472,7 +316,7 @@ else
             flex-shrink: 0;
         }
 
-        .move-btn-content {
+        .move-btn-chapter {
             width: 28px;
             height: 28px;
             display: flex;
@@ -487,14 +331,14 @@ else
             font-size: 0.75rem;
         }
 
-        .move-btn-content:hover {
+        .move-btn-chapter:hover {
             background: #667eea;
             border-color: #667eea;
             color: white;
             transform: scale(1.05);
         }
 
-        .move-btn-content:active {
+        .move-btn-chapter:active {
             transform: scale(0.95);
         }
 
@@ -521,23 +365,23 @@ else
         }
 
         /* Card Content */
-        .content-card-content {
+        .chapter-card-content {
             flex: 1;
             padding: 1rem;
         }
 
-        .content-header-section {
+        .chapter-header-section {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
             margin-bottom: 0.75rem;
         }
 
-        .content-info {
+        .chapter-info {
             flex: 1;
         }
 
-        .content-title-main {
+        .chapter-title-main {
             font-size: 1rem;
             font-weight: 600;
             color: #2d3748;
@@ -545,14 +389,14 @@ else
             line-height: 1.4;
         }
 
-        .content-description {
+        .chapter-description {
             font-size: 0.813rem;
             color: #718096;
             margin: 0.25rem 0 0 0;
             line-height: 1.4;
         }
 
-        .content-actions-top {
+        .chapter-actions-top {
             display: flex;
             align-items: center;
             gap: 0.75rem;
@@ -619,76 +463,27 @@ else
             border-color: #cbd5e0;
         }
 
-        /* Content Type Badge */
-        .content-type-section {
+        /* Objective Box */
+        .objective-box-minimal {
+            display: flex;
+            align-items: center;
+            gap: 0.625rem;
+            padding: 0.75rem;
+            background: rgba(102, 126, 234, 0.05);
+            border: 1px solid rgba(102, 126, 234, 0.2);
+            border-radius: 8px;
+            font-size: 0.813rem;
+            color: #495057;
             margin-bottom: 0.75rem;
         }
 
-        .content-type-badge {
-            font-size: 0.75rem;
-            padding: 0.25rem 0.5rem;
-            border-radius: 4px;
-        }
-
-        /* Content Preview */
-        .content-preview-section {
-            min-height: 80px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .preview-text {
-            font-size: 0.9rem;
-            line-height: 1.4;
-            color: #6c757d;
-            margin: 0;
-        }
-
-        .image-preview img {
-            border-radius: 8px;
-        }
-
-        .file-info {
-            text-align: center;
-            padding: 1rem;
-            background-color: #f8f9fa;
-            border-radius: 8px;
-        }
-
-        .url-info {
-            text-align: center;
-            padding: 1rem;
-            background-color: #f8f9fa;
-            border-radius: 8px;
-        }
-
-        .embed-responsive {
-            position: relative;
-            display: block;
-            width: 100%;
-            padding: 0;
-            overflow: hidden;
-        }
-
-        .embed-responsive::before {
-            content: "";
-            display: block;
-            padding-top: 56.25%;
-        }
-
-        .embed-responsive-item {
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            border: 0;
+        .objective-box-minimal i {
+            color: #667eea;
+            font-size: 0.875rem;
         }
 
         /* Action Buttons */
-        .content-actions-footer {
+        .chapter-actions-footer {
             display: flex;
             gap: 0.75rem;
             flex-wrap: wrap;
@@ -781,9 +576,9 @@ else
     <script>
         $(document).ready(function() {
             // Enhanced Sortable with better visual feedback
-            const contentsContainer = document.getElementById('contentsContainer');
-            if (contentsContainer) {
-                new Sortable(contentsContainer, {
+            const subchaptersContainer = document.getElementById('subchaptersContainer');
+            if (subchaptersContainer) {
+                new Sortable(subchaptersContainer, {
                     animation: 200,
                     handle: '.drag-lines',
                     ghostClass: 'sortable-ghost',
@@ -794,21 +589,21 @@ else
                     fallbackOnBody: true,
                     swapThreshold: 0.65,
                     onEnd: function(evt) {
-                        updateContentsOrder();
+                        updateSubChaptersOrder();
                     }
                 });
             }
 
-            // Move up/down buttons for contents
-            $('.move-btn-content').on('click', function(e) {
+            // Move up/down buttons for subchapters
+            $('.move-btn-chapter').on('click', function(e) {
                 e.stopPropagation();
-                const contentId = $(this).data('content-id');
+                const subChapterId = $(this).data('subchapter-id');
                 const direction = $(this).data('direction');
 
                 $.ajax({
-                    url: '@Url.Action("MoveContent", "EducationalContent")',
+                    url: '@Url.Action("MoveSubChapter", "SubChapters")',
                     type: 'POST',
-                    data: { id: contentId, direction: direction },
+                    data: { id: subChapterId, direction: direction },
                     success: function(response) {
                         if (response.success) {
                             location.reload();
@@ -830,8 +625,8 @@ else
                 $('.filter-btn-minimal').removeClass('active');
                 $(this).addClass('active');
                 
-                // Filter contents
-                $('.content-card-draggable').each(function() {
+                // Filter subchapters
+                $('.chapter-card-draggable').each(function() {
                     const isActive = $(this).data('is-active') === 'true';
                     
                     if (filter === 'all') {
@@ -846,22 +641,22 @@ else
                 });
             });
 
-            // Toggle content active status
-            $('.toggle-content-active').on('change', function() {
-                const contentId = $(this).data('content-id');
+            // Toggle subchapter active status
+            $('.toggle-subchapter-active').on('change', function() {
+                const subChapterId = $(this).data('subchapter-id');
                 const isChecked = $(this).prop('checked');
                 const $toggle = $(this);
 
                 $.ajax({
-                    url: '@Url.Action("ToggleActive", "EducationalContent")',
+                    url: '@Url.Action("ToggleActive", "SubChapters")',
                     type: 'POST',
-                    data: { id: contentId },
+                    data: { id: subChapterId },
                     success: function(response) {
                         if (response.success) {
-                            const $card = $toggle.closest('.content-card-draggable');
+                            const $card = $toggle.closest('.chapter-card-draggable');
                             $card.attr('data-status', response.isActive ? 'active' : 'inactive');
                             $card.attr('data-is-active', response.isActive ? 'true' : 'false');
-                            showToast('success', response.isActive ? 'محتوا فعال شد' : 'محتوا غیرفعال شد');
+                            showToast('success', response.isActive ? 'زیرمبحث فعال شد' : 'زیرمبحث غیرفعال شد');
                         } else {
                             $toggle.prop('checked', !isChecked);
                             showToast('error', response.error || 'خطا در تغییر وضعیت');
@@ -874,21 +669,21 @@ else
                 });
             });
 
-            // Update contents order
-            function updateContentsOrder() {
-                const contentIds = [];
-                $('.content-card-draggable').each(function() {
-                    contentIds.push($(this).data('content-id'));
+            // Update subchapters order
+            function updateSubChaptersOrder() {
+                const subChapterIds = [];
+                $('.chapter-card-draggable').each(function() {
+                    subChapterIds.push($(this).data('subchapter-id'));
                 });
 
                 $.ajax({
-                    url: '@Url.Action("ReorderContents", "EducationalContent")',
+                    url: '@Url.Action("ReorderSubChapters", "SubChapters")',
                     type: 'POST',
                     contentType: 'application/json',
-                    data: JSON.stringify(contentIds),
+                    data: JSON.stringify(subChapterIds),
                     success: function(response) {
                         if (response.success) {
-                            showToast('success', 'ترتیب محتوا به‌روز شد');
+                            showToast('success', 'ترتیب زیرمباحث به‌روز شد');
                         } else {
                             showToast('error', response.error || 'خطا در به‌روزرسانی ترتیب');
                         }

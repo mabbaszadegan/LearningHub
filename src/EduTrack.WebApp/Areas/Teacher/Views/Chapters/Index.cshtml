@@ -3,171 +3,205 @@
     ViewData["Title"] = "مدیریت مباحث";
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
+<!-- Page Header -->
+<div class="page-header-minimal mb-3">
+    <div class="d-flex justify-content-between align-items-center">
     <div>
-        <h2 class="h4 mb-0">مدیریت مباحث</h2>
-        <p class="text-muted mb-0">@ViewBag.CourseTitle</p>
+            <h1 class="page-title">مباحث دوره</h1>
+            <p class="page-subtitle mb-0">
+                <a asp-controller="Courses" asp-action="Index" class="breadcrumb-link">
+                    <i class="fas fa-chevron-right"></i> دوره‌ها
+                </a>
+                <span class="mx-2">/</span>
+                <span>@ViewBag.CourseTitle</span>
+            </p>
     </div>
-    <div>
-        <a asp-controller="Courses" asp-action="Index" class="btn btn-outline-secondary me-2">
-            <i class="fas fa-arrow-right me-2"></i>بازگشت به دوره‌ها
-        </a>
-        <a asp-action="Create" asp-route-courseId="@ViewBag.CourseId" class="btn btn-modern-primary">
-            <i class="fas fa-plus me-2"></i>افزودن مبحث جدید
+        <a asp-action="Create" asp-route-courseId="@ViewBag.CourseId" class="btn-action-primary">
+            <i class="fas fa-plus"></i>
+            <span>مبحث جدید</span>
         </a>
     </div>
 </div>
 
-@if (TempData["SuccessMessage"] != null)
+<!-- Filter/Sort Info Bar -->
+@if (Model.Any())
 {
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-        <i class="fas fa-check-circle me-2"></i>
-        @TempData["SuccessMessage"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    <div class="filter-bar-minimal mb-3">
+        <div class="filter-group">
+            <button class="filter-btn-minimal active" data-filter="all">
+                <i class="fas fa-book"></i>
+                <span>همه (@Model.Count)</span>
+            </button>
+            <button class="filter-btn-minimal" data-filter="active">
+                <i class="fas fa-check-circle"></i>
+                <span>فعال (@Model.Count(c => c.IsActive))</span>
+            </button>
+            <button class="filter-btn-minimal" data-filter="inactive">
+                <i class="fas fa-times-circle"></i>
+                <span>غیرفعال (@Model.Count(c => !c.IsActive))</span>
+            </button>
+        </div>
+        <div class="drag-info">
+            <i class="fas fa-grip-lines"></i>
+            <span>برای تغییر ترتیب، مباحث را بکشید و رها کنید</span>
     </div>
-}
-
-@if (TempData["ErrorMessage"] != null)
-{
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        <i class="fas fa-exclamation-circle me-2"></i>
-        @TempData["ErrorMessage"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 }
 
 @if (Model.Any())
 {
-    <div class="row">
-        @foreach (var chapter in Model)
+    <!-- Chapters List with Enhanced Drag & Drop -->
+    <div class="chapters-sortable-list" id="chaptersContainer">
+        @foreach (var chapter in Model.OrderBy(c => c.Order))
         {
-            <div class="col-lg-6 col-xl-4 mb-4">
-                <div class="modern-card">
-                    <div class="modern-card-body">
-                        <div class="d-flex justify-content-between align-items-start mb-3">
-                            <h5 class="modern-card-title">@chapter.Title</h5>
+            <div class="chapter-card-draggable" data-chapter-id="@chapter.Id" data-status="@(chapter.IsActive ? "active" : "inactive")" data-is-active="@(chapter.IsActive ? "true" : "false")">
+                <!-- Enhanced Drag Handle with Up/Down -->
+                <div class="drag-handle-enhanced">
+                    <button class="move-btn-chapter move-up" data-chapter-id="@chapter.Id" data-direction="up" title="انتقال به بالا">
+                        <i class="fas fa-chevron-up"></i>
+                    </button>
+                    <div class="drag-lines">
+                        <i class="fas fa-grip-lines"></i>
+                    </div>
+                    <span class="drag-hint">کشیدن</span>
+                    <button class="move-btn-chapter move-down" data-chapter-id="@chapter.Id" data-direction="down" title="انتقال به پایین">
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                </div>
+                
+                <!-- Card Content -->
+                <div class="chapter-card-content">
+                    <!-- Header Section -->
+                    <div class="chapter-header-section">
+                        <div class="chapter-info">
+                            <h3 class="chapter-title-main">@chapter.Title</h3>
+                            @if (!string.IsNullOrEmpty(chapter.Description))
+                            {
+                                <p class="chapter-description">@chapter.Description</p>
+                            }
+                        </div>
+                        <div class="chapter-actions-top">
+                            <label class="toggle-switch-minimal" title="فعال/غیرفعال">
+                                <input type="checkbox" 
+                                       class="toggle-chapter-active" 
+                                       data-chapter-id="@chapter.Id" 
+                                       @(chapter.IsActive ? "checked" : "") />
+                                <span class="toggle-slider-minimal"></span>
+                            </label>
                             <div class="dropdown">
-                                <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="dropdown">
+                                <button class="btn-icon-minimal" data-bs-toggle="dropdown">
                                     <i class="fas fa-ellipsis-v"></i>
                                 </button>
-                                <ul class="dropdown-menu">
+                                <ul class="dropdown-menu dropdown-menu-end">
                                     <li>
                                         <a class="dropdown-item" asp-action="Edit" asp-route-id="@chapter.Id">
-                                            <i class="fas fa-edit me-2"></i>ویرایش
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item" asp-action="CreateSubChapter" asp-route-chapterId="@chapter.Id">
-                                            <i class="fas fa-plus me-2"></i>افزودن زیرمبحث
+                                            <i class="fas fa-edit"></i>ویرایش مبحث
                                         </a>
                                     </li>
                                     <li><hr class="dropdown-divider"></li>
                                     <li>
                                         <form asp-action="Delete" asp-route-id="@chapter.Id" method="post" 
                                               onsubmit="return confirm('آیا از حذف این مبحث اطمینان دارید؟')">
+                                            @Html.AntiForgeryToken()
                                             <button type="submit" class="dropdown-item text-danger">
-                                                <i class="fas fa-trash me-2"></i>حذف
+                                                <i class="fas fa-trash"></i>حذف مبحث
                                             </button>
                                         </form>
                                     </li>
                                 </ul>
                             </div>
+                            </div>
                         </div>
                         
-                        @if (!string.IsNullOrEmpty(chapter.Description))
-                        {
-                            <p class="text-muted mb-3">@chapter.Description</p>
-                        }
-                        
-                        <div class="objective-section mb-3">
-                            <h6 class="text-primary mb-2">
-                                <i class="fas fa-target me-2"></i>هدف مبحث:
-                            </h6>
-                            <p class="objective-text">@chapter.Objective</p>
+                    <!-- Objective Section -->
+                    @if (!string.IsNullOrEmpty(chapter.Objective))
+                    {
+                        <div class="objective-box-minimal">
+                            <i class="fas fa-bullseye"></i>
+                            <span>@chapter.Objective</span>
+                        </div>
+                    }
+                    
+                    <!-- Stats Section -->
+                    <div class="chapter-stats-section">
+                        <div class="stat-badge">
+                            <i class="fas fa-list"></i>
+                            <span>@chapter.SubChapterCount زیرمبحث</span>
+                        </div>
                         </div>
                         
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <span class="badge bg-info">
-                                <i class="fas fa-list me-1"></i>
-                                @chapter.SubChapterCount زیرمبحث
-                            </span>
-                            <small class="text-muted">
-                                <i class="fas fa-sort-numeric-up me-1"></i>
-                                ترتیب: @chapter.Order
-                            </small>
-                        </div>
-                        
+                    <!-- Sub-chapters List -->
                         @if (chapter.SubChapters.Any())
                         {
-                            <div class="subchapters-section">
-                                <h6 class="text-secondary mb-2">
-                                    <i class="fas fa-list-ul me-2"></i>زیرمبحث‌ها:
-                                </h6>
-                                <div class="subchapters-list">
-                                    @foreach (var subChapter in chapter.SubChapters.Take(3))
+                        <div class="subchapters-section">
+                            <div class="subchapters-header-main">
+                                <span class="subchapters-title-main">
+                                    <i class="fas fa-layer-group"></i>
+                                    زیرمباحث
+                                </span>
+                            </div>
+                            <div class="subchapters-list-expanded">
+                                    @foreach (var subChapter in chapter.SubChapters.OrderBy(sc => sc.Order))
                                     {
-                                        <div class="subchapter-item d-flex justify-content-between align-items-center mb-2">
-                                            <div class="flex-grow-1">
-                                                <span class="subchapter-title">@subChapter.Title</span>
-                                                <br>
-                                                <small class="text-muted">@subChapter.Objective</small>
-                                                <br>
-                                                <small class="text-info">
-                                                    <i class="fas fa-file-alt me-1"></i>
+                                    <div class="subchapter-card-inline @(!subChapter.IsActive ? "inactive" : "")">
+                                        <div class="subchapter-main-info">
+                                            <div class="subchapter-icon-circle">
+                                                <i class="fas fa-bookmark"></i>
+                                            </div>
+                                            <div class="subchapter-details">
+                                                <span class="subchapter-title-text">@subChapter.Title</span>
+                                                <span class="subchapter-meta-text">
+                                                    <i class="fas fa-file-alt"></i>
                                                     @subChapter.ContentCount محتوا
-                                                </small>
-                                            </div>
-                                            <div class="dropdown">
-                                                <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="dropdown">
-                                                    <i class="fas fa-ellipsis-v"></i>
-                                                </button>
-                                                <ul class="dropdown-menu">
-                                                    <li>
-                                                        <a class="dropdown-item" asp-controller="EducationalContent" asp-action="Index" asp-route-subChapterId="@subChapter.Id">
-                                                            <i class="fas fa-file-alt me-2"></i>مدیریت محتوا
-                                                        </a>
-                                                    </li>
-                                                    <li>
-                                                        <a class="dropdown-item" asp-action="EditSubChapter" asp-route-id="@subChapter.Id">
-                                                            <i class="fas fa-edit me-2"></i>ویرایش
-                                                        </a>
-                                                    </li>
-                                                    <li><hr class="dropdown-divider"></li>
-                                                    <li>
-                                                        <form asp-action="DeleteSubChapter" asp-route-id="@subChapter.Id" method="post" 
-                                                              onsubmit="return confirm('آیا از حذف این زیرمبحث اطمینان دارید؟')">
-                                                            <button type="submit" class="dropdown-item text-danger">
-                                                                <i class="fas fa-trash me-2"></i>حذف
-                                                            </button>
-                                                        </form>
-                                                    </li>
-                                                </ul>
+                                                </span>
                                             </div>
                                         </div>
-                                    }
-                                    @if (chapter.SubChapters.Count > 3)
-                                    {
-                                        <div class="text-center">
-                                            <small class="text-muted">
-                                                و @(chapter.SubChapters.Count - 3) زیرمبحث دیگر...
-                                            </small>
+                                        <div class="subchapter-actions-inline">
+                                            <label class="toggle-switch-mini" title="فعال/غیرفعال">
+                                                <input type="checkbox" 
+                                                       class="toggle-subchapter-active" 
+                                                       data-subchapter-id="@subChapter.Id" 
+                                                       @(subChapter.IsActive ? "checked" : "") />
+                                                <span class="toggle-slider-mini"></span>
+                                            </label>
+                                            <a asp-controller="SubChapters" 
+                                               asp-action="Edit" 
+                                               asp-route-id="@subChapter.Id" 
+                                               class="btn-action-inline edit"
+                                               title="ویرایش">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a asp-controller="EducationalContent" 
+                                               asp-action="Index" 
+                                               asp-route-subChapterId="@subChapter.Id" 
+                                               class="btn-action-inline content"
+                                               title="مدیریت محتوا">
+                                                <i class="fas fa-folder-open"></i>
+                                            </a>
                                         </div>
+                                    </div>
                                     }
                                 </div>
                             </div>
                         }
-                        else
+                    
+                    <!-- Action Buttons -->
+                    <div class="chapter-actions-footer">
+                        <a asp-controller="SubChapters" asp-action="Create" asp-route-chapterId="@chapter.Id" class="action-btn-footer primary">
+                            <i class="fas fa-plus"></i>
+                            <span>افزودن زیرمبحث</span>
+                        </a>
+                        @if (chapter.SubChapters.Any())
                         {
-                            <div class="text-center py-3">
-                                <i class="fas fa-list-ul text-muted mb-2" style="font-size: 2rem;"></i>
-                                <p class="text-muted mb-0">هنوز زیرمبحثی اضافه نشده</p>
-                                <div class="mt-3">
-                                    <a asp-action="CreateSubChapter" asp-route-chapterId="@chapter.Id" class="btn btn-sm btn-outline-primary me-2">
-                                        <i class="fas fa-plus me-1"></i>افزودن زیرمبحث
-                                    </a>
-                                </div>
-                            </div>
+                            <a asp-action="Index" asp-controller="SubChapters" asp-route-chapterId="@chapter.Id" class="action-btn-footer success">
+                                <i class="fas fa-tasks"></i>
+                                <span>مدیریت زیرمباحث</span>
+                            </a>
                         }
+                        <a asp-action="Edit" asp-route-id="@chapter.Id" class="action-btn-footer info">
+                            <i class="fas fa-edit"></i>
+                            <span>ویرایش</span>
+                        </a>
                     </div>
                 </div>
             </div>
@@ -176,77 +210,964 @@
 }
 else
 {
-    <div class="empty-state text-center py-5">
-        <i class="fas fa-book-open text-muted mb-3" style="font-size: 4rem;"></i>
-        <h4 class="text-muted mb-3">هنوز مبحثی اضافه نشده</h4>
-        <p class="text-muted mb-4">برای شروع، اولین مبحث دوره خود را ایجاد کنید.</p>
-        <a asp-action="Create" asp-route-courseId="@ViewBag.CourseId" class="btn btn-modern-primary">
-            <i class="fas fa-plus me-2"></i>افزودن مبحث جدید
+    <!-- Empty State -->
+    <div class="empty-state-minimal">
+        <div class="empty-icon">
+            <i class="fas fa-book-open"></i>
+        </div>
+        <h3>هنوز مبحثی اضافه نشده</h3>
+        <p>برای شروع، اولین مبحث دوره را ایجاد کنید</p>
+        <a asp-action="Create" asp-route-courseId="@ViewBag.CourseId" class="btn-action-primary">
+            <i class="fas fa-plus"></i>
+            <span>افزودن مبحث جدید</span>
         </a>
     </div>
 }
 
+@section Styles {
 <style>
-.objective-section {
-    background-color: #f8f9fa;
-    border-radius: 8px;
-    padding: 15px;
-    border-right: 4px solid #007bff;
-}
+        /* Breadcrumb Link */
+        .breadcrumb-link {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 0.813rem;
+            transition: all 0.2s;
+        }
 
-.objective-text {
-    font-size: 0.9rem;
+        .breadcrumb-link:hover {
+            color: #5a6fd8;
+            text-decoration: underline;
+        }
+
+        /* Action Button */
+        .btn-action-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.625rem 1.125rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 0.813rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            border: none;
+        }
+
+        .btn-action-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            color: white;
+        }
+
+        /* Filter Bar */
+        .filter-bar-minimal {
+            background: white;
+    border-radius: 8px;
+            padding: 0.875rem 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid #e9ecef;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn-minimal {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 0.813rem;
+            font-weight: 500;
+            color: #4a5568;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filter-btn-minimal:hover {
+            background: #f7fafc;
+            border-color: #cbd5e0;
+        }
+
+        .filter-btn-minimal.active {
+            background: #667eea;
+            border-color: #667eea;
+            color: white;
+        }
+
+        .info-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.813rem;
+            color: #6c757d;
+        }
+
+        .info-badge i {
+            font-size: 0.875rem;
+        }
+
+        .drag-info {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.75rem;
+            color: #adb5bd;
+        }
+
+        .drag-info i {
+            color: #667eea;
+        }
+
+        /* Chapters Sortable List */
+        .chapters-sortable-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .chapter-card-draggable {
+            background: white;
+            border-radius: 12px;
+            border: 2px solid #e9ecef;
+            overflow: hidden;
+            display: flex;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .chapter-card-draggable:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            border-color: #667eea;
+        }
+
+        .chapter-card-draggable:hover .drag-handle-enhanced {
+            background: rgba(102, 126, 234, 0.1);
+            border-color: #667eea;
+        }
+
+        /* Enhanced Drag Handle with Buttons */
+        .drag-handle-enhanced {
+            width: 60px;
+            background: #f8f9fa;
+            border-left: 2px solid #e9ecef;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.375rem;
+            padding: 0.75rem 0;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .move-btn-chapter {
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            color: #6c757d;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.75rem;
+        }
+
+        .move-btn-chapter:hover {
+            background: #667eea;
+            border-color: #667eea;
+            color: white;
+            transform: scale(1.05);
+        }
+
+        .move-btn-chapter:active {
+            transform: scale(0.95);
+        }
+
+        .drag-lines {
+            font-size: 1.25rem;
+            color: #adb5bd;
+            transition: all 0.2s;
+            cursor: move;
+            padding: 0.5rem 0;
+        }
+
+        .drag-handle-enhanced:hover .drag-lines {
+            color: #667eea;
+            transform: scale(1.1);
+        }
+
+        .drag-hint {
+            font-size: 0.625rem;
+            color: #adb5bd;
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+
+        /* Drag States */
+        .chapter-card-draggable.sortable-ghost {
+            opacity: 0.3;
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .chapter-card-draggable.sortable-drag {
+            opacity: 0.8;
+            transform: rotate(2deg);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+        }
+
+        .chapter-card-draggable.sortable-chosen {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.02);
+        }
+
+        /* Placeholder */
+        .sortable-fallback {
+            opacity: 0;
+        }
+
+        /* Card Content */
+        .chapter-card-content {
+            flex: 1;
+            padding: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        /* Header Section */
+        .chapter-header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+
+        .chapter-info {
+            flex: 1;
+        }
+
+        .chapter-title-main {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin: 0 0 0.5rem 0;
+        }
+
+        .chapter-description {
+            font-size: 0.813rem;
+            color: #6c757d;
+            margin: 0;
     line-height: 1.5;
-    margin: 0;
+        }
+
+        .chapter-actions-top {
+            display: flex;
+            align-items: center;
+            gap: 0.625rem;
+        }
+
+        /* Toggle Switch */
+        .toggle-switch-minimal {
+            position: relative;
+            width: 36px;
+            height: 20px;
+            display: inline-block;
+            cursor: pointer;
+        }
+
+        .toggle-switch-minimal input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider-minimal {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #ccc;
+            border-radius: 20px;
+            transition: 0.3s;
+        }
+
+        .toggle-slider-minimal:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            right: 2px;
+            bottom: 2px;
+            background: white;
+            border-radius: 50%;
+            transition: 0.3s;
+        }
+
+        .toggle-switch-minimal input:checked + .toggle-slider-minimal {
+            background: #28a745;
+        }
+
+        .toggle-switch-minimal input:checked + .toggle-slider-minimal:before {
+            transform: translateX(-16px);
+        }
+
+        /* Icon Button */
+        .btn-icon-minimal {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: none;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            color: #6c757d;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-icon-minimal:hover {
+            background: #f8f9fa;
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        /* Objective Box */
+        .objective-box-minimal {
+            display: flex;
+            align-items: center;
+            gap: 0.625rem;
+            padding: 0.75rem;
+            background: rgba(102, 126, 234, 0.05);
+            border: 1px solid rgba(102, 126, 234, 0.2);
+            border-radius: 8px;
+            font-size: 0.813rem;
+            color: #495057;
+        }
+
+        .objective-box-minimal i {
+            color: #667eea;
+            font-size: 0.875rem;
+        }
+
+        /* Stats Section */
+        .chapter-stats-section {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .stat-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
+            padding: 0.5rem 0.75rem;
+            background: #f8f9fa;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            color: #6c757d;
+        }
+
+        .stat-badge i {
+            font-size: 0.75rem;
+            color: #adb5bd;
+        }
+
+        /* Subchapters Section - Expanded */
+        .subchapters-section {
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+
+        .subchapters-header-main {
+            margin-bottom: 0.875rem;
+            padding-bottom: 0.625rem;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .subchapters-title-main {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #2d3748;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .subchapters-title-main i {
+            color: #667eea;
+        }
+
+        .subchapters-list-expanded {
+            display: flex;
+            flex-direction: column;
+            gap: 0.625rem;
+        }
+
+        .subchapter-card-inline {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            padding: 0.75rem;
+            background: white;
+            border-radius: 6px;
+            border: 1px solid #e9ecef;
+            transition: all 0.2s;
+        }
+
+        .subchapter-card-inline:hover {
+            border-color: #667eea;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+        }
+
+        .subchapter-card-inline.inactive {
+            opacity: 0.6;
+            background: #fafafa;
+        }
+
+        .subchapter-main-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex: 1;
+        }
+
+        .subchapter-icon-circle {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 8px;
+            color: #667eea;
+            font-size: 0.875rem;
+            flex-shrink: 0;
+        }
+
+        .subchapter-details {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .subchapter-title-text {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .subchapter-meta-text {
+            font-size: 0.75rem;
+            color: #718096;
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
+        }
+
+        .subchapter-meta-text i {
+            font-size: 0.688rem;
+        }
+
+        .subchapter-actions-inline {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .toggle-switch-mini {
+            position: relative;
+            width: 40px;
+            height: 22px;
+            cursor: pointer;
+        }
+
+        .toggle-switch-mini input {
+            display: none;
+        }
+
+        .toggle-slider-mini {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #cbd5e0;
+            border-radius: 11px;
+            transition: 0.3s;
+        }
+
+        .toggle-slider-mini:before {
+            content: '';
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            left: 2px;
+            bottom: 2px;
+            background: white;
+            border-radius: 50%;
+            transition: 0.3s;
+        }
+
+        .toggle-switch-mini input:checked + .toggle-slider-mini {
+            background: #48bb78;
+        }
+
+        .toggle-switch-mini input:checked + .toggle-slider-mini:before {
+            transform: translateX(18px);
+        }
+
+        .btn-action-inline {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            color: #4a5568;
+            text-decoration: none;
+            transition: all 0.2s;
+            font-size: 0.813rem;
+        }
+
+        .btn-action-inline.edit:hover {
+            background: #667eea;
+            border-color: #667eea;
+            color: white;
+        }
+
+        .btn-action-inline.content:hover {
+            background: #48bb78;
+            border-color: #48bb78;
+            color: white;
+        }
+
+        /* Old Subchapters Preview (Keep for backward compatibility) */
+        .subchapters-preview {
+            padding: 0.875rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .subchapters-header {
+            margin-bottom: 0.75rem;
+        }
+
+        .subchapters-title {
+            font-size: 0.75rem;
+            font-weight: 600;
     color: #495057;
 }
 
-.subchapters-section {
-    border-top: 1px solid #e9ecef;
-    padding-top: 15px;
-}
+        .subchapters-list-minimal {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
 
-.subchapter-item {
-    background-color: #f8f9fa;
+        .subchapter-item-minimal {
+            display: flex;
+            align-items: center;
+            gap: 0.625rem;
+            padding: 0.625rem;
+            background: white;
     border-radius: 6px;
-    padding: 10px;
     border: 1px solid #e9ecef;
-}
+            transition: all 0.2s;
+        }
 
-.subchapter-title {
+        .subchapter-item-minimal:hover {
+            border-color: #667eea;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .subchapter-icon {
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 6px;
+            color: #667eea;
+            font-size: 0.75rem;
+            flex-shrink: 0;
+        }
+
+        .subchapter-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .subchapter-name {
+            font-size: 0.813rem;
     font-weight: 500;
     color: #495057;
 }
 
-.modern-card {
-    border: 1px solid #e9ecef;
-    border-radius: 12px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    transition: all 0.3s ease;
-    height: 100%;
-}
+        .subchapter-meta {
+            font-size: 0.7rem;
+            color: #adb5bd;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
 
-.modern-card:hover {
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    transform: translateY(-2px);
-}
+        .btn-link-icon {
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 6px;
+            color: #667eea;
+            text-decoration: none;
+            font-size: 0.75rem;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
 
-.modern-card-body {
-    padding: 20px;
-    height: 100%;
+        .btn-link-icon:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .more-items {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            font-size: 0.75rem;
+            color: #adb5bd;
+        }
+
+        /* Action Buttons Footer */
+        .chapter-actions-footer {
+            display: flex;
+            gap: 0.5rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        .action-btn-footer {
+            flex: 1;
     display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.375rem;
+            padding: 0.625rem;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 0.75rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            border: 1px solid;
+        }
+
+        .action-btn-footer i {
+            font-size: 0.813rem;
+        }
+
+        .action-btn-footer.primary {
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+            border-color: rgba(102, 126, 234, 0.2);
+        }
+
+        .action-btn-footer.primary:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .action-btn-footer.success {
+            background: rgba(40, 167, 69, 0.1);
+            color: #28a745;
+            border-color: rgba(40, 167, 69, 0.2);
+        }
+
+        .action-btn-footer.success:hover {
+            background: #28a745;
+            color: white;
+        }
+
+        .action-btn-footer.info {
+            background: rgba(23, 162, 184, 0.1);
+            color: #17a2b8;
+            border-color: rgba(23, 162, 184, 0.2);
+        }
+
+        .action-btn-footer.info:hover {
+            background: #17a2b8;
+            color: white;
+        }
+
+        /* Empty State */
+        .empty-state-minimal {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: white;
+            border-radius: 8px;
+            border: 2px dashed #e9ecef;
+        }
+
+        .empty-icon {
+            font-size: 3rem;
+            color: #dee2e6;
+            margin-bottom: 1.5rem;
+        }
+
+        .empty-state-minimal h3 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-state-minimal p {
+            font-size: 0.875rem;
+            color: #6c757d;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Responsive */
+        @@media (max-width: 767.98px) {
+            .drag-info {
+                display: none;
+            }
+
+            .drag-handle-enhanced {
+                width: 40px;
+            }
+
+            .drag-hint {
+                display: none;
+            }
+
+            .chapter-actions-footer {
     flex-direction: column;
 }
 
-.modern-card-title {
-    font-weight: 600;
-    color: #2c3e50;
-    margin: 0;
+            .action-btn-footer {
+                width: 100%;
+            }
+        }
+    </style>
 }
 
-.empty-state {
-    background-color: #f8f9fa;
-    border-radius: 12px;
-    border: 2px dashed #dee2e6;
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // Enhanced Sortable with better visual feedback
+            const chaptersContainer = document.getElementById('chaptersContainer');
+            if (chaptersContainer) {
+                new Sortable(chaptersContainer, {
+                    animation: 200,
+                    handle: '.drag-lines',
+                    ghostClass: 'sortable-ghost',
+                    chosenClass: 'sortable-chosen',
+                    dragClass: 'sortable-drag',
+                    forceFallback: true,
+                    fallbackClass: 'sortable-fallback',
+                    fallbackOnBody: true,
+                    swapThreshold: 0.65,
+                    onEnd: function(evt) {
+                        updateChaptersOrder();
+                    }
+                });
+            }
+
+            // Move up/down buttons for chapters
+            $('.move-btn-chapter').on('click', function(e) {
+                e.stopPropagation();
+                const chapterId = $(this).data('chapter-id');
+                const direction = $(this).data('direction');
+
+                $.ajax({
+                    url: '@Url.Action("MoveChapter", "Chapters")',
+                    type: 'POST',
+                    data: { id: chapterId, direction: direction },
+                    success: function(response) {
+                        if (response.success) {
+                            location.reload();
+                        } else {
+                            showToast('error', response.error || 'خطا در جابجایی');
+                        }
+                    },
+                    error: function() {
+                        showToast('error', 'خطا در ارتباط با سرور');
+                    }
+                });
+            });
+
+            // Filter functionality
+            $('.filter-btn-minimal').on('click', function() {
+                const filter = $(this).data('filter');
+                
+                // Update active button
+                $('.filter-btn-minimal').removeClass('active');
+                $(this).addClass('active');
+                
+                // Filter chapters
+                $('.chapter-card-draggable').each(function() {
+                    const isActive = $(this).data('is-active') === 'true';
+                    
+                    if (filter === 'all') {
+                        $(this).show();
+                    } else if (filter === 'active' && isActive) {
+                        $(this).show();
+                    } else if (filter === 'inactive' && !isActive) {
+                        $(this).show();
+                    } else {
+                        $(this).hide();
+                    }
+                });
+            });
+
+            // Toggle chapter active status
+            $('.toggle-chapter-active').on('change', function() {
+                const chapterId = $(this).data('chapter-id');
+                const isChecked = $(this).prop('checked');
+                const $toggle = $(this);
+
+                $.ajax({
+                    url: '@Url.Action("ToggleActive", "Chapters")',
+                    type: 'POST',
+                    data: { id: chapterId },
+                    success: function(response) {
+                        if (response.success) {
+                            const $card = $toggle.closest('.chapter-card-draggable');
+                            $card.attr('data-status', response.isActive ? 'active' : 'inactive');
+                            $card.attr('data-is-active', response.isActive ? 'true' : 'false');
+                            showToast('success', response.isActive ? 'مبحث فعال شد' : 'مبحث غیرفعال شد');
+                        } else {
+                            $toggle.prop('checked', !isChecked);
+                            showToast('error', response.error || 'خطا در تغییر وضعیت');
+                        }
+                    },
+                    error: function() {
+                        $toggle.prop('checked', !isChecked);
+                        showToast('error', 'خطا در ارتباط با سرور');
+                    }
+                });
+            });
+
+            // Toggle subchapter active status
+            $('.toggle-subchapter-active').on('change', function() {
+                const subChapterId = $(this).data('subchapter-id');
+                const isChecked = $(this).prop('checked');
+                const $toggle = $(this);
+
+                $.ajax({
+                    url: '@Url.Action("ToggleActive", "SubChapters")',
+                    type: 'POST',
+                    data: { id: subChapterId },
+                    success: function(response) {
+                        if (response.success) {
+                            const $card = $toggle.closest('.subchapter-card-inline');
+                            if (response.isActive) {
+                                $card.removeClass('inactive');
+                            } else {
+                                $card.addClass('inactive');
+                            }
+                            showToast('success', response.isActive ? 'زیرمبحث فعال شد' : 'زیرمبحث غیرفعال شد');
+                        } else {
+                            $toggle.prop('checked', !isChecked);
+                            showToast('error', response.error || 'خطا در تغییر وضعیت');
+                        }
+                    },
+                    error: function() {
+                        $toggle.prop('checked', !isChecked);
+                        showToast('error', 'خطا در ارتباط با سرور');
+                    }
+                });
+            });
+
+            // Update chapters order
+            function updateChaptersOrder() {
+                const chapterIds = [];
+                $('.chapter-card-draggable').each(function() {
+                    chapterIds.push($(this).data('chapter-id'));
+                });
+
+                $.ajax({
+                    url: '@Url.Action("ReorderChapters", "Chapters")',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(chapterIds),
+                    success: function(response) {
+                        if (response.success) {
+                            showToast('success', 'ترتیب مباحث به‌روز شد');
+                        } else {
+                            showToast('error', response.error || 'خطا در به‌روزرسانی ترتیب');
+                        }
+                    },
+                    error: function() {
+                        showToast('error', 'خطا در ارتباط با سرور');
+                    }
+                });
+            }
+
+            // Toast notification
+            function showToast(type, message) {
+                const bgColor = type === 'success' ? '#28a745' : '#dc3545';
+                const icon = type === 'success' ? 'check-circle' : 'exclamation-circle';
+                
+                const toast = $(`
+                    <div class="toast-notification" style="position: fixed; top: 80px; left: 20px; background: ${bgColor}; color: white; padding: 0.875rem 1.125rem; border-radius: 8px; display: flex; align-items: center; gap: 0.625rem; font-size: 0.813rem; z-index: 9999; box-shadow: 0 4px 12px rgba(0,0,0,0.15); animation: slideInLeft 0.3s ease-out;">
+                        <i class="fas fa-${icon}"></i>
+                        <span>${message}</span>
+                    </div>
+                `);
+
+                $('body').append(toast);
+
+                setTimeout(function() {
+                    toast.fadeOut(300, function() {
+                        $(this).remove();
+                    });
+                }, 3000);
+            }
+        });
+
+        // Animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @@keyframes slideInLeft {
+                from {
+                    transform: translateX(-100%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
 }
-</style>

@@ -3,51 +3,131 @@
     ViewData["Title"] = "دوره‌های من";
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 class="h4 mb-0">دوره‌های من</h2>
-    <a asp-action="Create" class="btn btn-modern-primary">
-        <i class="fas fa-plus me-2"></i>ایجاد دوره جدید
-    </a>
+<!-- Page Header -->
+<div class="page-header-minimal mb-3">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="page-title">دوره‌های من</h1>
+            <p class="page-subtitle mb-0">مدیریت و سازماندهی دوره‌های آموزشی</p>
+        </div>
+        <a asp-action="Create" class="btn-action-primary">
+            <i class="fas fa-plus"></i>
+            <span>دوره جدید</span>
+        </a>
+    </div>
+</div>
+
+<!-- Filter Bar -->
+<div class="filter-bar-minimal mb-3">
+    <div class="filter-group">
+        <button class="filter-btn active" data-filter="all">
+            <span>همه</span>
+            <span class="filter-count">@Model.Count</span>
+        </button>
+        <button class="filter-btn" data-filter="active">
+            <span>فعال</span>
+            <span class="filter-count">@Model.Count(c => c.IsActive)</span>
+        </button>
+        <button class="filter-btn" data-filter="inactive">
+            <span>غیرفعال</span>
+            <span class="filter-count">@Model.Count(c => !c.IsActive)</span>
+        </button>
+    </div>
+    <div class="filter-info">
+        <i class="fas fa-grip-vertical"></i>
+        <span>برای تغییر ترتیب، کارت‌ها را بکشید</span>
+    </div>
 </div>
 
 @if (Model.Any())
 {
-    <div class="row">
-        @foreach (var course in Model)
+    <!-- Courses Grid with Drag & Drop -->
+    <div class="courses-grid-sortable" id="coursesGrid">
+        @foreach (var course in Model.OrderBy(c => c.Order))
         {
-            <div class="col-lg-4 col-md-6 mb-4">
-                <div class="modern-card">
-                    <div class="modern-card-body">
-                        <div class="d-flex justify-content-between align-items-start mb-3">
-                            <h5 class="modern-card-title">@course.Title</h5>
-                            <span class="badge bg-success">فعال</span>
-                        </div>
+            <div class="course-card-draggable" data-course-id="@course.Id" data-status="@(course.IsActive ? "active" : "inactive")">
+                <!-- Card Content -->
+                <div class="course-card-content">
+                    <!-- Header -->
+                    <div class="course-card-header-mini">
+                        <h3 class="course-title-drag">@course.Title</h3>
                         
-                        <p class="text-muted mb-3">@course.Description</p>
-                        
-                        <div class="row text-center mb-3">
-                            <div class="col-4">
-                                <div class="stats-number">@course.ModuleCount</div>
-                                <div class="stats-label">ماژول</div>
+                        <!-- Drag Handle with Left/Right Buttons - Desktop -->
+                        <div class="drag-handle-desktop">
+                            <button class="move-btn move-up" data-course-id="@course.Id" data-direction="up" title="انتقال به قبل">
+                                <i class="fas fa-chevron-right"></i>
+                            </button>
+                            <div class="drag-icon">
+                                <i class="fas fa-grip-vertical"></i>
                             </div>
-                            <div class="col-4">
-                                <div class="stats-number">@course.LessonCount</div>
-                                <div class="stats-label">درس</div>
-                            </div>
-                            <div class="col-4">
-                                <div class="stats-number">0</div>
-                                <div class="stats-label">دانش‌آموز</div>
-                            </div>
+                            <button class="move-btn move-down" data-course-id="@course.Id" data-direction="down" title="انتقال به بعد">
+                                <i class="fas fa-chevron-left"></i>
+                            </button>
                         </div>
-                        
-                        <div class="d-flex gap-2 flex-wrap">
-                            <a asp-controller="Chapters" asp-action="Index" asp-route-courseId="@course.Id" class="btn btn-modern-primary btn-sm flex-fill">
-                                <i class="fas fa-book me-1"></i>مدیریت مباحث
-                            </a>
-                            <a href="#" class="btn btn-outline-secondary btn-sm">
-                                <i class="fas fa-edit me-1"></i>ویرایش
-                            </a>
+                        <div class="course-actions-top">
+                            <label class="toggle-switch-mini" title="فعال/غیرفعال">
+                                <input type="checkbox" 
+                                       class="toggle-course-active" 
+                                       data-course-id="@course.Id" 
+                                       @(course.IsActive ? "checked" : "") />
+                                <span class="toggle-slider-mini"></span>
+                            </label>
                         </div>
+                    </div>
+                    
+                    <!-- Description -->
+                    <p class="course-desc-drag">@course.Description</p>
+                    
+                    <!-- Stats -->
+                    <div class="course-stats-mini">
+                        <div class="stat-item-mini">
+                            <i class="fas fa-layer-group"></i>
+                            <span>@course.ModuleCount ماژول</span>
+                        </div>
+                        <div class="stat-item-mini">
+                            <i class="fas fa-book-open"></i>
+                            <span>@course.LessonCount درس</span>
+                        </div>
+                        <div class="stat-item-mini">
+                            <i class="fas fa-users"></i>
+                            <span>0 دانش‌آموز</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="course-actions-grid">
+                        <a asp-controller="Chapters" asp-action="Index" asp-route-courseId="@course.Id" 
+                           class="action-btn-mini primary" title="مدیریت مباحث">
+                            <i class="fas fa-book"></i>
+                            <span>مباحث</span>
+                        </a>
+                        <a asp-controller="InteractiveLesson" asp-action="ByCourse" asp-route-courseId="@course.Id" 
+                           class="action-btn-mini success" title="مدیریت درس‌های تعاملی">
+                            <i class="fas fa-play-circle"></i>
+                            <span>درس‌ها</span>
+                        </a>
+                        <a href="#" class="action-btn-mini warning" title="مدیریت آزمون‌ها">
+                            <i class="fas fa-clipboard-list"></i>
+                            <span>آزمون‌ها</span>
+                        </a>
+                        <a asp-action="Edit" asp-route-id="@course.Id" 
+                           class="action-btn-mini info" title="ویرایش دوره">
+                            <i class="fas fa-edit"></i>
+                            <span>ویرایش</span>
+                        </a>
+                    </div>
+                    
+                    <!-- Drag Handle - Mobile (Vertical) -->
+                    <div class="drag-handle-mobile">
+                        <button class="move-btn-mobile move-up" data-course-id="@course.Id" data-direction="up" title="انتقال به بالا">
+                            <i class="fas fa-chevron-up"></i>
+                        </button>
+                        <div class="drag-icon-mobile">
+                            <i class="fas fa-grip-vertical"></i>
+                        </div>
+                        <button class="move-btn-mobile move-down" data-course-id="@course.Id" data-direction="down" title="انتقال به پایین">
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -56,14 +136,598 @@
 }
 else
 {
-    <div class="text-center py-5">
-        <div class="mb-4">
-            <i class="fas fa-book fa-3x text-muted"></i>
+    <!-- Empty State -->
+    <div class="empty-state-minimal">
+        <div class="empty-icon">
+            <i class="fas fa-book"></i>
         </div>
-        <h4 class="text-muted mb-3">هنوز دوره‌ای ایجاد نکرده‌اید</h4>
-        <p class="text-muted mb-4">اولین دوره خود را ایجاد کنید و شروع به تدریس کنید.</p>
-        <a asp-action="Create" class="btn btn-modern-primary">
-            <i class="fas fa-plus me-2"></i>ایجاد دوره جدید
+        <h3>هنوز دوره‌ای ایجاد نشده</h3>
+        <p>اولین دوره آموزشی خود را ایجاد کنید</p>
+        <a asp-action="Create" class="btn-action-primary">
+            <i class="fas fa-plus"></i>
+            <span>ایجاد دوره جدید</span>
         </a>
     </div>
+}
+
+@section Styles {
+    <style>
+        /* Page Header */
+        .btn-action-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.625rem 1.125rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 0.813rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            border: none;
+        }
+
+        .btn-action-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            color: white;
+        }
+
+        .btn-action-primary i {
+            font-size: 0.813rem;
+        }
+
+        /* Filter Bar */
+        .filter-bar-minimal {
+            background: white;
+            border-radius: 8px;
+            padding: 0.875rem 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid #e9ecef;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .filter-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 0.875rem;
+            background: none;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            color: #6c757d;
+            font-size: 0.813rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filter-btn:hover {
+            background: #f8f9fa;
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        .filter-btn.active {
+            background: rgba(102, 126, 234, 0.1);
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        .filter-count {
+            background: #e9ecef;
+            padding: 0.125rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+        }
+
+        .filter-btn.active .filter-count {
+            background: #667eea;
+            color: white;
+        }
+
+        .filter-info {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.75rem;
+            color: #6c757d;
+        }
+
+        .filter-info i {
+            color: #adb5bd;
+        }
+
+        /* Courses Grid */
+        .courses-grid-sortable {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1rem;
+        }
+
+        .course-card-draggable {
+            background: white;
+            border-radius: 8px;
+            border: 2px solid #e9ecef;
+            overflow: hidden;
+            transition: all 0.2s;
+            cursor: move;
+            position: relative;
+        }
+
+        .course-card-draggable:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            border-color: #667eea;
+        }
+
+        .course-card-draggable.dragging {
+            opacity: 0.5;
+            transform: rotate(2deg);
+        }
+
+        .course-card-draggable.drag-over {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        /* Drag Handle - Desktop (Horizontal in header) */
+        .drag-handle-desktop {
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
+            margin-left: auto;
+        }
+
+        .drag-handle-mobile {
+            display: none;
+        }
+
+        .move-btn, .move-btn-mobile {
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            color: #6c757d;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.75rem;
+            flex-shrink: 0;
+        }
+
+        .move-btn:hover, .move-btn-mobile:hover {
+            background: #667eea;
+            border-color: #667eea;
+            color: white;
+        }
+
+        .move-btn:active, .move-btn-mobile:active {
+            transform: scale(0.95);
+        }
+
+        .drag-icon, .drag-icon-mobile {
+            padding: 0.25rem;
+            color: #adb5bd;
+            cursor: move;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .drag-icon:hover, .drag-icon-mobile:hover {
+            color: #667eea;
+        }
+
+        /* Mobile View - Vertical buttons at bottom */
+        @@media (max-width: 768px) {
+            .drag-handle-desktop {
+                display: none;
+            }
+
+            .drag-handle-mobile {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 0.375rem;
+                padding-top: 0.75rem;
+                margin-top: 0.75rem;
+                border-top: 1px solid #e9ecef;
+            }
+        }
+
+        /* Card Content */
+        .course-card-content {
+            padding: 1rem;
+        }
+
+        .course-card-header-mini {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+            padding-left: 1.5rem;
+        }
+
+        .course-title-drag {
+            font-size: 0.938rem;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin: 0;
+            flex: 1;
+        }
+
+        .course-desc-drag {
+            font-size: 0.75rem;
+            color: #6c757d;
+            margin: 0 0 0.875rem 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            line-height: 1.4;
+        }
+
+        /* Toggle Switch */
+        .toggle-switch-mini {
+            position: relative;
+            width: 36px;
+            height: 20px;
+            display: inline-block;
+            cursor: pointer;
+        }
+
+        .toggle-switch-mini input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider-mini {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #ccc;
+            border-radius: 20px;
+            transition: 0.3s;
+        }
+
+        .toggle-slider-mini:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            right: 2px;
+            bottom: 2px;
+            background: white;
+            border-radius: 50%;
+            transition: 0.3s;
+        }
+
+        .toggle-switch-mini input:checked + .toggle-slider-mini {
+            background: #28a745;
+        }
+
+        .toggle-switch-mini input:checked + .toggle-slider-mini:before {
+            transform: translateX(-16px);
+        }
+
+        /* Stats */
+        .course-stats-mini {
+            display: flex;
+            gap: 1rem;
+            padding: 0.75rem 0;
+            border-top: 1px solid #f0f0f0;
+            border-bottom: 1px solid #f0f0f0;
+            margin-bottom: 0.875rem;
+        }
+
+        .stat-item-mini {
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
+            font-size: 0.75rem;
+            color: #6c757d;
+        }
+
+        .stat-item-mini i {
+            font-size: 0.7rem;
+            color: #adb5bd;
+        }
+
+        /* Action Buttons Grid */
+        .course-actions-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.5rem;
+        }
+
+        .action-btn-mini {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 0.625rem;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 0.75rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            gap: 0.25rem;
+            border: 1px solid;
+        }
+
+        .action-btn-mini i {
+            font-size: 0.875rem;
+        }
+
+        .action-btn-mini.primary {
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+            border-color: rgba(102, 126, 234, 0.2);
+        }
+
+        .action-btn-mini.primary:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .action-btn-mini.success {
+            background: rgba(40, 167, 69, 0.1);
+            color: #28a745;
+            border-color: rgba(40, 167, 69, 0.2);
+        }
+
+        .action-btn-mini.success:hover {
+            background: #28a745;
+            color: white;
+        }
+
+        .action-btn-mini.warning {
+            background: rgba(255, 193, 7, 0.1);
+            color: #ffc107;
+            border-color: rgba(255, 193, 7, 0.2);
+        }
+
+        .action-btn-mini.warning:hover {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        .action-btn-mini.info {
+            background: rgba(23, 162, 184, 0.1);
+            color: #17a2b8;
+            border-color: rgba(23, 162, 184, 0.2);
+        }
+
+        .action-btn-mini.info:hover {
+            background: #17a2b8;
+            color: white;
+        }
+
+        /* Empty State */
+        .empty-state-minimal {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: white;
+            border-radius: 8px;
+            border: 2px dashed #e9ecef;
+        }
+
+        .empty-icon {
+            font-size: 3rem;
+            color: #dee2e6;
+            margin-bottom: 1.5rem;
+        }
+
+        .empty-state-minimal h3 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-state-minimal p {
+            font-size: 0.875rem;
+            color: #6c757d;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Responsive */
+        @@media (max-width: 767.98px) {
+            .courses-grid-sortable {
+                grid-template-columns: 1fr;
+            }
+
+            .filter-bar-minimal {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .filter-info {
+                display: none;
+            }
+
+            .course-actions-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+}
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // Initialize Sortable for drag & drop
+            const coursesGrid = document.getElementById('coursesGrid');
+            if (coursesGrid) {
+                new Sortable(coursesGrid, {
+                    animation: 150,
+                    handle: '.drag-icon, .drag-icon-mobile',
+                    ghostClass: 'dragging',
+                    chosenClass: 'drag-over',
+                    onEnd: function(evt) {
+                        updateCoursesOrder();
+                    }
+                });
+            }
+
+            // Move up/down buttons (both desktop and mobile)
+            $('.move-btn, .move-btn-mobile').on('click', function(e) {
+                e.stopPropagation();
+                const courseId = $(this).data('course-id');
+                const direction = $(this).data('direction');
+
+                $.ajax({
+                    url: '@Url.Action("MoveCourse", "Courses")',
+                    type: 'POST',
+                    data: { id: courseId, direction: direction },
+                    success: function(response) {
+                        if (response.success) {
+                            location.reload();
+                        } else {
+                            showToast('error', response.error || 'خطا در جابجایی');
+                        }
+                    },
+                    error: function() {
+                        showToast('error', 'خطا در ارتباط با سرور');
+                    }
+                });
+            });
+
+            // Filter functionality
+            $('.filter-btn').on('click', function() {
+                const filter = $(this).data('filter');
+                $('.filter-btn').removeClass('active');
+                $(this).addClass('active');
+
+                if (filter === 'all') {
+                    $('.course-card-draggable').show();
+                } else {
+                    $('.course-card-draggable').hide();
+                    $(`.course-card-draggable[data-status="${filter}"]`).show();
+                }
+            });
+
+            // Toggle active status
+            $('.toggle-course-active').on('change', function() {
+                const courseId = $(this).data('course-id');
+                const isChecked = $(this).prop('checked');
+                const $toggle = $(this);
+
+                $.ajax({
+                    url: '@Url.Action("ToggleActive", "Courses")',
+                    type: 'POST',
+                    data: { id: courseId },
+                    success: function(response) {
+                        if (response.success) {
+                            // Update card status
+                            const $card = $toggle.closest('.course-card-draggable');
+                            $card.attr('data-status', response.isActive ? 'active' : 'inactive');
+                            
+                            // Update filter counts
+                            updateFilterCounts();
+                            
+                            // Show success message
+                            showToast('success', response.isActive ? 'دوره فعال شد' : 'دوره غیرفعال شد');
+                        } else {
+                            $toggle.prop('checked', !isChecked);
+                            showToast('error', response.error || 'خطا در تغییر وضعیت');
+                        }
+                    },
+                    error: function() {
+                        $toggle.prop('checked', !isChecked);
+                        showToast('error', 'خطا در ارتباط با سرور');
+                    }
+                });
+            });
+
+            // Update courses order after drag & drop
+            function updateCoursesOrder() {
+                const courseIds = [];
+                $('.course-card-draggable').each(function() {
+                    courseIds.push($(this).data('course-id'));
+                });
+
+                $.ajax({
+                    url: '@Url.Action("ReorderCourses", "Courses")',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(courseIds),
+                    success: function(response) {
+                        if (response.success) {
+                            showToast('success', 'ترتیب دوره‌ها به‌روز شد');
+                        } else {
+                            showToast('error', response.error || 'خطا در به‌روزرسانی ترتیب');
+                        }
+                    },
+                    error: function() {
+                        showToast('error', 'خطا در ارتباط با سرور');
+                    }
+                });
+            }
+
+            // Update filter counts
+            function updateFilterCounts() {
+                const totalCount = $('.course-card-draggable').length;
+                const activeCount = $('.course-card-draggable[data-status="active"]').length;
+                const inactiveCount = $('.course-card-draggable[data-status="inactive"]').length;
+
+                $('.filter-btn[data-filter="all"] .filter-count').text(totalCount);
+                $('.filter-btn[data-filter="active"] .filter-count').text(activeCount);
+                $('.filter-btn[data-filter="inactive"] .filter-count').text(inactiveCount);
+            }
+
+            // Toast notification
+            function showToast(type, message) {
+                const bgColor = type === 'success' ? '#28a745' : '#dc3545';
+                const icon = type === 'success' ? 'check-circle' : 'exclamation-circle';
+                
+                const toast = $(`
+                    <div class="toast-notification" style="position: fixed; top: 80px; left: 20px; background: ${bgColor}; color: white; padding: 0.875rem 1.125rem; border-radius: 8px; display: flex; align-items: center; gap: 0.625rem; font-size: 0.813rem; z-index: 9999; box-shadow: 0 4px 12px rgba(0,0,0,0.15); animation: slideInLeft 0.3s ease-out;">
+                        <i class="fas fa-${icon}"></i>
+                        <span>${message}</span>
+                    </div>
+                `);
+
+                $('body').append(toast);
+
+                setTimeout(function() {
+                    toast.fadeOut(300, function() {
+                        $(this).remove();
+                    });
+                }, 3000);
+            }
+        });
+
+        // Animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @@keyframes slideInLeft {
+                from {
+                    transform: translateX(-100%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
 }

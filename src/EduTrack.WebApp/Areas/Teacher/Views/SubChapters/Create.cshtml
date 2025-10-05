@@ -1,17 +1,17 @@
-@model EduTrack.Application.Features.Chapters.Commands.UpdateChapterCommand
+@model EduTrack.Application.Features.Chapters.Commands.CreateSubChapterCommand
 @{
-    ViewData["Title"] = "ویرایش مبحث";
+    ViewData["Title"] = "ایجاد زیرمبحث جدید";
 }
 
 <!-- Minimal Page Header -->
 <div class="page-header-minimal">
     <div class="header-content-minimal">
         <div>
-            <h1 class="page-title-minimal">ویرایش مبحث</h1>
-            <p class="page-subtitle-minimal">@ViewBag.CourseTitle</p>
+            <h1 class="page-title-minimal">ایجاد زیرمبحث جدید</h1>
+            <p class="page-subtitle-minimal">@ViewBag.ChapterTitle</p>
         </div>
         <div class="header-actions-minimal">
-            <a asp-action="Index" asp-route-courseId="@ViewBag.CourseId" class="btn-minimal btn-secondary-minimal">
+            <a asp-controller="SubChapters" asp-action="Index" asp-route-chapterId="@ViewBag.ChapterId" class="btn-minimal btn-secondary-minimal">
                 <i class="fas fa-arrow-right"></i>
                 <span>بازگشت</span>
             </a>
@@ -19,66 +19,43 @@
     </div>
 </div>
 
-<!-- Quick Action Buttons -->
-<div class="quick-actions-bar mb-4">
-    <a asp-controller="SubChapters" asp-action="Index" asp-route-chapterId="@Model.Id" class="action-btn-minimal">
-        <i class="fas fa-list"></i>
-        <span>مدیریت زیرمباحث</span>
-    </a>
-    <a asp-controller="SubChapters" asp-action="Create" asp-route-chapterId="@Model.Id" class="action-btn-minimal">
-        <i class="fas fa-plus"></i>
-        <span>ایجاد زیرمبحث</span>
-    </a>
-</div>
-
 <div class="row justify-content-center">
     <div class="col-lg-8">
         <div class="card-minimal">
             <div class="card-body-minimal">
-                <form asp-action="Edit" method="post">
+                <form asp-action="Create" method="post">
                     <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
                     
-                    <input asp-for="Id" type="hidden" />
-                    
-                    <!-- Hidden fields -->
-                    <input asp-for="Order" type="hidden" />
+                    <input asp-for="ChapterId" type="hidden" />
                     
                     <div class="form-group-minimal">
-                        <label class="form-label-minimal">عنوان مبحث</label>
-                        <input asp-for="Title" class="form-control-minimal" placeholder="عنوان مبحث را وارد کنید" />
+                        <label class="form-label-minimal">عنوان زیرمبحث</label>
+                        <input asp-for="Title" class="form-control-minimal" placeholder="عنوان زیرمبحث را وارد کنید" />
                         <span asp-validation-for="Title" class="text-danger"></span>
                     </div>
                     
                     <div class="form-group-minimal">
                         <label class="form-label-minimal">توضیحات</label>
                         <textarea asp-for="Description" class="form-control-minimal" rows="3" 
-                                  placeholder="توضیحات کوتاه در مورد این مبحث (اختیاری)"></textarea>
+                                  placeholder="توضیحات کوتاه در مورد این زیرمبحث (اختیاری)"></textarea>
                         <span asp-validation-for="Description" class="text-danger"></span>
                     </div>
                     
                     <div class="form-group-minimal">
-                        <label class="form-label-minimal">هدف مبحث</label>
+                        <label class="form-label-minimal">هدف زیرمبحث</label>
                         <textarea asp-for="Objective" class="form-control-minimal" rows="4" 
-                                  placeholder="هدف این مبحث چیست؟ دانش‌آموزان چه چیزی یاد خواهند گرفت؟"></textarea>
+                                  placeholder="هدف این زیرمبحث چیست؟ دانش‌آموزان چه چیزی یاد خواهند گرفت؟"></textarea>
                         <span asp-validation-for="Objective" class="text-danger"></span>
                     </div>
                     
-                    <div class="form-group-minimal">
-                        <label class="toggle-label-minimal">
-                            <input asp-for="IsActive" type="checkbox" class="toggle-input-minimal" />
-                            <span class="toggle-slider-minimal"></span>
-                            <span class="toggle-text-minimal">مبحث فعال است</span>
-                        </label>
-                    </div>
-                    
                     <div class="form-actions-minimal">
-                        <a asp-action="Index" asp-route-courseId="@ViewBag.CourseId" class="btn-minimal btn-secondary-minimal">
+                        <a asp-controller="SubChapters" asp-action="Index" asp-route-chapterId="@ViewBag.ChapterId" class="btn-minimal btn-secondary-minimal">
                             <i class="fas fa-times"></i>
                             <span>انصراف</span>
                         </a>
                         <button type="submit" class="btn-minimal btn-primary-minimal">
                             <i class="fas fa-save"></i>
-                            <span>ذخیره تغییرات</span>
+                            <span>ایجاد زیرمبحث</span>
                         </button>
                     </div>
                 </form>
@@ -122,40 +99,6 @@
         gap: 0.75rem;
     }
 
-    /* Quick Actions Bar */
-    .quick-actions-bar {
-        display: flex;
-        gap: 0.75rem;
-        flex-wrap: wrap;
-    }
-
-    .action-btn-minimal {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        padding: 0.625rem 1rem;
-        background: white;
-        border: 1px solid #e9ecef;
-        border-radius: 6px;
-        color: #667eea;
-        font-size: 0.875rem;
-        font-weight: 500;
-        text-decoration: none;
-        transition: all 0.2s;
-    }
-
-    .action-btn-minimal:hover {
-        background: #667eea;
-        color: white;
-        border-color: #667eea;
-        transform: translateY(-1px);
-        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
-    }
-
-    .action-btn-minimal i {
-        font-size: 0.875rem;
-    }
-
     /* Card Minimal */
     .card-minimal {
         background: white;
@@ -194,53 +137,6 @@
         outline: none;
         border-color: #667eea;
         box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-    }
-
-    /* Toggle Switch Minimal */
-    .toggle-label-minimal {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        cursor: pointer;
-    }
-
-    .toggle-input-minimal {
-        display: none;
-    }
-
-    .toggle-slider-minimal {
-        position: relative;
-        width: 44px;
-        height: 24px;
-        background: #cbd5e0;
-        border-radius: 12px;
-        transition: all 0.2s;
-    }
-
-    .toggle-slider-minimal:before {
-        content: '';
-        position: absolute;
-        width: 20px;
-        height: 20px;
-        background: white;
-        border-radius: 50%;
-        top: 2px;
-        left: 2px;
-        transition: all 0.2s;
-    }
-
-    .toggle-input-minimal:checked + .toggle-slider-minimal {
-        background: #667eea;
-    }
-
-    .toggle-input-minimal:checked + .toggle-slider-minimal:before {
-        transform: translateX(20px);
-    }
-
-    .toggle-text-minimal {
-        font-size: 0.875rem;
-        font-weight: 500;
-        color: #4a5568;
     }
 
     /* Form Actions */
@@ -304,13 +200,13 @@
                 
                 // Add loading state
                 $submitBtn.prop('disabled', true);
-                $submitBtn.html('<i class="fas fa-spinner fa-spin"></i><span>در حال ذخیره...</span>');
+                $submitBtn.html('<i class="fas fa-spinner fa-spin"></i><span>در حال ایجاد...</span>');
                 
                 // Remove loading state after a delay (in case of validation errors)
                 setTimeout(function() {
                     if ($form.find('.text-danger').length > 0) {
                         $submitBtn.prop('disabled', false);
-                        $submitBtn.html('<i class="fas fa-save"></i><span>ذخیره تغییرات</span>');
+                        $submitBtn.html('<i class="fas fa-save"></i><span>ایجاد زیرمبحث</span>');
                     }
                 }, 100);
             });
