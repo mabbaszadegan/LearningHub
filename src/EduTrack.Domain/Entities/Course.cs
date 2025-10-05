@@ -8,6 +8,8 @@ public class Course
     private readonly List<Module> _modules = new();
     private readonly List<Chapter> _chapters = new();
     private readonly List<Class> _classes = new();
+    private readonly List<CourseEnrollment> _enrollments = new();
+    private readonly List<CourseAccess> _accesses = new();
 
     public int Id { get; private set; }
     public string Title { get; private set; } = string.Empty;
@@ -23,6 +25,8 @@ public class Course
     public IReadOnlyCollection<Module> Modules => _modules.AsReadOnly();
     public IReadOnlyCollection<Chapter> Chapters => _chapters.AsReadOnly();
     public IReadOnlyCollection<Class> Classes => _classes.AsReadOnly();
+    public IReadOnlyCollection<CourseEnrollment> Enrollments => _enrollments.AsReadOnly();
+    public IReadOnlyCollection<CourseAccess> Accesses => _accesses.AsReadOnly();
 
     // Private constructor for EF Core
     private Course() { }
@@ -187,5 +191,85 @@ public class Course
     public int GetTotalClasses()
     {
         return _classes.Count;
+    }
+
+    public int GetTotalEnrollments()
+    {
+        return _enrollments.Count(e => e.IsActive);
+    }
+
+    public int GetTotalAccesses()
+    {
+        return _accesses.Count(a => a.IsActive);
+    }
+
+    public void AddEnrollment(CourseEnrollment enrollment)
+    {
+        if (enrollment == null)
+            throw new ArgumentNullException(nameof(enrollment));
+
+        if (_enrollments.Any(e => e.StudentId == enrollment.StudentId))
+            throw new InvalidOperationException("Student is already enrolled in this course");
+
+        _enrollments.Add(enrollment);
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
+    public void RemoveEnrollment(CourseEnrollment enrollment)
+    {
+        if (enrollment == null)
+            throw new ArgumentNullException(nameof(enrollment));
+
+        var enrollmentToRemove = _enrollments.FirstOrDefault(e => e.Id == enrollment.Id);
+        if (enrollmentToRemove != null)
+        {
+            _enrollments.Remove(enrollmentToRemove);
+            UpdatedAt = DateTimeOffset.UtcNow;
+        }
+    }
+
+    public void AddAccess(CourseAccess access)
+    {
+        if (access == null)
+            throw new ArgumentNullException(nameof(access));
+
+        if (_accesses.Any(a => a.StudentId == access.StudentId))
+            throw new InvalidOperationException("Student already has access to this course");
+
+        _accesses.Add(access);
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
+    public void RemoveAccess(CourseAccess access)
+    {
+        if (access == null)
+            throw new ArgumentNullException(nameof(access));
+
+        var accessToRemove = _accesses.FirstOrDefault(a => a.Id == access.Id);
+        if (accessToRemove != null)
+        {
+            _accesses.Remove(accessToRemove);
+            UpdatedAt = DateTimeOffset.UtcNow;
+        }
+    }
+
+    public bool IsStudentEnrolled(string studentId)
+    {
+        return _enrollments.Any(e => e.StudentId == studentId && e.IsActive);
+    }
+
+    public bool HasStudentAccess(string studentId)
+    {
+        return _accesses.Any(a => a.StudentId == studentId && a.IsValid());
+    }
+
+    public CourseEnrollment? GetStudentEnrollment(string studentId)
+    {
+        return _enrollments.FirstOrDefault(e => e.StudentId == studentId && e.IsActive);
+    }
+
+    public CourseAccess? GetStudentAccess(string studentId)
+    {
+        return _accesses.FirstOrDefault(a => a.StudentId == studentId && a.IsValid());
     }
 }

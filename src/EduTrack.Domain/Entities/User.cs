@@ -11,6 +11,8 @@ public class User : IdentityUser
 {
     private readonly List<Class> _classes = new();
     private readonly List<Enrollment> _enrollments = new();
+    private readonly List<CourseEnrollment> _courseEnrollments = new();
+    private readonly List<CourseAccess> _courseAccesses = new();
     private readonly List<Attempt> _attempts = new();
     private readonly List<Progress> _progresses = new();
     private readonly List<ActivityLog> _activityLogs = new();
@@ -25,6 +27,8 @@ public class User : IdentityUser
     public Profile? Profile { get; private set; }
     public IReadOnlyCollection<Class> Classes => _classes.AsReadOnly();
     public IReadOnlyCollection<Enrollment> Enrollments => _enrollments.AsReadOnly();
+    public IReadOnlyCollection<CourseEnrollment> CourseEnrollments => _courseEnrollments.AsReadOnly();
+    public IReadOnlyCollection<CourseAccess> CourseAccesses => _courseAccesses.AsReadOnly();
     public IReadOnlyCollection<Attempt> Attempts => _attempts.AsReadOnly();
     public IReadOnlyCollection<Progress> Progresses => _progresses.AsReadOnly();
     public IReadOnlyCollection<ActivityLog> ActivityLogs => _activityLogs.AsReadOnly();
@@ -157,5 +161,85 @@ public class User : IdentityUser
     {
         var activityLog = ActivityLog.Create(Id, action, entityType, entityId, details, ipAddress, userAgent);
         _activityLogs.Add(activityLog);
+    }
+
+    // Course Enrollment Methods
+    public void EnrollInCourse(Course course)
+    {
+        if (course == null)
+            throw new ArgumentNullException(nameof(course));
+
+        if (_courseEnrollments.Any(e => e.CourseId == course.Id))
+            throw new InvalidOperationException("User is already enrolled in this course");
+
+        var enrollment = CourseEnrollment.Create(Id, course.Id);
+        _courseEnrollments.Add(enrollment);
+    }
+
+    public void UnenrollFromCourse(Course course)
+    {
+        if (course == null)
+            throw new ArgumentNullException(nameof(course));
+
+        var enrollment = _courseEnrollments.FirstOrDefault(e => e.CourseId == course.Id);
+        if (enrollment != null)
+        {
+            _courseEnrollments.Remove(enrollment);
+        }
+    }
+
+    public void GrantCourseAccess(Course course, CourseAccessLevel accessLevel, string? grantedBy = null, 
+        DateTimeOffset? expiresAt = null, string? notes = null)
+    {
+        if (course == null)
+            throw new ArgumentNullException(nameof(course));
+
+        if (_courseAccesses.Any(a => a.CourseId == course.Id))
+            throw new InvalidOperationException("User already has access to this course");
+
+        var access = CourseAccess.Create(Id, course.Id, accessLevel, grantedBy, expiresAt, notes);
+        _courseAccesses.Add(access);
+    }
+
+    public void RevokeCourseAccess(Course course, string? revokedBy = null)
+    {
+        if (course == null)
+            throw new ArgumentNullException(nameof(course));
+
+        var access = _courseAccesses.FirstOrDefault(a => a.CourseId == course.Id);
+        if (access != null)
+        {
+            access.RevokeAccess(revokedBy);
+        }
+    }
+
+    public bool IsEnrolledInCourse(int courseId)
+    {
+        return _courseEnrollments.Any(e => e.CourseId == courseId && e.IsActive);
+    }
+
+    public bool HasCourseAccess(int courseId)
+    {
+        return _courseAccesses.Any(a => a.CourseId == courseId && a.IsValid());
+    }
+
+    public CourseEnrollment? GetCourseEnrollment(int courseId)
+    {
+        return _courseEnrollments.FirstOrDefault(e => e.CourseId == courseId && e.IsActive);
+    }
+
+    public CourseAccess? GetCourseAccess(int courseId)
+    {
+        return _courseAccesses.FirstOrDefault(a => a.CourseId == courseId && a.IsValid());
+    }
+
+    public int GetTotalCourseEnrollments()
+    {
+        return _courseEnrollments.Count(e => e.IsActive);
+    }
+
+    public int GetTotalCourseAccesses()
+    {
+        return _courseAccesses.Count(a => a.IsValid());
     }
 }

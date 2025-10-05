@@ -1,5 +1,27 @@
 // Site-specific JavaScript functionality
 $(document).ready(function() {
+    // Initialize Toastr if available
+    if (typeof toastr !== 'undefined') {
+        toastr.options = {
+            "closeButton": true,
+            "debug": false,
+            "newestOnTop": true,
+            "progressBar": true,
+            "positionClass": "toast-top-right",
+            "preventDuplicates": false,
+            "onclick": null,
+            "showDuration": "300",
+            "hideDuration": "1000",
+            "timeOut": "5000",
+            "extendedTimeOut": "1000",
+            "showEasing": "swing",
+            "hideEasing": "linear",
+            "showMethod": "fadeIn",
+            "hideMethod": "fadeOut",
+            "rtl": true
+        };
+    }
+
     // Auto-dismiss alerts after 5 seconds
     $('.alert').each(function() {
         const alert = $(this);

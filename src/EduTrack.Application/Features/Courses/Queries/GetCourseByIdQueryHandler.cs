@@ -21,6 +21,12 @@ public class GetCourseByIdQueryHandler : IRequestHandler<GetCourseByIdQuery, Res
         var course = await _courseRepository.GetAll()
             .Include(c => c.Modules)
                 .ThenInclude(m => m.Lessons)
+                    .ThenInclude(l => l.Resources)
+            .Include(c => c.Chapters)
+                .ThenInclude(ch => ch.SubChapters)
+                    .ThenInclude(sc => sc.EducationalContents)
+                        .ThenInclude(ec => ec.File)
+            .Include(c => c.Classes)
             .FirstOrDefaultAsync(c => c.Id == request.Id, cancellationToken);
 
         if (course == null)
@@ -40,7 +46,104 @@ public class GetCourseByIdQueryHandler : IRequestHandler<GetCourseByIdQuery, Res
             UpdatedAt = course.UpdatedAt,
             CreatedBy = course.CreatedBy,
             ModuleCount = course.Modules.Count,
-            LessonCount = course.Modules.SelectMany(m => m.Lessons).Count()
+            LessonCount = course.Modules.SelectMany(m => m.Lessons).Count(),
+            ChapterCount = course.Chapters.Count,
+            ClassCount = course.Classes.Count,
+            Modules = course.Modules.Select(m => new ModuleDto
+            {
+                Id = m.Id,
+                CourseId = m.CourseId,
+                Title = m.Title,
+                Description = m.Description,
+                IsActive = m.IsActive,
+                Order = m.Order,
+                CreatedAt = m.CreatedAt,
+                UpdatedAt = m.UpdatedAt,
+                LessonCount = m.Lessons.Count,
+                Lessons = m.Lessons.Select(l => new LessonDto
+                {
+                    Id = l.Id,
+                    ModuleId = l.ModuleId,
+                    Title = l.Title,
+                    Content = l.Content,
+                    VideoUrl = l.VideoUrl,
+                    IsActive = l.IsActive,
+                    Order = l.Order,
+                    DurationMinutes = l.DurationMinutes,
+                    CreatedAt = l.CreatedAt,
+                    UpdatedAt = l.UpdatedAt,
+                    Resources = l.Resources.Select(r => new ResourceDto
+                    {
+                        Id = r.Id,
+                        LessonId = r.LessonId,
+                        Title = r.Title,
+                        Description = r.Description,
+                        Type = r.Type,
+                        FilePath = r.FilePath,
+                        Url = r.Url,
+                        FileSizeBytes = r.FileSizeBytes,
+                        MimeType = r.MimeType,
+                        IsActive = r.IsActive,
+                        Order = r.Order,
+                        CreatedAt = r.CreatedAt
+                    }).ToList()
+                }).ToList()
+            }).ToList(),
+            Chapters = course.Chapters.Select(c => new ChapterDto
+            {
+                Id = c.Id,
+                CourseId = c.CourseId,
+                Title = c.Title,
+                Description = c.Description,
+                Objective = c.Objective,
+                IsActive = c.IsActive,
+                Order = c.Order,
+                CreatedAt = c.CreatedAt,
+                UpdatedAt = c.UpdatedAt,
+                SubChapterCount = c.SubChapters.Count,
+                SubChapters = c.SubChapters.Select(sc => new SubChapterDto
+                {
+                    Id = sc.Id,
+                    ChapterId = sc.ChapterId,
+                    Title = sc.Title,
+                    Description = sc.Description,
+                    Objective = sc.Objective,
+                    IsActive = sc.IsActive,
+                    Order = sc.Order,
+                    CreatedAt = sc.CreatedAt,
+                    UpdatedAt = sc.UpdatedAt,
+                    ContentCount = sc.EducationalContents.Count,
+                    EducationalContents = sc.EducationalContents.Select(ec => new EducationalContentDto
+                    {
+                        Id = ec.Id,
+                        SubChapterId = ec.SubChapterId,
+                        Title = ec.Title,
+                        Description = ec.Description,
+                        Type = ec.Type,
+                        TextContent = ec.TextContent,
+                        FileId = ec.FileId,
+                        ExternalUrl = ec.ExternalUrl,
+                        IsActive = ec.IsActive,
+                        Order = ec.Order,
+                        CreatedAt = ec.CreatedAt,
+                        UpdatedAt = ec.UpdatedAt,
+                        CreatedBy = ec.CreatedBy,
+                        File = ec.File != null ? new FileDto
+                        {
+                            Id = ec.File.Id,
+                            FileName = ec.File.FileName,
+                            OriginalFileName = ec.File.OriginalFileName,
+                            FilePath = ec.File.FilePath,
+                            MimeType = ec.File.MimeType,
+                            FileSizeBytes = ec.File.FileSizeBytes,
+                            MD5Hash = ec.File.MD5Hash,
+                            CreatedAt = ec.File.CreatedAt,
+                            CreatedBy = ec.File.CreatedBy,
+                            ReferenceCount = ec.File.ReferenceCount
+                        } : null
+                    }).ToList()
+                }).ToList()
+            }).ToList()
         };
 
         return Result<CourseDto>.Success(courseDto);

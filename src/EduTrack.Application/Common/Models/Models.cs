@@ -76,6 +76,10 @@ public class CourseDto
     public string CreatedBy { get; set; } = string.Empty;
     public int ModuleCount { get; set; }
     public int LessonCount { get; set; }
+    public int ChapterCount { get; set; }
+    public int ClassCount { get; set; }
+    public List<ModuleDto> Modules { get; set; } = new();
+    public List<ChapterDto> Chapters { get; set; } = new();
 }
 
 public class ModuleDto
@@ -89,6 +93,7 @@ public class ModuleDto
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
     public int LessonCount { get; set; }
+    public List<LessonDto> Lessons { get; set; } = new();
 }
 
 public class LessonDto

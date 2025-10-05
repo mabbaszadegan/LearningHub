@@ -1,0 +1,165 @@
+@model EduTrack.Application.Common.Models.PaginatedList<EduTrack.Application.Common.Models.CourseDto>
+@{
+    ViewData["Title"] = "کاتالوگ دوره‌ها";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="h4 mb-1">کاتالوگ دوره‌ها</h2>
+        <p class="text-muted mb-0">دوره‌های موجود برای ثبت‌نام</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-action="Index" class="btn btn-modern-secondary btn-sm">
+            <i class="fas fa-list me-1"></i>دوره‌های من
+        </a>
+    </div>
+</div>
+
+@if (Model.Items.Any())
+{
+    <div class="row">
+        @foreach (var course in Model.Items)
+        {
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="course-card">
+                    <div class="course-thumbnail">
+                        @if (!string.IsNullOrEmpty(course.Thumbnail))
+                        {
+                            <img src="@course.Thumbnail" alt="@course.Title" class="img-fluid">
+                        }
+                        else
+                        {
+                            <div class="course-thumbnail-placeholder">
+                                <i class="fas fa-book fa-3x"></i>
+                            </div>
+                        }
+                        <div class="course-status">
+                            @if (course.IsActive)
+                            {
+                                <span class="badge bg-success">فعال</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">غیرفعال</span>
+                            }
+                        </div>
+                    </div>
+                    <div class="course-content">
+                        <h5 class="course-title">@course.Title</h5>
+                        @if (!string.IsNullOrEmpty(course.Description))
+                        {
+                            <p class="course-description">@course.Description</p>
+                        }
+                        
+                        <div class="course-stats mb-3">
+                            <div class="row text-center">
+                                <div class="col-4">
+                                    <div class="stat-number">@course.ModuleCount</div>
+                                    <div class="stat-label">ماژول</div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="stat-number">@course.LessonCount</div>
+                                    <div class="stat-label">درس</div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="stat-number">@course.ChapterCount</div>
+                                    <div class="stat-label">فصل</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="course-actions">
+                            <a asp-action="Details" asp-route-id="@course.Id" class="btn btn-modern-primary btn-sm w-100 mb-2">
+                                <i class="fas fa-info-circle me-1"></i>مشاهده جزئیات
+                            </a>
+                            @if (course.IsActive)
+                            {
+                                <button type="button" class="btn btn-modern-success btn-sm w-100" 
+                                        onclick="enrollInCourse(@course.Id)">
+                                    <i class="fas fa-plus me-1"></i>ثبت‌نام در دوره
+                                </button>
+                            }
+                            else
+                            {
+                                <button type="button" class="btn btn-modern-secondary btn-sm w-100" disabled>
+                                    <i class="fas fa-lock me-1"></i>دوره غیرفعال
+                                </button>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Pagination -->
+    @if (Model.TotalPages > 1)
+    {
+        <nav aria-label="صفحه‌بندی دوره‌ها">
+            <ul class="pagination justify-content-center">
+                @if (Model.HasPreviousPage)
+                {
+                    <li class="page-item">
+                        <a class="page-link" asp-action="Catalog" asp-route-pageNumber="@(Model.PageNumber - 1)">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </li>
+                }
+
+                @for (int i = Math.Max(1, Model.PageNumber - 2); i <= Math.Min(Model.TotalPages, Model.PageNumber + 2); i++)
+                {
+                    <li class="page-item @(i == Model.PageNumber ? "active" : "")">
+                        <a class="page-link" asp-action="Catalog" asp-route-pageNumber="@i">@i</a>
+                    </li>
+                }
+
+                @if (Model.HasNextPage)
+                {
+                    <li class="page-item">
+                        <a class="page-link" asp-action="Catalog" asp-route-pageNumber="@(Model.PageNumber + 1)">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                    </li>
+                }
+            </ul>
+        </nav>
+    }
+}
+else
+{
+    <div class="text-center py-5">
+        <div class="empty-state">
+            <i class="fas fa-search fa-4x text-muted mb-4"></i>
+            <h4 class="text-muted mb-3">دوره‌ای یافت نشد</h4>
+            <p class="text-muted mb-4">در حال حاضر دوره‌ای برای ثبت‌نام موجود نیست</p>
+            <a asp-action="Index" class="btn btn-modern-primary">
+                <i class="fas fa-list me-2"></i>بازگشت به دوره‌های من
+            </a>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        function enrollInCourse(courseId) {
+            if (confirm('آیا مطمئن هستید که می‌خواهید در این دوره ثبت‌نام کنید؟')) {
+                $.ajax({
+                    url: '@Url.Action("Enroll")',
+                    type: 'POST',
+                    data: { courseId: courseId },
+                    success: function(response) {
+                        if (response.success) {
+                            alert(response.message);
+                            location.reload();
+                        } else {
+                            alert('خطا: ' + response.error);
+                        }
+                    },
+                    error: function() {
+                        alert('خطا در ارتباط با سرور');
+                    }
+                });
+            }
+        }
+    </script>
+}

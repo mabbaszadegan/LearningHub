@@ -1,0 +1,230 @@
+@model EduTrack.Application.Common.Models.CourseDto
+@{
+    ViewData["Title"] = $"مطالعه: {Model.Title}";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="h4 mb-1">@Model.Title</h2>
+        <p class="text-muted mb-0">مطالعه دوره</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-modern-secondary btn-sm">
+            <i class="fas fa-info-circle me-1"></i>جزئیات دوره
+        </a>
+        <a asp-action="Index" class="btn btn-modern-secondary btn-sm">
+            <i class="fas fa-list me-1"></i>دوره‌های من
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-3">
+        <!-- Course Progress Sidebar -->
+        <div class="course-progress-sidebar">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-chart-line me-2"></i>پیشرفت دوره
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="progress mb-3">
+                        <div class="progress-bar" role="progressbar" style="width: @(ViewBag.Enrollment?.ProgressPercentage ?? 0)%" 
+                             aria-valuenow="@(ViewBag.Enrollment?.ProgressPercentage ?? 0)" aria-valuemin="0" aria-valuemax="100">
+                            @(ViewBag.Enrollment?.ProgressPercentage ?? 0)%
+                        </div>
+                    </div>
+                    
+                    <div class="progress-details">
+                        <div class="progress-item">
+                            <span class="progress-label">تاریخ ثبت‌نام:</span>
+                            <span class="progress-value">@(ViewBag.Enrollment?.EnrolledAt.ToString("yyyy/MM/dd") ?? "")</span>
+                        </div>
+                        <div class="progress-item">
+                            <span class="progress-label">آخرین بازدید:</span>
+                            <span class="progress-value">@(ViewBag.Enrollment?.LastAccessedAt?.ToString("yyyy/MM/dd") ?? "هیچ‌گاه")</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Course Navigation -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-list me-2"></i>فهرست دوره
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="course-navigation">
+                        @if (Model.Modules.Any())
+                        {
+                            @foreach (var module in Model.Modules.OrderBy(m => m.Order))
+                            {
+                                <div class="navigation-section">
+                                    <div class="section-header" data-bs-toggle="collapse" data-bs-target="#module-@module.Id">
+                                        <i class="fas fa-folder me-2"></i>
+                                        <span>@module.Title</span>
+                                        <i class="fas fa-chevron-down ms-auto"></i>
+                                    </div>
+                                    <div class="collapse" id="module-@module.Id">
+                                        <div class="section-content">
+                                            @if (module.Lessons.Any())
+                                            {
+                                                @foreach (var lesson in module.Lessons.OrderBy(l => l.Order))
+                                                {
+                                                    <div class="lesson-item">
+                                                        <a href="#" class="lesson-link" data-lesson-id="@lesson.Id">
+                                                            <i class="fas fa-play-circle me-2"></i>
+                                                            <span>@lesson.Title</span>
+                                                            <span class="lesson-duration">@lesson.DurationMinutes دقیقه</span>
+                                                        </a>
+                                                    </div>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                <div class="no-lessons">
+                                                    <small class="text-muted">درسی در این ماژول وجود ندارد</small>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <div class="no-content">
+                                <small class="text-muted">محتوایی در این دوره وجود ندارد</small>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-9">
+        <!-- Course Content Area -->
+        <div class="course-content-area">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-book me-2"></i>محتوای دوره
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div id="course-content-placeholder" class="text-center py-5">
+                        <i class="fas fa-play-circle fa-4x text-muted mb-4"></i>
+                        <h4 class="text-muted mb-3">برای شروع مطالعه، یک درس را انتخاب کنید</h4>
+                        <p class="text-muted">از فهرست سمت راست، درس مورد نظر خود را انتخاب کنید</p>
+                    </div>
+                    
+                    <div id="course-content" style="display: none;">
+                        <!-- Dynamic content will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Handle lesson clicks
+            $('.lesson-link').on('click', function(e) {
+                e.preventDefault();
+                var lessonId = $(this).data('lesson-id');
+                loadLessonContent(lessonId);
+            });
+
+            // Auto-expand first module
+            $('.navigation-section').first().find('.collapse').addClass('show');
+        });
+
+        function loadLessonContent(lessonId) {
+            // Hide placeholder and show content area
+            $('#course-content-placeholder').hide();
+            $('#course-content').show();
+
+            // Update active lesson
+            $('.lesson-link').removeClass('active');
+            $(`.lesson-link[data-lesson-id="${lessonId}"]`).addClass('active');
+
+            // Load lesson content (placeholder for now)
+            $('#course-content').html(`
+                <div class="lesson-content">
+                    <h4>درس ${lessonId}</h4>
+                    <p>محتوای درس در اینجا نمایش داده خواهد شد.</p>
+                    <div class="lesson-actions mt-4">
+                        <button class="btn btn-modern-primary" onclick="markLessonComplete(${lessonId})">
+                            <i class="fas fa-check me-2"></i>تکمیل درس
+                        </button>
+                    </div>
+                </div>
+            `);
+
+            // Update last accessed time
+            updateLastAccessed();
+        }
+
+        function markLessonComplete(lessonId) {
+            if (confirm('آیا این درس را تکمیل کرده‌اید؟')) {
+                // Update progress (placeholder for now)
+                var currentProgress = @(ViewBag.Enrollment?.ProgressPercentage ?? 0);
+                var newProgress = Math.min(100, currentProgress + 10);
+                
+                // Update progress bar
+                $('.progress-bar').css('width', newProgress + '%').attr('aria-valuenow', newProgress);
+                $('.progress-bar').text(newProgress + '%');
+
+                // Update course progress
+                $.ajax({
+                    url: '@Url.Action("UpdateProgress")',
+                    type: 'POST',
+                    data: { 
+                        courseId: @Model.Id, 
+                        progressPercentage: newProgress 
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            // Show success message
+                            showToast('درس با موفقیت تکمیل شد!', 'success');
+                        }
+                    },
+                    error: function() {
+                        showToast('خطا در به‌روزرسانی پیشرفت', 'error');
+                    }
+                });
+            }
+        }
+
+        function updateLastAccessed() {
+            // Update last accessed time (placeholder for now)
+            var now = new Date();
+            var formattedDate = now.toLocaleDateString('fa-IR');
+            $('.progress-item:last-child .progress-value').text(formattedDate);
+        }
+
+        function showToast(message, type) {
+            // Simple toast notification (you can replace with a proper toast library)
+            var alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+            var toast = $(`
+                <div class="alert ${alertClass} alert-dismissible fade show position-fixed" 
+                     style="top: 20px; right: 20px; z-index: 9999;">
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `);
+            $('body').append(toast);
+            
+            // Auto-remove after 3 seconds
+            setTimeout(function() {
+                toast.alert('close');
+            }, 3000);
+        }
+    </script>
+}

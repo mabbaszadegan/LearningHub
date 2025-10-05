@@ -47,6 +47,8 @@ public class AppDbContext : IdentityDbContext<User>
     public DbSet<Resource> Resources { get; set; }
     public DbSet<Class> Classes { get; set; }
     public DbSet<Enrollment> Enrollments { get; set; }
+    public DbSet<CourseEnrollment> CourseEnrollments { get; set; }
+    public DbSet<CourseAccess> CourseAccesses { get; set; }
     public DbSet<Question> Questions { get; set; }
     public DbSet<Choice> Choices { get; set; }
     public DbSet<Exam> Exams { get; set; }
@@ -188,6 +190,45 @@ public class AppDbContext : IdentityDbContext<User>
             entity.HasIndex(e => e.StudentId);
             entity.HasIndex(e => e.IsActive);
             entity.HasIndex(e => new { e.ClassId, e.StudentId }).IsUnique();
+        });
+
+        // Configure CourseEnrollment entity
+        builder.Entity<CourseEnrollment>(entity =>
+        {
+            entity.Property(e => e.StudentId).HasMaxLength(450).IsRequired();
+            entity.HasOne(e => e.Course)
+                .WithMany(e => e.Enrollments)
+                .HasForeignKey(e => e.CourseId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.Student)
+                .WithMany(e => e.CourseEnrollments)
+                .HasForeignKey(e => e.StudentId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasIndex(e => e.StudentId);
+            entity.HasIndex(e => e.IsActive);
+            entity.HasIndex(e => new { e.CourseId, e.StudentId }).IsUnique();
+            entity.HasIndex(e => e.LastAccessedAt);
+        });
+
+        // Configure CourseAccess entity
+        builder.Entity<CourseAccess>(entity =>
+        {
+            entity.Property(e => e.StudentId).HasMaxLength(450).IsRequired();
+            entity.Property(e => e.GrantedBy).HasMaxLength(450);
+            entity.Property(e => e.Notes).HasMaxLength(1000);
+            entity.HasOne(e => e.Course)
+                .WithMany(e => e.Accesses)
+                .HasForeignKey(e => e.CourseId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.Student)
+                .WithMany(e => e.CourseAccesses)
+                .HasForeignKey(e => e.StudentId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasIndex(e => e.StudentId);
+            entity.HasIndex(e => e.IsActive);
+            entity.HasIndex(e => e.AccessLevel);
+            entity.HasIndex(e => e.ExpiresAt);
+            entity.HasIndex(e => new { e.CourseId, e.StudentId }).IsUnique();
         });
 
         // Configure Question entity

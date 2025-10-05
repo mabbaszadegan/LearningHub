@@ -1,0 +1,232 @@
+@model dynamic
+@using Microsoft.AspNetCore.Mvc.ViewFeatures
+
+                @{
+                    var course = Model?.Course;
+                    var isEnrolled = Model?.IsEnrolled ?? false;
+                    var canEnroll = Model?.CanEnroll ?? false;
+                }
+
+                @if (course != null)
+                {
+    <div class="course-details-container" data-can-enroll="@(canEnroll ? "true" : "false")" data-is-enrolled="@(isEnrolled ? "true" : "false")">
+                        <!-- Course Header -->
+                        <div class="course-header-section">
+                            <div class="course-title-section">
+                                <h2 class="course-title">@course.Title</h2>
+                                <div class="course-meta-info">
+                                    <span class="course-duration">
+                                        <i class="fas fa-clock"></i>
+                                        مدت دوره: نامشخص
+                                    </span>
+                                    <span class="course-level">
+                                        <i class="fas fa-signal"></i>
+                                        سطح: متوسط
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            @if (isEnrolled)
+                            {
+                                <div class="enrollment-status enrolled">
+                                    <i class="fas fa-check-circle"></i>
+                                    <span>شما در این دوره ثبت‌نام کرده‌اید</span>
+                                </div>
+                            }
+                            else if (canEnroll)
+                            {
+                                <div class="enrollment-status available">
+                                    <i class="fas fa-info-circle"></i>
+                                    <span>قابل ثبت‌نام</span>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="enrollment-status unavailable">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    <span>غیرقابل ثبت‌نام</span>
+                                </div>
+                            }
+                        </div>
+                        
+                        <!-- Course Description -->
+                        <div class="course-description-section">
+                            <h4 class="section-title">
+                                <i class="fas fa-info-circle"></i>
+                                درباره دوره
+                            </h4>
+                            <div class="description-content">
+                                <p>@course.Description</p>
+                            </div>
+                        </div>
+                        
+        <!-- Course Chapters Details -->
+        <div class="course-chapters-details-section">
+            <h4 class="section-title">
+                <i class="fas fa-list-ul"></i>
+                مباحث دوره
+            </h4>
+            <div class="chapters-details-container">
+                @if (course.Chapters != null && course.Chapters.Count > 0)
+                {
+                    @foreach (var chapter in ((IEnumerable<dynamic>)course.Chapters).OrderBy(c => c.Order))
+                    {
+                        <div class="chapter-detail-card">
+                            <div class="chapter-detail-header">
+                                <div class="chapter-detail-title">
+                                    <i class="fas fa-folder-open"></i>
+                                    <span>@chapter.Title</span>
+                                </div>
+                                <div class="chapter-detail-stats">
+                                    <span class="stat-badge">
+                                        <i class="fas fa-list"></i>
+                                        @chapter.SubChapters.Count زیرمبحث
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            @if (!string.IsNullOrEmpty(chapter.Description))
+                            {
+                                <div class="chapter-detail-description">
+                                    <h5 class="chapter-objective-title">
+                                        <i class="fas fa-target"></i>
+                                        هدف مبحث
+                                    </h5>
+                                    <p>@chapter.Description</p>
+                                </div>
+                            }
+                            
+                            @if (chapter.SubChapters != null && chapter.SubChapters.Count > 0)
+                            {
+                                <div class="chapter-content-summary">
+                                    @{
+                                        var chapterSubChapters = (IEnumerable<dynamic>)chapter.SubChapters;
+                                        var allEducationalContents = chapterSubChapters.SelectMany(sc => (IEnumerable<dynamic>)sc.EducationalContents);
+                                        var textContents = allEducationalContents.Count(ec => ec.Type == EduTrack.Domain.Enums.EducationalContentType.Text);
+                                        var fileContents = allEducationalContents.Count(ec => ec.Type == EduTrack.Domain.Enums.EducationalContentType.File);
+                                        var externalUrlContents = allEducationalContents.Count(ec => ec.Type == EduTrack.Domain.Enums.EducationalContentType.ExternalUrl);
+                                        var videoContents = allEducationalContents.Count(ec => ec.Type == EduTrack.Domain.Enums.EducationalContentType.Video);
+                                        var imageContents = allEducationalContents.Count(ec => ec.Type == EduTrack.Domain.Enums.EducationalContentType.Image);
+                                        var pdfContents = allEducationalContents.Count(ec => ec.Type == EduTrack.Domain.Enums.EducationalContentType.PDF);
+                                        var audioContents = allEducationalContents.Count(ec => ec.Type == EduTrack.Domain.Enums.EducationalContentType.Audio);
+                                    }
+                                    
+                                    <div class="content-stats-minimal">
+                                        @if (textContents > 0)
+                                        {
+                                            <div class="stat-minimal">
+                                                <i class="fas fa-file-text"></i>
+                                                <span>@textContents</span>
+                                            </div>
+                                        }
+                                        
+                                        @if (fileContents > 0)
+                                        {
+                                            <div class="stat-minimal">
+                                                <i class="fas fa-file"></i>
+                                                <span>@fileContents</span>
+                                            </div>
+                                        }
+                                        
+                                        @if (externalUrlContents > 0)
+                                        {
+                                            <div class="stat-minimal">
+                                                <i class="fas fa-link"></i>
+                                                <span>@externalUrlContents</span>
+                                            </div>
+                                        }
+                                        
+                                        @if (pdfContents > 0)
+                                        {
+                                            <div class="stat-minimal">
+                                                <i class="fas fa-file-pdf"></i>
+                                                <span>@pdfContents</span>
+                                            </div>
+                                        }
+                                        
+                                        @if (audioContents > 0)
+                                        {
+                                            <div class="stat-minimal">
+                                                <i class="fas fa-volume-up"></i>
+                                                <span>@audioContents</span>
+                                            </div>
+                                        }
+                                        
+                                        @if (videoContents > 0)
+                                        {
+                                            <div class="stat-minimal">
+                                                <i class="fas fa-video"></i>
+                                                <span>@videoContents</span>
+                                            </div>
+                                        }
+                                        
+                                        @if (imageContents > 0)
+                                        {
+                                            <div class="stat-minimal">
+                                                <i class="fas fa-image"></i>
+                                                <span>@imageContents</span>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="empty-chapters">
+                        <i class="fas fa-folder-open"></i>
+                        <p>هنوز مبحثی برای این دوره تعریف نشده است</p>
+                    </div>
+                }
+            </div>
+        </div>
+                        
+                        <!-- Course Statistics -->
+                        <div class="course-stats-section">
+                            <h4 class="section-title">
+                                <i class="fas fa-chart-bar"></i>
+                                گزارش آماری
+                            </h4>
+                            <div class="stats-grid">
+                                <div class="stat-card">
+                                    <div class="stat-icon">
+                                        <i class="fas fa-layer-group"></i>
+                                    </div>
+                                    <div class="stat-content">
+                                        <div class="stat-number">@course.ModuleCount</div>
+                                        <div class="stat-label">مبحث</div>
+                                    </div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-icon">
+                                        <i class="fas fa-play-circle"></i>
+                                    </div>
+                                    <div class="stat-content">
+                                        <div class="stat-number">@course.LessonCount</div>
+                                        <div class="stat-label">درس</div>
+                                    </div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-icon">
+                                        <i class="fas fa-bookmark"></i>
+                                    </div>
+                                    <div class="stat-content">
+                                        <div class="stat-number">@course.ChapterCount</div>
+                                        <div class="stat-label">فصل</div>
+                                    </div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-icon">
+                                        <i class="fas fa-users"></i>
+                                    </div>
+                                    <div class="stat-content">
+                                        <div class="stat-number">@course.ClassCount</div>
+                                        <div class="stat-label">کلاس</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
