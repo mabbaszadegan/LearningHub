@@ -81,6 +81,11 @@ public class AppDbContext : IdentityDbContext<User>
     public DbSet<GroupMember> GroupMembers { get; set; }
     public DbSet<ScheduleItem> ScheduleItems { get; set; }
     public DbSet<Submission> Submissions { get; set; }
+    
+    // Teaching Session Reports
+    public DbSet<TeachingSessionReport> TeachingSessionReports { get; set; }
+    public DbSet<TeachingSessionAttendance> TeachingSessionAttendances { get; set; }
+    public DbSet<ScheduleItemAssignment> ScheduleItemAssignments { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -686,5 +691,79 @@ public class AppDbContext : IdentityDbContext<User>
             entity.HasIndex(e => e.LearningMode);
         });
 
+        // Configure TeachingSessionReport entity
+        builder.Entity<TeachingSessionReport>(entity =>
+        {
+            entity.ToTable("TeachingSessionReports");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Title).HasMaxLength(200);
+            entity.Property(x => x.Location).HasMaxLength(500);
+            entity.Property(x => x.TopicsJson).IsRequired();
+            entity.Property(x => x.Notes).HasMaxLength(4000);
+            entity.Property(x => x.StatsJson).HasMaxLength(2000);
+            entity.Property(x => x.AttachmentsJson).HasMaxLength(2000);
+            entity.HasOne(x => x.TeachingPlan)
+                .WithMany()
+                .HasForeignKey(x => x.TeachingPlanId)
+                .OnDelete(DeleteBehavior.NoAction);
+            entity.Property(x => x.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(x => x.UpdatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.HasIndex(x => x.TeachingPlanId);
+            entity.HasIndex(x => x.SessionDate);
+            entity.HasIndex(x => x.CreatedByTeacherId);
+        });
+
+        // Configure TeachingSessionAttendance entity
+        builder.Entity<TeachingSessionAttendance>(entity =>
+        {
+            entity.ToTable("TeachingSessionAttendances");
+            entity.HasKey(x => x.Id);
+            entity.HasIndex(x => new { x.TeachingSessionReportId, x.StudentId }).IsUnique();
+            entity.Property(x => x.ParticipationScore).HasPrecision(18, 2);
+            entity.Property(x => x.Comment).HasMaxLength(1000);
+            entity.HasOne(x => x.TeachingSessionReport)
+                .WithMany(r => r.Attendance)
+                .HasForeignKey(x => x.TeachingSessionReportId)
+                .OnDelete(DeleteBehavior.NoAction);
+            entity.HasIndex(x => x.StudentId);
+            entity.HasIndex(x => x.Status);
+        });
+
+        // Configure ScheduleItemAssignment entity
+        builder.Entity<ScheduleItemAssignment>(entity =>
+        {
+            entity.ToTable("ScheduleItemAssignments");
+            entity.HasKey(x => x.Id);
+            entity.HasOne(x => x.ScheduleItem)
+                .WithMany(i => i.Assignments)
+                .HasForeignKey(x => x.ScheduleItemId)
+                .OnDelete(DeleteBehavior.NoAction);
+            entity.HasIndex(x => new { x.ScheduleItemId, x.StudentId, x.GroupId }).IsUnique();
+            entity.HasIndex(x => x.StudentId);
+            entity.HasIndex(x => x.GroupId);
+        });
+
+        // Update ScheduleItem entity to include SessionReport relationship
+        builder.Entity<ScheduleItem>(entity =>
+        {
+            entity.HasOne(x => x.SessionReport)
+                .WithMany()
+                .HasForeignKey(x => x.SessionReportId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+    }
+
+    public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        // Set SQLite pragmas before saving changes
+        if (Database.ProviderName == "Microsoft.EntityFrameworkCore.Sqlite")
+        {
+            await Database.ExecuteSqlRawAsync("PRAGMA foreign_keys = ON", cancellationToken);
+            await Database.ExecuteSqlRawAsync("PRAGMA journal_mode = WAL", cancellationToken);
+            await Database.ExecuteSqlRawAsync("PRAGMA busy_timeout = 5000", cancellationToken);
+        }
+
+        return await base.SaveChangesAsync(cancellationToken);
     }
 }

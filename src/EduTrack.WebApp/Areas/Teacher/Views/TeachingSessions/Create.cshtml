@@ -1,0 +1,106 @@
+@model EduTrack.Application.Features.TeachingSessions.Commands.CreateTeachingSessionReportCommand
+@{
+    ViewData["Title"] = "Create Teaching Session";
+    var planId = ViewBag.TeachingPlanId as int?;
+    var planTitle = ViewBag.TeachingPlanTitle as string;
+    var sessionModes = ViewBag.SessionModes as SelectList;
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title mb-0">
+                        <i class="fas fa-plus me-2"></i>
+                        Create Teaching Session - @planTitle
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Create" method="post">
+                        <input type="hidden" asp-for="TeachingPlanId" value="@planId" />
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="Title" class="form-label">Session Title</label>
+                                    <input asp-for="Title" class="form-control" placeholder="Enter session title (optional)" />
+                                    <span asp-validation-for="Title" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="SessionDate" class="form-label">Session Date & Time</label>
+                                    <input asp-for="SessionDate" type="datetime-local" class="form-control" />
+                                    <span asp-validation-for="SessionDate" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="Mode" class="form-label">Session Mode</label>
+                                    <select asp-for="Mode" asp-items="sessionModes" class="form-select">
+                                        <option value="">Select session mode</option>
+                                    </select>
+                                    <span asp-validation-for="Mode" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="Location" class="form-label">Location</label>
+                                    <input asp-for="Location" class="form-control" placeholder="Enter location (optional)" />
+                                    <span asp-validation-for="Location" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="TopicsJson" class="form-label">Topics Covered</label>
+                            <textarea asp-for="TopicsJson" class="form-control" rows="4" placeholder='Enter topics in JSON format, e.g., {"topics":["Past Simple review"],"subtopics":["EF 2A Holidays"]}'></textarea>
+                            <div class="form-text">Enter topics covered in this session in JSON format.</div>
+                            <span asp-validation-for="TopicsJson" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Notes" class="form-label">Session Notes</label>
+                            <textarea asp-for="Notes" class="form-control" rows="6" placeholder="Enter detailed notes about the session..."></textarea>
+                            <span asp-validation-for="Notes" class="text-danger"></span>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="StatsJson" class="form-label">Session Statistics</label>
+                                    <textarea asp-for="StatsJson" class="form-control" rows="3" placeholder='Enter statistics in JSON format, e.g., {"duration":90,"participation":85}'></textarea>
+                                    <span asp-validation-for="StatsJson" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="AttachmentsJson" class="form-label">Attachments</label>
+                                    <textarea asp-for="AttachmentsJson" class="form-control" rows="3" placeholder='Enter attachment references in JSON format'></textarea>
+                                    <span asp-validation-for="AttachmentsJson" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="@Url.Action("Index", new { planId = planId })" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-1"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i>Create Session
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

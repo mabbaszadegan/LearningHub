@@ -448,3 +448,47 @@ public class UserDto
     public bool IsActive { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
 }
+
+public class TeachingSessionReportDto
+{
+    public int Id { get; set; }
+    public int TeachingPlanId { get; set; }
+    public string TeachingPlanTitle { get; set; } = string.Empty;
+    public string? Title { get; set; }
+    public DateTime SessionDate { get; set; }
+    public SessionMode Mode { get; set; }
+    public string? Location { get; set; }
+    public string TopicsJson { get; set; } = string.Empty;
+    public string? Notes { get; set; }
+    public string? StatsJson { get; set; }
+    public string? AttachmentsJson { get; set; }
+    public int CreatedByTeacherId { get; set; }
+    public string CreatedByTeacherName { get; set; } = string.Empty;
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
+    public int AttendanceCount { get; set; }
+    public int PresentCount { get; set; }
+    public int AbsentCount { get; set; }
+    public List<TeachingSessionAttendanceDto> Attendance { get; set; } = new();
+}
+
+public class TeachingSessionAttendanceDto
+{
+    public int Id { get; set; }
+    public int TeachingSessionReportId { get; set; }
+    public int StudentId { get; set; }
+    public string StudentName { get; set; } = string.Empty;
+    public AttendanceStatus Status { get; set; }
+    public decimal? ParticipationScore { get; set; }
+    public string? Comment { get; set; }
+}
+
+public class ScheduleItemAssignmentDto
+{
+    public int Id { get; set; }
+    public int ScheduleItemId { get; set; }
+    public int? StudentId { get; set; }
+    public string? StudentName { get; set; }
+    public int? GroupId { get; set; }
+    public string? GroupName { get; set; }
+}

@@ -286,8 +286,9 @@ public static class SeedData
         var groupA = StudentGroup.Create(teachingPlan.Id, "Group A");
         var groupB = StudentGroup.Create(teachingPlan.Id, "Group B");
         var groupC = StudentGroup.Create(teachingPlan.Id, "Group C");
+        var studentGroups = new List<StudentGroup> { groupA, groupB, groupC };
 
-        context.StudentGroups.AddRange(groupA, groupB, groupC);
+        context.StudentGroups.AddRange(studentGroups);
         await context.SaveChangesAsync();
 
         // Add students to groups (5 students per group)
@@ -385,6 +386,57 @@ public static class SeedData
         submissions[1].Start();
 
         context.Submissions.AddRange(submissions);
+        await context.SaveChangesAsync();
+
+        // Create TeachingSessionReport demo data
+        await CreateTeachingSessionReportDemoDataAsync(context, teacher, teachingPlan, students, studentGroups, scheduleItems);
+    }
+
+    private static async Task CreateTeachingSessionReportDemoDataAsync(AppDbContext context, User teacher, TeachingPlan teachingPlan, List<User> students, List<StudentGroup> studentGroups, List<ScheduleItem> scheduleItems)
+    {
+        // Create sample teaching session report
+        var sessionReport = new TeachingSessionReport
+        {
+            TeachingPlanId = teachingPlan.Id,
+            Title = "Past Simple Review Session",
+            SessionDate = DateTime.UtcNow.AddDays(-1),
+            Mode = SessionMode.InPerson,
+            Location = "Classroom A-101",
+            TopicsJson = """{"topics":["Past Simple review"],"subtopics":["EF 2A Holidays","Regular/Irregular verbs"]}""",
+            Notes = "Good participation overall. Students struggled with irregular verbs but showed improvement by the end of the session.",
+            StatsJson = """{"duration":90,"participation":85,"exercises_completed":5}""",
+            AttachmentsJson = """{"files":["past_simple_worksheet.pdf","irregular_verbs_list.pdf"]}""",
+            CreatedByTeacherId = int.Parse(teacher.Id),
+            CreatedAt = DateTime.UtcNow.AddDays(-1),
+            UpdatedAt = DateTime.UtcNow.AddDays(-1)
+        };
+
+        context.TeachingSessionReports.Add(sessionReport);
+        await context.SaveChangesAsync();
+
+        // Create attendance records
+        var attendance = new List<TeachingSessionAttendance>
+        {
+            new() { TeachingSessionReportId = sessionReport.Id, StudentId = int.Parse(students[0].Id), Status = AttendanceStatus.Present, ParticipationScore = 9.5m, Comment = "Excellent participation" },
+            new() { TeachingSessionReportId = sessionReport.Id, StudentId = int.Parse(students[1].Id), Status = AttendanceStatus.Present, ParticipationScore = 8.0m, Comment = "Good effort" },
+            new() { TeachingSessionReportId = sessionReport.Id, StudentId = int.Parse(students[2].Id), Status = AttendanceStatus.Late, ParticipationScore = 7.5m, Comment = "Arrived 15 minutes late" },
+            new() { TeachingSessionReportId = sessionReport.Id, StudentId = int.Parse(students[3].Id), Status = AttendanceStatus.Absent, Comment = "Sick leave" },
+            new() { TeachingSessionReportId = sessionReport.Id, StudentId = int.Parse(students[4].Id), Status = AttendanceStatus.Present, ParticipationScore = 8.5m, Comment = "Active participation" }
+        };
+
+        context.TeachingSessionAttendances.AddRange(attendance);
+        await context.SaveChangesAsync();
+
+        // Create sample ScheduleItemAssignment for targeted assignments
+        var scheduleItemAssignments = new List<ScheduleItemAssignment>
+        {
+            new() { ScheduleItemId = scheduleItems[0].Id, StudentId = int.Parse(students[0].Id) }, // Reminder for specific student
+            new() { ScheduleItemId = scheduleItems[1].Id, GroupId = studentGroups[0].Id }, // MCQ for Group A
+            new() { ScheduleItemId = scheduleItems[2].Id, GroupId = studentGroups[1].Id }, // Writing for Group B
+            new() { ScheduleItemId = scheduleItems[3].Id, StudentId = int.Parse(students[5].Id) } // GapFill for specific student
+        };
+
+        context.ScheduleItemAssignments.AddRange(scheduleItemAssignments);
         await context.SaveChangesAsync();
     }
 }

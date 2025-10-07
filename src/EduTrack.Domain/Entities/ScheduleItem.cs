@@ -20,6 +20,7 @@ public class ScheduleItem
     public DisciplineType? DisciplineHint { get; private set; }
     public string ContentJson { get; private set; } = string.Empty;
     public decimal? MaxScore { get; private set; }
+    public int? SessionReportId { get; set; }
     public DateTimeOffset CreatedAt { get; private set; }
     public DateTimeOffset UpdatedAt { get; private set; }
 
@@ -27,6 +28,8 @@ public class ScheduleItem
     public TeachingPlan TeachingPlan { get; private set; } = null!;
     public StudentGroup? Group { get; private set; }
     public Lesson? Lesson { get; private set; }
+    public TeachingSessionReport? SessionReport { get; set; }
+    public ICollection<ScheduleItemAssignment> Assignments { get; set; } = new List<ScheduleItemAssignment>();
 
     // Private constructor for EF Core
     private ScheduleItem() { }
