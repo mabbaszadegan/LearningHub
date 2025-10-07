@@ -111,6 +111,26 @@ public static class SeedData
             await userManager.AddToRoleAsync(student2, "Student");
         }
 
+        // Create additional students for TeachingPlan demo
+        var students = new List<User>();
+        for (int i = 3; i <= 15; i++)
+        {
+            var studentEmail = $"student{i}@local";
+            var student = await userManager.FindByEmailAsync(studentEmail);
+            if (student == null)
+            {
+                student = User.Create($"Student{i}", "Demo", studentEmail);
+                student.EmailConfirmed = true;
+                await userManager.CreateAsync(student, "Passw0rd!");
+                await userManager.AddToRoleAsync(student, "Student");
+            }
+            students.Add(student);
+        }
+        
+        // Add the first two students to the list
+        students.Add(student1);
+        students.Add(student2);
+
         // Create course
         var course = Course.Create(
             "General English A1",
@@ -244,6 +264,127 @@ public static class SeedData
             ExamQuestion.Create(exam.Id, questions[2].Id, 3)
         };
         context.ExamQuestions.AddRange(examQuestions);
+        await context.SaveChangesAsync();
+
+        // Create TeachingPlan demo data
+        await CreateTeachingPlanDemoDataAsync(context, teacher, course, students);
+    }
+
+    private static async Task CreateTeachingPlanDemoDataAsync(AppDbContext context, User teacher, Course course, List<User> students)
+    {
+        // Create TeachingPlan
+        var teachingPlan = TeachingPlan.Create(
+            course.Id,
+            teacher.Id,
+            "Plan A (Fall 2024)",
+            "Comprehensive teaching plan for the fall semester covering all course modules with structured assignments and group activities.");
+
+        context.TeachingPlans.Add(teachingPlan);
+        await context.SaveChangesAsync();
+
+        // Create StudentGroups
+        var groupA = StudentGroup.Create(teachingPlan.Id, "Group A");
+        var groupB = StudentGroup.Create(teachingPlan.Id, "Group B");
+        var groupC = StudentGroup.Create(teachingPlan.Id, "Group C");
+
+        context.StudentGroups.AddRange(groupA, groupB, groupC);
+        await context.SaveChangesAsync();
+
+        // Add students to groups (5 students per group)
+        var groupMembers = new List<GroupMember>();
+        for (int i = 0; i < students.Count && i < 15; i++)
+        {
+            var group = i < 5 ? groupA : i < 10 ? groupB : groupC;
+            groupMembers.Add(GroupMember.Create(group.Id, students[i].Id));
+        }
+        context.GroupMembers.AddRange(groupMembers);
+        await context.SaveChangesAsync();
+
+        // Create ScheduleItems
+        var now = DateTimeOffset.UtcNow;
+        var scheduleItems = new List<ScheduleItem>
+        {
+            // Reminder
+            ScheduleItem.Create(
+                teachingPlan.Id,
+                ScheduleItemType.Reminder,
+                "Welcome to the Course",
+                "Welcome message and course overview",
+                now.AddDays(-7),
+                null,
+                false,
+                """{"type":"Reminder","text":"Welcome to our English course! Make sure to review the course materials and join your assigned group.","links":[{"title":"Course Materials","url":"/courses/1"}]}""",
+                null,
+                null,
+                null,
+                DisciplineType.Language),
+
+            // Multiple Choice Assignment
+            ScheduleItem.Create(
+                teachingPlan.Id,
+                ScheduleItemType.MultipleChoice,
+                "Basic English Grammar Quiz",
+                "Test your knowledge of basic English grammar",
+                now.AddDays(-3),
+                now.AddDays(2),
+                true,
+                """{"type":"MultipleChoice","stem":"Choose the correct form of the verb","choices":[{"text":"I am go","correct":false},{"text":"I go","correct":true},{"text":"I goes","correct":false}]}""",
+                10m,
+                groupA.Id,
+                null,
+                DisciplineType.Language),
+
+            // Writing Assignment
+            ScheduleItem.Create(
+                teachingPlan.Id,
+                ScheduleItemType.Writing,
+                "My Weekend Story",
+                "Write about your weekend activities",
+                now.AddDays(-1),
+                now.AddDays(5),
+                true,
+                """{"type":"Writing","prompt":"Write about your weekend activities in 120-150 words.","maxWords":150,"rubric":"basic"}""",
+                15m,
+                groupB.Id,
+                null,
+                DisciplineType.Language),
+
+            // Gap Fill Assignment
+            ScheduleItem.Create(
+                teachingPlan.Id,
+                ScheduleItemType.GapFill,
+                "Fill in the Blanks",
+                "Complete the sentences with the correct words",
+                now,
+                now.AddDays(7),
+                true,
+                """{"type":"GapFill","text":"I ___ to school yesterday.","answers":["went"]}""",
+                5m,
+                groupC.Id,
+                null,
+                DisciplineType.Language)
+        };
+
+        context.ScheduleItems.AddRange(scheduleItems);
+        await context.SaveChangesAsync();
+
+        // Create sample submissions
+        var submissions = new List<Submission>
+        {
+            // Completed MCQ submission
+            Submission.Create(scheduleItems[1].Id, students[0].Id, """{"selectedChoice":1}"""),
+            // In-progress writing submission
+            Submission.Create(scheduleItems[2].Id, students[5].Id, """{"text":"Last weekend I went to the park with my family..."}""")
+        };
+
+        // Set submission statuses
+        submissions[0].Start();
+        submissions[0].Submit();
+        submissions[0].SetGrade(10m, "Excellent work! You got all questions correct.", teacher.Id);
+
+        submissions[1].Start();
+
+        context.Submissions.AddRange(submissions);
         await context.SaveChangesAsync();
     }
 }

@@ -1,0 +1,124 @@
+@model List<EduTrack.Application.Common.Models.TeachingPlanDto>
+@{
+    ViewData["Title"] = "Teaching Plans";
+    var courseId = ViewBag.CourseId as int?;
+    var courseTitle = ViewBag.CourseTitle as string;
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="card-title mb-0">
+                        <i class="fas fa-chalkboard-teacher me-2"></i>
+                        Teaching Plans - @courseTitle
+                    </h4>
+                    <div>
+                        <a href="@Url.Action("Create", new { courseId = courseId })" class="btn btn-primary">
+                            <i class="fas fa-plus me-1"></i>Create Teaching Plan
+                        </a>
+                        <a href="@Url.Action("Index", "Courses", new { area = "Teacher" })" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>Back to Courses
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    @if (Model.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Title</th>
+                                        <th>Description</th>
+                                        <th>Groups</th>
+                                        <th>Schedule Items</th>
+                                        <th>Total Students</th>
+                                        <th>Created</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var plan in Model)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <strong>@plan.Title</strong>
+                                            </td>
+                                            <td>
+                                                @if (!string.IsNullOrEmpty(plan.Description))
+                                                {
+                                                    <span class="text-muted">@(plan.Description.Length > 100 ? plan.Description.Substring(0, 100) + "..." : plan.Description)</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">No description</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-info">@plan.GroupCount</span>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-success">@plan.ScheduleItemCount</span>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-primary">@plan.TotalStudents</span>
+                                            </td>
+                                            <td>
+                                                <small class="text-muted">@plan.CreatedAt.ToString("MMM dd, yyyy")</small>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group" role="group">
+                                                    <a href="@Url.Action("Details", new { id = plan.Id })" class="btn btn-sm btn-outline-primary" title="View Details">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                    <a href="@Url.Action("Edit", new { id = plan.Id })" class="btn btn-sm btn-outline-warning" title="Edit">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                    <a href="@Url.Action("Index", "StudentGroup", new { planId = plan.Id })" class="btn btn-sm btn-outline-info" title="Manage Groups">
+                                                        <i class="fas fa-users"></i>
+                                                    </a>
+                                                    <a href="@Url.Action("Index", "Schedule", new { planId = plan.Id })" class="btn btn-sm btn-outline-success" title="Schedule Items">
+                                                        <i class="fas fa-calendar-alt"></i>
+                                                    </a>
+                                                    <form method="post" action="@Url.Action("Delete", new { id = plan.Id })" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this teaching plan?')">
+                                                        @Html.AntiForgeryToken()
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-5">
+                            <i class="fas fa-chalkboard-teacher fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No Teaching Plans Found</h5>
+                            <p class="text-muted">Create your first teaching plan to start organizing your course content and student groups.</p>
+                            <a href="@Url.Action("Create", new { courseId = courseId })" class="btn btn-primary">
+                                <i class="fas fa-plus me-1"></i>Create Teaching Plan
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Add any JavaScript functionality here
+        $(document).ready(function() {
+            // Initialize tooltips
+            $('[title]').tooltip();
+        });
+    </script>
+}

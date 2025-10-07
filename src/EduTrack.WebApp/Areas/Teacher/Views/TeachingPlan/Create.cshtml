@@ -1,0 +1,87 @@
+@model EduTrack.Application.Features.TeachingPlan.Commands.CreateTeachingPlanCommand
+@{
+    ViewData["Title"] = "Create Teaching Plan";
+    var courseId = ViewBag.CourseId as int?;
+    var courseTitle = ViewBag.CourseTitle as string;
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title mb-0">
+                        <i class="fas fa-plus me-2"></i>
+                        Create Teaching Plan - @courseTitle
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Create" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" asp-for="CourseId" value="@courseId" />
+                        
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="mb-3">
+                                    <label asp-for="Title" class="form-label">Title <span class="text-danger">*</span></label>
+                                    <input asp-for="Title" class="form-control" placeholder="Enter teaching plan title" />
+                                    <span asp-validation-for="Title" class="text-danger"></span>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label asp-for="Description" class="form-label">Description</label>
+                                    <textarea asp-for="Description" class="form-control" rows="4" placeholder="Enter teaching plan description (optional)"></textarea>
+                                    <span asp-validation-for="Description" class="text-danger"></span>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h6 class="card-title">
+                                            <i class="fas fa-info-circle me-1"></i>
+                                            Teaching Plan Info
+                                        </h6>
+                                        <p class="card-text small">
+                                            A teaching plan helps you organize your course content and manage student groups. 
+                                            You can create multiple teaching plans for different semesters or class sections.
+                                        </p>
+                                        <ul class="small text-muted">
+                                            <li>Create student groups</li>
+                                            <li>Schedule assignments</li>
+                                            <li>Track student progress</li>
+                                            <li>Provide feedback</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="@Url.Action("Index", new { courseId = courseId })" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-1"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i>Create Teaching Plan
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    
+    <script>
+        $(document).ready(function() {
+            // Auto-resize textarea
+            $('textarea').on('input', function() {
+                this.style.height = 'auto';
+                this.style.height = (this.scrollHeight) + 'px';
+            });
+        });
+    </script>
+}

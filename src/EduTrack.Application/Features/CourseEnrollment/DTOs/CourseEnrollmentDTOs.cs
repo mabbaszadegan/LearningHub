@@ -17,7 +17,9 @@ public class CourseEnrollmentDto
     public bool IsActive { get; set; }
     public DateTimeOffset? LastAccessedAt { get; set; }
     public int ProgressPercentage { get; set; }
+    public LearningMode LearningMode { get; set; }
     public bool IsCompleted { get; set; }
+    public bool IsInProgress { get; set; }
     public TimeSpan? Duration { get; set; }
     public TimeSpan TimeSinceLastAccess { get; set; }
 }

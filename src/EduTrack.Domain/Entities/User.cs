@@ -16,6 +16,8 @@ public class User : IdentityUser
     private readonly List<Attempt> _attempts = new();
     private readonly List<Progress> _progresses = new();
     private readonly List<ActivityLog> _activityLogs = new();
+    private readonly List<TeachingPlan> _teachingPlans = new();
+    private readonly List<Submission> _submissions = new();
 
     public string FirstName { get; private set; } = string.Empty;
     public string LastName { get; private set; } = string.Empty;
@@ -32,6 +34,8 @@ public class User : IdentityUser
     public IReadOnlyCollection<Attempt> Attempts => _attempts.AsReadOnly();
     public IReadOnlyCollection<Progress> Progresses => _progresses.AsReadOnly();
     public IReadOnlyCollection<ActivityLog> ActivityLogs => _activityLogs.AsReadOnly();
+    public IReadOnlyCollection<TeachingPlan> TeachingPlans => _teachingPlans.AsReadOnly();
+    public IReadOnlyCollection<Submission> Submissions => _submissions.AsReadOnly();
 
     public string FullName => $"{FirstName} {LastName}".Trim();
 
@@ -241,5 +245,27 @@ public class User : IdentityUser
     public int GetTotalCourseAccesses()
     {
         return _courseAccesses.Count(a => a.IsValid());
+    }
+
+    public void AddTeachingPlan(TeachingPlan teachingPlan)
+    {
+        if (teachingPlan == null)
+            throw new ArgumentNullException(nameof(teachingPlan));
+
+        if (_teachingPlans.Any(tp => tp.Id == teachingPlan.Id))
+            throw new InvalidOperationException("Teaching plan already exists for this user");
+
+        _teachingPlans.Add(teachingPlan);
+    }
+
+    public void AddSubmission(Submission submission)
+    {
+        if (submission == null)
+            throw new ArgumentNullException(nameof(submission));
+
+        if (_submissions.Any(s => s.Id == submission.Id))
+            throw new InvalidOperationException("Submission already exists for this user");
+
+        _submissions.Add(submission);
     }
 }

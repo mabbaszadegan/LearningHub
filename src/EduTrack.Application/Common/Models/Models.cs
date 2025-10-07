@@ -74,6 +74,7 @@ public class CourseDto
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
     public string CreatedBy { get; set; } = string.Empty;
+    public DisciplineType DisciplineType { get; set; }
     public int ModuleCount { get; set; }
     public int LessonCount { get; set; }
     public int ChapterCount { get; set; }
@@ -305,4 +306,145 @@ public class DashboardViewModel
     public int CompletedLessons { get; set; }
     public int CompletedExams { get; set; }
     public double OverallProgress { get; set; }
+}
+
+// Teaching Plan DTOs
+public class TeachingPlanDto
+{
+    public int Id { get; set; }
+    public int CourseId { get; set; }
+    public string CourseTitle { get; set; } = string.Empty;
+    public string TeacherId { get; set; } = string.Empty;
+    public string TeacherName { get; set; } = string.Empty;
+    public string Title { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
+    public DateTimeOffset UpdatedAt { get; set; }
+    public int GroupCount { get; set; }
+    public int ScheduleItemCount { get; set; }
+    public int TotalStudents { get; set; }
+    public List<StudentGroupDto> Groups { get; set; } = new();
+    public List<ScheduleItemDto> ScheduleItems { get; set; } = new();
+}
+
+public class StudentGroupDto
+{
+    public int Id { get; set; }
+    public int TeachingPlanId { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public int MemberCount { get; set; }
+    public List<GroupMemberDto> Members { get; set; } = new();
+}
+
+public class GroupMemberDto
+{
+    public int Id { get; set; }
+    public int StudentGroupId { get; set; }
+    public string StudentId { get; set; } = string.Empty;
+    public string StudentName { get; set; } = string.Empty;
+    public string StudentEmail { get; set; } = string.Empty;
+}
+
+public class ScheduleItemDto
+{
+    public int Id { get; set; }
+    public int TeachingPlanId { get; set; }
+    public int? GroupId { get; set; }
+    public string? GroupName { get; set; }
+    public int? LessonId { get; set; }
+    public string? LessonTitle { get; set; }
+    public ScheduleItemType Type { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public DateTimeOffset StartDate { get; set; }
+    public DateTimeOffset? DueDate { get; set; }
+    public bool IsMandatory { get; set; }
+    public DisciplineType? DisciplineHint { get; set; }
+    public string ContentJson { get; set; } = string.Empty;
+    public decimal? MaxScore { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
+    public DateTimeOffset UpdatedAt { get; set; }
+    public bool IsOverdue { get; set; }
+    public bool IsUpcoming { get; set; }
+    public bool IsActive { get; set; }
+    public TimeSpan? TimeUntilDue { get; set; }
+    public int SubmissionCount { get; set; }
+    public int CompletedSubmissions { get; set; }
+}
+
+public class SubmissionDto
+{
+    public int Id { get; set; }
+    public int ScheduleItemId { get; set; }
+    public string ScheduleItemTitle { get; set; } = string.Empty;
+    public string StudentId { get; set; } = string.Empty;
+    public string StudentName { get; set; } = string.Empty;
+    public DateTimeOffset? SubmittedAt { get; set; }
+    public SubmissionStatus Status { get; set; }
+    public decimal? Grade { get; set; }
+    public string? FeedbackText { get; set; }
+    public string? TeacherId { get; set; }
+    public string? TeacherName { get; set; }
+    public string PayloadJson { get; set; } = string.Empty;
+    public string? AttachmentsJson { get; set; }
+    public DateTimeOffset? ReviewedAt { get; set; }
+    public DateTimeOffset UpdatedAt { get; set; }
+    public decimal? PercentageScore { get; set; }
+    public bool IsPassing { get; set; }
+    public bool IsOverdue { get; set; }
+}
+
+public class StudentAgendaDto
+{
+    public string StudentId { get; set; } = string.Empty;
+    public string StudentName { get; set; } = string.Empty;
+    public int CourseId { get; set; }
+    public string CourseTitle { get; set; } = string.Empty;
+    public LearningMode LearningMode { get; set; }
+    public List<ScheduleItemDto> UpcomingItems { get; set; } = new();
+    public List<ScheduleItemDto> InProgressItems { get; set; } = new();
+    public List<ScheduleItemDto> OverdueItems { get; set; } = new();
+    public List<ScheduleItemDto> CompletedItems { get; set; } = new();
+    public int TotalItems { get; set; }
+    public int CompletedCount { get; set; }
+    public int OverdueCount { get; set; }
+    public double CompletionPercentage { get; set; }
+}
+
+public class GroupProgressDto
+{
+    public int GroupId { get; set; }
+    public string GroupName { get; set; } = string.Empty;
+    public int TeachingPlanId { get; set; }
+    public string TeachingPlanTitle { get; set; } = string.Empty;
+    public int TotalStudents { get; set; }
+    public int TotalScheduleItems { get; set; }
+    public int CompletedSubmissions { get; set; }
+    public int OverdueSubmissions { get; set; }
+    public double CompletionPercentage { get; set; }
+    public double AverageScore { get; set; }
+    public List<StudentProgressDto> StudentProgress { get; set; } = new();
+}
+
+public class StudentProgressDto
+{
+    public string StudentId { get; set; } = string.Empty;
+    public string StudentName { get; set; } = string.Empty;
+    public int CompletedSubmissions { get; set; }
+    public int TotalSubmissions { get; set; }
+    public double CompletionPercentage { get; set; }
+    public double AverageScore { get; set; }
+    public int OverdueCount { get; set; }
+    public DateTimeOffset? LastActivity { get; set; }
+}
+
+public class UserDto
+{
+    public string Id { get; set; } = string.Empty;
+    public string UserName { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+    public string FullName { get; set; } = string.Empty;
+    public UserRole Role { get; set; }
+    public bool IsActive { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
 }

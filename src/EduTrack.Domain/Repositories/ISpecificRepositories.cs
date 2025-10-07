@@ -95,3 +95,51 @@ public interface IEducationalContentRepository : IRepository<EducationalContent>
     Task<IEnumerable<EducationalContent>> GetContentByTypeAsync(EducationalContentType type, CancellationToken cancellationToken = default);
     Task<IEnumerable<EducationalContent>> GetActiveContentAsync(CancellationToken cancellationToken = default);
 }
+
+/// <summary>
+/// Specific repository for TeachingPlan entity with domain-specific queries
+/// </summary>
+public interface ITeachingPlanRepository : IRepository<TeachingPlan>
+{
+    Task<IEnumerable<TeachingPlan>> GetTeachingPlansByCourseAsync(int courseId, CancellationToken cancellationToken = default);
+    Task<IEnumerable<TeachingPlan>> GetTeachingPlansByTeacherAsync(string teacherId, CancellationToken cancellationToken = default);
+    Task<TeachingPlan?> GetTeachingPlanWithGroupsAsync(int teachingPlanId, CancellationToken cancellationToken = default);
+    Task<TeachingPlan?> GetTeachingPlanWithScheduleItemsAsync(int teachingPlanId, CancellationToken cancellationToken = default);
+    Task<TeachingPlan?> GetTeachingPlanWithAllAsync(int teachingPlanId, CancellationToken cancellationToken = default);
+}
+
+/// <summary>
+/// Specific repository for StudentGroup entity with domain-specific queries
+/// </summary>
+public interface IStudentGroupRepository : IRepository<StudentGroup>
+{
+    Task<IEnumerable<StudentGroup>> GetGroupsByTeachingPlanAsync(int teachingPlanId, CancellationToken cancellationToken = default);
+    Task<StudentGroup?> GetGroupWithMembersAsync(int groupId, CancellationToken cancellationToken = default);
+    Task<bool> IsStudentInGroupAsync(int groupId, string studentId, CancellationToken cancellationToken = default);
+}
+
+/// <summary>
+/// Specific repository for ScheduleItem entity with domain-specific queries
+/// </summary>
+public interface IScheduleItemRepository : IRepository<ScheduleItem>
+{
+    Task<IEnumerable<ScheduleItem>> GetScheduleItemsByTeachingPlanAsync(int teachingPlanId, CancellationToken cancellationToken = default);
+    Task<IEnumerable<ScheduleItem>> GetScheduleItemsByGroupAsync(int groupId, CancellationToken cancellationToken = default);
+    Task<IEnumerable<ScheduleItem>> GetScheduleItemsByTypeAsync(ScheduleItemType type, CancellationToken cancellationToken = default);
+    Task<IEnumerable<ScheduleItem>> GetUpcomingScheduleItemsAsync(DateTimeOffset fromDate, CancellationToken cancellationToken = default);
+    Task<IEnumerable<ScheduleItem>> GetOverdueScheduleItemsAsync(CancellationToken cancellationToken = default);
+    Task<IEnumerable<ScheduleItem>> GetActiveScheduleItemsAsync(CancellationToken cancellationToken = default);
+}
+
+/// <summary>
+/// Specific repository for Submission entity with domain-specific queries
+/// </summary>
+public interface ISubmissionRepository : IRepository<Submission>
+{
+    Task<IEnumerable<Submission>> GetSubmissionsByStudentAsync(string studentId, CancellationToken cancellationToken = default);
+    Task<IEnumerable<Submission>> GetSubmissionsByScheduleItemAsync(int scheduleItemId, CancellationToken cancellationToken = default);
+    Task<IEnumerable<Submission>> GetSubmissionsByStatusAsync(SubmissionStatus status, CancellationToken cancellationToken = default);
+    Task<Submission?> GetSubmissionByStudentAndItemAsync(string studentId, int scheduleItemId, CancellationToken cancellationToken = default);
+    Task<IEnumerable<Submission>> GetSubmissionsNeedingReviewAsync(CancellationToken cancellationToken = default);
+    Task<IEnumerable<Submission>> GetSubmissionsByTeacherAsync(string teacherId, CancellationToken cancellationToken = default);
+}

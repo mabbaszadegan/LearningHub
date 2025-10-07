@@ -1,3 +1,5 @@
+using EduTrack.Domain.Enums;
+
 namespace EduTrack.Domain.Entities;
 
 /// <summary>
@@ -14,6 +16,7 @@ public class CourseEnrollment
     public bool IsActive { get; private set; } = true;
     public DateTimeOffset? LastAccessedAt { get; private set; }
     public int ProgressPercentage { get; private set; } = 0;
+    public LearningMode LearningMode { get; private set; } = LearningMode.SelfStudy;
 
     // Navigation properties
     public User Student { get; private set; } = null!;
@@ -22,7 +25,7 @@ public class CourseEnrollment
     // Private constructor for EF Core
     private CourseEnrollment() { }
 
-    public static CourseEnrollment Create(string studentId, int courseId)
+    public static CourseEnrollment Create(string studentId, int courseId, LearningMode learningMode = LearningMode.SelfStudy)
     {
         if (string.IsNullOrWhiteSpace(studentId))
             throw new ArgumentException("Student ID cannot be null or empty", nameof(studentId));
@@ -34,6 +37,7 @@ public class CourseEnrollment
         {
             StudentId = studentId,
             CourseId = courseId,
+            LearningMode = learningMode,
             EnrolledAt = DateTimeOffset.UtcNow,
             IsActive = true,
             LastAccessedAt = DateTimeOffset.UtcNow,
@@ -72,6 +76,11 @@ public class CourseEnrollment
 
         ProgressPercentage = percentage;
         LastAccessedAt = DateTimeOffset.UtcNow;
+    }
+
+    public void UpdateLearningMode(LearningMode learningMode)
+    {
+        LearningMode = learningMode;
     }
 
     public bool IsCompleted => CompletedAt.HasValue;

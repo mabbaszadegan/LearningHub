@@ -74,6 +74,13 @@ public class AppDbContext : IdentityDbContext<User>
     public DbSet<InteractiveLessonStage> InteractiveLessonStages { get; set; }
     public DbSet<StageContentItem> StageContentItems { get; set; }
     public DbSet<InteractiveLessonSubChapter> InteractiveLessonSubChapters { get; set; }
+    
+    // Teaching Plan System
+    public DbSet<TeachingPlan> TeachingPlans { get; set; }
+    public DbSet<StudentGroup> StudentGroups { get; set; }
+    public DbSet<GroupMember> GroupMembers { get; set; }
+    public DbSet<ScheduleItem> ScheduleItems { get; set; }
+    public DbSet<Submission> Submissions { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -564,6 +571,119 @@ public class AppDbContext : IdentityDbContext<User>
             entity.HasIndex(e => new { e.InteractiveLessonId, e.SubChapterId }).IsUnique();
             entity.HasIndex(e => new { e.InteractiveLessonId, e.Order });
             entity.HasIndex(e => e.IsActive);
+        });
+
+        // Configure TeachingPlan entity
+        builder.Entity<TeachingPlan>(entity =>
+        {
+            entity.Property(e => e.Title).HasMaxLength(200).IsRequired();
+            entity.Property(e => e.Description).HasMaxLength(1000);
+            entity.Property(e => e.TeacherId).HasMaxLength(450).IsRequired();
+            entity.HasOne(e => e.Course)
+                .WithMany(e => e.TeachingPlans)
+                .HasForeignKey(e => e.CourseId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.Teacher)
+                .WithMany(e => e.TeachingPlans)
+                .HasForeignKey(e => e.TeacherId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasIndex(e => e.CourseId);
+            entity.HasIndex(e => e.TeacherId);
+            entity.HasIndex(e => e.CreatedAt);
+        });
+
+        // Configure StudentGroup entity
+        builder.Entity<StudentGroup>(entity =>
+        {
+            entity.Property(e => e.Name).HasMaxLength(200).IsRequired();
+            entity.HasOne(e => e.TeachingPlan)
+                .WithMany(e => e.Groups)
+                .HasForeignKey(e => e.TeachingPlanId)
+                .OnDelete(DeleteBehavior.NoAction);
+            entity.HasIndex(e => e.TeachingPlanId);
+        });
+
+        // Configure GroupMember entity
+        builder.Entity<GroupMember>(entity =>
+        {
+            entity.Property(e => e.StudentId).HasMaxLength(450).IsRequired();
+            entity.HasOne(e => e.StudentGroup)
+                .WithMany(e => e.Members)
+                .HasForeignKey(e => e.StudentGroupId)
+                .OnDelete(DeleteBehavior.NoAction);
+            entity.HasOne(e => e.Student)
+                .WithMany()
+                .HasForeignKey(e => e.StudentId)
+                .OnDelete(DeleteBehavior.NoAction);
+            entity.HasIndex(e => e.StudentGroupId);
+            entity.HasIndex(e => e.StudentId);
+            entity.HasIndex(e => new { e.StudentGroupId, e.StudentId }).IsUnique();
+        });
+
+        // Configure ScheduleItem entity
+        builder.Entity<ScheduleItem>(entity =>
+        {
+            entity.Property(e => e.Title).HasMaxLength(200).IsRequired();
+            entity.Property(e => e.Description).HasMaxLength(1000);
+            entity.Property(e => e.ContentJson).IsRequired();
+            entity.Property(e => e.MaxScore).HasPrecision(18, 2);
+            entity.HasOne(e => e.TeachingPlan)
+                .WithMany(e => e.ScheduleItems)
+                .HasForeignKey(e => e.TeachingPlanId)
+                .OnDelete(DeleteBehavior.NoAction);
+            entity.HasOne(e => e.Group)
+                .WithMany()
+                .HasForeignKey(e => e.GroupId)
+                .OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(e => e.Lesson)
+                .WithMany()
+                .HasForeignKey(e => e.LessonId)
+                .OnDelete(DeleteBehavior.SetNull);
+            entity.HasIndex(e => new { e.TeachingPlanId, e.StartDate });
+            entity.HasIndex(e => new { e.GroupId, e.DueDate });
+            entity.HasIndex(e => e.Type);
+            entity.HasIndex(e => e.IsMandatory);
+            entity.HasIndex(e => e.StartDate);
+            entity.HasIndex(e => e.DueDate);
+        });
+
+        // Configure Submission entity
+        builder.Entity<Submission>(entity =>
+        {
+            entity.Property(e => e.StudentId).HasMaxLength(450).IsRequired();
+            entity.Property(e => e.FeedbackText).HasMaxLength(2000);
+            entity.Property(e => e.TeacherId).HasMaxLength(450);
+            entity.Property(e => e.PayloadJson).IsRequired();
+            entity.Property(e => e.Grade).HasPrecision(18, 2);
+            entity.HasOne(e => e.ScheduleItem)
+                .WithMany()
+                .HasForeignKey(e => e.ScheduleItemId)
+                .OnDelete(DeleteBehavior.NoAction);
+            entity.HasOne(e => e.Student)
+                .WithMany(e => e.Submissions)
+                .HasForeignKey(e => e.StudentId)
+                .OnDelete(DeleteBehavior.NoAction);
+            entity.HasOne(e => e.Teacher)
+                .WithMany()
+                .HasForeignKey(e => e.TeacherId)
+                .OnDelete(DeleteBehavior.SetNull);
+            entity.HasIndex(e => e.StudentId);
+            entity.HasIndex(e => e.ScheduleItemId);
+            entity.HasIndex(e => e.Status);
+            entity.HasIndex(e => e.SubmittedAt);
+            entity.HasIndex(e => new { e.ScheduleItemId, e.StudentId }).IsUnique();
+        });
+
+        // Update Course entity to include DisciplineType
+        builder.Entity<Course>(entity =>
+        {
+            entity.HasIndex(e => e.DisciplineType);
+        });
+
+        // Update CourseEnrollment entity to include LearningMode
+        builder.Entity<CourseEnrollment>(entity =>
+        {
+            entity.HasIndex(e => e.LearningMode);
         });
 
     }

@@ -1,0 +1,301 @@
+@model EduTrack.Application.Common.Models.StudentAgendaDto
+@{
+    ViewData["Title"] = "My Agenda";
+    var courseId = ViewBag.CourseId as int?;
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title mb-0">
+                        <i class="fas fa-calendar-check me-2"></i>
+                        My Agenda
+                        @if (courseId.HasValue)
+                        {
+                            <span class="text-muted">- @Model.CourseTitle</span>
+                        }
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <!-- Progress Summary -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body text-center">
+                                    <h5>@Model.TotalItems</h5>
+                                    <small>Total Items</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-success text-white">
+                                <div class="card-body text-center">
+                                    <h5>@Model.CompletedCount</h5>
+                                    <small>Completed</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-warning text-white">
+                                <div class="card-body text-center">
+                                    <h5>@Model.OverdueCount</h5>
+                                    <small>Overdue</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-info text-white">
+                                <div class="card-body text-center">
+                                    <h5>@Model.CompletionPercentage.ToString("F1")%</h5>
+                                    <small>Progress</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Learning Mode Info -->
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Learning Mode:</strong> @Model.LearningMode
+                        @if (Model.LearningMode == EduTrack.Domain.Enums.LearningMode.InstructorGuided)
+                        {
+                            <span class="text-muted">- You must complete mandatory assignments by their due dates.</span>
+                        }
+                        else
+                        {
+                            <span class="text-muted">- You can work at your own pace. Assignments are suggestions.</span>
+                        }
+                    </div>
+
+                    <!-- Tabs -->
+                    <ul class="nav nav-tabs" id="agendaTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="upcoming-tab" data-bs-toggle="tab" data-bs-target="#upcoming" type="button" role="tab">
+                                Upcoming (@Model.UpcomingItems.Count)
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="inprogress-tab" data-bs-toggle="tab" data-bs-target="#inprogress" type="button" role="tab">
+                                In Progress (@Model.InProgressItems.Count)
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="overdue-tab" data-bs-toggle="tab" data-bs-target="#overdue" type="button" role="tab">
+                                Overdue (@Model.OverdueItems.Count)
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="completed-tab" data-bs-toggle="tab" data-bs-target="#completed" type="button" role="tab">
+                                Completed (@Model.CompletedItems.Count)
+                            </button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content" id="agendaTabsContent">
+                        <!-- Upcoming Items -->
+                        <div class="tab-pane fade show active" id="upcoming" role="tabpanel">
+                            @if (Model.UpcomingItems.Any())
+                            {
+                                <div class="list-group mt-3">
+                                    @foreach (var item in Model.UpcomingItems)
+                                    {
+                                        <div class="list-group-item">
+                                            <div class="d-flex w-100 justify-content-between">
+                                                <h6 class="mb-1">
+                                                    <i class="fas fa-clock text-info me-2"></i>
+                                                    @item.Title
+                                                    @if (item.IsMandatory)
+                                                    {
+                                                        <span class="badge bg-danger ms-2">Mandatory</span>
+                                                    }
+                                                </h6>
+                                                <small>@item.StartDate.ToString("MMM dd, yyyy")</small>
+                                            </div>
+                                            <p class="mb-1">@item.Description</p>
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <small class="text-muted">
+                                                    <i class="fas fa-tag me-1"></i>@item.Type
+                                                    @if (!string.IsNullOrEmpty(item.GroupName))
+                                                    {
+                                                        <span class="ms-2"><i class="fas fa-users me-1"></i>@item.GroupName</span>
+                                                    }
+                                                </small>
+                                                <a href="@Url.Action("Item", new { id = item.Id })" class="btn btn-sm btn-outline-primary">
+                                                    <i class="fas fa-eye me-1"></i>View
+                                                </a>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="text-center py-4">
+                                    <i class="fas fa-calendar-check fa-2x text-muted mb-2"></i>
+                                    <p class="text-muted">No upcoming assignments</p>
+                                </div>
+                            }
+                        </div>
+
+                        <!-- In Progress Items -->
+                        <div class="tab-pane fade" id="inprogress" role="tabpanel">
+                            @if (Model.InProgressItems.Any())
+                            {
+                                <div class="list-group mt-3">
+                                    @foreach (var item in Model.InProgressItems)
+                                    {
+                                        <div class="list-group-item">
+                                            <div class="d-flex w-100 justify-content-between">
+                                                <h6 class="mb-1">
+                                                    <i class="fas fa-play text-warning me-2"></i>
+                                                    @item.Title
+                                                    @if (item.IsMandatory)
+                                                    {
+                                                        <span class="badge bg-danger ms-2">Mandatory</span>
+                                                    }
+                                                </h6>
+                                                <small>
+                                                    @if (item.DueDate.HasValue)
+                                                    {
+                                                        <span class="text-warning">Due: @item.DueDate.Value.ToString("MMM dd, yyyy")</span>
+                                                    }
+                                                </small>
+                                            </div>
+                                            <p class="mb-1">@item.Description</p>
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <small class="text-muted">
+                                                    <i class="fas fa-tag me-1"></i>@item.Type
+                                                    @if (!string.IsNullOrEmpty(item.GroupName))
+                                                    {
+                                                        <span class="ms-2"><i class="fas fa-users me-1"></i>@item.GroupName</span>
+                                                    }
+                                                </small>
+                                                <a href="@Url.Action("Item", new { id = item.Id })" class="btn btn-sm btn-primary">
+                                                    <i class="fas fa-edit me-1"></i>Continue
+                                                </a>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="text-center py-4">
+                                    <i class="fas fa-play fa-2x text-muted mb-2"></i>
+                                    <p class="text-muted">No assignments in progress</p>
+                                </div>
+                            }
+                        </div>
+
+                        <!-- Overdue Items -->
+                        <div class="tab-pane fade" id="overdue" role="tabpanel">
+                            @if (Model.OverdueItems.Any())
+                            {
+                                <div class="list-group mt-3">
+                                    @foreach (var item in Model.OverdueItems)
+                                    {
+                                        <div class="list-group-item list-group-item-danger">
+                                            <div class="d-flex w-100 justify-content-between">
+                                                <h6 class="mb-1">
+                                                    <i class="fas fa-exclamation-triangle text-danger me-2"></i>
+                                                    @item.Title
+                                                    @if (item.IsMandatory)
+                                                    {
+                                                        <span class="badge bg-danger ms-2">Mandatory</span>
+                                                    }
+                                                </h6>
+                                                <small class="text-danger">
+                                                    Overdue: @item.DueDate?.ToString("MMM dd, yyyy")
+                                                </small>
+                                            </div>
+                                            <p class="mb-1">@item.Description</p>
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <small class="text-muted">
+                                                    <i class="fas fa-tag me-1"></i>@item.Type
+                                                    @if (!string.IsNullOrEmpty(item.GroupName))
+                                                    {
+                                                        <span class="ms-2"><i class="fas fa-users me-1"></i>@item.GroupName</span>
+                                                    }
+                                                </small>
+                                                <a href="@Url.Action("Item", new { id = item.Id })" class="btn btn-sm btn-danger">
+                                                    <i class="fas fa-exclamation-triangle me-1"></i>Complete Now
+                                                </a>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="text-center py-4">
+                                    <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                                    <p class="text-muted">No overdue assignments</p>
+                                </div>
+                            }
+                        </div>
+
+                        <!-- Completed Items -->
+                        <div class="tab-pane fade" id="completed" role="tabpanel">
+                            @if (Model.CompletedItems.Any())
+                            {
+                                <div class="list-group mt-3">
+                                    @foreach (var item in Model.CompletedItems)
+                                    {
+                                        <div class="list-group-item list-group-item-success">
+                                            <div class="d-flex w-100 justify-content-between">
+                                                <h6 class="mb-1">
+                                                    <i class="fas fa-check-circle text-success me-2"></i>
+                                                    @item.Title
+                                                </h6>
+                                                <small class="text-success">Completed</small>
+                                            </div>
+                                            <p class="mb-1">@item.Description</p>
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <small class="text-muted">
+                                                    <i class="fas fa-tag me-1"></i>@item.Type
+                                                    @if (!string.IsNullOrEmpty(item.GroupName))
+                                                    {
+                                                        <span class="ms-2"><i class="fas fa-users me-1"></i>@item.GroupName</span>
+                                                    }
+                                                </small>
+                                                <a href="@Url.Action("Item", new { id = item.Id })" class="btn btn-sm btn-outline-success">
+                                                    <i class="fas fa-eye me-1"></i>View
+                                                </a>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="text-center py-4">
+                                    <i class="fas fa-tasks fa-2x text-muted mb-2"></i>
+                                    <p class="text-muted">No completed assignments yet</p>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Initialize Bootstrap tabs
+            var triggerTabList = [].slice.call(document.querySelectorAll('#agendaTabs button'));
+            triggerTabList.forEach(function (triggerEl) {
+                var tabTrigger = new bootstrap.Tab(triggerEl);
+                
+                triggerEl.addEventListener('click', function (event) {
+                    event.preventDefault();
+                    tabTrigger.show();
+                });
+            });
+        });
+    </script>
+}

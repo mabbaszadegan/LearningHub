@@ -1,3 +1,5 @@
+using EduTrack.Domain.Enums;
+
 namespace EduTrack.Domain.Entities;
 
 /// <summary>
@@ -10,6 +12,7 @@ public class Course
     private readonly List<Class> _classes = new();
     private readonly List<CourseEnrollment> _enrollments = new();
     private readonly List<CourseAccess> _accesses = new();
+    private readonly List<TeachingPlan> _teachingPlans = new();
 
     public int Id { get; private set; }
     public string Title { get; private set; } = string.Empty;
@@ -20,6 +23,7 @@ public class Course
     public DateTimeOffset CreatedAt { get; private set; }
     public DateTimeOffset UpdatedAt { get; private set; }
     public string CreatedBy { get; private set; } = string.Empty;
+    public DisciplineType DisciplineType { get; private set; } = DisciplineType.Other;
 
     // Navigation properties
     public IReadOnlyCollection<Module> Modules => _modules.AsReadOnly();
@@ -27,12 +31,13 @@ public class Course
     public IReadOnlyCollection<Class> Classes => _classes.AsReadOnly();
     public IReadOnlyCollection<CourseEnrollment> Enrollments => _enrollments.AsReadOnly();
     public IReadOnlyCollection<CourseAccess> Accesses => _accesses.AsReadOnly();
+    public IReadOnlyCollection<TeachingPlan> TeachingPlans => _teachingPlans.AsReadOnly();
 
     // Private constructor for EF Core
     private Course() { }
 
     public static Course Create(string title, string? description, string? thumbnail, 
-        int order, string createdBy)
+        int order, string createdBy, DisciplineType disciplineType = DisciplineType.Other)
     {
         if (string.IsNullOrWhiteSpace(title))
             throw new ArgumentException("Title cannot be null or empty", nameof(title));
@@ -50,6 +55,7 @@ public class Course
             Thumbnail = thumbnail,
             Order = order,
             CreatedBy = createdBy,
+            DisciplineType = disciplineType,
             CreatedAt = DateTimeOffset.UtcNow,
             UpdatedAt = DateTimeOffset.UtcNow,
             IsActive = true
@@ -83,6 +89,12 @@ public class Course
             throw new ArgumentException("Order cannot be negative", nameof(order));
 
         Order = order;
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
+    public void UpdateDisciplineType(DisciplineType disciplineType)
+    {
+        DisciplineType = disciplineType;
         UpdatedAt = DateTimeOffset.UtcNow;
     }
 
@@ -203,6 +215,11 @@ public class Course
         return _accesses.Count(a => a.IsActive);
     }
 
+    public int GetTotalTeachingPlans()
+    {
+        return _teachingPlans.Count;
+    }
+
     public void AddEnrollment(CourseEnrollment enrollment)
     {
         if (enrollment == null)
@@ -249,6 +266,31 @@ public class Course
         if (accessToRemove != null)
         {
             _accesses.Remove(accessToRemove);
+            UpdatedAt = DateTimeOffset.UtcNow;
+        }
+    }
+
+    public void AddTeachingPlan(TeachingPlan teachingPlan)
+    {
+        if (teachingPlan == null)
+            throw new ArgumentNullException(nameof(teachingPlan));
+
+        if (_teachingPlans.Any(tp => tp.Id == teachingPlan.Id))
+            throw new InvalidOperationException("Teaching plan already exists for this course");
+
+        _teachingPlans.Add(teachingPlan);
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
+    public void RemoveTeachingPlan(TeachingPlan teachingPlan)
+    {
+        if (teachingPlan == null)
+            throw new ArgumentNullException(nameof(teachingPlan));
+
+        var planToRemove = _teachingPlans.FirstOrDefault(tp => tp.Id == teachingPlan.Id);
+        if (planToRemove != null)
+        {
+            _teachingPlans.Remove(planToRemove);
             UpdatedAt = DateTimeOffset.UtcNow;
         }
     }
