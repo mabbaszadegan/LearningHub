@@ -18,6 +18,8 @@ public class StudentGroupRepository : Repository<StudentGroup>, IStudentGroupRep
     {
         return await _dbSet
             .Where(sg => sg.TeachingPlanId == teachingPlanId)
+            .Include(sg => sg.Members)
+            .ThenInclude(m => m.Student)
             .OrderBy(sg => sg.Name)
             .ToListAsync(cancellationToken);
     }

@@ -7,112 +7,98 @@
 }
 
 <!-- Page Header -->
-<div class="page-header-modern mb-4">
+<div class="page-header-minimal mb-3">
     <div class="d-flex justify-content-between align-items-center">
         <div>
-            <h1 class="page-title-modern">ایجاد گروه دانش‌آموزی</h1>
-            <p class="page-subtitle-modern mb-0">
-                <i class="fas fa-chalkboard-teacher me-2"></i>
-                @teachingPlanTitle - @courseTitle
+            <h1 class="page-title">ایجاد گروه دانش‌آموزی</h1>
+            <p class="page-subtitle mb-0">
+                <a asp-controller="Courses" asp-action="Index" class="breadcrumb-link">
+                    <i class="fas fa-chevron-right"></i> دوره‌ها
+                </a>
+                <span class="mx-2">/</span>
+                <a asp-controller="TeachingPlan" asp-action="Index" asp-route-courseId="@ViewBag.CourseId" class="breadcrumb-link">
+                    @courseTitle
+                </a>
+                <span class="mx-2">/</span>
+                <a asp-controller="StudentGroup" asp-action="Index" asp-route-planId="@teachingPlanId" class="breadcrumb-link">
+                    @teachingPlanTitle
+                </a>
+                <span class="mx-2">/</span>
+                <span>گروه جدید</span>
             </p>
         </div>
-        <div class="header-actions">
-            <a asp-action="Index" asp-route-planId="@teachingPlanId" class="btn-back-modern">
-                <i class="fas fa-arrow-left"></i>
-                <span>بازگشت به گروه‌ها</span>
-            </a>
-        </div>
+        <a asp-action="Index" asp-route-planId="@teachingPlanId" class="btn-action-primary">
+            <i class="fas fa-arrow-right"></i>
+            <span>بازگشت به گروه‌ها</span>
+        </a>
     </div>
 </div>
 
 <!-- Create Group Form -->
-<div class="create-group-container">
-    <div class="row justify-content-center">
-        <div class="col-lg-8">
-            <div class="create-group-card">
-                <div class="card-header-modern">
-                    <h3 class="card-title-modern">
-                        <i class="fas fa-users me-2"></i>
-                        اطلاعات گروه جدید
-                    </h3>
-                    <p class="card-subtitle-modern">
-                        گروه‌های دانش‌آموزی به شما کمک می‌کنند تا دانش‌آموزان را برای فعالیت‌های گروهی و پروژه‌ها سازماندهی کنید
-                    </p>
-                </div>
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card-minimal">
+            <div class="card-body-minimal">
+                <form asp-action="Create" method="post">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+                    
+                    <input asp-for="TeachingPlanId" type="hidden" value="@teachingPlanId" />
+                    
+                    <div class="form-group-minimal">
+                        <label asp-for="Name" class="form-label-minimal">نام گروه</label>
+                        <input asp-for="Name" class="form-control-minimal" placeholder="نام گروه را وارد کنید (مثال: گروه A، تیم پروژه، ...)" />
+                        <span asp-validation-for="Name" class="text-danger"></span>
+                    </div>
 
-                <div class="card-body-modern">
-                    <form asp-action="Create" method="post" class="create-group-form">
-                        @Html.AntiForgeryToken()
-                        <input type="hidden" asp-for="TeachingPlanId" value="@teachingPlanId" />
-                        
-                        <div class="form-group-modern">
-                            <label asp-for="Name" class="form-label-modern">
-                                نام گروه <span class="required">*</span>
-                            </label>
-                            <div class="input-group-modern">
-                                <div class="input-icon">
-                                    <i class="fas fa-tag"></i>
-                                </div>
-                                <input asp-for="Name" class="form-control-modern" 
-                                       placeholder="نام گروه را وارد کنید (مثال: گروه A، تیم پروژه، ...)" 
-                                       autocomplete="off" />
-                            </div>
-                            <span asp-validation-for="Name" class="validation-error"></span>
-                            <div class="form-help">
-                                <i class="fas fa-info-circle"></i>
-                                نام گروه باید واضح و قابل تشخیص باشد
-                            </div>
-                        </div>
-
-                        <!-- Group Suggestions -->
-                        <div class="suggestions-section">
-                            <h4 class="suggestions-title">
-                                <i class="fas fa-lightbulb me-2"></i>
-                                پیشنهادات نام گروه
-                            </h4>
-                            <div class="suggestions-grid">
-                                <button type="button" class="suggestion-btn" onclick="setGroupName('گروه A')">
-                                    <i class="fas fa-a"></i>
-                                    گروه A
-                                </button>
-                                <button type="button" class="suggestion-btn" onclick="setGroupName('گروه B')">
-                                    <i class="fas fa-b"></i>
-                                    گروه B
-                                </button>
-                                <button type="button" class="suggestion-btn" onclick="setGroupName('تیم پروژه')">
-                                    <i class="fas fa-project-diagram"></i>
-                                    تیم پروژه
-                                </button>
-                                <button type="button" class="suggestion-btn" onclick="setGroupName('گروه تحقیقاتی')">
-                                    <i class="fas fa-search"></i>
-                                    گروه تحقیقاتی
-                                </button>
-                                <button type="button" class="suggestion-btn" onclick="setGroupName('تیم ارائه')">
-                                    <i class="fas fa-presentation"></i>
-                                    تیم ارائه
-                                </button>
-                                <button type="button" class="suggestion-btn" onclick="setGroupName('گروه عملی')">
-                                    <i class="fas fa-flask"></i>
-                                    گروه عملی
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Form Actions -->
-                        <div class="form-actions-modern">
-                            <button type="button" class="btn-cancel-modern" onclick="history.back()">
-                                <i class="fas fa-times"></i>
-                                لغو
+                    <!-- Group Suggestions -->
+                    <div class="suggestions-section-minimal">
+                        <h4 class="suggestions-title-minimal">
+                            <i class="fas fa-lightbulb me-2"></i>
+                            پیشنهادات نام گروه
+                        </h4>
+                        <div class="suggestions-grid-minimal">
+                            <button type="button" class="suggestion-btn-minimal" onclick="setGroupName('گروه A')">
+                                <i class="fas fa-a"></i>
+                                گروه A
                             </button>
-                            <button type="submit" class="btn-create-modern">
-                                <i class="fas fa-plus"></i>
-                                ایجاد گروه
+                            <button type="button" class="suggestion-btn-minimal" onclick="setGroupName('گروه B')">
+                                <i class="fas fa-b"></i>
+                                گروه B
+                            </button>
+                            <button type="button" class="suggestion-btn-minimal" onclick="setGroupName('تیم پروژه')">
+                                <i class="fas fa-project-diagram"></i>
+                                تیم پروژه
+                            </button>
+                            <button type="button" class="suggestion-btn-minimal" onclick="setGroupName('گروه تحقیقاتی')">
+                                <i class="fas fa-search"></i>
+                                گروه تحقیقاتی
+                            </button>
+                            <button type="button" class="suggestion-btn-minimal" onclick="setGroupName('تیم ارائه')">
+                                <i class="fas fa-presentation"></i>
+                                تیم ارائه
+                            </button>
+                            <button type="button" class="suggestion-btn-minimal" onclick="setGroupName('گروه عملی')">
+                                <i class="fas fa-flask"></i>
+                                گروه عملی
                             </button>
                         </div>
-                    </form>
-                </div>
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div class="form-actions-minimal">
+                        <a asp-action="Index" asp-route-planId="@teachingPlanId" class="btn-minimal btn-secondary-minimal">
+                            <i class="fas fa-times"></i>
+                            <span>انصراف</span>
+                        </a>
+                        <button type="submit" class="btn-minimal btn-primary-minimal">
+                            <i class="fas fa-save"></i>
+                            <span>ایجاد گروه</span>
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
+    </div>
 
         <!-- Info Sidebar -->
         <div class="col-lg-4">
@@ -171,332 +157,178 @@
 
 @section Styles {
     <style>
-        /* Modern Page Header */
-        .page-header-modern {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 2rem;
-            border-radius: 12px;
-            margin-bottom: 2rem;
+        /* Breadcrumb Link */
+        .breadcrumb-link {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 0.813rem;
+            transition: all 0.2s;
         }
 
-        .page-title-modern {
-            font-size: 1.75rem;
-            font-weight: 700;
-            margin: 0;
+        .breadcrumb-link:hover {
+            color: #5a6fd8;
+            text-decoration: underline;
         }
 
-        .page-subtitle-modern {
-            font-size: 1rem;
-            opacity: 0.9;
-            margin: 0.5rem 0 0 0;
-        }
-
-        .btn-back-modern {
+        /* Action Button */
+        .btn-action-primary {
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
-            padding: 0.75rem 1.5rem;
-            background: transparent;
+            padding: 0.625rem 1.125rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            border: 2px solid rgba(255, 255, 255, 0.3);
             border-radius: 8px;
             text-decoration: none;
-            font-weight: 600;
-            transition: all 0.3s ease;
+            font-size: 0.813rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            border: none;
         }
 
-        .btn-back-modern:hover {
-            background: rgba(255, 255, 255, 0.1);
-            border-color: rgba(255, 255, 255, 0.5);
+        .btn-action-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
             color: white;
         }
 
-        /* Create Group Container */
-        .create-group-container {
-            margin-bottom: 2rem;
-        }
-
-        .create-group-card {
+        /* Card Minimal */
+        .card-minimal {
             background: white;
-            border-radius: 16px;
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
             border: 1px solid #e9ecef;
             overflow: hidden;
         }
 
-        .card-header-modern {
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-            padding: 2rem;
-            border-bottom: 1px solid #e9ecef;
-        }
-
-        .card-title-modern {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #2c3e50;
-            margin: 0 0 0.5rem 0;
-        }
-
-        .card-subtitle-modern {
-            color: #6c757d;
-            margin: 0;
-            font-size: 1rem;
-        }
-
-        .card-body-modern {
+        .card-body-minimal {
             padding: 2rem;
         }
 
-        /* Form Styles */
-        .form-group-modern {
-            margin-bottom: 2rem;
+        /* Form Minimal */
+        .form-group-minimal {
+            margin-bottom: 1.25rem;
         }
 
-        .form-label-modern {
+        .form-label-minimal {
             display: block;
-            font-weight: 600;
-            color: #2c3e50;
-            margin-bottom: 0.75rem;
-            font-size: 1rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #4a5568;
+            margin-bottom: 0.5rem;
         }
 
-        .required {
-            color: #dc3545;
-        }
-
-        .input-group-modern {
-            position: relative;
-        }
-
-        .input-icon {
-            position: absolute;
-            left: 1rem;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #6c757d;
-            z-index: 2;
-        }
-
-        .form-control-modern {
+        .form-control-minimal {
             width: 100%;
-            padding: 1rem 1rem 1rem 3rem;
-            border: 2px solid #e9ecef;
-            border-radius: 12px;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-            background: #f8f9fa;
+            padding: 0.625rem 0.875rem;
+            font-size: 0.875rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            transition: all 0.2s;
         }
 
-        .form-control-modern:focus {
+        .form-control-minimal:focus {
             outline: none;
             border-color: #667eea;
-            background: white;
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
 
-        .validation-error {
-            color: #dc3545;
-            font-size: 0.875rem;
-            margin-top: 0.5rem;
-            display: block;
-        }
-
-        .form-help {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            color: #6c757d;
-            font-size: 0.875rem;
-            margin-top: 0.5rem;
-        }
-
         /* Suggestions Section */
-        .suggestions-section {
-            margin-bottom: 2rem;
-            padding: 1.5rem;
+        .suggestions-section-minimal {
+            margin-bottom: 1.5rem;
+            padding: 1rem;
             background: #f8f9fa;
-            border-radius: 12px;
+            border-radius: 6px;
             border: 1px solid #e9ecef;
         }
 
-        .suggestions-title {
-            font-size: 1.1rem;
+        .suggestions-title-minimal {
+            font-size: 0.875rem;
             font-weight: 600;
-            color: #2c3e50;
-            margin-bottom: 1rem;
+            color: #2d3748;
+            margin-bottom: 0.75rem;
         }
 
-        .suggestions-grid {
+        .suggestions-grid-minimal {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 0.75rem;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 0.5rem;
         }
 
-        .suggestion-btn {
+        .suggestion-btn-minimal {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
-            padding: 0.75rem 1rem;
+            gap: 0.375rem;
+            padding: 0.5rem 0.75rem;
             background: white;
-            border: 2px solid #e9ecef;
-            border-radius: 8px;
-            color: #6c757d;
-            font-size: 0.9rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            color: #4a5568;
+            font-size: 0.813rem;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.2s;
         }
 
-        .suggestion-btn:hover {
+        .suggestion-btn-minimal:hover {
             border-color: #667eea;
             color: #667eea;
             background: rgba(102, 126, 234, 0.05);
         }
 
         /* Form Actions */
-        .form-actions-modern {
+        .form-actions-minimal {
             display: flex;
-            gap: 1rem;
             justify-content: flex-end;
-            padding-top: 2rem;
+            gap: 0.75rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
             border-top: 1px solid #e9ecef;
         }
 
-        .btn-cancel-modern {
+        /* Buttons Minimal */
+        .btn-minimal {
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
-            padding: 0.75rem 1.5rem;
-            background: #6c757d;
-            color: white;
+            padding: 0.625rem 1.25rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            border-radius: 6px;
             border: none;
-            border-radius: 8px;
-            font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.2s;
+            text-decoration: none;
         }
 
-        .btn-cancel-modern:hover {
-            background: #5a6268;
-            transform: translateY(-2px);
-        }
-
-        .btn-create-modern {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.75rem 1.5rem;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        .btn-primary-minimal {
+            background: #667eea;
             color: white;
-            border: none;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
         }
 
-        .btn-create-modern:hover {
-            transform: translateY(-2px);
+        .btn-primary-minimal:hover {
+            background: #5568d3;
+            transform: translateY(-1px);
             box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
         }
 
-        /* Info Sidebar */
-        .info-sidebar {
-            position: sticky;
-            top: 2rem;
-        }
-
-        .info-card {
+        .btn-secondary-minimal {
             background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-            border: 1px solid #e9ecef;
-            margin-bottom: 1.5rem;
-            overflow: hidden;
+            color: #718096;
+            border: 1px solid #e2e8f0;
         }
 
-        .info-header {
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-            padding: 1.5rem;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            border-bottom: 1px solid #e9ecef;
-        }
-
-        .info-header i {
-            color: #667eea;
-            font-size: 1.25rem;
-        }
-
-        .info-header h4 {
-            margin: 0;
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: #2c3e50;
-        }
-
-        .info-content {
-            padding: 1.5rem;
-        }
-
-        .info-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        .info-list li {
-            display: flex;
-            align-items: flex-start;
-            gap: 0.75rem;
-            margin-bottom: 0.75rem;
-            color: #6c757d;
-        }
-
-        .info-list li:last-child {
-            margin-bottom: 0;
-        }
-
-        .info-list i {
-            color: #28a745;
-            margin-top: 0.125rem;
-        }
-
-        .tip-item {
-            margin-bottom: 1rem;
-        }
-
-        .tip-item:last-child {
-            margin-bottom: 0;
-        }
-
-        .tip-item strong {
-            color: #2c3e50;
-            display: block;
-            margin-bottom: 0.25rem;
-        }
-
-        .tip-item p {
-            color: #6c757d;
-            margin: 0;
-            font-size: 0.9rem;
+        .btn-secondary-minimal:hover {
+            background: #f7fafc;
+            color: #2d3748;
+            border-color: #cbd5e0;
         }
 
         /* Responsive */
-        @@media (max-width: 991.98px) {
-            .info-sidebar {
-                position: static;
-                margin-top: 2rem;
-            }
-        }
-
         @@media (max-width: 767.98px) {
-            .form-actions-modern {
+            .form-actions-minimal {
                 flex-direction: column;
             }
 
-            .suggestions-grid {
+            .suggestions-grid-minimal {
                 grid-template-columns: 1fr;
             }
         }

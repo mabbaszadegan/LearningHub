@@ -57,6 +57,7 @@ public class StudentGroupController : Controller
         ViewBag.TeachingPlanId = planId;
         ViewBag.TeachingPlanTitle = teachingPlan.Value.Title;
         ViewBag.CourseTitle = teachingPlan.Value.CourseTitle;
+        ViewBag.CourseId = teachingPlan.Value.CourseId;
         return View(groups.Value);
     }
 
@@ -83,6 +84,7 @@ public class StudentGroupController : Controller
         ViewBag.TeachingPlanId = planId;
         ViewBag.TeachingPlanTitle = teachingPlan.Value.Title;
         ViewBag.CourseTitle = teachingPlan.Value.CourseTitle;
+        ViewBag.CourseId = teachingPlan.Value.CourseId;
         return View();
     }
 
@@ -134,14 +136,15 @@ public class StudentGroupController : Controller
             return Forbid("You don't have permission to manage this group");
         }
 
-        // Get all students enrolled in the course
-        var courseStudents = await _mediator.Send(new GetCourseStudentsQuery(teachingPlan.Value.CourseId));
-        var availableStudents = courseStudents.IsSuccess ? courseStudents.Value : new List<UserDto>();
+        // Get available students (enrolled but not in any group of this teaching plan)
+        var availableStudentsQuery = await _mediator.Send(new GetAvailableStudentsForTeachingPlanQuery(teachingPlan.Value.Id));
+        var availableStudents = availableStudentsQuery.IsSuccess ? availableStudentsQuery.Value : new List<UserDto>();
 
         ViewBag.GroupId = groupId;
         ViewBag.GroupName = group.Value.Name;
         ViewBag.TeachingPlanTitle = teachingPlan.Value.Title;
         ViewBag.CourseTitle = teachingPlan.Value.CourseTitle;
+        ViewBag.CourseId = teachingPlan.Value.CourseId;
         ViewBag.AvailableStudents = availableStudents;
         return View(group.Value);
     }
@@ -188,6 +191,46 @@ public class StudentGroupController : Controller
         }
 
         return RedirectToAction(nameof(ManageMembers), new { groupId = command.GroupId });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> RemoveMemberAjax(RemoveGroupMemberCommand command)
+    {
+        var currentUser = await _userManager.GetUserAsync(User);
+        if (currentUser == null)
+        {
+            return Json(new { success = false, message = "کاربر احراز هویت نشده" });
+        }
+
+        // Verify the group exists and user has permission
+        var group = await _mediator.Send(new GetStudentGroupByIdQuery(command.GroupId));
+        if (!group.IsSuccess || group.Value == null)
+        {
+            return Json(new { success = false, message = "گروه یافت نشد" });
+        }
+
+        // Get the teaching plan to verify teacher permissions
+        var teachingPlan = await _mediator.Send(new GetTeachingPlanByIdQuery(group.Value.TeachingPlanId));
+        if (!teachingPlan.IsSuccess || teachingPlan.Value == null)
+        {
+            return Json(new { success = false, message = "پلن آموزشی یافت نشد" });
+        }
+
+        // Verify the current user is the teacher of this teaching plan
+        if (teachingPlan.Value.TeacherId != currentUser.Id)
+        {
+            return Json(new { success = false, message = "شما اجازه حذف دانش‌آموز از این گروه را ندارید" });
+        }
+
+        var result = await _mediator.Send(command);
+        
+        if (result.IsSuccess)
+        {
+            return Json(new { success = true, message = "دانش‌آموز با موفقیت حذف شد" });
+        }
+        
+        return Json(new { success = false, message = result.Error ?? "خطا در حذف دانش‌آموز" });
     }
 
     [HttpPost]
@@ -254,6 +297,7 @@ public class StudentGroupController : Controller
         ViewBag.TeachingPlanId = group.Value.TeachingPlanId;
         ViewBag.TeachingPlanTitle = teachingPlan.Value.Title;
         ViewBag.CourseTitle = teachingPlan.Value.CourseTitle;
+        ViewBag.CourseId = teachingPlan.Value.CourseId;
         return View(command);
     }
 
@@ -284,5 +328,57 @@ public class StudentGroupController : Controller
         }
 
         return RedirectToAction(nameof(Index), new { planId = result.Value?.TeachingPlanId ?? 0 });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> TransferMember(TransferGroupMemberCommand command)
+    {
+        var currentUser = await _userManager.GetUserAsync(User);
+        if (currentUser == null)
+        {
+            return Json(new { success = false, message = "کاربر احراز هویت نشده" });
+        }
+
+        // Verify both groups exist and user has permission
+        var fromGroup = await _mediator.Send(new GetStudentGroupByIdQuery(command.FromGroupId));
+        if (!fromGroup.IsSuccess || fromGroup.Value == null)
+        {
+            return Json(new { success = false, message = "گروه مبدأ یافت نشد" });
+        }
+
+        var toGroup = await _mediator.Send(new GetStudentGroupByIdQuery(command.ToGroupId));
+        if (!toGroup.IsSuccess || toGroup.Value == null)
+        {
+            return Json(new { success = false, message = "گروه مقصد یافت نشد" });
+        }
+
+        // Verify both groups belong to the same teaching plan
+        if (fromGroup.Value.TeachingPlanId != toGroup.Value.TeachingPlanId)
+        {
+            return Json(new { success = false, message = "گروه‌ها باید متعلق به یک پلن آموزشی باشند" });
+        }
+
+        // Get the teaching plan to verify teacher permissions
+        var teachingPlan = await _mediator.Send(new GetTeachingPlanByIdQuery(fromGroup.Value.TeachingPlanId));
+        if (!teachingPlan.IsSuccess || teachingPlan.Value == null)
+        {
+            return Json(new { success = false, message = "پلن آموزشی یافت نشد" });
+        }
+
+        // Verify the current user is the teacher of this teaching plan
+        if (teachingPlan.Value.TeacherId != currentUser.Id)
+        {
+            return Json(new { success = false, message = "شما اجازه انتقال دانش‌آموز بین این گروه‌ها را ندارید" });
+        }
+
+        var result = await _mediator.Send(command);
+        
+        if (result.IsSuccess)
+        {
+            return Json(new { success = true, message = "دانش‌آموز با موفقیت منتقل شد" });
+        }
+        
+        return Json(new { success = false, message = result.Error ?? "خطا در انتقال دانش‌آموز" });
     }
 }

@@ -9,20 +9,20 @@
 <div class="page-header-minimal mb-3">
     <div class="d-flex justify-content-between align-items-center">
         <div>
-            <h1 class="page-title">پلن‌های آموزشی - @courseTitle</h1>
-            <p class="page-subtitle mb-0">مدیریت و سازماندهی پلن‌های آموزشی دوره</p>
+            <h1 class="page-title">پلن‌های آموزشی</h1>
+            <p class="page-subtitle mb-0">
+                <a asp-controller="Courses" asp-action="Index" class="breadcrumb-link">
+                    <i class="fas fa-chevron-right"></i> دوره‌ها
+                </a>
+                <span class="mx-2">/</span>
+                <span>@courseTitle</span>
+            </p>
         </div>
-                    <div>
-            <a asp-action="Create" asp-route-courseId="@courseId" class="btn-action-primary">
-                <i class="fas fa-plus"></i>
-                <span>پلن جدید</span>
-                        </a>
-            <a asp-controller="Courses" asp-action="Index" class="btn-action-secondary">
-                <i class="fas fa-arrow-left"></i>
-                <span>بازگشت به دوره‌ها</span>
-                        </a>
-                    </div>
-                </div>
+        <a asp-action="Create" asp-route-courseId="@courseId" class="btn-action-primary">
+            <i class="fas fa-plus"></i>
+            <span>پلن جدید</span>
+        </a>
+    </div>
 </div>
 
                     @if (Model.Any())

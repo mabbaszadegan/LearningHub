@@ -18,7 +18,7 @@ public class GetTeachingPlanByIdQueryHandler : IRequestHandler<GetTeachingPlanBy
     {
         try
         {
-            var teachingPlan = await _teachingPlanRepository.GetByIdAsync(request.Id, cancellationToken);
+            var teachingPlan = await _teachingPlanRepository.GetTeachingPlanWithAllAsync(request.Id, cancellationToken);
             
             if (teachingPlan == null)
             {

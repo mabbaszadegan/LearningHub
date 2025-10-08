@@ -40,16 +40,46 @@ public class AddGroupMembersCommandHandler : IRequestHandler<AddGroupMembersComm
             return Result<bool>.Failure("You don't have permission to manage this group");
         }
 
+        // Get all students already in groups of this teaching plan
+        var studentsInOtherGroups = group.TeachingPlan.Groups
+            .Where(g => g.Id != request.GroupId)
+            .SelectMany(g => g.Members)
+            .Select(m => m.StudentId)
+            .ToHashSet();
+
         var addedCount = 0;
-        foreach (var studentId in request.StudentIds)
+        var errors = new List<string>();
+
+        // Handle both single student ID and comma-separated IDs
+        var studentIds = request.StudentIds;
+        if (studentIds.Count == 1 && studentIds[0].Contains(','))
         {
-            // Check if student is already in the group
-            if (!group.HasStudent(studentId))
+            studentIds = studentIds[0].Split(',').Select(s => s.Trim()).ToList();
+        }
+
+        foreach (var studentId in studentIds)
+        {
+            // Check if student is already in this group
+            if (group.HasStudent(studentId))
             {
-                var member = GroupMember.Create(request.GroupId, studentId);
-                await _groupMemberRepository.AddAsync(member, cancellationToken);
-                addedCount++;
+                continue; // Skip if already in this group
             }
+
+            // Check if student is already in another group of this teaching plan
+            if (studentsInOtherGroups.Contains(studentId))
+            {
+                errors.Add($"Student is already assigned to another group in this teaching plan");
+                continue;
+            }
+
+            var member = GroupMember.Create(request.GroupId, studentId);
+            await _groupMemberRepository.AddAsync(member, cancellationToken);
+            addedCount++;
+        }
+
+        if (errors.Any())
+        {
+            return Result<bool>.Failure(string.Join("; ", errors));
         }
 
         if (addedCount > 0)

@@ -6,144 +6,166 @@
     var courseTitle = ViewBag.CourseTitle as string;
 }
 
+@Html.AntiForgeryToken()
+
 <!-- Page Header -->
-<div class="page-header-modern mb-4">
+<div class="page-header-minimal mb-3">
     <div class="d-flex justify-content-between align-items-center">
         <div>
-            <h1 class="page-title-modern">مدیریت گروه‌های دانش‌آموزی</h1>
-            <p class="page-subtitle-modern mb-0">
-                <i class="fas fa-chalkboard-teacher me-2"></i>
-                @teachingPlanTitle - @courseTitle
+            <h1 class="page-title">گروه‌های دانش‌آموزی</h1>
+            <p class="page-subtitle mb-0">
+                <a asp-controller="Courses" asp-action="Index" class="breadcrumb-link">
+                    <i class="fas fa-chevron-right"></i> دوره‌ها
+                </a>
+                <span class="mx-2">/</span>
+                <a asp-controller="TeachingPlan" asp-action="Index" asp-route-courseId="@ViewBag.CourseId" class="breadcrumb-link">
+                    @courseTitle
+                </a>
+                <span class="mx-2">/</span>
+                <span>@teachingPlanTitle</span>
             </p>
         </div>
-        <div class="header-actions">
-            <a asp-action="Create" asp-route-planId="@teachingPlanId" class="btn-create-group">
-                <i class="fas fa-plus"></i>
-                <span>گروه جدید</span>
-            </a>
-            <a asp-controller="TeachingPlan" asp-action="Index" asp-route-courseId="@ViewBag.CourseId" class="btn-back-modern">
-                <i class="fas fa-arrow-left"></i>
-                <span>بازگشت به پلن آموزشی</span>
-            </a>
-        </div>
+        <a asp-action="Create" asp-route-planId="@teachingPlanId" class="btn-action-primary">
+            <i class="fas fa-plus"></i>
+            <span>گروه جدید</span>
+        </a>
     </div>
 </div>
 
+<!-- Filter/Sort Info Bar -->
 @if (Model.Any())
 {
-    <!-- Groups Overview Stats -->
-    <div class="groups-overview mb-4">
-        <div class="row g-3">
-            <div class="col-md-3">
-                <div class="stat-card-modern">
-                    <div class="stat-icon">
-                        <i class="fas fa-users"></i>
-                    </div>
-                    <div class="stat-content">
-                        <h3>@Model.Count</h3>
-                        <p>تعداد گروه‌ها</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="stat-card-modern">
-                    <div class="stat-icon">
-                        <i class="fas fa-user-graduate"></i>
-                    </div>
-                    <div class="stat-content">
-                        <h3>@Model.Sum(g => g.MemberCount)</h3>
-                        <p>کل دانش‌آموزان</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="stat-card-modern">
-                    <div class="stat-icon">
-                        <i class="fas fa-chart-line"></i>
-                    </div>
-                    <div class="stat-content">
-                        <h3>@(Model.Count > 0 ? (Model.Sum(g => g.MemberCount) / Model.Count).ToString("F1") : "0")</h3>
-                        <p>میانگین اعضا</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="stat-card-modern">
-                    <div class="stat-icon">
-                        <i class="fas fa-balance-scale"></i>
-                    </div>
-                    <div class="stat-content">
-                        <h3>@(Model.Count > 0 ? Model.Max(g => g.MemberCount) - Model.Min(g => g.MemberCount) : 0)</h3>
-                        <p>تفاوت اعضا</p>
-                    </div>
-                </div>
-            </div>
+    <div class="filter-bar-minimal mb-3">
+        <div class="filter-group">
+            <button class="filter-btn-minimal active" data-filter="all">
+                <i class="fas fa-users"></i>
+                <span>همه (@Model.Count)</span>
+            </button>
+            <button class="filter-btn-minimal" data-filter="with-members">
+                <i class="fas fa-user-check"></i>
+                <span>با عضو (@Model.Count(g => g.MemberCount > 0))</span>
+            </button>
+            <button class="filter-btn-minimal" data-filter="empty">
+                <i class="fas fa-user-plus"></i>
+                <span>بدون عضو (@Model.Count(g => g.MemberCount == 0))</span>
+            </button>
+        </div>
+        <div class="drag-info">
+            <i class="fas fa-info-circle"></i>
+            <span>گروه‌های دانش‌آموزی برای سازماندهی فعالیت‌های گروهی</span>
         </div>
     </div>
+}
 
-    <!-- Groups Grid -->
-    <div class="groups-grid-modern">
+@if (Model.Any())
+{
+    <!-- Groups List with Enhanced Style -->
+    <div class="groups-sortable-list" id="groupsContainer">
         @foreach (var group in Model.OrderBy(g => g.Name))
         {
-            <div class="group-card-modern" data-group-id="@group.Id">
-                <div class="group-card-header">
-                    <div class="group-info">
-                        <h3 class="group-name">@group.Name</h3>
-                        <div class="group-meta">
-                            <span class="member-count">
-                                <i class="fas fa-users"></i>
-                                @group.MemberCount عضو
-                            </span>
+            <div class="group-card-draggable" data-group-id="@group.Id" data-member-count="@group.MemberCount">
+                <!-- Group Info Section -->
+                <div class="group-card-content">
+                    <!-- Header Section -->
+                    <div class="group-header-section">
+                        <div class="group-info">
+                            <h3 class="group-title-main">@group.Name</h3>
+                            <div class="group-meta-info">
+                                <span class="member-count-badge">
+                                    <i class="fas fa-users"></i>
+                                    @group.MemberCount عضو
+                                </span>
+                            </div>
+                        </div>
+                        <div class="group-actions-top">
+                            <div class="dropdown">
+                                <button class="btn-icon-minimal" data-bs-toggle="dropdown">
+                                    <i class="fas fa-ellipsis-v"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li>
+                                        <a class="dropdown-item" href="#" onclick="editGroup(@group.Id, '@group.Name')">
+                                            <i class="fas fa-edit"></i>ویرایش گروه
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <form asp-action="Delete" asp-route-id="@group.Id" method="post" 
+                                              onsubmit="return confirm('آیا از حذف این گروه اطمینان دارید؟')">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="dropdown-item text-danger">
+                                                <i class="fas fa-trash"></i>حذف گروه
+                                            </button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </div>
                         </div>
                     </div>
-                    <div class="group-actions">
-                        <button class="action-btn-modern edit-btn" onclick="editGroup(@group.Id, '@group.Name')" title="ویرایش گروه">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="action-btn-modern delete-btn" onclick="deleteGroup(@group.Id, '@group.Name')" title="حذف گروه">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="group-members-preview">
+                    
+                    <!-- Members Preview Section -->
                     @if (group.Members.Any())
                     {
-                        <div class="members-list">
-                            @foreach (var member in group.Members.Take(3))
-                            {
-                                <div class="member-item">
-                                    <div class="member-avatar">
-                                        <i class="fas fa-user"></i>
+                        <div class="members-preview-section">
+                            <div class="members-header">
+                                <span class="members-title">
+                                    <i class="fas fa-user-friends"></i>
+                                    اعضای گروه
+                                </span>
+                            </div>
+                            <div class="members-list-preview" data-group-id="@group.Id">
+                                @foreach (var member in group.Members.Take(4))
+                                {
+                                    <div class="member-item-preview draggable-student" 
+                                         data-student-id="@member.StudentId" 
+                                         data-student-name="@member.StudentName"
+                                         data-group-id="@group.Id"
+                                         draggable="true">
+                                        <div class="member-avatar-small">
+                                            <i class="fas fa-user"></i>
+                                        </div>
+                                        <div class="member-details">
+                                            <span class="member-name-small">@member.StudentName</span>
+                                        </div>
+                                        <div class="member-actions-preview">
+                                            <button class="btn-remove-member-preview" 
+                                                    onclick="removeMember('@member.StudentId', '@member.StudentName', @group.Id)"
+                                                    title="حذف از گروه">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
                                     </div>
-                                    <div class="member-info">
-                                        <span class="member-name">@member.StudentName</span>
-                                        <span class="member-email">@member.StudentEmail</span>
+                                }
+                                @if (group.Members.Count > 4)
+                                {
+                                    <div class="more-members-indicator">
+                                        <span>+@(group.Members.Count - 4) عضو دیگر</span>
                                     </div>
-                                </div>
-                            }
-                            @if (group.Members.Count > 3)
-                            {
-                                <div class="more-members">
-                                    <span>+@(group.Members.Count - 3) عضو دیگر</span>
-                                </div>
-                            }
+                                }
+                            </div>
                         </div>
                     }
                     else
                     {
-                        <div class="no-members">
-                            <i class="fas fa-user-plus"></i>
-                            <span>هنوز عضوی اضافه نشده</span>
+                        <div class="no-members-section">
+                            <div class="no-members-content">
+                                <i class="fas fa-user-plus"></i>
+                                <span>هنوز عضوی اضافه نشده</span>
+                            </div>
                         </div>
                     }
-                </div>
-
-                <div class="group-card-footer">
-                    <a asp-action="ManageMembers" asp-route-groupId="@group.Id" class="btn-manage-members">
-                        <i class="fas fa-cog"></i>
-                        <span>مدیریت اعضا</span>
-                    </a>
+                    
+                    <!-- Action Buttons -->
+                    <div class="group-actions-footer">
+                        <a asp-action="ManageMembers" asp-route-groupId="@group.Id" class="action-btn-footer primary">
+                            <i class="fas fa-users"></i>
+                            <span>مدیریت اعضا</span>
+                        </a>
+                        <a href="#" onclick="editGroup(@group.Id, '@group.Name')" class="action-btn-footer info">
+                            <i class="fas fa-edit"></i>
+                            <span>ویرایش</span>
+                        </a>
+                    </div>
                 </div>
             </div>
         }
@@ -152,15 +174,15 @@
 else
 {
     <!-- Empty State -->
-    <div class="empty-state-modern">
-        <div class="empty-icon-modern">
+    <div class="empty-state-minimal">
+        <div class="empty-icon">
             <i class="fas fa-users"></i>
         </div>
         <h3>هنوز گروهی ایجاد نشده</h3>
         <p>اولین گروه دانش‌آموزی خود را ایجاد کنید تا بتوانید دانش‌آموزان را سازماندهی کنید</p>
-        <a asp-action="Create" asp-route-planId="@teachingPlanId" class="btn-create-group">
+        <a asp-action="Create" asp-route-planId="@teachingPlanId" class="btn-action-primary">
             <i class="fas fa-plus"></i>
-            <span>ایجاد گروه جدید</span>
+            <span>افزودن گروه جدید</span>
         </a>
     </div>
 }
@@ -193,348 +215,445 @@ else
 
 @section Styles {
     <style>
-        /* Modern Page Header */
-        .page-header-modern {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 2rem;
-            border-radius: 12px;
-            margin-bottom: 2rem;
+        /* Breadcrumb Link */
+        .breadcrumb-link {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 0.813rem;
+            transition: all 0.2s;
         }
 
-        .page-title-modern {
-            font-size: 1.75rem;
-            font-weight: 700;
-            margin: 0;
+        .breadcrumb-link:hover {
+            color: #5a6fd8;
+            text-decoration: underline;
         }
 
-        .page-subtitle-modern {
-            font-size: 1rem;
-            opacity: 0.9;
-            margin: 0.5rem 0 0 0;
-        }
-
-        .header-actions {
-            display: flex;
-            gap: 1rem;
-        }
-
-        .btn-create-group {
+        /* Action Button */
+        .btn-action-primary {
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
-            padding: 0.75rem 1.5rem;
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-
-        .btn-create-group:hover {
-            background: rgba(255, 255, 255, 0.3);
-            border-color: rgba(255, 255, 255, 0.5);
-            color: white;
-            transform: translateY(-2px);
-        }
-
-        .btn-back-modern {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.75rem 1.5rem;
-            background: transparent;
-            color: white;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-
-        .btn-back-modern:hover {
-            background: rgba(255, 255, 255, 0.1);
-            border-color: rgba(255, 255, 255, 0.5);
-            color: white;
-        }
-
-        /* Groups Overview Stats */
-        .groups-overview {
-            margin-bottom: 2rem;
-        }
-
-        .stat-card-modern {
-            background: white;
-            border-radius: 12px;
-            padding: 1.5rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-            border: 1px solid #e9ecef;
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            transition: all 0.3s ease;
-        }
-
-        .stat-card-modern:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-        }
-
-        .stat-icon {
-            width: 60px;
-            height: 60px;
-            border-radius: 12px;
+            padding: 0.625rem 1.125rem;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
             color: white;
-            font-size: 1.5rem;
-        }
-
-        .stat-content h3 {
-            font-size: 2rem;
-            font-weight: 700;
-            color: #2c3e50;
-            margin: 0;
-        }
-
-        .stat-content p {
-            color: #6c757d;
-            margin: 0;
-            font-size: 0.9rem;
-        }
-
-        /* Groups Grid */
-        .groups-grid-modern {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-            gap: 1.5rem;
-        }
-
-        .group-card-modern {
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-            border: 1px solid #e9ecef;
-            overflow: hidden;
-            transition: all 0.3s ease;
-        }
-
-        .group-card-modern:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
-        }
-
-        .group-card-header {
-            padding: 1.5rem;
-            border-bottom: 1px solid #f8f9fa;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .group-name {
-            font-size: 1.25rem;
-            font-weight: 700;
-            color: #2c3e50;
-            margin: 0;
-        }
-
-        .group-meta {
-            margin-top: 0.5rem;
-        }
-
-        .member-count {
-            color: #6c757d;
-            font-size: 0.9rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .group-actions {
-            display: flex;
-            gap: 0.5rem;
-        }
-
-        .action-btn-modern {
-            width: 36px;
-            height: 36px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 0.813rem;
+            font-weight: 500;
+            transition: all 0.2s;
             border: none;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            font-size: 0.9rem;
         }
 
-        .edit-btn {
-            background: rgba(23, 162, 184, 0.1);
-            color: #17a2b8;
-        }
-
-        .edit-btn:hover {
-            background: #17a2b8;
-            color: white;
-        }
-
-        .delete-btn {
-            background: rgba(220, 53, 69, 0.1);
-            color: #dc3545;
-        }
-
-        .delete-btn:hover {
-            background: #dc3545;
-            color: white;
-        }
-
-        /* Group Members Preview */
-        .group-members-preview {
-            padding: 1.5rem;
-        }
-
-        .members-list {
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
-        }
-
-        .member-item {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-
-        .member-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 0.9rem;
-        }
-
-        .member-info {
-            flex: 1;
-        }
-
-        .member-name {
-            display: block;
-            font-weight: 600;
-            color: #2c3e50;
-            font-size: 0.9rem;
-        }
-
-        .member-email {
-            display: block;
-            color: #6c757d;
-            font-size: 0.8rem;
-        }
-
-        .more-members {
-            text-align: center;
-            padding: 0.5rem;
-            color: #6c757d;
-            font-size: 0.9rem;
-            background: #f8f9fa;
-            border-radius: 8px;
-        }
-
-        .no-members {
-            text-align: center;
-            padding: 2rem;
-            color: #6c757d;
-        }
-
-        .no-members i {
-            font-size: 2rem;
-            margin-bottom: 1rem;
-            display: block;
-        }
-
-        /* Group Card Footer */
-        .group-card-footer {
-            padding: 1rem 1.5rem;
-            background: #f8f9fa;
-            border-top: 1px solid #e9ecef;
-        }
-
-        .btn-manage-members {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.75rem 1.5rem;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            width: 100%;
-            justify-content: center;
-        }
-
-        .btn-manage-members:hover {
+        .btn-action-primary:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
             color: white;
         }
 
+        /* Filter Bar */
+        .filter-bar-minimal {
+            background: white;
+            border-radius: 8px;
+            padding: 0.875rem 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid #e9ecef;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn-minimal {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 0.813rem;
+            font-weight: 500;
+            color: #4a5568;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filter-btn-minimal:hover {
+            background: #f7fafc;
+            border-color: #cbd5e0;
+        }
+
+        .filter-btn-minimal.active {
+            background: #667eea;
+            border-color: #667eea;
+            color: white;
+        }
+
+        .drag-info {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.75rem;
+            color: #adb5bd;
+        }
+
+        .drag-info i {
+            color: #667eea;
+        }
+
+        /* Groups Sortable List */
+        .groups-sortable-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+        }
+
+        .group-card-draggable {
+            background: white;
+            border-radius: 12px;
+            border: 2px solid #e9ecef;
+            overflow: hidden;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .group-card-draggable:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            border-color: #667eea;
+        }
+
+        /* Card Content */
+        .group-card-content {
+            padding: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        /* Header Section */
+        .group-header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+
+        .group-info {
+            flex: 1;
+        }
+
+        .group-title-main {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin: 0 0 0.5rem 0;
+        }
+
+        .group-meta-info {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .member-count-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
+            padding: 0.5rem 0.75rem;
+            background: #f8f9fa;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            color: #6c757d;
+        }
+
+        .member-count-badge i {
+            font-size: 0.75rem;
+            color: #adb5bd;
+        }
+
+        .group-actions-top {
+            display: flex;
+            align-items: center;
+            gap: 0.625rem;
+        }
+
+        /* Icon Button */
+        .btn-icon-minimal {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: none;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            color: #6c757d;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-icon-minimal:hover {
+            background: #f8f9fa;
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        /* Members Preview Section */
+        .members-preview-section {
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+
+        .members-header {
+            margin-bottom: 0.875rem;
+            padding-bottom: 0.625rem;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .members-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #2d3748;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .members-title i {
+            color: #667eea;
+        }
+
+        .members-list-preview {
+            display: flex;
+            flex-direction: column;
+            gap: 0.625rem;
+        }
+
+        .member-item-preview {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem;
+            background: white;
+            border-radius: 6px;
+            border: 1px solid #e9ecef;
+            transition: all 0.2s;
+        }
+
+        .member-item-preview:hover {
+            border-color: #667eea;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+        }
+
+        .member-avatar-small {
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 6px;
+            color: #667eea;
+            font-size: 0.75rem;
+            flex-shrink: 0;
+        }
+
+        .member-details {
+            flex: 1;
+        }
+
+        .member-name-small {
+            font-size: 0.813rem;
+            font-weight: 500;
+            color: #495057;
+        }
+
+        /* Drag and Drop Styles */
+        .draggable-student {
+            cursor: grab;
+            transition: all 0.2s;
+        }
+
+        .draggable-student:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .draggable-student:active {
+            cursor: grabbing;
+        }
+
+        .draggable-student.dragging {
+            opacity: 0.5;
+            transform: rotate(5deg);
+        }
+
+        .member-actions-preview {
+            display: flex;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .member-item-preview:hover .member-actions-preview {
+            opacity: 1;
+        }
+
+        .btn-remove-member-preview {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            border-radius: 4px;
+            background: rgba(220, 53, 69, 0.1);
+            color: #dc3545;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.75rem;
+        }
+
+        .btn-remove-member-preview:hover {
+            background: #dc3545;
+            color: white;
+        }
+
+        /* Drop Zone Styles */
+        .members-list-preview.drop-zone {
+            border: 2px dashed #667eea;
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .members-list-preview.drop-zone-active {
+            border-color: #28a745;
+            background: rgba(40, 167, 69, 0.05);
+        }
+
+        .more-members-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            font-size: 0.75rem;
+            color: #adb5bd;
+            background: #f8f9fa;
+            border-radius: 6px;
+        }
+
+        /* No Members Section */
+        .no-members-section {
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+
+        .no-members-content {
+            text-align: center;
+            color: #6c757d;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .no-members-content i {
+            font-size: 1.5rem;
+            color: #dee2e6;
+        }
+
+        /* Action Buttons Footer */
+        .group-actions-footer {
+            display: flex;
+            gap: 0.5rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        .action-btn-footer {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.375rem;
+            padding: 0.625rem;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 0.75rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            border: 1px solid;
+        }
+
+        .action-btn-footer i {
+            font-size: 0.813rem;
+        }
+
+        .action-btn-footer.primary {
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+            border-color: rgba(102, 126, 234, 0.2);
+        }
+
+        .action-btn-footer.primary:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .action-btn-footer.info {
+            background: rgba(23, 162, 184, 0.1);
+            color: #17a2b8;
+            border-color: rgba(23, 162, 184, 0.2);
+        }
+
+        .action-btn-footer.info:hover {
+            background: #17a2b8;
+            color: white;
+        }
+
         /* Empty State */
-        .empty-state-modern {
+        .empty-state-minimal {
             text-align: center;
             padding: 4rem 2rem;
             background: white;
-            border-radius: 16px;
+            border-radius: 8px;
             border: 2px dashed #e9ecef;
         }
 
-        .empty-icon-modern {
-            font-size: 4rem;
+        .empty-icon {
+            font-size: 3rem;
             color: #dee2e6;
-            margin-bottom: 2rem;
+            margin-bottom: 1.5rem;
         }
 
-        .empty-state-modern h3 {
-            font-size: 1.5rem;
+        .empty-state-minimal h3 {
+            font-size: 1.125rem;
             font-weight: 600;
             color: #495057;
-            margin-bottom: 1rem;
+            margin-bottom: 0.5rem;
         }
 
-        .empty-state-modern p {
-            font-size: 1rem;
+        .empty-state-minimal p {
+            font-size: 0.875rem;
             color: #6c757d;
-            margin-bottom: 2rem;
-            max-width: 500px;
-            margin-left: auto;
-            margin-right: auto;
+            margin-bottom: 1.5rem;
         }
 
         /* Responsive */
-        @@media (max-width: 768px) {
-            .groups-grid-modern {
-                grid-template-columns: 1fr;
+        @@media (max-width: 767.98px) {
+            .group-actions-footer {
+                flex-direction: column;
             }
 
-            .header-actions {
-                flex-direction: column;
+            .action-btn-footer {
                 width: 100%;
-                margin-top: 1rem;
-            }
-
-            .stat-card-modern {
-                flex-direction: column;
-                text-align: center;
             }
         }
     </style>
@@ -542,6 +661,87 @@ else
 
 @section Scripts {
     <script>
+        $(document).ready(function() {
+            // Filter functionality
+            $('.filter-btn-minimal').on('click', function() {
+                const filter = $(this).data('filter');
+                
+                // Update active button
+                $('.filter-btn-minimal').removeClass('active');
+                $(this).addClass('active');
+                
+                // Filter groups
+                $('.group-card-draggable').each(function() {
+                    const memberCount = parseInt($(this).data('member-count'));
+                    
+                    if (filter === 'all') {
+                        $(this).show();
+                    } else if (filter === 'with-members' && memberCount > 0) {
+                        $(this).show();
+                    } else if (filter === 'empty' && memberCount === 0) {
+                        $(this).show();
+                    } else {
+                        $(this).hide();
+                    }
+                });
+            });
+
+            // Drag and Drop functionality
+            let draggedStudent = null;
+            let draggedFromGroup = null;
+
+            // Drag start
+            $('.draggable-student').on('dragstart', function(e) {
+                draggedStudent = {
+                    id: $(this).data('student-id'),
+                    name: $(this).data('student-name'),
+                    groupId: $(this).data('group-id')
+                };
+                draggedFromGroup = $(this).data('group-id');
+                $(this).addClass('dragging');
+                
+                // Set drag data
+                e.originalEvent.dataTransfer.setData('text/plain', draggedStudent.id);
+                e.originalEvent.dataTransfer.effectAllowed = 'move';
+            });
+
+            // Drag end
+            $('.draggable-student').on('dragend', function() {
+                $(this).removeClass('dragging');
+                $('.members-list-preview').removeClass('drop-zone drop-zone-active');
+                draggedStudent = null;
+                draggedFromGroup = null;
+            });
+
+            // Drag over (drop zone)
+            $('.members-list-preview').on('dragover', function(e) {
+                e.preventDefault();
+                e.originalEvent.dataTransfer.dropEffect = 'move';
+                
+                const targetGroupId = $(this).data('group-id');
+                if (targetGroupId !== draggedFromGroup) {
+                    $(this).addClass('drop-zone-active');
+                }
+            });
+
+            // Drag leave (drop zone)
+            $('.members-list-preview').on('dragleave', function(e) {
+                $(this).removeClass('drop-zone-active');
+            });
+
+            // Drop
+            $('.members-list-preview').on('drop', function(e) {
+                e.preventDefault();
+                $(this).removeClass('drop-zone drop-zone-active');
+                
+                const targetGroupId = $(this).data('group-id');
+                
+                if (draggedStudent && targetGroupId !== draggedFromGroup) {
+                    transferStudent(draggedStudent.id, draggedStudent.name, draggedFromGroup, targetGroupId);
+                }
+            });
+        });
+
         function editGroup(groupId, groupName) {
             document.getElementById('editGroupId').value = groupId;
             document.getElementById('editGroupName').value = groupName;
@@ -572,6 +772,81 @@ else
                 document.body.appendChild(form);
                 form.submit();
             }
+        }
+
+        // Remove student from group
+        function removeMember(studentId, studentName, groupId) {
+            if (confirm(`آیا می‌خواهید "${studentName}" را از گروه حذف کنید؟`)) {
+                $.ajax({
+                    url: '@Url.Action("RemoveMemberAjax", "StudentGroup")',
+                    type: 'POST',
+                    data: {
+                        GroupId: groupId,
+                        StudentId: studentId,
+                        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            showToast('success', response.message || 'دانش‌آموز با موفقیت حذف شد');
+                            setTimeout(() => location.reload(), 1000);
+                        } else {
+                            showToast('error', response.message || 'خطا در حذف دانش‌آموز');
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('AJAX Error:', xhr.responseText);
+                        showToast('error', 'خطا در ارتباط با سرور');
+                    }
+                });
+            }
+        }
+
+        // Transfer student between groups
+        function transferStudent(studentId, studentName, fromGroupId, toGroupId) {
+            if (confirm(`آیا می‌خواهید "${studentName}" را به گروه جدید منتقل کنید؟`)) {
+                $.ajax({
+                    url: '@Url.Action("TransferMember", "StudentGroup")',
+                    type: 'POST',
+                    data: {
+                        FromGroupId: fromGroupId,
+                        ToGroupId: toGroupId,
+                        StudentId: studentId,
+                        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            showToast('success', response.message || 'دانش‌آموز با موفقیت منتقل شد');
+                            setTimeout(() => location.reload(), 1000);
+                        } else {
+                            showToast('error', response.message || 'خطا در انتقال دانش‌آموز');
+                        }
+                    },
+                    error: function() {
+                        showToast('error', 'خطا در ارتباط با سرور');
+                    }
+                });
+            }
+        }
+
+        // Toast notification
+        function showToast(type, message) {
+            const bgColor = type === 'success' ? '#28a745' : '#dc3545';
+            const icon = type === 'success' ? 'check-circle' : 'exclamation-circle';
+            
+            const toast = $(`
+                <div class="toast-notification" style="position: fixed; top: 80px; left: 20px; background: ${bgColor}; color: white; padding: 0.875rem 1.125rem; border-radius: 8px; display: flex; align-items: center; gap: 0.625rem; font-size: 0.813rem; z-index: 9999; box-shadow: 0 4px 12px rgba(0,0,0,0.15); animation: slideInLeft 0.3s ease-out;">
+                    <i class="fas fa-${icon}"></i>
+                    <span>${message}</span>
+                </div>
+            `);
+
+            $('body').append(toast);
+
+            setTimeout(function() {
+                toast.fadeOut(300, function() {
+                    $(this).remove();
+                });
+            }, 3000);
         }
 
         // Auto-hide alerts after 5 seconds

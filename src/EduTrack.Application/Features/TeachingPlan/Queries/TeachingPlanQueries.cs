@@ -68,3 +68,6 @@ public record GetLessonsByCourseIdQuery(int CourseId) : IRequest<Result<List<Les
 
 // Student Enrollment Queries
 public record GetStudentCourseEnrollmentsQuery(string StudentId) : IRequest<Result<List<CourseEnrollmentDto>>>;
+
+// Available Students Query
+public record GetAvailableStudentsForTeachingPlanQuery(int TeachingPlanId) : IRequest<Result<List<UserDto>>>;

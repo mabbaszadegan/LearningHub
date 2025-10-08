@@ -38,6 +38,11 @@ public record RemoveGroupMemberCommand(
     int GroupId,
     string StudentId) : IRequest<Result<bool>>;
 
+public record TransferGroupMemberCommand(
+    int FromGroupId,
+    int ToGroupId,
+    string StudentId) : IRequest<Result<bool>>;
+
 // ScheduleItem Commands
 public record CreateScheduleItemCommand(
     int TeachingPlanId,
