@@ -583,6 +583,7 @@ public class AppDbContext : IdentityDbContext<User>
         {
             entity.Property(e => e.Title).HasMaxLength(200).IsRequired();
             entity.Property(e => e.Description).HasMaxLength(1000);
+            entity.Property(e => e.Objectives).HasMaxLength(2000);
             entity.Property(e => e.TeacherId).HasMaxLength(450).IsRequired();
             entity.HasOne(e => e.Course)
                 .WithMany(e => e.TeachingPlans)

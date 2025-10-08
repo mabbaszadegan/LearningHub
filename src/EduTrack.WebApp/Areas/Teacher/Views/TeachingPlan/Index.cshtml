@@ -1,121 +1,438 @@
 @model List<EduTrack.Application.Common.Models.TeachingPlanDto>
 @{
-    ViewData["Title"] = "Teaching Plans";
+    ViewData["Title"] = "پلن‌های آموزشی";
     var courseId = ViewBag.CourseId as int?;
     var courseTitle = ViewBag.CourseTitle as string;
 }
 
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h4 class="card-title mb-0">
-                        <i class="fas fa-chalkboard-teacher me-2"></i>
-                        Teaching Plans - @courseTitle
-                    </h4>
-                    <div>
-                        <a href="@Url.Action("Create", new { courseId = courseId })" class="btn btn-primary">
-                            <i class="fas fa-plus me-1"></i>Create Teaching Plan
-                        </a>
-                        <a href="@Url.Action("Index", "Courses", new { area = "Teacher" })" class="btn btn-secondary">
-                            <i class="fas fa-arrow-left me-1"></i>Back to Courses
-                        </a>
-                    </div>
-                </div>
-                <div class="card-body">
-                    @if (Model.Any())
-                    {
-                        <div class="table-responsive">
-                            <table class="table table-striped table-hover">
-                                <thead class="table-dark">
-                                    <tr>
-                                        <th>Title</th>
-                                        <th>Description</th>
-                                        <th>Groups</th>
-                                        <th>Schedule Items</th>
-                                        <th>Total Students</th>
-                                        <th>Created</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (var plan in Model)
-                                    {
-                                        <tr>
-                                            <td>
-                                                <strong>@plan.Title</strong>
-                                            </td>
-                                            <td>
-                                                @if (!string.IsNullOrEmpty(plan.Description))
-                                                {
-                                                    <span class="text-muted">@(plan.Description.Length > 100 ? plan.Description.Substring(0, 100) + "..." : plan.Description)</span>
-                                                }
-                                                else
-                                                {
-                                                    <span class="text-muted">No description</span>
-                                                }
-                                            </td>
-                                            <td>
-                                                <span class="badge bg-info">@plan.GroupCount</span>
-                                            </td>
-                                            <td>
-                                                <span class="badge bg-success">@plan.ScheduleItemCount</span>
-                                            </td>
-                                            <td>
-                                                <span class="badge bg-primary">@plan.TotalStudents</span>
-                                            </td>
-                                            <td>
-                                                <small class="text-muted">@plan.CreatedAt.ToString("MMM dd, yyyy")</small>
-                                            </td>
-                                            <td>
-                                                <div class="btn-group" role="group">
-                                                    <a href="@Url.Action("Details", new { id = plan.Id })" class="btn btn-sm btn-outline-primary" title="View Details">
-                                                        <i class="fas fa-eye"></i>
-                                                    </a>
-                                                    <a href="@Url.Action("Edit", new { id = plan.Id })" class="btn btn-sm btn-outline-warning" title="Edit">
-                                                        <i class="fas fa-edit"></i>
-                                                    </a>
-                                                    <a href="@Url.Action("Index", "StudentGroup", new { planId = plan.Id })" class="btn btn-sm btn-outline-info" title="Manage Groups">
-                                                        <i class="fas fa-users"></i>
-                                                    </a>
-                                                    <a href="@Url.Action("Index", "Schedule", new { planId = plan.Id })" class="btn btn-sm btn-outline-success" title="Schedule Items">
-                                                        <i class="fas fa-calendar-alt"></i>
-                                                    </a>
-                                                    <form method="post" action="@Url.Action("Delete", new { id = plan.Id })" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this teaching plan?')">
-                                                        @Html.AntiForgeryToken()
-                                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete">
-                                                            <i class="fas fa-trash"></i>
-                                                        </button>
-                                                    </form>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    }
-                                </tbody>
-                            </table>
-                        </div>
-                    }
-                    else
-                    {
-                        <div class="text-center py-5">
-                            <i class="fas fa-chalkboard-teacher fa-3x text-muted mb-3"></i>
-                            <h5 class="text-muted">No Teaching Plans Found</h5>
-                            <p class="text-muted">Create your first teaching plan to start organizing your course content and student groups.</p>
-                            <a href="@Url.Action("Create", new { courseId = courseId })" class="btn btn-primary">
-                                <i class="fas fa-plus me-1"></i>Create Teaching Plan
-                            </a>
-                        </div>
-                    }
-                </div>
-            </div>
+<!-- Page Header -->
+<div class="page-header-minimal mb-3">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="page-title">پلن‌های آموزشی - @courseTitle</h1>
+            <p class="page-subtitle mb-0">مدیریت و سازماندهی پلن‌های آموزشی دوره</p>
+        </div>
+        <div>
+            <a asp-action="Create" asp-route-courseId="@courseId" class="btn-action-primary">
+                <i class="fas fa-plus"></i>
+                <span>پلن جدید</span>
+            </a>
+            <a asp-controller="Courses" asp-action="Index" class="btn-action-secondary">
+                <i class="fas fa-arrow-left"></i>
+                <span>بازگشت به دوره‌ها</span>
+            </a>
         </div>
     </div>
 </div>
 
+@if (Model.Any())
+{
+    <!-- Teaching Plans Grid -->
+    <div class="courses-grid-sortable" id="teachingPlansGrid">
+        @foreach (var plan in Model.OrderBy(p => p.CreatedAt))
+        {
+            <div class="course-card-draggable" data-plan-id="@plan.Id">
+                <!-- Card Content -->
+                <div class="course-card-content">
+                    <!-- Header -->
+                    <div class="course-card-header-mini">
+                        <h3 class="course-title-drag">@plan.Title</h3>
+                        
+                        <!-- Actions -->
+                        <div class="course-actions-top">
+                            <a asp-action="Edit" asp-route-id="@plan.Id" 
+                               class="edit-icon-mini" title="ویرایش پلن">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <div class="plan-status-badge">
+                                <span class="badge bg-success">فعال</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Description -->
+                    <p class="course-desc-drag">
+                        @if (!string.IsNullOrEmpty(plan.Description))
+                        {
+                            @(plan.Description.Length > 100 ? plan.Description.Substring(0, 100) + "..." : plan.Description)
+                        }
+                        else
+                        {
+                            <span class="text-muted">بدون توضیحات</span>
+                        }
+                    </p>
+                    
+                    <!-- Objectives -->
+                    @if (!string.IsNullOrEmpty(plan.Objectives))
+                    {
+                        <div class="objectives-preview">
+                            <strong>اهداف:</strong>
+                            <span class="text-muted">@(plan.Objectives.Length > 80 ? plan.Objectives.Substring(0, 80) + "..." : plan.Objectives)</span>
+                        </div>
+                    }
+                    
+                    <!-- Stats -->
+                    <div class="course-stats-mini">
+                        <div class="stat-item-mini">
+                            <i class="fas fa-users"></i>
+                            <span>@plan.GroupCount گروه</span>
+                        </div>
+                        <div class="stat-item-mini">
+                            <i class="fas fa-calendar-alt"></i>
+                            <span>@plan.ScheduleItemCount آیتم</span>
+                        </div>
+                        <div class="stat-item-mini">
+                            <i class="fas fa-graduation-cap"></i>
+                            <span>@plan.TotalStudents دانش‌آموز</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="course-actions-grid">
+                        <a asp-action="Details" asp-route-id="@plan.Id" 
+                           class="action-btn-mini primary" title="مشاهده جزئیات">
+                            <i class="fas fa-eye"></i>
+                            <span>جزئیات</span>
+                        </a>
+                        <a asp-action="Edit" asp-route-id="@plan.Id" 
+                           class="action-btn-mini info" title="ویرایش پلن">
+                            <i class="fas fa-edit"></i>
+                            <span>ویرایش</span>
+                        </a>
+                        <a href="#" class="action-btn-mini success" title="مدیریت گروه‌ها">
+                            <i class="fas fa-users"></i>
+                            <span>گروه‌ها</span>
+                        </a>
+                        <a href="#" class="action-btn-mini warning" title="برنامه‌ریزی">
+                            <i class="fas fa-calendar-alt"></i>
+                            <span>برنامه</span>
+                        </a>
+                    </div>
+                    
+                    <!-- Created Date -->
+                    <div class="plan-meta">
+                        <small class="text-muted">
+                            <i class="fas fa-clock"></i>
+                            ایجاد شده در @plan.CreatedAt.ToString("dd MMM yyyy")
+                        </small>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <!-- Empty State -->
+    <div class="empty-state-minimal">
+        <div class="empty-icon">
+            <i class="fas fa-chalkboard-teacher"></i>
+        </div>
+        <h3>هنوز پلن آموزشی ایجاد نشده</h3>
+        <p>اولین پلن آموزشی خود را برای این دوره ایجاد کنید</p>
+        <a asp-action="Create" asp-route-courseId="@courseId" class="btn-action-primary">
+            <i class="fas fa-plus"></i>
+            <span>ایجاد پلن آموزشی</span>
+        </a>
+    </div>
+}
+
+@section Styles {
+    <style>
+        /* Page Header */
+        .btn-action-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.625rem 1.125rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 0.813rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            border: none;
+        }
+
+        .btn-action-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            color: white;
+        }
+
+        .btn-action-secondary {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.625rem 1.125rem;
+            background: #6c757d;
+            color: white;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 0.813rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            border: none;
+        }
+
+        .btn-action-secondary:hover {
+            background: #5a6268;
+            color: white;
+        }
+
+        /* Teaching Plans Grid */
+        .courses-grid-sortable {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1rem;
+        }
+
+        .course-card-draggable {
+            background: white;
+            border-radius: 8px;
+            border: 2px solid #e9ecef;
+            overflow: hidden;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .course-card-draggable:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            border-color: #667eea;
+        }
+
+        /* Card Content */
+        .course-card-content {
+            padding: 1rem;
+        }
+
+        .course-card-header-mini {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .course-title-drag {
+            font-size: 0.938rem;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin: 0;
+            flex: 1;
+        }
+
+        .course-desc-drag {
+            font-size: 0.75rem;
+            color: #6c757d;
+            margin: 0 0 0.875rem 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            line-height: 1.4;
+        }
+
+        .objectives-preview {
+            margin-bottom: 0.875rem;
+            padding: 0.5rem;
+            background: rgba(102, 126, 234, 0.05);
+            border-radius: 6px;
+            border-right: 3px solid #667eea;
+        }
+
+        .objectives-preview strong {
+            font-size: 0.75rem;
+            color: #667eea;
+        }
+
+        .objectives-preview span {
+            font-size: 0.75rem;
+            display: block;
+            margin-top: 0.25rem;
+        }
+
+        .course-actions-top {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .edit-icon-mini {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            background: rgba(23, 162, 184, 0.1);
+            color: #17a2b8;
+            border: 1px solid rgba(23, 162, 184, 0.2);
+            border-radius: 4px;
+            text-decoration: none;
+            transition: all 0.2s;
+            font-size: 0.75rem;
+        }
+
+        .edit-icon-mini:hover {
+            background: #17a2b8;
+            color: white;
+            transform: scale(1.05);
+        }
+
+        .plan-status-badge .badge {
+            font-size: 0.7rem;
+            padding: 0.25rem 0.5rem;
+        }
+
+        /* Stats */
+        .course-stats-mini {
+            display: flex;
+            gap: 1rem;
+            padding: 0.75rem 0;
+            border-top: 1px solid #f0f0f0;
+            border-bottom: 1px solid #f0f0f0;
+            margin-bottom: 0.875rem;
+        }
+
+        .stat-item-mini {
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
+            font-size: 0.75rem;
+            color: #6c757d;
+        }
+
+        .stat-item-mini i {
+            font-size: 0.7rem;
+            color: #adb5bd;
+        }
+
+        /* Action Buttons Grid */
+        .course-actions-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.5rem;
+            margin-bottom: 0.875rem;
+        }
+
+        .action-btn-mini {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 0.625rem;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 0.75rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            gap: 0.25rem;
+            border: 1px solid;
+        }
+
+        .action-btn-mini i {
+            font-size: 0.875rem;
+        }
+
+        .action-btn-mini.primary {
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+            border-color: rgba(102, 126, 234, 0.2);
+        }
+
+        .action-btn-mini.primary:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .action-btn-mini.success {
+            background: rgba(40, 167, 69, 0.1);
+            color: #28a745;
+            border-color: rgba(40, 167, 69, 0.2);
+        }
+
+        .action-btn-mini.success:hover {
+            background: #28a745;
+            color: white;
+        }
+
+        .action-btn-mini.warning {
+            background: rgba(255, 193, 7, 0.1);
+            color: #ffc107;
+            border-color: rgba(255, 193, 7, 0.2);
+        }
+
+        .action-btn-mini.warning:hover {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        .action-btn-mini.info {
+            background: rgba(23, 162, 184, 0.1);
+            color: #17a2b8;
+            border-color: rgba(23, 162, 184, 0.2);
+        }
+
+        .action-btn-mini.info:hover {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .plan-meta {
+            text-align: center;
+            padding-top: 0.5rem;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        .plan-meta i {
+            margin-left: 0.25rem;
+        }
+
+        /* Empty State */
+        .empty-state-minimal {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: white;
+            border-radius: 8px;
+            border: 2px dashed #e9ecef;
+        }
+
+        .empty-icon {
+            font-size: 3rem;
+            color: #dee2e6;
+            margin-bottom: 1.5rem;
+        }
+
+        .empty-state-minimal h3 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-state-minimal p {
+            font-size: 0.875rem;
+            color: #6c757d;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Responsive */
+        @@media (max-width: 767.98px) {
+            .courses-grid-sortable {
+                grid-template-columns: 1fr;
+            }
+
+            .course-actions-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+}
+
 @section Scripts {
     <script>
-        // Add any JavaScript functionality here
         $(document).ready(function() {
             // Initialize tooltips
             $('[title]').tooltip();

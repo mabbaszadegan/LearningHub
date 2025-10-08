@@ -153,7 +153,8 @@ public class TeachingPlanController : Controller
         var command = new UpdateTeachingPlanCommand(
             teachingPlan.Value.Id,
             teachingPlan.Value.Title,
-            teachingPlan.Value.Description);
+            teachingPlan.Value.Description,
+            teachingPlan.Value.Objectives);
 
         ViewBag.CourseId = teachingPlan.Value.CourseId;
         ViewBag.CourseTitle = teachingPlan.Value.CourseTitle;

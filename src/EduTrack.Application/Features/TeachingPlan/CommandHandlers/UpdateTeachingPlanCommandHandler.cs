@@ -1,19 +1,18 @@
 using EduTrack.Application.Common.Interfaces;
 using EduTrack.Application.Common.Models;
 using EduTrack.Application.Features.TeachingPlan.Commands;
-using EduTrack.Domain.Entities;
 using EduTrack.Domain.Repositories;
 using FluentValidation;
 using MediatR;
 
 namespace EduTrack.Application.Features.TeachingPlan.CommandHandlers;
 
-public class CreateTeachingPlanCommandValidator : AbstractValidator<CreateTeachingPlanCommand>
+public class UpdateTeachingPlanCommandValidator : AbstractValidator<UpdateTeachingPlanCommand>
 {
-    public CreateTeachingPlanCommandValidator()
+    public UpdateTeachingPlanCommandValidator()
     {
-        RuleFor(x => x.CourseId)
-            .GreaterThan(0).WithMessage("Course ID must be greater than 0");
+        RuleFor(x => x.Id)
+            .GreaterThan(0).WithMessage("Teaching Plan ID must be greater than 0");
 
         RuleFor(x => x.Title)
             .NotEmpty().WithMessage("Title is required")
@@ -27,55 +26,48 @@ public class CreateTeachingPlanCommandValidator : AbstractValidator<CreateTeachi
     }
 }
 
-public class CreateTeachingPlanCommandHandler : IRequestHandler<CreateTeachingPlanCommand, Result<TeachingPlanDto>>
+public class UpdateTeachingPlanCommandHandler : IRequestHandler<UpdateTeachingPlanCommand, Result<TeachingPlanDto>>
 {
     private readonly ITeachingPlanRepository _teachingPlanRepository;
-    private readonly ICourseRepository _courseRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICurrentUserService _currentUserService;
 
-    public CreateTeachingPlanCommandHandler(
+    public UpdateTeachingPlanCommandHandler(
         ITeachingPlanRepository teachingPlanRepository,
-        ICourseRepository courseRepository,
         IUnitOfWork unitOfWork,
         ICurrentUserService currentUserService)
     {
         _teachingPlanRepository = teachingPlanRepository;
-        _courseRepository = courseRepository;
         _unitOfWork = unitOfWork;
         _currentUserService = currentUserService;
     }
 
-    public async Task<Result<TeachingPlanDto>> Handle(CreateTeachingPlanCommand request, CancellationToken cancellationToken)
+    public async Task<Result<TeachingPlanDto>> Handle(UpdateTeachingPlanCommand request, CancellationToken cancellationToken)
     {
-        // Verify course exists
-        var course = await _courseRepository.GetByIdAsync(request.CourseId, cancellationToken);
-        if (course == null)
+        var teachingPlan = await _teachingPlanRepository.GetByIdAsync(request.Id, cancellationToken);
+        if (teachingPlan == null)
         {
-            return Result<TeachingPlanDto>.Failure("Course not found");
+            return Result<TeachingPlanDto>.Failure("Teaching plan not found");
         }
 
-        // Verify user is the course creator or has permission
-        if (course.CreatedBy != _currentUserService.UserId)
+        // Verify user is the teaching plan creator or has permission
+        if (teachingPlan.TeacherId != _currentUserService.UserId)
         {
-            return Result<TeachingPlanDto>.Failure("You don't have permission to create teaching plans for this course");
+            return Result<TeachingPlanDto>.Failure("You don't have permission to update this teaching plan");
         }
 
-        var teachingPlan = EduTrack.Domain.Entities.TeachingPlan.Create(
-            request.CourseId,
-            _currentUserService.UserId ?? "system",
-            request.Title,
-            request.Description,
-            request.Objectives);
+        teachingPlan.UpdateTitle(request.Title);
+        teachingPlan.UpdateDescription(request.Description);
+        teachingPlan.UpdateObjectives(request.Objectives);
 
-        await _teachingPlanRepository.AddAsync(teachingPlan, cancellationToken);
+        await _teachingPlanRepository.UpdateAsync(teachingPlan, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         var teachingPlanDto = new TeachingPlanDto
         {
             Id = teachingPlan.Id,
             CourseId = teachingPlan.CourseId,
-            CourseTitle = course.Title,
+            CourseTitle = teachingPlan.Course?.Title ?? "Unknown Course",
             TeacherId = teachingPlan.TeacherId,
             TeacherName = _currentUserService.UserName ?? "Unknown",
             Title = teachingPlan.Title,
@@ -83,9 +75,9 @@ public class CreateTeachingPlanCommandHandler : IRequestHandler<CreateTeachingPl
             Objectives = teachingPlan.Objectives,
             CreatedAt = teachingPlan.CreatedAt,
             UpdatedAt = teachingPlan.UpdatedAt,
-            GroupCount = 0,
-            ScheduleItemCount = 0,
-            TotalStudents = 0
+            GroupCount = teachingPlan.GetTotalGroups(),
+            ScheduleItemCount = teachingPlan.GetTotalScheduleItems(),
+            TotalStudents = teachingPlan.GetTotalStudents()
         };
 
         return Result<TeachingPlanDto>.Success(teachingPlanDto);

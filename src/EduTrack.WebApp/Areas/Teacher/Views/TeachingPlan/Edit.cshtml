@@ -1,6 +1,6 @@
-@model EduTrack.Application.Features.TeachingPlan.Commands.CreateTeachingPlanCommand
+@model EduTrack.Application.Features.TeachingPlan.Commands.UpdateTeachingPlanCommand
 @{
-    ViewData["Title"] = "ایجاد پلن آموزشی";
+    ViewData["Title"] = "ویرایش پلن آموزشی";
     var courseId = ViewBag.CourseId as int?;
     var courseTitle = ViewBag.CourseTitle as string;
 }
@@ -11,14 +11,14 @@
             <div class="card">
                 <div class="card-header">
                     <h4 class="card-title mb-0">
-                        <i class="fas fa-plus me-2"></i>
-                        ایجاد پلن آموزشی - @courseTitle
+                        <i class="fas fa-edit me-2"></i>
+                        ویرایش پلن آموزشی - @courseTitle
                     </h4>
                 </div>
                 <div class="card-body">
-                    <form asp-action="Create" method="post">
+                    <form asp-action="Edit" method="post">
                         @Html.AntiForgeryToken()
-                        <input type="hidden" asp-for="CourseId" value="@courseId" />
+                        <input type="hidden" asp-for="Id" />
                         
                         <div class="row">
                             <div class="col-md-8">
@@ -49,14 +49,13 @@
                                             اطلاعات پلن آموزشی
                                         </h6>
                                         <p class="card-text small">
-                                            پلن آموزشی به شما کمک می‌کند تا محتوای دوره خود را سازماندهی کرده و گروه‌های دانش‌آموزی را مدیریت کنید. 
-                                            می‌توانید پلن‌های آموزشی متعددی برای ترم‌ها یا بخش‌های مختلف کلاس ایجاد کنید.
+                                            جزئیات پلن آموزشی خود را به‌روزرسانی کنید. فیلد اهداف به شما کمک می‌کند تا اهداف یادگیری و نتایج دوره خود را تعریف کنید.
                                         </p>
                                         <ul class="small text-muted">
-                                            <li>ایجاد گروه‌های دانش‌آموزی</li>
-                                            <li>برنامه‌ریزی تکالیف</li>
-                                            <li>پیگیری پیشرفت دانش‌آموزان</li>
-                                            <li>ارائه بازخورد</li>
+                                            <li>اهداف واضح یادگیری را هدایت می‌کند</li>
+                                            <li>به دانش‌آموزان در درک انتظارات کمک می‌کند</li>
+                                            <li>برنامه‌ریزی بهتر ارزیابی را امکان‌پذیر می‌کند</li>
+                                            <li>از هماهنگی برنامه درسی پشتیبانی می‌کند</li>
                                         </ul>
                                     </div>
                                 </div>
@@ -68,7 +67,7 @@
                                 <i class="fas fa-arrow-left me-1"></i>لغو
                             </a>
                             <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save me-1"></i>ایجاد پلن آموزشی
+                                <i class="fas fa-save me-1"></i>به‌روزرسانی پلن آموزشی
                             </button>
                         </div>
                     </form>

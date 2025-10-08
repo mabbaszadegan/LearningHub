@@ -15,6 +15,7 @@ public class TeachingPlan
     public string TeacherId { get; private set; } = string.Empty;
     public string Title { get; private set; } = string.Empty;
     public string? Description { get; private set; }
+    public string? Objectives { get; private set; }
     public DateTimeOffset CreatedAt { get; private set; }
     public DateTimeOffset UpdatedAt { get; private set; }
 
@@ -27,7 +28,7 @@ public class TeachingPlan
     // Private constructor for EF Core
     private TeachingPlan() { }
 
-    public static TeachingPlan Create(int courseId, string teacherId, string title, string? description = null)
+    public static TeachingPlan Create(int courseId, string teacherId, string title, string? description = null, string? objectives = null)
     {
         if (courseId <= 0)
             throw new ArgumentException("Course ID must be greater than 0", nameof(courseId));
@@ -44,6 +45,7 @@ public class TeachingPlan
             TeacherId = teacherId,
             Title = title,
             Description = description,
+            Objectives = objectives,
             CreatedAt = DateTimeOffset.UtcNow,
             UpdatedAt = DateTimeOffset.UtcNow
         };
@@ -61,6 +63,12 @@ public class TeachingPlan
     public void UpdateDescription(string? description)
     {
         Description = description;
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
+    public void UpdateObjectives(string? objectives)
+    {
+        Objectives = objectives;
         UpdatedAt = DateTimeOffset.UtcNow;
     }
 

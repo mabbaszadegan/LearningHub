@@ -318,6 +318,7 @@ public class TeachingPlanDto
     public string TeacherName { get; set; } = string.Empty;
     public string Title { get; set; } = string.Empty;
     public string? Description { get; set; }
+    public string? Objectives { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
     public int GroupCount { get; set; }

@@ -72,6 +72,10 @@
                                        @(course.IsActive ? "checked" : "") />
                                 <span class="toggle-slider-mini"></span>
                             </label>
+                            <a asp-action="Edit" asp-route-id="@course.Id"
+                               class="edit-icon-mini" title="ویرایش دوره">
+                                <i class="fas fa-edit"></i>
+                            </a>
                         </div>
                     </div>
                     
@@ -106,14 +110,14 @@
                             <i class="fas fa-play-circle"></i>
                             <span>درس‌ها</span>
                         </a>
-                        <a href="#" class="action-btn-mini warning" title="مدیریت آزمون‌ها">
+                        <a asp-controller="TeachingPlan" asp-action="Index" asp-route-courseId="@course.Id" 
+                           class="action-btn-mini warning" title="مدیریت پلن آموزشی">
+                            <i class="fas fa-chalkboard-teacher"></i>
+                            <span>پلن آموزشی</span>
+                        </a>
+                        <a href="#" class="action-btn-mini danger" title="مدیریت آزمون‌ها">
                             <i class="fas fa-clipboard-list"></i>
                             <span>آزمون‌ها</span>
-                        </a>
-                        <a asp-action="Edit" asp-route-id="@course.Id" 
-                           class="action-btn-mini info" title="ویرایش دوره">
-                            <i class="fas fa-edit"></i>
-                            <span>ویرایش</span>
                         </a>
                     </div>
                     
@@ -425,6 +429,33 @@ else
             transform: translateX(-16px);
         }
 
+        .course-actions-top {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .edit-icon-mini {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            background: rgba(23, 162, 184, 0.1);
+            color: #17a2b8;
+            border: 1px solid rgba(23, 162, 184, 0.2);
+            border-radius: 4px;
+            text-decoration: none;
+            transition: all 0.2s;
+            font-size: 0.75rem;
+        }
+
+        .edit-icon-mini:hover {
+            background: #17a2b8;
+            color: white;
+            transform: scale(1.05);
+        }
+
         /* Stats */
         .course-stats-mini {
             display: flex;
@@ -515,6 +546,17 @@ else
 
         .action-btn-mini.info:hover {
             background: #17a2b8;
+            color: white;
+        }
+
+        .action-btn-mini.danger {
+            background: rgba(220, 53, 69, 0.1);
+            color: #dc3545;
+            border-color: rgba(220, 53, 69, 0.2);
+        }
+
+        .action-btn-mini.danger:hover {
+            background: #dc3545;
             color: white;
         }
 

@@ -8,12 +8,14 @@ namespace EduTrack.Application.Features.TeachingPlan.Commands;
 public record CreateTeachingPlanCommand(
     int CourseId,
     string Title,
-    string? Description) : IRequest<Result<TeachingPlanDto>>;
+    string? Description,
+    string? Objectives) : IRequest<Result<TeachingPlanDto>>;
 
 public record UpdateTeachingPlanCommand(
     int Id,
     string Title,
-    string? Description) : IRequest<Result<TeachingPlanDto>>;
+    string? Description,
+    string? Objectives) : IRequest<Result<TeachingPlanDto>>;
 
 public record DeleteTeachingPlanCommand(int Id) : IRequest<Result<bool>>;
 
