@@ -1,0 +1,470 @@
+@model EduTrack.Application.Common.Models.StudentGroupDto
+@{
+    ViewData["Title"] = "مدیریت اعضای گروه";
+    var groupId = ViewBag.GroupId as int?;
+    var groupName = ViewBag.GroupName as string;
+    var teachingPlanTitle = ViewBag.TeachingPlanTitle as string;
+    var courseTitle = ViewBag.CourseTitle as string;
+    var availableStudents = ViewBag.AvailableStudents as List<EduTrack.Application.Common.Models.UserDto> ?? new List<EduTrack.Application.Common.Models.UserDto>();
+}
+
+<!-- Page Header -->
+<div class="page-header-modern mb-4">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="page-title-modern">مدیریت اعضای گروه</h1>
+            <p class="page-subtitle-modern mb-0">
+                <i class="fas fa-users me-2"></i>
+                @groupName - @teachingPlanTitle
+            </p>
+        </div>
+        <div class="header-actions">
+            <a asp-action="Index" asp-route-planId="@Model.TeachingPlanId" class="btn-back-modern">
+                <i class="fas fa-arrow-left"></i>
+                <span>بازگشت به گروه‌ها</span>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Members Management Container -->
+<div class="members-management-container">
+    <div class="row">
+        <!-- Current Members -->
+        <div class="col-lg-6">
+            <div class="members-section">
+                <div class="section-header">
+                    <h3 class="section-title">
+                        <i class="fas fa-user-check me-2"></i>
+                        اعضای فعلی گروه
+                    </h3>
+                    <div class="member-count-badge">
+                        @Model.Members.Count عضو
+                    </div>
+                </div>
+
+                <div class="members-list">
+                    @if (Model.Members.Any())
+                    {
+                        @foreach (var member in Model.Members)
+                        {
+                            <div class="member-card" data-member-id="@member.StudentId">
+                                <div class="member-avatar">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <div class="member-info">
+                                    <h4 class="member-name">@member.StudentName</h4>
+                                    <p class="member-email">@member.StudentEmail</p>
+                                </div>
+                                <div class="member-actions">
+                                    <button class="btn-remove-member" onclick="removeMember('@member.StudentId', '@member.StudentName')" title="حذف از گروه">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="empty-members">
+                            <i class="fas fa-user-plus"></i>
+                            <h4>هنوز عضوی اضافه نشده</h4>
+                            <p>از بخش "دانش‌آموزان موجود" اعضا را به گروه اضافه کنید</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Available Students -->
+        <div class="col-lg-6">
+            <div class="available-students-section">
+                <div class="section-header">
+                    <h3 class="section-title">
+                        <i class="fas fa-user-plus me-2"></i>
+                        دانش‌آموزان موجود
+                    </h3>
+                    <div class="search-box">
+                        <input type="text" id="studentSearch" placeholder="جستجو در دانش‌آموزان..." class="search-input">
+                        <i class="fas fa-search search-icon"></i>
+                    </div>
+                </div>
+
+                <div class="available-students-list" id="availableStudentsList">
+                    @if (availableStudents.Any())
+                    {
+                        @foreach (var student in availableStudents)
+                        {
+                            var isInGroup = Model.Members.Any(m => m.StudentId == student.Id);
+                            <div class="student-card @(isInGroup ? "in-group" : "")" data-student-id="@student.Id">
+                                <div class="student-avatar">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <div class="student-info">
+                                    <h4 class="student-name">@student.FullName</h4>
+                                    <p class="student-email">@student.Email</p>
+                                </div>
+                                <div class="student-actions">
+                                    @if (isInGroup)
+                                    {
+                                        <span class="in-group-badge">
+                                            <i class="fas fa-check"></i>
+                                            عضو گروه
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <button class="btn-add-member" onclick="addMember('@student.Id', '@student.FullName')" title="اضافه به گروه">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="empty-students">
+                            <i class="fas fa-graduation-cap"></i>
+                            <h4>دانش‌آموزی یافت نشد</h4>
+                            <p>ابتدا دانش‌آموزان را به دوره اضافه کنید</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Members Form (Hidden) -->
+<form id="addMembersForm" method="post" asp-action="AddMembers" style="display: none;">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="GroupId" value="@groupId" />
+    <input type="hidden" name="StudentIds" id="studentIdsInput" />
+</form>
+
+<!-- Remove Member Form (Hidden) -->
+<form id="removeMemberForm" method="post" asp-action="RemoveMember" style="display: none;">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="GroupId" value="@groupId" />
+    <input type="hidden" name="StudentId" id="studentIdInput" />
+</form>
+
+@section Styles {
+    <style>
+        /* Modern Page Header */
+        .page-header-modern {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+        }
+
+        .page-title-modern {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .page-subtitle-modern {
+            font-size: 1rem;
+            opacity: 0.9;
+            margin: 0.5rem 0 0 0;
+        }
+
+        .btn-back-modern {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: transparent;
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-back-modern:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.5);
+            color: white;
+        }
+
+        /* Members Management Container */
+        .members-management-container {
+            margin-bottom: 2rem;
+        }
+
+        .members-section, .available-students-section {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e9ecef;
+            overflow: hidden;
+            height: 100%;
+        }
+
+        .section-header {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 1.5rem;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #2c3e50;
+            margin: 0;
+        }
+
+        .member-count-badge {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        /* Search Box */
+        .search-box {
+            position: relative;
+            width: 250px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 0.75rem 1rem 0.75rem 2.5rem;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+        }
+
+        /* Members List */
+        .members-list, .available-students-list {
+            max-height: 600px;
+            overflow-y: auto;
+            padding: 1rem;
+        }
+
+        .member-card, .student-card {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            border: 1px solid #e9ecef;
+            border-radius: 12px;
+            margin-bottom: 0.75rem;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+        }
+
+        .member-card:hover, .student-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            background: white;
+        }
+
+        .student-card.in-group {
+            opacity: 0.6;
+            background: #e9ecef;
+        }
+
+        .member-avatar, .student-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.25rem;
+        }
+
+        .member-info, .student-info {
+            flex: 1;
+        }
+
+        .member-name, .student-name {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin: 0 0 0.25rem 0;
+        }
+
+        .member-email, .student-email {
+            font-size: 0.875rem;
+            color: #6c757d;
+            margin: 0;
+        }
+
+        .member-actions, .student-actions {
+            display: flex;
+            align-items: center;
+        }
+
+        .btn-remove-member, .btn-add-member {
+            width: 36px;
+            height: 36px;
+            border: none;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+        }
+
+        .btn-remove-member {
+            background: rgba(220, 53, 69, 0.1);
+            color: #dc3545;
+        }
+
+        .btn-remove-member:hover {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-add-member {
+            background: rgba(40, 167, 69, 0.1);
+            color: #28a745;
+        }
+
+        .btn-add-member:hover {
+            background: #28a745;
+            color: white;
+        }
+
+        .in-group-badge {
+            background: rgba(40, 167, 69, 0.1);
+            color: #28a745;
+            padding: 0.5rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        /* Empty States */
+        .empty-members, .empty-students {
+            text-align: center;
+            padding: 3rem 2rem;
+            color: #6c757d;
+        }
+
+        .empty-members i, .empty-students i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            display: block;
+            color: #dee2e6;
+        }
+
+        .empty-members h4, .empty-students h4 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-members p, .empty-students p {
+            font-size: 0.9rem;
+            margin: 0;
+        }
+
+        /* Responsive */
+        @@media (max-width: 991.98px) {
+            .section-header {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: stretch;
+            }
+
+            .search-box {
+                width: 100%;
+            }
+        }
+
+        @@media (max-width: 767.98px) {
+            .member-card, .student-card {
+                flex-direction: column;
+                text-align: center;
+                gap: 0.75rem;
+            }
+
+            .member-info, .student-info {
+                text-align: center;
+            }
+        }
+    </style>
+}
+
+@section Scripts {
+    <script>
+        // Search functionality
+        document.getElementById('studentSearch').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const studentCards = document.querySelectorAll('.student-card');
+            
+            studentCards.forEach(card => {
+                const name = card.querySelector('.student-name').textContent.toLowerCase();
+                const email = card.querySelector('.student-email').textContent.toLowerCase();
+                
+                if (name.includes(searchTerm) || email.includes(searchTerm)) {
+                    card.style.display = 'flex';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+
+        // Add member function
+        function addMember(studentId, studentName) {
+            if (confirm(`آیا می‌خواهید "${studentName}" را به گروه اضافه کنید؟`)) {
+                document.getElementById('studentIdsInput').value = studentId;
+                document.getElementById('addMembersForm').submit();
+            }
+        }
+
+        // Remove member function
+        function removeMember(studentId, studentName) {
+            if (confirm(`آیا می‌خواهید "${studentName}" را از گروه حذف کنید؟`)) {
+                document.getElementById('studentIdInput').value = studentId;
+                document.getElementById('removeMemberForm').submit();
+            }
+        }
+
+        // Auto-hide alerts after 5 seconds
+        setTimeout(function() {
+            var alerts = document.querySelectorAll('.alert');
+            alerts.forEach(function(alert) {
+                var bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            });
+        }, 5000);
+    </script>
+}

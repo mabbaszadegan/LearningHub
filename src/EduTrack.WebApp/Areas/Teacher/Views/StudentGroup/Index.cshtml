@@ -1,0 +1,586 @@
+@model List<EduTrack.Application.Common.Models.StudentGroupDto>
+@{
+    ViewData["Title"] = "مدیریت گروه‌های دانش‌آموزی";
+    var teachingPlanId = ViewBag.TeachingPlanId as int?;
+    var teachingPlanTitle = ViewBag.TeachingPlanTitle as string;
+    var courseTitle = ViewBag.CourseTitle as string;
+}
+
+<!-- Page Header -->
+<div class="page-header-modern mb-4">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="page-title-modern">مدیریت گروه‌های دانش‌آموزی</h1>
+            <p class="page-subtitle-modern mb-0">
+                <i class="fas fa-chalkboard-teacher me-2"></i>
+                @teachingPlanTitle - @courseTitle
+            </p>
+        </div>
+        <div class="header-actions">
+            <a asp-action="Create" asp-route-planId="@teachingPlanId" class="btn-create-group">
+                <i class="fas fa-plus"></i>
+                <span>گروه جدید</span>
+            </a>
+            <a asp-controller="TeachingPlan" asp-action="Index" asp-route-courseId="@ViewBag.CourseId" class="btn-back-modern">
+                <i class="fas fa-arrow-left"></i>
+                <span>بازگشت به پلن آموزشی</span>
+            </a>
+        </div>
+    </div>
+</div>
+
+@if (Model.Any())
+{
+    <!-- Groups Overview Stats -->
+    <div class="groups-overview mb-4">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <div class="stat-card-modern">
+                    <div class="stat-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3>@Model.Count</h3>
+                        <p>تعداد گروه‌ها</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card-modern">
+                    <div class="stat-icon">
+                        <i class="fas fa-user-graduate"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3>@Model.Sum(g => g.MemberCount)</h3>
+                        <p>کل دانش‌آموزان</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card-modern">
+                    <div class="stat-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3>@(Model.Count > 0 ? (Model.Sum(g => g.MemberCount) / Model.Count).ToString("F1") : "0")</h3>
+                        <p>میانگین اعضا</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card-modern">
+                    <div class="stat-icon">
+                        <i class="fas fa-balance-scale"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3>@(Model.Count > 0 ? Model.Max(g => g.MemberCount) - Model.Min(g => g.MemberCount) : 0)</h3>
+                        <p>تفاوت اعضا</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Groups Grid -->
+    <div class="groups-grid-modern">
+        @foreach (var group in Model.OrderBy(g => g.Name))
+        {
+            <div class="group-card-modern" data-group-id="@group.Id">
+                <div class="group-card-header">
+                    <div class="group-info">
+                        <h3 class="group-name">@group.Name</h3>
+                        <div class="group-meta">
+                            <span class="member-count">
+                                <i class="fas fa-users"></i>
+                                @group.MemberCount عضو
+                            </span>
+                        </div>
+                    </div>
+                    <div class="group-actions">
+                        <button class="action-btn-modern edit-btn" onclick="editGroup(@group.Id, '@group.Name')" title="ویرایش گروه">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="action-btn-modern delete-btn" onclick="deleteGroup(@group.Id, '@group.Name')" title="حذف گروه">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="group-members-preview">
+                    @if (group.Members.Any())
+                    {
+                        <div class="members-list">
+                            @foreach (var member in group.Members.Take(3))
+                            {
+                                <div class="member-item">
+                                    <div class="member-avatar">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                    <div class="member-info">
+                                        <span class="member-name">@member.StudentName</span>
+                                        <span class="member-email">@member.StudentEmail</span>
+                                    </div>
+                                </div>
+                            }
+                            @if (group.Members.Count > 3)
+                            {
+                                <div class="more-members">
+                                    <span>+@(group.Members.Count - 3) عضو دیگر</span>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="no-members">
+                            <i class="fas fa-user-plus"></i>
+                            <span>هنوز عضوی اضافه نشده</span>
+                        </div>
+                    }
+                </div>
+
+                <div class="group-card-footer">
+                    <a asp-action="ManageMembers" asp-route-groupId="@group.Id" class="btn-manage-members">
+                        <i class="fas fa-cog"></i>
+                        <span>مدیریت اعضا</span>
+                    </a>
+                </div>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <!-- Empty State -->
+    <div class="empty-state-modern">
+        <div class="empty-icon-modern">
+            <i class="fas fa-users"></i>
+        </div>
+        <h3>هنوز گروهی ایجاد نشده</h3>
+        <p>اولین گروه دانش‌آموزی خود را ایجاد کنید تا بتوانید دانش‌آموزان را سازماندهی کنید</p>
+        <a asp-action="Create" asp-route-planId="@teachingPlanId" class="btn-create-group">
+            <i class="fas fa-plus"></i>
+            <span>ایجاد گروه جدید</span>
+        </a>
+    </div>
+}
+
+<!-- Edit Group Modal -->
+<div class="modal fade" id="editGroupModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">ویرایش گروه</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editGroupForm" method="post">
+                <div class="modal-body">
+                    <input type="hidden" id="editGroupId" name="Id" />
+                    <input type="hidden" name="TeachingPlanId" value="@teachingPlanId" />
+                    <div class="mb-3">
+                        <label for="editGroupName" class="form-label">نام گروه</label>
+                        <input type="text" class="form-control" id="editGroupName" name="Name" required />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">لغو</button>
+                    <button type="submit" class="btn btn-primary">ذخیره تغییرات</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        /* Modern Page Header */
+        .page-header-modern {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+        }
+
+        .page-title-modern {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .page-subtitle-modern {
+            font-size: 1rem;
+            opacity: 0.9;
+            margin: 0.5rem 0 0 0;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn-create-group {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-create-group:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.5);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .btn-back-modern {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: transparent;
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-back-modern:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.5);
+            color: white;
+        }
+
+        /* Groups Overview Stats */
+        .groups-overview {
+            margin-bottom: 2rem;
+        }
+
+        .stat-card-modern {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e9ecef;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card-modern:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+        }
+
+        .stat-content h3 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #2c3e50;
+            margin: 0;
+        }
+
+        .stat-content p {
+            color: #6c757d;
+            margin: 0;
+            font-size: 0.9rem;
+        }
+
+        /* Groups Grid */
+        .groups-grid-modern {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .group-card-modern {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e9ecef;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .group-card-modern:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        .group-card-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #f8f9fa;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .group-name {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #2c3e50;
+            margin: 0;
+        }
+
+        .group-meta {
+            margin-top: 0.5rem;
+        }
+
+        .member-count {
+            color: #6c757d;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .group-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .action-btn-modern {
+            width: 36px;
+            height: 36px;
+            border: none;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+        }
+
+        .edit-btn {
+            background: rgba(23, 162, 184, 0.1);
+            color: #17a2b8;
+        }
+
+        .edit-btn:hover {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .delete-btn {
+            background: rgba(220, 53, 69, 0.1);
+            color: #dc3545;
+        }
+
+        .delete-btn:hover {
+            background: #dc3545;
+            color: white;
+        }
+
+        /* Group Members Preview */
+        .group-members-preview {
+            padding: 1.5rem;
+        }
+
+        .members-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .member-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .member-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.9rem;
+        }
+
+        .member-info {
+            flex: 1;
+        }
+
+        .member-name {
+            display: block;
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 0.9rem;
+        }
+
+        .member-email {
+            display: block;
+            color: #6c757d;
+            font-size: 0.8rem;
+        }
+
+        .more-members {
+            text-align: center;
+            padding: 0.5rem;
+            color: #6c757d;
+            font-size: 0.9rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .no-members {
+            text-align: center;
+            padding: 2rem;
+            color: #6c757d;
+        }
+
+        .no-members i {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        /* Group Card Footer */
+        .group-card-footer {
+            padding: 1rem 1.5rem;
+            background: #f8f9fa;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .btn-manage-members {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .btn-manage-members:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            color: white;
+        }
+
+        /* Empty State */
+        .empty-state-modern {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: white;
+            border-radius: 16px;
+            border: 2px dashed #e9ecef;
+        }
+
+        .empty-icon-modern {
+            font-size: 4rem;
+            color: #dee2e6;
+            margin-bottom: 2rem;
+        }
+
+        .empty-state-modern h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 1rem;
+        }
+
+        .empty-state-modern p {
+            font-size: 1rem;
+            color: #6c757d;
+            margin-bottom: 2rem;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Responsive */
+        @@media (max-width: 768px) {
+            .groups-grid-modern {
+                grid-template-columns: 1fr;
+            }
+
+            .header-actions {
+                flex-direction: column;
+                width: 100%;
+                margin-top: 1rem;
+            }
+
+            .stat-card-modern {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+    </style>
+}
+
+@section Scripts {
+    <script>
+        function editGroup(groupId, groupName) {
+            document.getElementById('editGroupId').value = groupId;
+            document.getElementById('editGroupName').value = groupName;
+            document.getElementById('editGroupForm').action = '@Url.Action("Edit", "StudentGroup")';
+            
+            var modal = new bootstrap.Modal(document.getElementById('editGroupModal'));
+            modal.show();
+        }
+
+        function deleteGroup(groupId, groupName) {
+            if (confirm(`آیا مطمئن هستید که می‌خواهید گروه "${groupName}" را حذف کنید؟`)) {
+                var form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '@Url.Action("Delete", "StudentGroup")';
+                
+                var token = document.createElement('input');
+                token.type = 'hidden';
+                token.name = '__RequestVerificationToken';
+                token.value = '@Html.AntiForgeryToken()';
+                
+                var idInput = document.createElement('input');
+                idInput.type = 'hidden';
+                idInput.name = 'id';
+                idInput.value = groupId;
+                
+                form.appendChild(token);
+                form.appendChild(idInput);
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+
+        // Auto-hide alerts after 5 seconds
+        setTimeout(function() {
+            var alerts = document.querySelectorAll('.alert');
+            alerts.forEach(function(alert) {
+                var bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            });
+        }, 5000);
+    </script>
+}

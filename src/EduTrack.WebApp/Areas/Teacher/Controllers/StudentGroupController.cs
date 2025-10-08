@@ -225,4 +225,64 @@ public class StudentGroupController : Controller
 
         return RedirectToAction(nameof(Index), new { planId = group.Value.TeachingPlanId });
     }
+
+    public async Task<IActionResult> Edit(int id)
+    {
+        var currentUser = await _userManager.GetUserAsync(User);
+        if (currentUser == null)
+        {
+            return RedirectToAction("Login", "Account", new { area = "Public" });
+        }
+
+        var group = await _mediator.Send(new GetStudentGroupByIdQuery(id));
+        if (!group.IsSuccess || group.Value == null)
+        {
+            return NotFound("Group not found");
+        }
+
+        // Verify user has access to this group's teaching plan
+        var teachingPlan = await _mediator.Send(new GetTeachingPlanByIdQuery(group.Value.TeachingPlanId));
+        if (!teachingPlan.IsSuccess || teachingPlan.Value == null || teachingPlan.Value.TeacherId != currentUser.Id)
+        {
+            return Forbid("You don't have permission to edit this group");
+        }
+
+        var command = new UpdateStudentGroupCommand(
+            group.Value.Id,
+            group.Value.Name);
+
+        ViewBag.TeachingPlanId = group.Value.TeachingPlanId;
+        ViewBag.TeachingPlanTitle = teachingPlan.Value.Title;
+        ViewBag.CourseTitle = teachingPlan.Value.CourseTitle;
+        return View(command);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit(UpdateStudentGroupCommand command)
+    {
+        if (!ModelState.IsValid)
+        {
+            var group = await _mediator.Send(new GetStudentGroupByIdQuery(command.Id));
+            var teachingPlan = await _mediator.Send(new GetTeachingPlanByIdQuery(group.Value?.TeachingPlanId ?? 0));
+            ViewBag.TeachingPlanId = group.Value?.TeachingPlanId ?? 0;
+            ViewBag.TeachingPlanTitle = teachingPlan.Value?.Title ?? "Unknown Plan";
+            ViewBag.CourseTitle = teachingPlan.Value?.CourseTitle ?? "Unknown Course";
+            return View(command);
+        }
+
+        var result = await _mediator.Send(command);
+        if (!result.IsSuccess)
+        {
+            ModelState.AddModelError("", result.Error ?? "An error occurred while updating the group");
+            var group = await _mediator.Send(new GetStudentGroupByIdQuery(command.Id));
+            var teachingPlan = await _mediator.Send(new GetTeachingPlanByIdQuery(group.Value?.TeachingPlanId ?? 0));
+            ViewBag.TeachingPlanId = group.Value?.TeachingPlanId ?? 0;
+            ViewBag.TeachingPlanTitle = teachingPlan.Value?.Title ?? "Unknown Plan";
+            ViewBag.CourseTitle = teachingPlan.Value?.CourseTitle ?? "Unknown Course";
+            return View(command);
+        }
+
+        return RedirectToAction(nameof(Index), new { planId = result.Value?.TeachingPlanId ?? 0 });
+    }
 }

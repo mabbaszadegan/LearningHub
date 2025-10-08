@@ -1,0 +1,436 @@
+@model EduTrack.Application.Features.TeachingPlan.Commands.UpdateStudentGroupCommand
+@{
+    ViewData["Title"] = "ویرایش گروه دانش‌آموزی";
+    var teachingPlanId = ViewBag.TeachingPlanId as int?;
+    var teachingPlanTitle = ViewBag.TeachingPlanTitle as string;
+    var courseTitle = ViewBag.CourseTitle as string;
+}
+
+<!-- Page Header -->
+<div class="page-header-modern mb-4">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="page-title-modern">ویرایش گروه دانش‌آموزی</h1>
+            <p class="page-subtitle-modern mb-0">
+                <i class="fas fa-chalkboard-teacher me-2"></i>
+                @teachingPlanTitle - @courseTitle
+            </p>
+        </div>
+        <div class="header-actions">
+            <a asp-action="Index" asp-route-planId="@teachingPlanId" class="btn-back-modern">
+                <i class="fas fa-arrow-left"></i>
+                <span>بازگشت به گروه‌ها</span>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Group Form -->
+<div class="edit-group-container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="edit-group-card">
+                <div class="card-header-modern">
+                    <h3 class="card-title-modern">
+                        <i class="fas fa-edit me-2"></i>
+                        ویرایش اطلاعات گروه
+                    </h3>
+                    <p class="card-subtitle-modern">
+                        نام گروه را تغییر دهید. تغییر نام گروه بر روی اعضای گروه تأثیری ندارد.
+                    </p>
+                </div>
+
+                <div class="card-body-modern">
+                    <form asp-action="Edit" method="post" class="edit-group-form">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" asp-for="Id" />
+                        
+                        <div class="form-group-modern">
+                            <label asp-for="Name" class="form-label-modern">
+                                نام گروه <span class="required">*</span>
+                            </label>
+                            <div class="input-group-modern">
+                                <div class="input-icon">
+                                    <i class="fas fa-tag"></i>
+                                </div>
+                                <input asp-for="Name" class="form-control-modern" 
+                                       placeholder="نام گروه را وارد کنید" 
+                                       autocomplete="off" />
+                            </div>
+                            <span asp-validation-for="Name" class="validation-error"></span>
+                            <div class="form-help">
+                                <i class="fas fa-info-circle"></i>
+                                نام گروه باید منحصر به فرد و قابل تشخیص باشد
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="form-actions-modern">
+                            <button type="button" class="btn-cancel-modern" onclick="history.back()">
+                                <i class="fas fa-times"></i>
+                                لغو
+                            </button>
+                            <button type="submit" class="btn-save-modern">
+                                <i class="fas fa-save"></i>
+                                ذخیره تغییرات
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Info Sidebar -->
+        <div class="col-lg-4">
+            <div class="info-sidebar">
+                <div class="info-card">
+                    <div class="info-header">
+                        <i class="fas fa-info-circle"></i>
+                        <h4>نکات مهم</h4>
+                    </div>
+                    <div class="info-content">
+                        <ul class="info-list">
+                            <li>
+                                <i class="fas fa-check"></i>
+                                تغییر نام گروه بر اعضا تأثیری ندارد
+                            </li>
+                            <li>
+                                <i class="fas fa-check"></i>
+                                نام جدید باید منحصر به فرد باشد
+                            </li>
+                            <li>
+                                <i class="fas fa-check"></i>
+                                تغییرات بلافاصله اعمال می‌شود
+                            </li>
+                            <li>
+                                <i class="fas fa-check"></i>
+                                می‌توانید نام را بعداً دوباره تغییر دهید
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="info-card">
+                    <div class="info-header">
+                        <i class="fas fa-lightbulb"></i>
+                        <h4>پیشنهادات</h4>
+                    </div>
+                    <div class="info-content">
+                        <div class="tip-item">
+                            <strong>نام واضح:</strong>
+                            <p>از نام‌هایی استفاده کنید که هدف گروه را مشخص کند</p>
+                        </div>
+                        <div class="tip-item">
+                            <strong>ترتیب منطقی:</strong>
+                            <p>برای گروه‌های متعدد از ترتیب منطقی استفاده کنید</p>
+                        </div>
+                        <div class="tip-item">
+                            <strong>سازگاری:</strong>
+                            <p>نام گروه را با سایر گروه‌ها هماهنگ کنید</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        /* Modern Page Header */
+        .page-header-modern {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+        }
+
+        .page-title-modern {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .page-subtitle-modern {
+            font-size: 1rem;
+            opacity: 0.9;
+            margin: 0.5rem 0 0 0;
+        }
+
+        .btn-back-modern {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: transparent;
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-back-modern:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.5);
+            color: white;
+        }
+
+        /* Edit Group Container */
+        .edit-group-container {
+            margin-bottom: 2rem;
+        }
+
+        .edit-group-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e9ecef;
+            overflow: hidden;
+        }
+
+        .card-header-modern {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 2rem;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .card-title-modern {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #2c3e50;
+            margin: 0 0 0.5rem 0;
+        }
+
+        .card-subtitle-modern {
+            color: #6c757d;
+            margin: 0;
+            font-size: 1rem;
+        }
+
+        .card-body-modern {
+            padding: 2rem;
+        }
+
+        /* Form Styles */
+        .form-group-modern {
+            margin-bottom: 2rem;
+        }
+
+        .form-label-modern {
+            display: block;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 0.75rem;
+            font-size: 1rem;
+        }
+
+        .required {
+            color: #dc3545;
+        }
+
+        .input-group-modern {
+            position: relative;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+            z-index: 2;
+        }
+
+        .form-control-modern {
+            width: 100%;
+            padding: 1rem 1rem 1rem 3rem;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+        }
+
+        .form-control-modern:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .validation-error {
+            color: #dc3545;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+            display: block;
+        }
+
+        .form-help {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #6c757d;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+        }
+
+        /* Form Actions */
+        .form-actions-modern {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+            padding-top: 2rem;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .btn-cancel-modern {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-cancel-modern:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        .btn-save-modern {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-save-modern:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+        }
+
+        /* Info Sidebar */
+        .info-sidebar {
+            position: sticky;
+            top: 2rem;
+        }
+
+        .info-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e9ecef;
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+        }
+
+        .info-header {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .info-header i {
+            color: #667eea;
+            font-size: 1.25rem;
+        }
+
+        .info-header h4 {
+            margin: 0;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .info-content {
+            padding: 1.5rem;
+        }
+
+        .info-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .info-list li {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+            color: #6c757d;
+        }
+
+        .info-list li:last-child {
+            margin-bottom: 0;
+        }
+
+        .info-list i {
+            color: #28a745;
+            margin-top: 0.125rem;
+        }
+
+        .tip-item {
+            margin-bottom: 1rem;
+        }
+
+        .tip-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .tip-item strong {
+            color: #2c3e50;
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+
+        .tip-item p {
+            color: #6c757d;
+            margin: 0;
+            font-size: 0.9rem;
+        }
+
+        /* Responsive */
+        @@media (max-width: 991.98px) {
+            .info-sidebar {
+                position: static;
+                margin-top: 2rem;
+            }
+        }
+
+        @@media (max-width: 767.98px) {
+            .form-actions-modern {
+                flex-direction: column;
+            }
+        }
+    </style>
+}
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    
+    <script>
+        // Auto-focus on name input
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('Name').focus();
+            document.getElementById('Name').select();
+        });
+    </script>
+}
