@@ -25,6 +25,9 @@ public class Lesson
     public Module Module { get; private set; } = null!;
     public IReadOnlyCollection<Resource> Resources => _resources.AsReadOnly();
     public IReadOnlyCollection<Progress> Progresses => _progresses.AsReadOnly();
+    
+    // Navigation properties for new entities
+    public ICollection<TeachingSessionTopicCoverage> TopicCoverages { get; set; } = new List<TeachingSessionTopicCoverage>();
 
     // Private constructor for EF Core
     private Lesson() { }

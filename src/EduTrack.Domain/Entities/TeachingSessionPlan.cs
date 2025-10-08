@@ -32,7 +32,7 @@ public class TeachingSessionPlan
     /// <summary>
     /// زمان برنامه‌ریزی
     /// </summary>
-    public DateTime PlannedAt { get; set; } = DateTime.UtcNow;
+    public DateTimeOffset PlannedAt { get; set; } = DateTimeOffset.UtcNow;
     
     // Navigation properties
     public TeachingSessionReport TeachingSessionReport { get; set; } = null!;

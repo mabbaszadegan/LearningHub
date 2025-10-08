@@ -4,6 +4,7 @@ using EduTrack.Infrastructure;
 using EduTrack.Infrastructure.Data;
 using EduTrack.WebApp.Data;
 using EduTrack.WebApp.Filters;
+using EduTrack.WebApp.ModelBinders;
 using EduTrack.WebApp.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
@@ -28,6 +29,7 @@ builder.Host.UseSerilog();
 builder.Services.AddControllersWithViews(options =>
 {
     options.Filters.Add<DomainExceptionFilter>();
+    options.ModelBinderProviders.Insert(0, new PersianDateTimeOffsetModelBinderProvider());
 })
     .AddRazorRuntimeCompilation();
 

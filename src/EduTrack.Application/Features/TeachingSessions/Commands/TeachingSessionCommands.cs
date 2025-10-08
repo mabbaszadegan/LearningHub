@@ -7,7 +7,7 @@ namespace EduTrack.Application.Features.TeachingSessions.Commands;
 public record CreateTeachingSessionReportCommand(
     int TeachingPlanId,
     string? Title,
-    DateTime SessionDate,
+    DateTimeOffset SessionDate,
     SessionMode Mode,
     string? Location,
     string TopicsJson,
@@ -18,7 +18,7 @@ public record CreateTeachingSessionReportCommand(
 public record UpdateTeachingSessionReportCommand(
     int Id,
     string? Title,
-    DateTime SessionDate,
+    DateTimeOffset SessionDate,
     SessionMode Mode,
     string? Location,
     string TopicsJson,

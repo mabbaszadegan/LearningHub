@@ -24,6 +24,9 @@ public class TeachingPlan
     public User Teacher { get; private set; } = null!;
     public IReadOnlyCollection<StudentGroup> Groups => _groups.AsReadOnly();
     public IReadOnlyCollection<ScheduleItem> ScheduleItems => _scheduleItems.AsReadOnly();
+    
+    // Navigation properties for new entities
+    public ICollection<TeachingPlanProgress> PlanProgresses { get; set; } = new List<TeachingPlanProgress>();
 
     // Private constructor for EF Core
     private TeachingPlan() { }

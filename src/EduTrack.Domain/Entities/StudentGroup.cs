@@ -14,6 +14,12 @@ public class StudentGroup
     // Navigation properties
     public TeachingPlan TeachingPlan { get; private set; } = null!;
     public IReadOnlyCollection<GroupMember> Members => _members.AsReadOnly();
+    
+    // Navigation properties for new entities
+    public ICollection<TeachingSessionPlan> SessionPlans { get; set; } = new List<TeachingSessionPlan>();
+    public ICollection<TeachingSessionExecution> SessionExecutions { get; set; } = new List<TeachingSessionExecution>();
+    public ICollection<TeachingSessionTopicCoverage> TopicCoverages { get; set; } = new List<TeachingSessionTopicCoverage>();
+    public ICollection<TeachingPlanProgress> PlanProgresses { get; set; } = new List<TeachingPlanProgress>();
 
     // Private constructor for EF Core
     private StudentGroup() { }

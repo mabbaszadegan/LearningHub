@@ -7,7 +7,7 @@ public class TeachingSessionReport
     public int Id { get; set; }
     public int TeachingPlanId { get; set; }
     public string? Title { get; set; }
-    public DateTime SessionDate { get; set; }
+    public DateTimeOffset SessionDate { get; set; }
     public SessionMode Mode { get; set; }
     public string? Location { get; set; }
     public string TopicsJson { get; set; } = string.Empty;
@@ -15,9 +15,14 @@ public class TeachingSessionReport
     public string? StatsJson { get; set; }
     public string? AttachmentsJson { get; set; }
     public int CreatedByTeacherId { get; set; }
-    public DateTime CreatedAt { get; set; }
-    public DateTime UpdatedAt { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
+    public DateTimeOffset UpdatedAt { get; set; }
 
     public TeachingPlan TeachingPlan { get; set; } = null!;
     public ICollection<TeachingSessionAttendance> Attendance { get; set; } = new List<TeachingSessionAttendance>();
+    
+    // Navigation properties for new entities
+    public ICollection<TeachingSessionPlan> Plans { get; set; } = new List<TeachingSessionPlan>();
+    public ICollection<TeachingSessionExecution> Executions { get; set; } = new List<TeachingSessionExecution>();
+    public ICollection<TeachingSessionTopicCoverage> TopicCoverages { get; set; } = new List<TeachingSessionTopicCoverage>();
 }

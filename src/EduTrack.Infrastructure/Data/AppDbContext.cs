@@ -86,9 +86,20 @@ public class AppDbContext : IdentityDbContext<User>
     public DbSet<TeachingSessionReport> TeachingSessionReports { get; set; }
     public DbSet<TeachingSessionAttendance> TeachingSessionAttendances { get; set; }
     public DbSet<ScheduleItemAssignment> ScheduleItemAssignments { get; set; }
+    
+    // New Teaching Session Entities
+    public DbSet<TeachingSessionPlan> TeachingSessionPlans { get; set; }
+    public DbSet<TeachingSessionExecution> TeachingSessionExecutions { get; set; }
+    public DbSet<TeachingSessionTopicCoverage> TeachingSessionTopicCoverages { get; set; }
+    public DbSet<TeachingPlanProgress> TeachingPlanProgresses { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
+        foreach (var foreignKey in builder.Model.GetEntityTypes().SelectMany(e => e.GetForeignKeys()))
+        {
+            foreignKey.DeleteBehavior = DeleteBehavior.Restrict;
+        }
+
         base.OnModelCreating(builder);
 
         // Configure Course entity
@@ -751,6 +762,112 @@ public class AppDbContext : IdentityDbContext<User>
                 .WithMany()
                 .HasForeignKey(x => x.SessionReportId)
                 .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        // Configure TeachingSessionPlan entity
+        builder.Entity<TeachingSessionPlan>(entity =>
+        {
+            entity.ToTable("TeachingSessionPlans");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.PlannedObjectives).HasMaxLength(2000);
+            entity.Property(x => x.PlannedSubTopicsJson).HasMaxLength(4000);
+            entity.Property(x => x.PlannedLessonsJson).HasMaxLength(4000);
+            entity.Property(x => x.AdditionalTopics).HasMaxLength(2000);
+            entity.HasOne(x => x.TeachingSessionReport)
+                .WithMany(r => r.Plans)
+                .HasForeignKey(x => x.TeachingSessionReportId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(x => x.StudentGroup)
+                .WithMany(g => g.SessionPlans)
+                .HasForeignKey(x => x.StudentGroupId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasIndex(x => new { x.TeachingSessionReportId, x.StudentGroupId }).IsUnique();
+            entity.HasIndex(x => x.PlannedAt);
+        });
+
+        // Configure TeachingSessionExecution entity
+        builder.Entity<TeachingSessionExecution>(entity =>
+        {
+            entity.ToTable("TeachingSessionExecutions", t =>
+            {
+                t.HasCheckConstraint("CK_UnderstandingLevel", "UnderstandingLevel >= 1 AND UnderstandingLevel <= 5");
+                t.HasCheckConstraint("CK_ParticipationLevel", "ParticipationLevel >= 1 AND ParticipationLevel <= 5");
+            });
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.AchievedObjectives).HasMaxLength(2000);
+            entity.Property(x => x.AchievedSubTopicsJson).HasMaxLength(4000);
+            entity.Property(x => x.AchievedLessonsJson).HasMaxLength(4000);
+            entity.Property(x => x.AdditionalTopicsCovered).HasMaxLength(2000);
+            entity.Property(x => x.UncoveredPlannedTopics).HasMaxLength(2000);
+            entity.Property(x => x.UncoveredReasons).HasMaxLength(2000);
+            entity.Property(x => x.GroupFeedback).HasMaxLength(4000);
+            entity.Property(x => x.Challenges).HasMaxLength(2000);
+            entity.Property(x => x.NextSessionRecommendations).HasMaxLength(2000);
+            entity.HasOne(x => x.TeachingSessionReport)
+                .WithMany(r => r.Executions)
+                .HasForeignKey(x => x.TeachingSessionReportId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(x => x.StudentGroup)
+                .WithMany(g => g.SessionExecutions)
+                .HasForeignKey(x => x.StudentGroupId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasIndex(x => new { x.TeachingSessionReportId, x.StudentGroupId }).IsUnique();
+            entity.HasIndex(x => x.CompletedAt);
+        });
+
+        // Configure TeachingSessionTopicCoverage entity
+        builder.Entity<TeachingSessionTopicCoverage>(entity =>
+        {
+            entity.ToTable("TeachingSessionTopicCoverages", t =>
+            {
+                t.HasCheckConstraint("CK_CoveragePercentage", "CoveragePercentage >= 0 AND CoveragePercentage <= 100");
+                t.HasCheckConstraint("CK_CoverageStatus", "CoverageStatus IN (0,1,2,3)");
+                t.HasCheckConstraint("CK_TopicType", "TopicType IN ('SubTopic', 'Lesson', 'Additional')");
+            });
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.TopicType).HasMaxLength(20).IsRequired();
+            entity.Property(x => x.TopicTitle).HasMaxLength(500);
+            entity.Property(x => x.TeacherNotes).HasMaxLength(4000);
+            entity.Property(x => x.Challenges).HasMaxLength(2000);
+            entity.HasOne(x => x.TeachingSessionReport)
+                .WithMany(r => r.TopicCoverages)
+                .HasForeignKey(x => x.TeachingSessionReportId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(x => x.StudentGroup)
+                .WithMany(g => g.TopicCoverages)
+                .HasForeignKey(x => x.StudentGroupId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasIndex(x => new { x.TeachingSessionReportId, x.StudentGroupId, x.TopicType, x.TopicId });
+            entity.HasIndex(x => x.CreatedAt);
+        });
+
+        // Configure TeachingPlanProgress entity
+        builder.Entity<TeachingPlanProgress>(entity =>
+        {
+            entity.ToTable("TeachingPlanProgresses", t =>
+            {
+                t.HasCheckConstraint("CK_OverallProgressPercentage", "OverallProgressPercentage >= 0 AND OverallProgressPercentage <= 100");
+                t.HasCheckConstraint("CK_OverallStatus", "OverallStatus IN (0,1,2,3,4)");
+                t.HasCheckConstraint("CK_SessionsCount", "SessionsCount >= 0");
+            });
+            entity.HasKey(x => x.Id);
+            entity.HasOne(x => x.TeachingPlan)
+                .WithMany(p => p.PlanProgresses)
+                .HasForeignKey(x => x.TeachingPlanId)
+                .OnDelete(DeleteBehavior.NoAction);
+            entity.HasOne(x => x.SubTopic)
+                .WithMany(s => s.PlanProgresses)
+                .HasForeignKey(x => x.SubTopicId)
+                .OnDelete(DeleteBehavior.NoAction);
+            entity.HasOne(x => x.StudentGroup)
+                .WithMany(g => g.PlanProgresses)
+                .HasForeignKey(x => x.StudentGroupId)
+                .OnDelete(DeleteBehavior.NoAction);
+            entity.HasIndex(x => new { x.TeachingPlanId, x.SubTopicId, x.StudentGroupId }).IsUnique();
+            entity.HasIndex(x => x.OverallStatus);
+            entity.HasIndex(x => x.FirstTaughtDate);
+            entity.HasIndex(x => x.LastTaughtDate);
+            entity.HasIndex(x => x.UpdatedAt);
         });
 
     }

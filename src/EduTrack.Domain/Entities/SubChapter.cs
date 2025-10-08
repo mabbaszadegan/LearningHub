@@ -22,6 +22,10 @@ public class SubChapter
     // Navigation properties
     public Chapter Chapter { get; private set; } = null!;
     public IReadOnlyCollection<EducationalContent> EducationalContents => _educationalContents.AsReadOnly();
+    
+    // Navigation properties for new entities
+    public ICollection<TeachingSessionTopicCoverage> TopicCoverages { get; set; } = new List<TeachingSessionTopicCoverage>();
+    public ICollection<TeachingPlanProgress> PlanProgresses { get; set; } = new List<TeachingPlanProgress>();
 
     // Private constructor for EF Core
     private SubChapter() { }

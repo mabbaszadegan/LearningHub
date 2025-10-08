@@ -67,7 +67,7 @@ public class TeachingSessionExecution
     /// <summary>
     /// زمان تکمیل
     /// </summary>
-    public DateTime CompletedAt { get; set; } = DateTime.UtcNow;
+    public DateTimeOffset CompletedAt { get; set; } = DateTimeOffset.UtcNow;
     
     // Navigation properties
     public TeachingSessionReport TeachingSessionReport { get; set; } = null!;

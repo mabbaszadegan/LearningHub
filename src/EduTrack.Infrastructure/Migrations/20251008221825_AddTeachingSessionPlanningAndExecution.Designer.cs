@@ -4,6 +4,7 @@ using EduTrack.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EduTrack.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251008221825_AddTeachingSessionPlanningAndExecution")]
+    partial class AddTeachingSessionPlanningAndExecution
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1682,14 +1685,14 @@ namespace EduTrack.Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("datetimeoffset");
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
 
-                    b.Property<DateTimeOffset?>("FirstTaughtDate")
-                        .HasColumnType("datetimeoffset");
+                    b.Property<DateTime?>("FirstTaughtDate")
+                        .HasColumnType("datetime2");
 
-                    b.Property<DateTimeOffset?>("LastTaughtDate")
-                        .HasColumnType("datetimeoffset");
+                    b.Property<DateTime?>("LastTaughtDate")
+                        .HasColumnType("datetime2");
 
                     b.Property<int>("OverallProgressPercentage")
                         .HasColumnType("int");
@@ -1709,8 +1712,8 @@ namespace EduTrack.Infrastructure.Migrations
                     b.Property<int>("TeachingPlanId")
                         .HasColumnType("int");
 
-                    b.Property<DateTimeOffset>("UpdatedAt")
-                        .HasColumnType("datetimeoffset");
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
 
                     b.HasKey("Id");
 
@@ -1804,8 +1807,8 @@ namespace EduTrack.Infrastructure.Migrations
                         .HasMaxLength(2000)
                         .HasColumnType("nvarchar(2000)");
 
-                    b.Property<DateTimeOffset>("CompletedAt")
-                        .HasColumnType("datetimeoffset");
+                    b.Property<DateTime>("CompletedAt")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("GroupFeedback")
                         .HasMaxLength(4000)
@@ -1864,8 +1867,8 @@ namespace EduTrack.Infrastructure.Migrations
                         .HasMaxLength(2000)
                         .HasColumnType("nvarchar(2000)");
 
-                    b.Property<DateTimeOffset>("PlannedAt")
-                        .HasColumnType("datetimeoffset");
+                    b.Property<DateTime>("PlannedAt")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("PlannedLessonsJson")
                         .HasMaxLength(4000)
@@ -1909,9 +1912,9 @@ namespace EduTrack.Infrastructure.Migrations
                         .HasMaxLength(2000)
                         .HasColumnType("nvarchar(2000)");
 
-                    b.Property<DateTimeOffset>("CreatedAt")
+                    b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("datetimeoffset")
+                        .HasColumnType("datetime2")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                     b.Property<int>("CreatedByTeacherId")
@@ -1928,8 +1931,8 @@ namespace EduTrack.Infrastructure.Migrations
                         .HasMaxLength(4000)
                         .HasColumnType("nvarchar(4000)");
 
-                    b.Property<DateTimeOffset>("SessionDate")
-                        .HasColumnType("datetimeoffset");
+                    b.Property<DateTime>("SessionDate")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("StatsJson")
                         .HasMaxLength(2000)
@@ -1946,9 +1949,9 @@ namespace EduTrack.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTimeOffset>("UpdatedAt")
+                    b.Property<DateTime>("UpdatedAt")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("datetimeoffset")
+                        .HasColumnType("datetime2")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                     b.HasKey("Id");
@@ -1980,8 +1983,8 @@ namespace EduTrack.Infrastructure.Migrations
                     b.Property<int>("CoverageStatus")
                         .HasColumnType("int");
 
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("datetimeoffset");
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
 
                     b.Property<int?>("LessonId")
                         .HasColumnType("int");
