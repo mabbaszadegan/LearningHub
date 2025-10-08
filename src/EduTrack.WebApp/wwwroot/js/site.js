@@ -38,12 +38,54 @@ $(document).ready(function() {
         }
     });
 
-    // Form validation enhancement
-    $('form').on('submit', function() {
-        const submitBtn = $(this).find('button[type="submit"]');
+    // Form validation enhancement - only for forms without custom handlers
+    $('form:not(.session-form)').on('submit', function(e) {
+        const form = $(this);
+        const submitBtn = form.find('button[type="submit"]');
+        
+        // Store original state for restoration
+        if (!submitBtn.data('original-html')) {
+            submitBtn.data('original-html', submitBtn.html());
+        }
+        
+        // Show loading state
         submitBtn.prop('disabled', true);
         submitBtn.html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...');
+        
+        // Set a timeout to restore button if form doesn't submit successfully
+        setTimeout(function() {
+            if (submitBtn.prop('disabled')) {
+                restoreSubmitButton(submitBtn);
+            }
+        }, 10000); // 10 second timeout
     });
+
+    // Function to restore submit button
+    function restoreSubmitButton(submitBtn) {
+        const originalHtml = submitBtn.data('original-html');
+        submitBtn.prop('disabled', false);
+        
+        if (originalHtml) {
+            submitBtn.html(originalHtml);
+        } else {
+            // Fallback based on button class
+            if (submitBtn.hasClass('btn-submit')) {
+                submitBtn.html('<i class="fas fa-save"></i><span>ایجاد جلسه</span>');
+            } else {
+                submitBtn.html('Submit');
+            }
+        }
+    }
+
+    // Restore all submit buttons on page load (handles validation errors)
+    function restoreAllSubmitButtons() {
+        $('form button[type="submit"]').each(function() {
+            restoreSubmitButton($(this));
+        });
+    }
+
+    // Call restoration function on document ready
+    restoreAllSubmitButtons();
 
     // Exam timer initialization
     if (typeof window.examTimerData !== 'undefined') {

@@ -1,106 +1,627 @@
 @model EduTrack.Application.Features.TeachingSessions.Commands.CreateTeachingSessionReportCommand
 @{
-    ViewData["Title"] = "Create Teaching Session";
+    ViewData["Title"] = "ایجاد جلسه آموزشی";
     var planId = ViewBag.TeachingPlanId as int?;
     var planTitle = ViewBag.TeachingPlanTitle as string;
+    var courseTitle = ViewBag.CourseTitle as string;
     var sessionModes = ViewBag.SessionModes as SelectList;
 }
 
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h4 class="card-title mb-0">
-                        <i class="fas fa-plus me-2"></i>
-                        Create Teaching Session - @planTitle
-                    </h4>
+<!-- Page Header -->
+<div class="page-header-minimal mb-3">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="page-title">ایجاد جلسه آموزشی</h1>
+            <p class="page-subtitle mb-0">
+                <a asp-controller="Courses" asp-action="Index" class="breadcrumb-link">
+                    <i class="fas fa-chevron-right"></i> دوره‌ها
+                </a>
+                <span class="mx-2">/</span>
+                <a asp-controller="TeachingPlan" asp-action="Index" asp-route-courseId="@ViewBag.CourseId" class="breadcrumb-link">
+                    @courseTitle
+                </a>
+                <span class="mx-2">/</span>
+                <a asp-action="Index" asp-route-planId="@planId" class="breadcrumb-link">
+                    @planTitle
+                </a>
+                <span class="mx-2">/</span>
+                <span>جلسه جدید</span>
+            </p>
+        </div>
+    </div>
                 </div>
-                <div class="card-body">
-                    <form asp-action="Create" method="post">
+
+<!-- Session Creation Form -->
+<div class="session-form-container">
+    <form asp-action="Create" method="post" class="session-form">
                         <input type="hidden" asp-for="TeachingPlanId" value="@planId" />
                         
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label asp-for="Title" class="form-label">Session Title</label>
-                                    <input asp-for="Title" class="form-control" placeholder="Enter session title (optional)" />
+        <!-- Basic Information Section -->
+        <div class="form-section">
+            <div class="section-header">
+                <h3 class="section-title">
+                    <i class="fas fa-info-circle"></i>
+                    اطلاعات پایه جلسه
+                </h3>
+                <p class="section-subtitle">اطلاعات کلی جلسه آموزشی را وارد کنید</p>
+            </div>
+            
+            <div class="form-grid">
+                <div class="form-group">
+                    <label asp-for="Title" class="form-label">
+                        <i class="fas fa-heading"></i>
+                        عنوان جلسه
+                    </label>
+                    <input asp-for="Title" class="form-control modern-input" placeholder="مثال: جلسه اول - مرور زمان گذشته" />
                                     <span asp-validation-for="Title" class="text-danger"></span>
+                </div>
+                
+                <div class="form-group">
+                    <label asp-for="SessionDate" class="form-label">
+                        <i class="fas fa-calendar-alt"></i>
+                        تاریخ و زمان جلسه
+                    </label>
+                    <div class="date-time-container">
+                        <div class="date-input-wrapper">
+                            <input type="text" id="PersianSessionDate" class="form-control modern-input persian-datepicker" 
+                                   placeholder="انتخاب تاریخ" data-target="SessionDate" name="PersianSessionDate" />
+                            <input asp-for="SessionDate" type="hidden" id="SessionDate" name="SessionDate" />
+                        </div>
+                        <div class="time-input-wrapper">
+                            <input type="time" id="SessionTime" class="form-control modern-input" />
                                 </div>
                             </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label asp-for="SessionDate" class="form-label">Session Date & Time</label>
-                                    <input asp-for="SessionDate" type="datetime-local" class="form-control" />
                                     <span asp-validation-for="SessionDate" class="text-danger"></span>
-                                </div>
                             </div>
                         </div>
 
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label asp-for="Mode" class="form-label">Session Mode</label>
-                                    <select asp-for="Mode" asp-items="sessionModes" class="form-select">
-                                        <option value="">Select session mode</option>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label asp-for="Mode" class="form-label">
+                        <i class="fas fa-video"></i>
+                        نوع جلسه
+                    </label>
+                    <select asp-for="Mode" asp-items="sessionModes" class="form-select modern-select">
+                        <option value="">نوع جلسه را انتخاب کنید</option>
                                     </select>
                                     <span asp-validation-for="Mode" class="text-danger"></span>
                                 </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label asp-for="Location" class="form-label">Location</label>
-                                    <input asp-for="Location" class="form-control" placeholder="Enter location (optional)" />
+                
+                <div class="form-group">
+                    <label asp-for="Location" class="form-label">
+                        <i class="fas fa-map-marker-alt"></i>
+                        مکان برگزاری
+                    </label>
+                    <input asp-for="Location" class="form-control modern-input" placeholder="مثال: کلاس 101، سالن کنفرانس" />
                                     <span asp-validation-for="Location" class="text-danger"></span>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label asp-for="TopicsJson" class="form-label">Topics Covered</label>
-                            <textarea asp-for="TopicsJson" class="form-control" rows="4" placeholder='Enter topics in JSON format, e.g., {"topics":["Past Simple review"],"subtopics":["EF 2A Holidays"]}'></textarea>
-                            <div class="form-text">Enter topics covered in this session in JSON format.</div>
+        <!-- Content Section -->
+        <div class="form-section">
+            <div class="section-header">
+                <h3 class="section-title">
+                    <i class="fas fa-book-open"></i>
+                    محتوای جلسه
+                </h3>
+                <p class="section-subtitle">موضوعات و یادداشت‌های جلسه را وارد کنید</p>
+            </div>
+            
+            <div class="form-group">
+                <label asp-for="TopicsJson" class="form-label">
+                    <i class="fas fa-list-ul"></i>
+                    موضوعات تدریس شده
+                </label>
+                <textarea asp-for="TopicsJson" class="form-control modern-textarea" rows="4" placeholder='{"topics":["مرور زمان گذشته ساده"],"subtopics":["افعال بی‌قاعده","جمله‌های سوالی"],"materials":["کتاب صفحه 25-30"]}'></textarea>
+                <div class="form-help">
+                    <i class="fas fa-info-circle"></i>
+                    موضوعات را به صورت JSON وارد کنید. مثال: {"topics":["موضوع اصلی"],"subtopics":["زیرموضوع"]}
+                </div>
                             <span asp-validation-for="TopicsJson" class="text-danger"></span>
                         </div>
 
-                        <div class="mb-3">
-                            <label asp-for="Notes" class="form-label">Session Notes</label>
-                            <textarea asp-for="Notes" class="form-control" rows="6" placeholder="Enter detailed notes about the session..."></textarea>
+            <div class="form-group">
+                <label asp-for="Notes" class="form-label">
+                    <i class="fas fa-sticky-note"></i>
+                    یادداشت‌های جلسه
+                </label>
+                <textarea asp-for="Notes" class="form-control modern-textarea" rows="6" placeholder="یادداشت‌های مفصل درباره جلسه، مشکلات دانش‌آموزان، نکات مهم و..."></textarea>
                             <span asp-validation-for="Notes" class="text-danger"></span>
+            </div>
                         </div>
 
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label asp-for="StatsJson" class="form-label">Session Statistics</label>
-                                    <textarea asp-for="StatsJson" class="form-control" rows="3" placeholder='Enter statistics in JSON format, e.g., {"duration":90,"participation":85}'></textarea>
+        <!-- Additional Information Section -->
+        <div class="form-section">
+            <div class="section-header">
+                <h3 class="section-title">
+                    <i class="fas fa-chart-bar"></i>
+                    اطلاعات تکمیلی
+                </h3>
+                <p class="section-subtitle">آمار و ضمائم جلسه (اختیاری)</p>
+            </div>
+            
+            <div class="form-grid">
+                <div class="form-group">
+                    <label asp-for="StatsJson" class="form-label">
+                        <i class="fas fa-chart-line"></i>
+                        آمار جلسه
+                    </label>
+                    <textarea asp-for="StatsJson" class="form-control modern-textarea" rows="3" placeholder='{"duration":90,"participation":85,"homework_completed":12}'></textarea>
                                     <span asp-validation-for="StatsJson" class="text-danger"></span>
                                 </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label asp-for="AttachmentsJson" class="form-label">Attachments</label>
-                                    <textarea asp-for="AttachmentsJson" class="form-control" rows="3" placeholder='Enter attachment references in JSON format'></textarea>
+                
+                <div class="form-group">
+                    <label asp-for="AttachmentsJson" class="form-label">
+                        <i class="fas fa-paperclip"></i>
+                        ضمائم
+                    </label>
+                    <textarea asp-for="AttachmentsJson" class="form-control modern-textarea" rows="3" placeholder='{"files":["worksheet1.pdf","audio1.mp3"],"links":["https://example.com"]}'></textarea>
                                     <span asp-validation-for="AttachmentsJson" class="text-danger"></span>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="d-flex justify-content-between">
-                            <a href="@Url.Action("Index", new { planId = planId })" class="btn btn-secondary">
-                                <i class="fas fa-arrow-left me-1"></i>Cancel
-                            </a>
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save me-1"></i>Create Session
+        <!-- Form Actions -->
+        <div class="form-actions">
+            <a asp-action="Index" asp-route-planId="@planId" class="btn-cancel">
+                <i class="fas fa-times"></i>
+                <span>لغو</span>
+            </a>
+            <button type="submit" class="btn-submit" id="createSessionBtn">
+                <i class="fas fa-save"></i>
+                <span>ایجاد جلسه</span>
                             </button>
                         </div>
                     </form>
                 </div>
-            </div>
-        </div>
-    </div>
-</div>
+
+@section Styles {
+    <style>
+        /* Page Header */
+        .btn-action-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.625rem 1.125rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 0.813rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            border: none;
+        }
+
+        .btn-action-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            color: white;
+        }
+
+        /* Breadcrumb Link */
+        .breadcrumb-link {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 0.813rem;
+            transition: all 0.2s;
+        }
+
+        .breadcrumb-link:hover {
+            color: #5a6fd8;
+            text-decoration: underline;
+        }
+
+        /* Session Form Container */
+        .session-form-container {
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #e9ecef;
+            overflow: hidden;
+        }
+
+        .session-form {
+            padding: 0;
+        }
+
+        /* Form Sections */
+        .form-section {
+            padding: 2rem;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .form-section:last-child {
+            border-bottom: none;
+        }
+
+        .section-header {
+            margin-bottom: 1.5rem;
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin: 0 0 0.5rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .section-title i {
+            color: #667eea;
+            font-size: 1.125rem;
+        }
+
+        .section-subtitle {
+            font-size: 0.875rem;
+            color: #6c757d;
+            margin: 0;
+        }
+
+        /* Form Grid */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        /* Form Groups */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-label i {
+            color: #667eea;
+            font-size: 0.813rem;
+        }
+
+        /* Modern Form Controls */
+        .modern-input,
+        .modern-select,
+        .modern-textarea {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+            background: white;
+        }
+
+        .modern-input:focus,
+        .modern-select:focus,
+        .modern-textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .modern-textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        /* Form Help */
+        .form-help {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+            font-size: 0.75rem;
+            color: #6b7280;
+        }
+
+        .form-help i {
+            color: #667eea;
+        }
+
+        /* Form Actions */
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            padding: 2rem;
+            background: #f8f9fa;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .btn-cancel,
+        .btn-submit {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-cancel {
+            background: #f3f4f6;
+            color: #6b7280;
+            border: 1px solid #d1d5db;
+        }
+
+        .btn-cancel:hover {
+            background: #e5e7eb;
+            color: #374151;
+        }
+
+        .btn-submit {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+
+        /* Responsive */
+        @@media (max-width: 767.98px) {
+            .form-section {
+                padding: 1.5rem;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .form-actions {
+                flex-direction: column;
+                padding: 1.5rem;
+            }
+
+            .btn-cancel,
+            .btn-submit {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        /* Validation Styles */
+        .text-danger {
+            font-size: 0.75rem;
+            margin-top: 0.25rem;
+            display: block;
+        }
+
+        .field-validation-error {
+            color: #dc3545;
+        }
+
+        .input-validation-error {
+            border-color: #dc3545 !important;
+        }
+
+        /* Date Time Container */
+        .date-time-container {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 0.75rem;
+        }
+
+        .date-input-wrapper,
+        .time-input-wrapper {
+            position: relative;
+        }
+
+        .date-input-wrapper .persian-datepicker {
+            padding-left: 2.5rem;
+        }
+
+        .time-input-wrapper input[type="time"] {
+            text-align: center;
+        }
+
+        /* Persian Date Picker Integration */
+        .persian-datepicker-wrapper {
+            position: relative;
+        }
+
+        .persian-datepicker-icon {
+            position: absolute;
+            left: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #667eea;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .persian-datepicker-input {
+            padding-left: 2.5rem !important;
+        }
+
+        /* Responsive adjustments for date-time */
+        @@media (max-width: 767.98px) {
+            .date-time-container {
+                grid-template-columns: 1fr;
+                gap: 0.5rem;
+            }
+        }
+    </style>
+}
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    
+    <script>
+        $(document).ready(function() {
+            // Store original button content
+            const originalButtonContent = $('#createSessionBtn').html();
+            
+            // Fix for loading state issue when validation errors occur
+            function restoreSubmitButton() {
+                const submitBtn = $('#createSessionBtn');
+                if (submitBtn.length > 0) {
+                    submitBtn.prop('disabled', false);
+                    submitBtn.html(originalButtonContent);
+                    console.log('Submit button restored');
+                }
+            }
+
+            // Override the global form submit handler for this specific form
+            $('.session-form').off('submit').on('submit', function(e) {
+                const submitBtn = $('#createSessionBtn');
+                
+                // Show loading state
+                submitBtn.prop('disabled', true);
+                submitBtn.html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> در حال پردازش...');
+                
+                // Set timeout to restore button if form doesn't submit
+                setTimeout(function() {
+                    if (submitBtn.prop('disabled')) {
+                        restoreSubmitButton();
+                    }
+                }, 5000);
+            });
+
+            // Force restore button state immediately on page load
+            restoreSubmitButton();
+
+            // Check if there are validation errors and restore button state
+            if ($('.text-danger:visible, .field-validation-error:visible, .input-validation-error').length > 0) {
+                restoreSubmitButton();
+            }
+
+            // Monitor for validation errors and restore button
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.type === 'childList') {
+                        mutation.addedNodes.forEach(function(node) {
+                            if (node.nodeType === 1 && (node.classList.contains('text-danger') || node.classList.contains('field-validation-error'))) {
+                                restoreSubmitButton();
+                            }
+                        });
+                    }
+                });
+            });
+
+            // Start observing
+            observer.observe(document.body, {
+                childList: true,
+                subtree: true
+            });
+            // Auto-resize textareas
+            $('.modern-textarea').on('input', function() {
+                this.style.height = 'auto';
+                this.style.height = (this.scrollHeight) + 'px';
+            });
+
+            // Form validation feedback
+            $('.modern-input, .modern-select, .modern-textarea').on('blur', function() {
+                if ($(this).hasClass('input-validation-error')) {
+                    $(this).addClass('error-state');
+                } else {
+                    $(this).removeClass('error-state');
+                }
+            });
+
+            // Set current time first
+            const now = new Date();
+            const currentTime = now.toTimeString().slice(0, 5);
+            $('#SessionTime').val(currentTime);
+            
+            // Initialize Persian date picker (it will set current date automatically)
+            setTimeout(function() {
+                initializeAllDatePickers();
+                
+                // Update the hidden field after initialization
+                setTimeout(function() {
+                    updateSessionDateTime();
+                    console.log('Persian date picker initialized with current date');
+                }, 50);
+            }, 100);
+            
+            // Update hidden field when time changes
+            $('#SessionTime').on('change', function() {
+                updateSessionDateTime();
+            });
+            
+            // Update hidden field when Persian date changes
+            $('#PersianSessionDate').on('change', function() {
+                updateSessionDateTime();
+            });
+
+            
+            function updateSessionDateTime() {
+                const persianDate = $('#PersianSessionDate').val();
+                const time = $('#SessionTime').val();
+                
+                if (persianDate && time) {
+                    try {
+                        let gregorianDate;
+                        
+                        if (window.persianDate && window.persianDate.persianStringToGregorianDate) {
+                            // Use the existing Persian date library
+                            gregorianDate = window.persianDate.persianStringToGregorianDate(persianDate);
+                        } else {
+                            // Fallback: manual conversion
+                            gregorianDate = convertPersianToGregorian(persianDate);
+                        }
+                        
+                        if (gregorianDate) {
+                            // Set the time
+                            const [hours, minutes] = time.split(':');
+                            gregorianDate.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+                            
+                            // Update hidden field
+                            $('#SessionDate').val(gregorianDate.toISOString());
+                        }
+                    } catch (e) {
+                        console.warn('Error converting Persian date:', e);
+                    }
+                }
+            }
+            
+            // Fallback Persian to Gregorian conversion
+            function convertPersianToGregorian(persianDateString) {
+                try {
+                    const parts = persianDateString.split('/');
+                    if (parts.length !== 3) return null;
+                    
+                    const pYear = parseInt(parts[0]);
+                    const pMonth = parseInt(parts[1]);
+                    const pDay = parseInt(parts[2]);
+                    
+                    // Simple conversion (approximate)
+                    let gYear = pYear + 621;
+                    let gMonth = pMonth;
+                    let gDay = pDay;
+                    
+                    // Adjust for Persian calendar offset
+                    if (pMonth <= 6) {
+                        gMonth = pMonth + 6;
+                    } else {
+                        gMonth = pMonth - 6;
+                        gYear = pYear + 622;
+                    }
+                    
+                    return new Date(gYear, gMonth - 1, gDay);
+                } catch (e) {
+                    console.warn('Error in fallback conversion:', e);
+                    return null;
+                }
+            }
+        });
+    </script>
 }

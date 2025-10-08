@@ -61,7 +61,18 @@ function initializeAllDatePickers() {
 function findHiddenField(input) {
     // Try to find hidden field by various methods
     
-    // Method 1: Look for hidden field with similar name
+    // Method 1: Look for data-target attribute (most reliable)
+    const targetName = input.dataset.target;
+    if (targetName) {
+        const hiddenField = document.querySelector(`input[name="${targetName}"][type="hidden"]`);
+        if (hiddenField) return hiddenField;
+        
+        // Also try by ID
+        const hiddenFieldById = document.getElementById(targetName);
+        if (hiddenFieldById && hiddenFieldById.type === 'hidden') return hiddenFieldById;
+    }
+    
+    // Method 2: Look for hidden field with similar name
     const inputName = input.name || input.id;
     if (inputName) {
         // Remove "Persian" prefix if exists
@@ -70,17 +81,11 @@ function findHiddenField(input) {
         if (hiddenField) return hiddenField;
     }
     
-    // Method 2: Look in the same parent container
-    const container = input.closest('.mb-3, .form-group, .col-md-6, .col-sm-6');
+    // Method 3: Look in the same parent container
+    const container = input.closest('.mb-3, .form-group, .col-md-6, .col-sm-6, .date-input-wrapper');
     if (container) {
         const hiddenField = container.querySelector('input[type="hidden"]');
         if (hiddenField) return hiddenField;
-    }
-    
-    // Method 3: Look for data-target attribute
-    const targetName = input.dataset.target;
-    if (targetName) {
-        return document.querySelector(`input[name="${targetName}"]`);
     }
     
     return null;

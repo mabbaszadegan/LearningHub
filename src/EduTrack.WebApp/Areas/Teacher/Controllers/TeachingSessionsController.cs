@@ -30,6 +30,39 @@ public class TeachingSessionsController : Controller
         _mediator = mediator;
     }
 
+    public async Task<IActionResult> Dashboard()
+    {
+        var currentUser = await _userManager.GetUserAsync(User);
+        if (currentUser == null)
+        {
+            return RedirectToAction("Login", "Account", new { area = "Public" });
+        }
+
+        // Get all teaching plans for the current teacher
+        var teachingPlansResult = await _mediator.Send(new GetTeachingPlansByTeacherQuery(currentUser.Id));
+        if (!teachingPlansResult.IsSuccess)
+        {
+            TempData["ErrorMessage"] = teachingPlansResult.Error ?? "خطا در بارگذاری پلن‌های آموزشی.";
+            return View(new List<TeachingSessionReportDto>());
+        }
+
+        // Get all sessions from all teaching plans
+        var allSessions = new List<TeachingSessionReportDto>();
+        if (teachingPlansResult.Value != null)
+        {
+            foreach (var plan in teachingPlansResult.Value)
+            {
+                var sessionsResult = await _mediator.Send(new ListTeachingSessionReportsQuery(plan.Id));
+                if (sessionsResult.IsSuccess && sessionsResult.Value != null)
+                {
+                    allSessions.AddRange(sessionsResult.Value);
+                }
+            }
+        }
+
+        return View(allSessions);
+    }
+
     public async Task<IActionResult> Index(int planId)
     {
         var currentUser = await _userManager.GetUserAsync(User);
@@ -41,19 +74,21 @@ public class TeachingSessionsController : Controller
         var teachingPlanResult = await _mediator.Send(new GetTeachingPlanByIdQuery(planId));
         if (!teachingPlanResult.IsSuccess || teachingPlanResult.Value == null)
         {
-            TempData["ErrorMessage"] = teachingPlanResult.Error ?? "Teaching Plan not found.";
+            TempData["ErrorMessage"] = teachingPlanResult.Error ?? "پلن آموزشی یافت نشد.";
             return RedirectToAction("Index", "TeachingPlan");
         }
 
         var sessionReportsResult = await _mediator.Send(new ListTeachingSessionReportsQuery(planId));
         if (!sessionReportsResult.IsSuccess)
         {
-            TempData["ErrorMessage"] = sessionReportsResult.Error ?? "Error loading session reports.";
+            TempData["ErrorMessage"] = sessionReportsResult.Error ?? "خطا در بارگذاری گزارش‌های جلسات.";
             return View(new List<TeachingSessionReportDto>());
         }
 
         ViewBag.TeachingPlanId = planId;
         ViewBag.TeachingPlanTitle = teachingPlanResult.Value.Title;
+        ViewBag.CourseId = teachingPlanResult.Value.CourseId;
+        ViewBag.CourseTitle = teachingPlanResult.Value.CourseTitle;
         return View(sessionReportsResult.Value);
     }
 
@@ -68,12 +103,14 @@ public class TeachingSessionsController : Controller
         var teachingPlanResult = await _mediator.Send(new GetTeachingPlanByIdQuery(planId));
         if (!teachingPlanResult.IsSuccess || teachingPlanResult.Value == null)
         {
-            TempData["ErrorMessage"] = teachingPlanResult.Error ?? "Teaching Plan not found.";
+            TempData["ErrorMessage"] = teachingPlanResult.Error ?? "پلن آموزشی یافت نشد.";
             return RedirectToAction("Index", "TeachingPlan");
         }
 
         ViewBag.TeachingPlanId = planId;
         ViewBag.TeachingPlanTitle = teachingPlanResult.Value.Title;
+        ViewBag.CourseId = teachingPlanResult.Value.CourseId;
+        ViewBag.CourseTitle = teachingPlanResult.Value.CourseTitle;
         ViewBag.SessionModes = new SelectList(Enum.GetValues(typeof(SessionMode)));
 
         return View();
@@ -98,16 +135,18 @@ public class TeachingSessionsController : Controller
         var result = await _mediator.Send(command);
         if (result.IsSuccess)
         {
-            TempData["SuccessMessage"] = "Session report created successfully.";
+            TempData["SuccessMessage"] = "گزارش جلسه با موفقیت ایجاد شد.";
             return RedirectToAction(nameof(Index), new { planId = command.TeachingPlanId });
         }
 
-        TempData["ErrorMessage"] = result.Error ?? "Error creating session report.";
+        TempData["ErrorMessage"] = result.Error ?? "خطا در ایجاد گزارش جلسه.";
         var teachingPlanResultError = await _mediator.Send(new GetTeachingPlanByIdQuery(command.TeachingPlanId));
         if (teachingPlanResultError.IsSuccess && teachingPlanResultError.Value != null)
         {
             ViewBag.TeachingPlanId = command.TeachingPlanId;
             ViewBag.TeachingPlanTitle = teachingPlanResultError.Value.Title;
+            ViewBag.CourseId = teachingPlanResultError.Value.CourseId;
+            ViewBag.CourseTitle = teachingPlanResultError.Value.CourseTitle;
             ViewBag.SessionModes = new SelectList(Enum.GetValues(typeof(SessionMode)), command.Mode);
         }
         return View(command);
@@ -118,8 +157,16 @@ public class TeachingSessionsController : Controller
         var sessionReportResult = await _mediator.Send(new GetTeachingSessionReportDetailsQuery(id));
         if (!sessionReportResult.IsSuccess || sessionReportResult.Value == null)
         {
-            TempData["ErrorMessage"] = sessionReportResult.Error ?? "Session report not found.";
+            TempData["ErrorMessage"] = sessionReportResult.Error ?? "گزارش جلسه یافت نشد.";
             return RedirectToAction("Index", "TeachingPlan");
+        }
+
+        // Get course information for breadcrumb
+        var teachingPlanResult = await _mediator.Send(new GetTeachingPlanByIdQuery(sessionReportResult.Value.TeachingPlanId));
+        if (teachingPlanResult.IsSuccess && teachingPlanResult.Value != null)
+        {
+            ViewBag.CourseId = teachingPlanResult.Value.CourseId;
+            ViewBag.CourseTitle = teachingPlanResult.Value.CourseTitle;
         }
 
         return View(sessionReportResult.Value);

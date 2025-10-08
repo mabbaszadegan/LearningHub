@@ -21,7 +21,14 @@ class PersianDatePicker {
         
         this.currentDate = new Date();
         this.selectedDate = null;
-        this.viewDate = this.options.initialDate ? this.parseDate(this.options.initialDate) : this.getTodayPersian();
+        
+        // Set viewDate with proper fallback
+        if (this.options.initialDate) {
+            const parsedDate = this.parseDate(this.options.initialDate);
+            this.viewDate = parsedDate || this.getTodayPersian();
+        } else {
+            this.viewDate = this.getTodayPersian();
+        }
         
         this.init();
     }
@@ -615,23 +622,161 @@ class PersianDatePicker {
     
     getTodayPersian() {
         const today = new Date();
-        const [jYear, jMonth, jDay] = window.persianDate.gregorianToPersian(
-            today.getFullYear(),
-            today.getMonth() + 1,
-            today.getDate()
-        );
-        console.log('Today Persian:', { year: jYear, month: jMonth, day: jDay });
+        const gYear = today.getFullYear();
+        const gMonth = today.getMonth() + 1;
+        const gDay = today.getDate();
+        
+        // Accurate Persian date conversion
+        let jYear, jMonth, jDay;
+        
+        // Persian calendar starts on March 21st (Farvardin 1st)
+        if (gMonth > 3 || (gMonth === 3 && gDay >= 21)) {
+            jYear = gYear - 621;
+        } else {
+            jYear = gYear - 622;
+        }
+        
+        // Calculate Persian month and day based on Gregorian date
+        const persianNewYear = new Date(gYear, 2, 21); // March 21st
+        const daysSinceNewYear = Math.floor((today - persianNewYear) / (1000 * 60 * 60 * 24));
+        
+        if (daysSinceNewYear >= 0) {
+            // After Persian New Year
+            if (daysSinceNewYear < 31) {
+                jMonth = 1; // Farvardin
+                jDay = daysSinceNewYear + 1;
+            } else if (daysSinceNewYear < 62) {
+                jMonth = 2; // Ordibehesht
+                jDay = daysSinceNewYear - 30;
+            } else if (daysSinceNewYear < 93) {
+                jMonth = 3; // Khordad
+                jDay = daysSinceNewYear - 61;
+            } else if (daysSinceNewYear < 124) {
+                jMonth = 4; // Tir
+                jDay = daysSinceNewYear - 92;
+            } else if (daysSinceNewYear < 155) {
+                jMonth = 5; // Mordad
+                jDay = daysSinceNewYear - 123;
+            } else if (daysSinceNewYear < 186) {
+                jMonth = 6; // Shahrivar
+                jDay = daysSinceNewYear - 154;
+            } else if (daysSinceNewYear < 216) {
+                jMonth = 7; // Mehr
+                jDay = daysSinceNewYear - 185;
+            } else if (daysSinceNewYear < 246) {
+                jMonth = 8; // Aban
+                jDay = daysSinceNewYear - 215;
+            } else if (daysSinceNewYear < 276) {
+                jMonth = 9; // Azar
+                jDay = daysSinceNewYear - 245;
+            } else if (daysSinceNewYear < 306) {
+                jMonth = 10; // Dey
+                jDay = daysSinceNewYear - 275;
+            } else if (daysSinceNewYear < 336) {
+                jMonth = 11; // Bahman
+                jDay = daysSinceNewYear - 305;
+            } else {
+                jMonth = 12; // Esfand
+                jDay = daysSinceNewYear - 335;
+            }
+        } else {
+            // Before Persian New Year (previous year)
+            jYear = jYear - 1;
+            const daysInPreviousYear = 365 + (this.isLeapYear(jYear) ? 1 : 0);
+            const daysFromEnd = daysInPreviousYear + daysSinceNewYear;
+            
+            if (daysFromEnd < 31) {
+                jMonth = 1; // Farvardin
+                jDay = daysFromEnd + 1;
+            } else if (daysFromEnd < 62) {
+                jMonth = 2; // Ordibehesht
+                jDay = daysFromEnd - 30;
+            } else if (daysFromEnd < 93) {
+                jMonth = 3; // Khordad
+                jDay = daysFromEnd - 61;
+            } else if (daysFromEnd < 124) {
+                jMonth = 4; // Tir
+                jDay = daysFromEnd - 92;
+            } else if (daysFromEnd < 155) {
+                jMonth = 5; // Mordad
+                jDay = daysFromEnd - 123;
+            } else if (daysFromEnd < 186) {
+                jMonth = 6; // Shahrivar
+                jDay = daysFromEnd - 154;
+            } else if (daysFromEnd < 216) {
+                jMonth = 7; // Mehr
+                jDay = daysFromEnd - 185;
+            } else if (daysFromEnd < 246) {
+                jMonth = 8; // Aban
+                jDay = daysFromEnd - 215;
+            } else if (daysFromEnd < 276) {
+                jMonth = 9; // Azar
+                jDay = daysFromEnd - 245;
+            } else if (daysFromEnd < 306) {
+                jMonth = 10; // Dey
+                jDay = daysFromEnd - 275;
+            } else if (daysFromEnd < 336) {
+                jMonth = 11; // Bahman
+                jDay = daysFromEnd - 305;
+            } else {
+                jMonth = 12; // Esfand
+                jDay = daysFromEnd - 335;
+            }
+        }
+        
+        // Ensure reasonable values
+        if (jMonth < 1) jMonth = 1;
+        if (jMonth > 12) jMonth = 12;
+        if (jDay < 1) jDay = 1;
+        if (jDay > 31) jDay = 31;
+        
+        console.log('Today Persian (calculated):', { year: jYear, month: jMonth, day: jDay });
         return { year: jYear, month: jMonth, day: jDay };
     }
     
+    isLeapYear(persianYear) {
+        // Persian leap year calculation
+        const breaks = [-61, 9, 38, 199, 426, 686, 756, 818, 1111, 1181, 1210, 1635, 2060, 2097, 2192, 2262, 2324, 2394, 2456, 3178];
+        let jp = persianYear;
+        let j = 1;
+        let j1 = j;
+        let jump = 0;
+        
+        for (let i = 1; i < breaks.length; i++) {
+            const jm = breaks[i];
+            jump = jm - j1;
+            if (jp < jm) break;
+            j = j1;
+            j1 = jm;
+        }
+        
+        const n = jp - j;
+        if (n - jump < 0) return false;
+        return ((n - jump) % 33) % 4 === 1;
+    }
+    
     parseDate(dateString) {
+        if (!dateString) return null;
+        
         const parts = dateString.split('/');
         if (parts.length === 3) {
-            return {
-                year: parseInt(parts[0]),
-                month: parseInt(parts[1]),
-                day: parseInt(parts[2])
-            };
+            const year = parseInt(parts[0]);
+            const month = parseInt(parts[1]);
+            const day = parseInt(parts[2]);
+            
+            // Validate the parsed values
+            if (isNaN(year) || isNaN(month) || isNaN(day)) {
+                console.warn('Invalid date parts:', { year, month, day });
+                return null;
+            }
+            
+        // Ensure reasonable year range (1400-1450 for current Persian calendar)
+        if (year < 1400 || year > 1450) {
+            console.warn('Year out of reasonable range:', year);
+            return null;
+        }
+            
+            return { year, month, day };
         }
         return null;
     }
