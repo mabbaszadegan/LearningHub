@@ -11,13 +11,16 @@ public class GetTeachingSessionReportDetailsQueryHandler : IRequestHandler<GetTe
 {
     private readonly ITeachingSessionReportRepository _sessionReportRepository;
     private readonly ICurrentUserService _currentUserService;
+    private readonly IStudentGroupRepository _studentGroupRepository;
 
     public GetTeachingSessionReportDetailsQueryHandler(
         ITeachingSessionReportRepository sessionReportRepository,
-        ICurrentUserService currentUserService)
+        ICurrentUserService currentUserService,
+        IStudentGroupRepository studentGroupRepository)
     {
         _sessionReportRepository = sessionReportRepository;
         _currentUserService = currentUserService;
+        _studentGroupRepository = studentGroupRepository;
     }
 
     public async Task<Result<TeachingSessionReportDto>> Handle(GetTeachingSessionReportDetailsQuery request, CancellationToken cancellationToken)
@@ -40,6 +43,26 @@ public class GetTeachingSessionReportDetailsQueryHandler : IRequestHandler<GetTe
             return Result<TeachingSessionReportDto>.Failure("You don't have permission to view this session report.");
         }
 
+        // Get all students from groups in this teaching plan
+        var groups = await _studentGroupRepository.GetGroupsByTeachingPlanAsync(sessionReport.TeachingPlanId, cancellationToken);
+        var allStudents = groups.SelectMany(g => g.Members).ToList();
+        
+        // Create attendance DTOs with student information
+        var attendanceDtos = allStudents.Select(member => 
+        {
+            var existingAttendance = sessionReport.Attendance.FirstOrDefault(a => a.StudentId == member.StudentId);
+            return new TeachingSessionAttendanceDto
+            {
+                Id = existingAttendance?.Id ?? 0,
+                TeachingSessionReportId = sessionReport.Id,
+                StudentId = member.StudentId,
+                StudentName = (member.Student?.FirstName + " " + member.Student?.LastName)?.Trim() ?? "Unknown Student",
+                Status = existingAttendance?.Status ?? AttendanceStatus.Absent,
+                ParticipationScore = existingAttendance?.ParticipationScore,
+                Comment = existingAttendance?.Comment
+            };
+        }).ToList();
+
         var sessionReportDto = new TeachingSessionReportDto
         {
             Id = sessionReport.Id,
@@ -59,7 +82,8 @@ public class GetTeachingSessionReportDetailsQueryHandler : IRequestHandler<GetTe
             UpdatedAt = sessionReport.UpdatedAt,
             AttendanceCount = sessionReport.Attendance.Count,
             PresentCount = sessionReport.Attendance.Count(a => a.Status == AttendanceStatus.Present),
-            AbsentCount = sessionReport.Attendance.Count(a => a.Status == AttendanceStatus.Absent)
+            AbsentCount = sessionReport.Attendance.Count(a => a.Status == AttendanceStatus.Absent),
+            Attendance = attendanceDtos
         };
 
         return Result<TeachingSessionReportDto>.Success(sessionReportDto);

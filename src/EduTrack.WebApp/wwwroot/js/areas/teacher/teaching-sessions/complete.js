@@ -628,7 +628,15 @@ class StepCompletionManager {
                 return;
             }
 
+
             const tabData = this.collectTabAttendanceData(tabIndex, groupId);
+            
+            console.log('Saving tab data:', {
+                sessionId: this.sessionId,
+                groupId: groupId,
+                tabIndex: tabIndex,
+                tabData: tabData
+            });
             
             const response = await fetch(`/Teacher/TeachingSessions/SaveTabCompletion`, {
                 method: 'POST',
@@ -644,7 +652,15 @@ class StepCompletionManager {
                 })
             });
 
+            console.log('Response status:', response.status);
+            console.log('Response headers:', response.headers);
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
             const result = await response.json();
+            console.log('Save tab response:', result);
 
             if (result.success) {
                 this.showNotification(`حضور و غیاب گروه ${group.name} با موفقیت ذخیره شد`, 'success');
@@ -664,7 +680,7 @@ class StepCompletionManager {
             }
         } catch (error) {
             console.error('Error saving tab data:', error);
-            this.showErrorMessage('خطا در ذخیره داده‌های تب');
+            this.showErrorMessage('خطا در ذخیره داده‌های تب: ' + error.message);
         }
     }
 
@@ -729,7 +745,7 @@ class StepCompletionManager {
             const comment = $(`.attendance-comment[data-student-id="${member.studentId}"]`).val();
 
             groupAttendance.students.push({
-                studentId: member.studentId,
+                studentId: member.studentId, // Use GroupMember.StudentId (GUID) for proper relationship
                 studentName: member.studentName,
                 status: parseInt(status),
                 participationScore: participationScore ? parseFloat(participationScore) : null,
@@ -737,7 +753,11 @@ class StepCompletionManager {
             });
         });
 
-        return groupAttendance;
+        // Return in AttendanceStepDataDto format
+        return {
+            sessionId: this.sessionId,
+            groupAttendances: [groupAttendance]
+        };
     }
 
     collectAttendanceData() {
@@ -749,11 +769,12 @@ class StepCompletionManager {
         this.groups.forEach((group, index) => {
             // Use saved tab data if available, otherwise collect current data
             if (this.tabData[index]) {
-                attendanceData.groupAttendances.push(this.tabData[index]);
+                // tabData[index] is already in AttendanceStepDataDto format
+                attendanceData.groupAttendances.push(...this.tabData[index].groupAttendances);
             } else {
-                const groupAttendance = this.collectTabAttendanceData(index, group.id);
-                if (groupAttendance) {
-                    attendanceData.groupAttendances.push(groupAttendance);
+                const tabData = this.collectTabAttendanceData(index, group.id);
+                if (tabData) {
+                    attendanceData.groupAttendances.push(...tabData.groupAttendances);
                 }
             }
         });

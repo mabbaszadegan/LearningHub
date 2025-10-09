@@ -729,11 +729,16 @@ public class AppDbContext : IdentityDbContext<User>
             entity.ToTable("TeachingSessionAttendances");
             entity.HasKey(x => x.Id);
             entity.HasIndex(x => new { x.TeachingSessionReportId, x.StudentId }).IsUnique();
+            entity.Property(x => x.StudentId).HasMaxLength(450); // GUID string
             entity.Property(x => x.ParticipationScore).HasPrecision(18, 2);
             entity.Property(x => x.Comment).HasMaxLength(1000);
             entity.HasOne(x => x.TeachingSessionReport)
                 .WithMany(r => r.Attendance)
                 .HasForeignKey(x => x.TeachingSessionReportId)
+                .OnDelete(DeleteBehavior.NoAction);
+            entity.HasOne(x => x.Student)
+                .WithMany()
+                .HasForeignKey(x => x.StudentId)
                 .OnDelete(DeleteBehavior.NoAction);
             entity.HasIndex(x => x.StudentId);
             entity.HasIndex(x => x.Status);

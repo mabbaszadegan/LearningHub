@@ -229,26 +229,61 @@
             <div class="attendance-container">
                 @if (Model.Attendance.Any())
                 {
-                    <div class="attendance-table">
-                        <div class="table-header">
-                            <h4>
+                    <div class="attendance-header">
+                        <h4>
+                            <i class="fas fa-users"></i>
+                            لیست حضور و غیاب
+                        </h4>
+                        <div class="attendance-summary">
+                            <span class="summary-item">
+                                <i class="fas fa-check-circle text-success"></i>
+                                <span>@Model.PresentCount حاضر</span>
+                            </span>
+                            <span class="summary-item">
+                                <i class="fas fa-times-circle text-danger"></i>
+                                <span>@Model.AbsentCount غایب</span>
+                            </span>
+                            <span class="summary-item">
                                 <i class="fas fa-users"></i>
-                                لیست حضور و غیاب
-                            </h4>
+                                <span>@Model.Attendance.Count کل دانش‌آموزان</span>
+                            </span>
                         </div>
-                        <div class="table-content">
-                            @foreach (var attendance in Model.Attendance)
-                            {
-                                <div class="attendance-row">
+                    </div>
+                    
+                    <div class="attendance-grid">
+                        @foreach (var attendance in Model.Attendance)
+                        {
+                            var hasRecord = attendance.Id > 0;
+                            <div class="student-card @(hasRecord ? "has-record" : "")" data-student-id="@attendance.StudentId" data-attendance-id="@attendance.Id">
+                                <div class="card-header">
+                                    <div class="student-avatar">
+                                        <i class="fas fa-user"></i>
+                                    </div>
                                     <div class="student-info">
-                                        <div class="student-avatar">
-                                            <i class="fas fa-user"></i>
-                                        </div>
-                                        <div class="student-details">
-                                            <h5>@attendance.StudentName</h5>
+                                        <h5>@attendance.StudentName</h5>
+                                        <div class="completion-indicator">
+                                            @if (hasRecord)
+                                            {
+                                                <i class="fas fa-check-circle text-success"></i>
+                                                <span class="text-success">ثبت شده</span>
+                                            }
+                                            else
+                                            {
+                                                <i class="fas fa-clock text-muted"></i>
+                                                <span class="text-muted">ثبت نشده</span>
+                                            }
                                         </div>
                                     </div>
+                                    <div class="card-actions">
+                                        <button class="btn-edit-attendance" title="ویرایش حضور و غیاب">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div class="card-content">
                                     <div class="attendance-status">
+                                        <label>وضعیت:</label>
                                         <span class="status-badge bg-@(attendance.Status == EduTrack.Domain.Enums.AttendanceStatus.Present ? "success" : 
                                                                         attendance.Status == EduTrack.Domain.Enums.AttendanceStatus.Absent ? "danger" : 
                                                                         attendance.Status == EduTrack.Domain.Enums.AttendanceStatus.Late ? "warning" : "info")">
@@ -257,29 +292,72 @@
                                               attendance.Status == EduTrack.Domain.Enums.AttendanceStatus.Late ? "تأخیر" : "معذور")
                                         </span>
                                     </div>
+                                    
                                     <div class="participation-score">
+                                        <label>نمره مشارکت:</label>
                                         @if (attendance.ParticipationScore.HasValue)
                                         {
-                                            <span class="score-badge">@attendance.ParticipationScore.Value.ToString("F1")</span>
+                                            <span class="score-value">@attendance.ParticipationScore.Value.ToString("F1")</span>
                                         }
                                         else
                                         {
-                                            <span class="no-score">-</span>
+                                            <span class="no-value">-</span>
                                         }
                                     </div>
+                                    
                                     <div class="attendance-comment">
+                                        <label>یادداشت:</label>
                                         @if (!string.IsNullOrEmpty(attendance.Comment))
                                         {
-                                            <p>@attendance.Comment</p>
+                                            <p class="comment-text">@attendance.Comment</p>
                                         }
                                         else
                                         {
-                                            <span class="no-comment">-</span>
+                                            <span class="no-value">-</span>
                                         }
                                     </div>
                                 </div>
-                            }
-                        </div>
+                                
+                                <!-- Edit Form (Hidden by default) -->
+                                <div class="edit-form" style="display: none;">
+                                    <form class="attendance-edit-form" data-student-id="@attendance.StudentId" data-attendance-id="@attendance.Id">
+                                        <div class="form-group">
+                                            <label>وضعیت حضور:</label>
+                                            <select name="status" class="form-control">
+                                                <option value="0" selected="@(attendance.Status == EduTrack.Domain.Enums.AttendanceStatus.Absent)">غایب</option>
+                                                <option value="1" selected="@(attendance.Status == EduTrack.Domain.Enums.AttendanceStatus.Present)">حاضر</option>
+                                                <option value="2" selected="@(attendance.Status == EduTrack.Domain.Enums.AttendanceStatus.Late)">تأخیر</option>
+                                                <option value="3" selected="@(attendance.Status == EduTrack.Domain.Enums.AttendanceStatus.Excused)">معذور</option>
+                                            </select>
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <label>نمره مشارکت:</label>
+                                            <input type="number" name="participationScore" class="form-control" 
+                                                   value="@(attendance.ParticipationScore?.ToString("F1") ?? "")" 
+                                                   min="0" max="10" step="0.1" placeholder="0.0">
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <label>یادداشت:</label>
+                                            <textarea name="comment" class="form-control" rows="2" 
+                                                      placeholder="یادداشت اختیاری...">@attendance.Comment</textarea>
+                                        </div>
+                                        
+                                        <div class="form-actions">
+                                            <button type="submit" class="btn-save">
+                                                <i class="fas fa-save"></i>
+                                                ذخیره
+                                            </button>
+                                            <button type="button" class="btn-cancel">
+                                                <i class="fas fa-times"></i>
+                                                انصراف
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        }
                     </div>
                 }
                 else
@@ -288,8 +366,8 @@
                         <div class="empty-icon">
                             <i class="fas fa-users"></i>
                         </div>
-                        <h3>هنوز حضور و غیابی ثبت نشده</h3>
-                        <p>پس از ثبت حضور و غیاب، اطلاعات در اینجا نمایش داده خواهد شد</p>
+                        <h3>هیچ دانش‌آموزی یافت نشد</h3>
+                        <p>ابتدا باید گروه‌های دانش‌آموزی برای این پلن آموزشی تعریف شوند</p>
                     </div>
                 }
             </div>
@@ -326,5 +404,9 @@
 }
 
 @section Scripts {
+    <script>
+        // Set session ID for JavaScript
+        document.body.setAttribute('data-session-id', '@Model.Id');
+    </script>
     <script src="~/js/areas/teacher/teaching-sessions/details.js"></script>
 }

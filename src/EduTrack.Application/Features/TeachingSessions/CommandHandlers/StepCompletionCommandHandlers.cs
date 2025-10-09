@@ -82,14 +82,23 @@ public class SaveAttendanceStepCommandHandler : IRequestHandler<SaveAttendanceSt
                 return Result<bool>.Failure("جلسه یافت نشد.");
             }
 
-            // Clear existing attendance records for this session
+            // Get all existing attendance records for this session (once)
             var existingAttendance = await _attendanceRepository.GetBySessionIdAsync(request.SessionId, cancellationToken);
-            foreach (var attendance in existingAttendance)
+
+            // Collect all student IDs that will be updated
+            var allStudentIds = request.AttendanceData.GroupAttendances
+                .SelectMany(g => g.Students)
+                .Select(s => s.StudentId)
+                .ToHashSet();
+
+            // Delete existing records only for students that will be updated
+            var recordsToDelete = existingAttendance.Where(a => allStudentIds.Contains(a.StudentId)).ToList();
+            foreach (var attendance in recordsToDelete)
             {
                 await _attendanceRepository.DeleteAsync(attendance, cancellationToken);
             }
 
-            // Add new attendance records
+            // Add new attendance records for all groups
             foreach (var groupAttendance in request.AttendanceData.GroupAttendances)
             {
                 foreach (var studentAttendance in groupAttendance.Students)

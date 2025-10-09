@@ -469,7 +469,7 @@ public class TeachingSessionAttendanceDto
 {
     public int Id { get; set; }
     public int TeachingSessionReportId { get; set; }
-    public int StudentId { get; set; }
+    public string StudentId { get; set; } = string.Empty;
     public string StudentName { get; set; } = string.Empty;
     public AttendanceStatus Status { get; set; }
     public decimal? ParticipationScore { get; set; }
@@ -560,6 +560,25 @@ public class StepCompletionDataDto
     public bool IsCompleted { get; set; }
 }
 
+public class TabCompletionDataDto
+{
+    public int SessionId { get; set; }
+    public int GroupId { get; set; }
+    public int TabIndex { get; set; }
+    public string CompletionData { get; set; } = string.Empty; // JSON data
+    public bool IsCompleted { get; set; }
+}
+
+public class UpdateAttendanceRequest
+{
+    public int SessionId { get; set; }
+    public string StudentId { get; set; } = string.Empty;
+    public int AttendanceId { get; set; }
+    public int Status { get; set; }
+    public decimal? ParticipationScore { get; set; }
+    public string? Comment { get; set; }
+}
+
 // Step-specific data models
 public class AttendanceStepDataDto
 {
@@ -576,7 +595,7 @@ public class GroupAttendanceDto
 
 public class StudentAttendanceDto
 {
-    public int StudentId { get; set; }
+    public string StudentId { get; set; } = string.Empty;
     public string StudentName { get; set; } = string.Empty;
     public AttendanceStatus Status { get; set; }
     public decimal? ParticipationScore { get; set; }

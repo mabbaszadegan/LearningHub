@@ -18,20 +18,23 @@ public class TeachingSessionAttendanceRepository : ITeachingSessionAttendanceRep
     {
         return await _context.TeachingSessionAttendances
             .Include(a => a.TeachingSessionReport)
+            .Include(a => a.Student)
             .FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
     }
 
     public async Task<IEnumerable<TeachingSessionAttendance>> GetBySessionIdAsync(int sessionId, CancellationToken cancellationToken = default)
     {
         return await _context.TeachingSessionAttendances
+            .Include(a => a.Student)
             .Where(a => a.TeachingSessionReportId == sessionId)
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<IEnumerable<TeachingSessionAttendance>> GetByStudentIdAsync(int studentId, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<TeachingSessionAttendance>> GetByStudentIdAsync(string studentId, CancellationToken cancellationToken = default)
     {
         return await _context.TeachingSessionAttendances
             .Include(a => a.TeachingSessionReport)
+            .Include(a => a.Student)
             .Where(a => a.StudentId == studentId)
             .ToListAsync(cancellationToken);
     }

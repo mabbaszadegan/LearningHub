@@ -414,11 +414,11 @@ public static class SeedData
         // Create attendance records
         var attendance = new List<TeachingSessionAttendance>
         {
-            new() { TeachingSessionReportId = sessionReport.Id, StudentId = int.Parse(students[0].Id), Status = AttendanceStatus.Present, ParticipationScore = 9.5m, Comment = "Excellent participation" },
-            new() { TeachingSessionReportId = sessionReport.Id, StudentId = int.Parse(students[1].Id), Status = AttendanceStatus.Present, ParticipationScore = 8.0m, Comment = "Good effort" },
-            new() { TeachingSessionReportId = sessionReport.Id, StudentId = int.Parse(students[2].Id), Status = AttendanceStatus.Late, ParticipationScore = 7.5m, Comment = "Arrived 15 minutes late" },
-            new() { TeachingSessionReportId = sessionReport.Id, StudentId = int.Parse(students[3].Id), Status = AttendanceStatus.Absent, Comment = "Sick leave" },
-            new() { TeachingSessionReportId = sessionReport.Id, StudentId = int.Parse(students[4].Id), Status = AttendanceStatus.Present, ParticipationScore = 8.5m, Comment = "Active participation" }
+            new() { TeachingSessionReportId = sessionReport.Id, StudentId = students[0].Id, Status = AttendanceStatus.Present, ParticipationScore = 9.5m, Comment = "Excellent participation" },
+            new() { TeachingSessionReportId = sessionReport.Id, StudentId = students[1].Id, Status = AttendanceStatus.Present, ParticipationScore = 8.0m, Comment = "Good effort" },
+            new() { TeachingSessionReportId = sessionReport.Id, StudentId = students[2].Id, Status = AttendanceStatus.Late, ParticipationScore = 7.5m, Comment = "Arrived 15 minutes late" },
+            new() { TeachingSessionReportId = sessionReport.Id, StudentId = students[3].Id, Status = AttendanceStatus.Absent, Comment = "Sick leave" },
+            new() { TeachingSessionReportId = sessionReport.Id, StudentId = students[4].Id, Status = AttendanceStatus.Present, ParticipationScore = 8.5m, Comment = "Active participation" }
         };
 
         context.TeachingSessionAttendances.AddRange(attendance);
