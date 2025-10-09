@@ -330,7 +330,8 @@ public class TeachingSessionsController : Controller
                 m.StudentName, 
                 m.StudentEmail,
                 m.ExistingAttendance
-            }).ToList()
+            }).ToList(),
+            g.ExistingFeedback
         }), jsonOptions);
         var subtopicsJson = JsonConvert.SerializeObject(completionData.AvailableSubTopics.Select(s => new { s.Id, s.Title, s.ChapterTitle }), jsonOptions);
         var lessonsJson = JsonConvert.SerializeObject(completionData.AvailableLessons.Select(l => new { l.Id, l.Title, l.ModuleTitle }), jsonOptions);

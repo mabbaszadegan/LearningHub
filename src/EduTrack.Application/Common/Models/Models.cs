@@ -504,6 +504,7 @@ public class GroupDataDto
     public string Name { get; set; } = string.Empty;
     public int MemberCount { get; set; }
     public List<GroupMemberDto> Members { get; set; } = new();
+    public GroupFeedbackDto? ExistingFeedback { get; set; }
 }
 
 public class GroupMemberDto
@@ -615,6 +616,7 @@ public class GroupFeedbackDto
     public string GroupName { get; set; } = string.Empty;
     public int UnderstandingLevel { get; set; }
     public int ParticipationLevel { get; set; }
+    public int TeacherSatisfaction { get; set; }
     public string? GroupFeedback { get; set; }
     public string? Challenges { get; set; }
     public string? NextSessionRecommendations { get; set; }

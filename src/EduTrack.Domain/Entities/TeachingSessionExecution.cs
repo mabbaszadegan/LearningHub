@@ -55,6 +55,11 @@ public class TeachingSessionExecution
     public int ParticipationLevel { get; set; } = 3;
     
     /// <summary>
+    /// میزان رضایت معلم از گروه (1-5)
+    /// </summary>
+    public int TeacherSatisfaction { get; set; } = 3;
+    
+    /// <summary>
     /// مشکلات و چالش‌ها
     /// </summary>
     public string? Challenges { get; set; }

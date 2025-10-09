@@ -795,6 +795,7 @@ public class AppDbContext : IdentityDbContext<User>
             {
                 t.HasCheckConstraint("CK_UnderstandingLevel", "UnderstandingLevel >= 1 AND UnderstandingLevel <= 5");
                 t.HasCheckConstraint("CK_ParticipationLevel", "ParticipationLevel >= 1 AND ParticipationLevel <= 5");
+                t.HasCheckConstraint("CK_TeacherSatisfaction", "TeacherSatisfaction >= 1 AND TeacherSatisfaction <= 5");
             });
             entity.HasKey(x => x.Id);
             entity.Property(x => x.AchievedObjectives).HasMaxLength(2000);

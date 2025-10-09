@@ -343,6 +343,21 @@ class StepCompletionManager {
         });
     }
 
+    setupFeedbackTabEventListeners() {
+        // Feedback tab navigation click events
+        $(document).on('click', '.feedback-tab-nav-item', (e) => {
+            const tabIndex = parseInt($(e.currentTarget).data('tab-index'));
+            this.switchFeedbackTab(tabIndex);
+        });
+
+        // Save feedback button click events
+        $(document).on('click', '.btn-save-feedback', (e) => {
+            e.preventDefault();
+            const groupId = parseInt($(e.target).data('group-id'));
+            this.saveGroupFeedback(groupId);
+        });
+    }
+
     setupAttendanceEventListeners() {
         // Participation score slider updates
         $(document).on('input', '.participation-score', (e) => {
@@ -377,6 +392,132 @@ class StepCompletionManager {
         $(`.attendance-tab-panel[data-tab-index="${tabIndex}"]`).addClass('active');
 
         this.currentActiveTab = tabIndex;
+    }
+
+    switchFeedbackTab(tabIndex) {
+        // Remove active class from all feedback tabs and panels
+        $('.feedback-tab-nav-item').removeClass('active');
+        $('.feedback-tab-panel').removeClass('active');
+
+        // Add active class to selected tab and panel
+        $(`.feedback-tab-nav-item[data-tab-index="${tabIndex}"]`).addClass('active');
+        $(`.feedback-tab-panel[data-tab-index="${tabIndex}"]`).addClass('active');
+    }
+
+    updateFeedbackTabStatus(groupId) {
+        const group = this.groups.find(g => g.id === groupId);
+        if (!group) return;
+
+        const hasExistingFeedback = group.existingFeedback && 
+            (group.existingFeedback.understandingLevel || 
+             group.existingFeedback.participationLevel || 
+             group.existingFeedback.teacherSatisfaction || 
+             group.existingFeedback.groupFeedback || 
+             group.existingFeedback.challenges || 
+             group.existingFeedback.nextSessionRecommendations);
+
+        // Find the tab index for this group
+        const tabIndex = this.groups.findIndex(g => g.id === groupId);
+        if (tabIndex === -1) return;
+
+        // Update tab status
+        const tabNavItem = $(`.feedback-tab-nav-item[data-tab-index="${tabIndex}"]`);
+        const statusElement = tabNavItem.find('.feedback-tab-status');
+        
+        if (hasExistingFeedback) {
+            statusElement.removeClass('pending').addClass('completed').text('تکمیل شده');
+            
+            // Add completion badge if not exists
+            if (tabNavItem.find('.completion-badge').length === 0) {
+                tabNavItem.append('<div class="completion-badge"><i class="fas fa-check"></i></div>');
+            }
+        } else {
+            statusElement.removeClass('completed').addClass('pending').text('در انتظار');
+            tabNavItem.find('.completion-badge').remove();
+        }
+    }
+
+    async saveGroupFeedback(groupId) {
+        try {
+            const group = this.groups.find(g => g.id === groupId);
+            if (!group) {
+                this.showNotification('گروه یافت نشد', 'error');
+                return;
+            }
+
+            // Collect feedback data for this group
+            const understandingLevel = $(`.understanding-level[data-group-id="${groupId}"]`).val();
+            const participationLevel = $(`.participation-level[data-group-id="${groupId}"]`).val();
+            const teacherSatisfaction = $(`.teacher-satisfaction[data-group-id="${groupId}"]`).val();
+            const groupFeedback = $(`.group-feedback[data-group-id="${groupId}"]`).val();
+            const challenges = $(`.challenges[data-group-id="${groupId}"]`).val();
+            const nextSessionRecommendations = $(`.next-session-recommendations[data-group-id="${groupId}"]`).val();
+
+            const feedbackData = {
+                sessionId: this.sessionId,
+                groupFeedbacks: [{
+                    groupId: groupId,
+                    groupName: group.name,
+                    understandingLevel: parseInt(understandingLevel),
+                    participationLevel: parseInt(participationLevel),
+                    teacherSatisfaction: parseInt(teacherSatisfaction),
+                    groupFeedback: groupFeedback || null,
+                    challenges: challenges || null,
+                    nextSessionRecommendations: nextSessionRecommendations || null
+                }]
+            };
+
+            // Show loading state
+            const saveButton = $(`.btn-save-feedback[data-group-id="${groupId}"]`);
+            const originalText = saveButton.html();
+            saveButton.html('<i class="fas fa-spinner fa-spin"></i> در حال ذخیره...').prop('disabled', true);
+
+            // Send request
+            const response = await fetch('/Teacher/TeachingSessions/SaveFeedbackStep', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(feedbackData)
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+            
+            if (result.success) {
+                this.showNotification(`بازخورد گروه ${group.name} با موفقیت ذخیره شد`, 'success');
+                
+                // Update button state
+                saveButton.html('<i class="fas fa-check"></i> ذخیره شده').removeClass('btn-primary').addClass('btn-success');
+                
+                // Update group data
+                if (!group.existingFeedback) {
+                    group.existingFeedback = {};
+                }
+                group.existingFeedback.understandingLevel = parseInt(understandingLevel);
+                group.existingFeedback.participationLevel = parseInt(participationLevel);
+                group.existingFeedback.teacherSatisfaction = parseInt(teacherSatisfaction);
+                group.existingFeedback.groupFeedback = groupFeedback;
+                group.existingFeedback.challenges = challenges;
+                group.existingFeedback.nextSessionRecommendations = nextSessionRecommendations;
+
+                // Update tab status
+                this.updateFeedbackTabStatus(groupId);
+            } else {
+                this.showNotification(result.message || 'خطا در ذخیره بازخورد', 'error');
+                saveButton.html(originalText).prop('disabled', false);
+            }
+        } catch (error) {
+            console.error('Error saving group feedback:', error);
+            this.showNotification('خطا در ذخیره بازخورد', 'error');
+            
+            // Reset button state
+            const saveButton = $(`.btn-save-feedback[data-group-id="${groupId}"]`);
+            saveButton.html('<i class="fas fa-save"></i> ذخیره بازخورد').prop('disabled', false);
+        }
     }
 
     updateTabProgress(tabIndex) {
@@ -528,46 +669,119 @@ class StepCompletionManager {
     }
 
     populateFeedbackStep() {
-        const container = $('#feedbackContainer');
-        container.empty();
+        const navContainer = $('#feedbackTabsNav');
+        const contentContainer = $('#feedbackTabsContent');
+        
+        navContainer.empty();
+        contentContainer.empty();
 
-        this.groups.forEach(group => {
-            const groupHtml = `
-                <div class="group-feedback-section" data-group-id="${group.id}">
-                    <div class="group-feedback-header">
-                        <h4 class="group-feedback-title">${group.name}</h4>
+        if (this.groups.length === 0) {
+            contentContainer.html(`
+                <div class="feedback-loading">
+                    <div class="loading-spinner">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <p>هیچ گروهی یافت نشد</p>
                     </div>
-                    <div class="feedback-controls">
-                        <div class="rating-group">
-                            <label class="rating-label">سطح درک مطلب</label>
-                            <input type="range" class="rating-slider understanding-level" min="1" max="5" value="3" data-group-id="${group.id}">
-                            <span class="rating-display">3</span>
+                </div>
+            `);
+            return;
+        }
+
+        // Create tab navigation
+        this.groups.forEach((group, index) => {
+            const hasExistingFeedback = group.existingFeedback && 
+                (group.existingFeedback.understandingLevel || 
+                 group.existingFeedback.participationLevel || 
+                 group.existingFeedback.teacherSatisfaction || 
+                 group.existingFeedback.groupFeedback || 
+                 group.existingFeedback.challenges || 
+                 group.existingFeedback.nextSessionRecommendations);
+            
+            const tabNavHtml = `
+                <div class="feedback-tab-nav-item ${index === 0 ? 'active' : ''}"
+                     data-tab-index="${index}" data-group-id="${group.id}">
+                    <div class="feedback-tab-icon">
+                        <i class="fas fa-comments"></i>
+                    </div>
+                    <div class="feedback-tab-info">
+                        <div class="feedback-tab-title">${group.name} (${group.memberCount})</div>
+                    </div>
+                    <div class="feedback-tab-status ${hasExistingFeedback ? 'completed' : 'pending'}">
+                        ${hasExistingFeedback ? 'تکمیل شده' : 'در انتظار'}
+                    </div>
+                    ${hasExistingFeedback ? '<div class="completion-badge"><i class="fas fa-check"></i></div>' : ''}
+                </div>
+            `;
+            navContainer.append(tabNavHtml);
+        });
+
+        // Create tab content panels
+        this.groups.forEach((group, index) => {
+            const tabContentHtml = `
+                <div class="feedback-tab-panel ${index === 0 ? 'active' : ''}" 
+                     data-tab-index="${index}" data-group-id="${group.id}">
+                    <div class="group-feedback-section" data-group-id="${group.id}">
+                        <div class="group-feedback-header">
+                            <h4 class="group-feedback-title">
+                                <i class="fas fa-comments"></i>
+                                ${group.name}
+                            </h4>
+                            <p class="group-feedback-subtitle">${group.memberCount} دانش‌آموز</p>
                         </div>
-                        <div class="rating-group">
-                            <label class="rating-label">سطح مشارکت</label>
-                            <input type="range" class="rating-slider participation-level" min="1" max="5" value="3" data-group-id="${group.id}">
-                            <span class="rating-display">3</span>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">بازخورد کلی</label>
-                            <textarea class="form-control group-feedback" data-group-id="${group.id}" 
-                                      placeholder="بازخورد کلی درباره عملکرد گروه..."></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">چالش‌ها</label>
-                            <textarea class="form-control challenges" data-group-id="${group.id}" 
-                                      placeholder="چالش‌ها و مشکلات پیش آمده..."></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">پیشنهادات جلسه بعد</label>
-                            <textarea class="form-control next-session-recommendations" data-group-id="${group.id}" 
-                                      placeholder="پیشنهادات برای جلسه بعد..."></textarea>
+                        <div class="feedback-controls">
+                            <div class="rating-groups-container">
+                                <div class="rating-group">
+                                    <label class="rating-label">سطح درک مطلب</label>
+                                    <div class="rating-control">
+                                        <input type="range" class="rating-slider understanding-level" min="1" max="5" value="3" data-group-id="${group.id}">
+                                        <span class="rating-display">3</span>
+                                    </div>
+                                </div>
+                                <div class="rating-group">
+                                    <label class="rating-label">سطح مشارکت</label>
+                                    <div class="rating-control">
+                                        <input type="range" class="rating-slider participation-level" min="1" max="5" value="3" data-group-id="${group.id}">
+                                        <span class="rating-display">3</span>
+                                    </div>
+                                </div>
+                                <div class="rating-group">
+                                    <label class="rating-label">میزان رضایت معلم</label>
+                                    <div class="rating-control">
+                                        <input type="range" class="rating-slider teacher-satisfaction" min="1" max="5" value="3" data-group-id="${group.id}">
+                                        <span class="rating-display">3</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">بازخورد کلی</label>
+                                <textarea class="form-control group-feedback" data-group-id="${group.id}" 
+                                          placeholder="بازخورد کلی درباره عملکرد گروه..."></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">چالش‌ها</label>
+                                <textarea class="form-control challenges" data-group-id="${group.id}" 
+                                          placeholder="چالش‌ها و مشکلات پیش آمده..."></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">پیشنهادات جلسه بعد</label>
+                                <textarea class="form-control next-session-recommendations" data-group-id="${group.id}" 
+                                          placeholder="پیشنهادات برای جلسه بعد..."></textarea>
+                            </div>
+                            <div class="group-actions">
+                                <button type="button" class="btn btn-primary btn-save-feedback" data-group-id="${group.id}">
+                                    <i class="fas fa-save"></i>
+                                    ذخیره بازخورد
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
             `;
-            container.append(groupHtml);
+            contentContainer.append(tabContentHtml);
         });
+
+        // Setup tab event listeners
+        this.setupFeedbackTabEventListeners();
 
         // Setup rating slider events
         $('.rating-slider').on('input', (e) => {
@@ -575,10 +789,8 @@ class StepCompletionManager {
             $(e.target).siblings('.rating-display').text(value);
         });
 
-        // Load existing data if available
-        if (this.stepData[2]) {
-            this.loadFeedbackData(this.stepData[2].completionData);
-        }
+        // Load existing feedback data
+        this.loadFeedbackData();
     }
 
     populateTopicCoverageStep() {
@@ -836,6 +1048,7 @@ class StepCompletionManager {
         this.groups.forEach(group => {
             const understandingLevel = $(`.understanding-level[data-group-id="${group.id}"]`).val();
             const participationLevel = $(`.participation-level[data-group-id="${group.id}"]`).val();
+            const teacherSatisfaction = $(`.teacher-satisfaction[data-group-id="${group.id}"]`).val();
             const groupFeedback = $(`.group-feedback[data-group-id="${group.id}"]`).val();
             const challenges = $(`.challenges[data-group-id="${group.id}"]`).val();
             const nextSessionRecommendations = $(`.next-session-recommendations[data-group-id="${group.id}"]`).val();
@@ -845,6 +1058,7 @@ class StepCompletionManager {
                 groupName: group.name,
                 understandingLevel: parseInt(understandingLevel),
                 participationLevel: parseInt(participationLevel),
+                teacherSatisfaction: parseInt(teacherSatisfaction),
                 groupFeedback: groupFeedback || null,
                 challenges: challenges || null,
                 nextSessionRecommendations: nextSessionRecommendations || null
@@ -985,16 +1199,55 @@ class StepCompletionManager {
     }
 
     loadFeedbackData(data) {
-        // Load existing feedback data
-        if (data) {
-            const feedbackData = JSON.parse(data);
-            feedbackData.groupFeedbacks.forEach(groupFeedback => {
-                $(`.understanding-level[data-group-id="${groupFeedback.groupId}"]`).val(groupFeedback.understandingLevel);
-                $(`.participation-level[data-group-id="${groupFeedback.groupId}"]`).val(groupFeedback.participationLevel);
-                $(`.group-feedback[data-group-id="${groupFeedback.groupId}"]`).val(groupFeedback.groupFeedback || '');
-                $(`.challenges[data-group-id="${groupFeedback.groupId}"]`).val(groupFeedback.challenges || '');
-                $(`.next-session-recommendations[data-group-id="${groupFeedback.groupId}"]`).val(groupFeedback.nextSessionRecommendations || '');
+        // Load existing feedback data from groups (database)
+        if (this.groups && this.groups.length > 0) {
+            this.groups.forEach(group => {
+                if (group.existingFeedback) {
+                    const feedback = group.existingFeedback;
+                    
+                    // Update rating sliders and displays
+                    $(`.understanding-level[data-group-id="${group.id}"]`).val(feedback.understandingLevel);
+                    $(`.understanding-level[data-group-id="${group.id}"]`).siblings('.rating-display').text(feedback.understandingLevel);
+                    
+                    $(`.participation-level[data-group-id="${group.id}"]`).val(feedback.participationLevel);
+                    $(`.participation-level[data-group-id="${group.id}"]`).siblings('.rating-display').text(feedback.participationLevel);
+                    
+                    $(`.teacher-satisfaction[data-group-id="${group.id}"]`).val(feedback.teacherSatisfaction || 3);
+                    $(`.teacher-satisfaction[data-group-id="${group.id}"]`).siblings('.rating-display').text(feedback.teacherSatisfaction || 3);
+                    
+                    // Update text areas
+                    $(`.group-feedback[data-group-id="${group.id}"]`).val(feedback.groupFeedback || '');
+                    $(`.challenges[data-group-id="${group.id}"]`).val(feedback.challenges || '');
+                    $(`.next-session-recommendations[data-group-id="${group.id}"]`).val(feedback.nextSessionRecommendations || '');
+                }
             });
+        }
+        
+        // Also try to load from JSON data (fallback)
+        if (data) {
+            try {
+                const feedbackData = JSON.parse(data);
+                if (feedbackData.groupFeedbacks) {
+                    feedbackData.groupFeedbacks.forEach(groupFeedback => {
+                        // Update rating sliders and displays
+                        $(`.understanding-level[data-group-id="${groupFeedback.groupId}"]`).val(groupFeedback.understandingLevel);
+                        $(`.understanding-level[data-group-id="${groupFeedback.groupId}"]`).siblings('.rating-display').text(groupFeedback.understandingLevel);
+                        
+                        $(`.participation-level[data-group-id="${groupFeedback.groupId}"]`).val(groupFeedback.participationLevel);
+                        $(`.participation-level[data-group-id="${groupFeedback.groupId}"]`).siblings('.rating-display').text(groupFeedback.participationLevel);
+                        
+                        $(`.teacher-satisfaction[data-group-id="${groupFeedback.groupId}"]`).val(groupFeedback.teacherSatisfaction || 3);
+                        $(`.teacher-satisfaction[data-group-id="${groupFeedback.groupId}"]`).siblings('.rating-display').text(groupFeedback.teacherSatisfaction || 3);
+                        
+                        // Update text areas
+                        $(`.group-feedback[data-group-id="${groupFeedback.groupId}"]`).val(groupFeedback.groupFeedback || '');
+                        $(`.challenges[data-group-id="${groupFeedback.groupId}"]`).val(groupFeedback.challenges || '');
+                        $(`.next-session-recommendations[data-group-id="${groupFeedback.groupId}"]`).val(groupFeedback.nextSessionRecommendations || '');
+                    });
+                }
+            } catch (e) {
+                console.log('Error parsing feedback data:', e);
+            }
         }
     }
 

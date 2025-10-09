@@ -166,14 +166,20 @@ public class SaveFeedbackStepCommandHandler : IRequestHandler<SaveFeedbackStepCo
                 return Result<bool>.Failure("جلسه یافت نشد.");
             }
 
-            // Clear existing execution records for this session
+            // Get existing execution records for this session
             var existingExecutions = await _executionRepository.GetBySessionIdAsync(request.SessionId, cancellationToken);
-            foreach (var execution in existingExecutions)
+            
+            // Collect all group IDs from the current request
+            var requestGroupIds = request.FeedbackData.GroupFeedbacks.Select(gf => gf.GroupId).ToHashSet();
+            
+            // Delete only executions for groups that are in the current request
+            var executionsToDelete = existingExecutions.Where(e => requestGroupIds.Contains(e.StudentGroupId)).ToList();
+            foreach (var execution in executionsToDelete)
             {
                 await _executionRepository.DeleteAsync(execution, cancellationToken);
             }
 
-            // Add new execution records
+            // Add new execution records for the groups in the current request
             foreach (var groupFeedback in request.FeedbackData.GroupFeedbacks)
             {
                 var execution = new TeachingSessionExecution
@@ -183,6 +189,7 @@ public class SaveFeedbackStepCommandHandler : IRequestHandler<SaveFeedbackStepCo
                     GroupFeedback = groupFeedback.GroupFeedback,
                     UnderstandingLevel = groupFeedback.UnderstandingLevel,
                     ParticipationLevel = groupFeedback.ParticipationLevel,
+                    TeacherSatisfaction = groupFeedback.TeacherSatisfaction,
                     Challenges = groupFeedback.Challenges,
                     NextSessionRecommendations = groupFeedback.NextSessionRecommendations,
                     CompletedAt = DateTimeOffset.UtcNow

@@ -12,19 +12,22 @@ public class GetSessionCompletionDataQueryHandler : IRequestHandler<GetSessionCo
     private readonly IStudentGroupRepository _studentGroupRepository;
     private readonly ISubChapterRepository _subChapterRepository;
     private readonly ILessonRepository _lessonRepository;
+    private readonly ITeachingSessionExecutionRepository _executionRepository;
 
     public GetSessionCompletionDataQueryHandler(
         ITeachingSessionReportRepository sessionReportRepository,
         ITeachingPlanRepository teachingPlanRepository,
         IStudentGroupRepository studentGroupRepository,
         ISubChapterRepository subChapterRepository,
-        ILessonRepository lessonRepository)
+        ILessonRepository lessonRepository,
+        ITeachingSessionExecutionRepository executionRepository)
     {
         _sessionReportRepository = sessionReportRepository;
         _teachingPlanRepository = teachingPlanRepository;
         _studentGroupRepository = studentGroupRepository;
         _subChapterRepository = subChapterRepository;
         _lessonRepository = lessonRepository;
+        _executionRepository = executionRepository;
     }
 
     public async Task<Result<SessionCompletionDataDto>> Handle(GetSessionCompletionDataQuery request, CancellationToken cancellationToken)
@@ -55,11 +58,22 @@ public class GetSessionCompletionDataQueryHandler : IRequestHandler<GetSessionCo
             var existingAttendance = sessionReport.Attendance?.ToList() ?? new List<Domain.Entities.TeachingSessionAttendance>();
             var attendanceDict = existingAttendance.ToDictionary(a => a.StudentId, a => a);
             
+            // Get existing feedback data from database
+            var existingExecutions = await _executionRepository.GetBySessionIdAsync(request.SessionId, cancellationToken);
+            var executionDict = existingExecutions.ToDictionary(e => e.StudentGroupId, e => e);
+            
             // Debug: Log attendance data
             System.Diagnostics.Debug.WriteLine($"Found {existingAttendance.Count} existing attendance records");
             foreach (var attendance in existingAttendance)
             {
                 System.Diagnostics.Debug.WriteLine($"  Attendance: StudentId={attendance.StudentId}, Status={attendance.Status}, Score={attendance.ParticipationScore}");
+            }
+            
+            // Debug: Log execution data
+            System.Diagnostics.Debug.WriteLine($"Found {existingExecutions.Count()} existing execution records");
+            foreach (var execution in existingExecutions)
+            {
+                System.Diagnostics.Debug.WriteLine($"  Execution: GroupId={execution.StudentGroupId}, Understanding={execution.UnderstandingLevel}, Participation={execution.ParticipationLevel}, Satisfaction={execution.TeacherSatisfaction}");
             }
             
             var groupDtos = groups.Select(g => new GroupDataDto
@@ -82,7 +96,19 @@ public class GetSessionCompletionDataQueryHandler : IRequestHandler<GetSessionCo
                         ParticipationScore = attendanceDict[m.StudentId].ParticipationScore,
                         Comment = attendanceDict[m.StudentId].Comment
                     } : null
-                }).ToList() ?? new List<GroupMemberDto>()
+                }).ToList() ?? new List<GroupMemberDto>(),
+                // Add existing feedback data
+                ExistingFeedback = executionDict.ContainsKey(g.Id) ? new GroupFeedbackDto
+                {
+                    GroupId = g.Id,
+                    GroupName = g.Name,
+                    UnderstandingLevel = executionDict[g.Id].UnderstandingLevel,
+                    ParticipationLevel = executionDict[g.Id].ParticipationLevel,
+                    TeacherSatisfaction = executionDict[g.Id].TeacherSatisfaction,
+                    GroupFeedback = executionDict[g.Id].GroupFeedback,
+                    Challenges = executionDict[g.Id].Challenges,
+                    NextSessionRecommendations = executionDict[g.Id].NextSessionRecommendations
+                } : null
             }).ToList();
 
             // Get available subtopics and lessons
