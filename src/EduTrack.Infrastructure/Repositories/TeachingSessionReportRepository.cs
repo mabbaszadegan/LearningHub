@@ -19,6 +19,7 @@ public class TeachingSessionReportRepository : ITeachingSessionReportRepository
         return await _context.TeachingSessionReports
             .Include(r => r.TeachingPlan)
             .Include(r => r.Attendance)
+                .ThenInclude(a => a.Student)
             .Include(r => r.Plans)
             .Include(r => r.Executions)
             .Include(r => r.TopicCoverages)

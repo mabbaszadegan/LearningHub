@@ -51,6 +51,17 @@ public class GetSessionCompletionDataQueryHandler : IRequestHandler<GetSessionCo
             // Debug: Log groups count
             System.Diagnostics.Debug.WriteLine($"Found {groups.Count()} groups for teaching plan {sessionReport.TeachingPlanId}");
             
+            // Get existing attendance data
+            var existingAttendance = sessionReport.Attendance?.ToList() ?? new List<Domain.Entities.TeachingSessionAttendance>();
+            var attendanceDict = existingAttendance.ToDictionary(a => a.StudentId, a => a);
+            
+            // Debug: Log attendance data
+            System.Diagnostics.Debug.WriteLine($"Found {existingAttendance.Count} existing attendance records");
+            foreach (var attendance in existingAttendance)
+            {
+                System.Diagnostics.Debug.WriteLine($"  Attendance: StudentId={attendance.StudentId}, Status={attendance.Status}, Score={attendance.ParticipationScore}");
+            }
+            
             var groupDtos = groups.Select(g => new GroupDataDto
             {
                 Id = g.Id,
@@ -62,7 +73,15 @@ public class GetSessionCompletionDataQueryHandler : IRequestHandler<GetSessionCo
                     StudentGroupId = m.StudentGroupId,
                     StudentId = m.StudentId,
                     StudentName = (m.Student?.FirstName + " " + m.Student?.LastName)?.Trim() ?? "Unknown Student",
-                    StudentEmail = m.Student?.Email ?? ""
+                    StudentEmail = m.Student?.Email ?? "",
+                    // Add existing attendance data
+                    ExistingAttendance = attendanceDict.ContainsKey(m.StudentId) ? new StudentAttendanceDto
+                    {
+                        StudentId = m.StudentId,
+                        Status = attendanceDict[m.StudentId].Status,
+                        ParticipationScore = attendanceDict[m.StudentId].ParticipationScore,
+                        Comment = attendanceDict[m.StudentId].Comment
+                    } : null
                 }).ToList() ?? new List<GroupMemberDto>()
             }).ToList();
 

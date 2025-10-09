@@ -417,6 +417,43 @@
     margin: 0;
 }
 
+/* Existing Data Indicators */
+.student-attendance-item.has-existing-data {
+    border-left: 4px solid #28a745;
+    background: linear-gradient(135deg, #f8fff9 0%, #ffffff 100%);
+}
+
+.existing-data-indicator {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: #28a745;
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    box-shadow: 0 2px 4px rgba(40, 167, 69, 0.3);
+}
+
+.student-avatar {
+    position: relative;
+}
+
+.existing-data-label {
+    display: inline-block;
+    background: #28a745;
+    color: white;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    margin-top: 4px;
+    font-weight: 500;
+}
+
 /* Group Actions */
 .group-actions {
     margin-top: 25px;

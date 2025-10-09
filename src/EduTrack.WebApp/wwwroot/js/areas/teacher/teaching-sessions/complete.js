@@ -190,6 +190,15 @@ class StepCompletionManager {
         contentContainer.empty();
 
         console.log('Groups data:', this.groups);
+        
+        // Debug: Log existing attendance data
+        this.groups.forEach((group, groupIndex) => {
+            console.log(`Group ${groupIndex}: ${group.name}`);
+            group.members.forEach((member, memberIndex) => {
+                console.log(`  Member ${memberIndex}: ${member.studentName} (${member.studentId})`);
+                console.log(`    ExistingAttendance:`, member.existingAttendance);
+            });
+        });
 
         if (this.groups.length === 0) {
             contentContainer.html(`
@@ -241,43 +250,52 @@ class StepCompletionManager {
                             </div>
                         </div>
                         <div class="students-attendance-list">
-                            ${group.members.map(member => `
-                                <div class="student-attendance-item" data-student-id="${member.studentId}">
+                            ${group.members.map(member => {
+                                const hasExistingData = member.existingAttendance;
+                                const statusValue = hasExistingData ? parseInt(member.existingAttendance.status) : 1;
+                                const participationValue = hasExistingData ? member.existingAttendance.participationScore || 100 : 100;
+                                const commentValue = hasExistingData ? member.existingAttendance.comment || '' : '';
+                                
+                                return `
+                                <div class="student-attendance-item ${hasExistingData ? 'has-existing-data' : ''}" data-student-id="${member.studentId}">
                                     <div class="student-info">
                                         <div class="student-avatar">
                                             <i class="fas fa-user"></i>
+                                            ${hasExistingData ? '<div class="existing-data-indicator"><i class="fas fa-check-circle"></i></div>' : ''}
                                         </div>
                                         <div class="student-details">
                                             <span class="student-name">${member.studentName}</span>
                                             <span class="student-email">${member.studentEmail || ''}</span>
+                                            ${hasExistingData ? '<span class="existing-data-label">داده‌های موجود</span>' : ''}
                                         </div>
                                     </div>
                                     <div class="attendance-controls">
                                         <div class="control-group">
                                             <label class="control-label">وضعیت حضور</label>
                                             <select class="attendance-status" data-student-id="${member.studentId}">
-                                                <option value="0">غایب</option>
-                                                <option value="1" selected>حاضر</option>
-                                                <option value="2">تأخیر</option>
-                                                <option value="3">مرخصی</option>
+                                                <option value="0" ${statusValue === 0 ? 'selected' : ''}>غایب</option>
+                                                <option value="1" ${statusValue === 1 ? 'selected' : ''}>حاضر</option>
+                                                <option value="2" ${statusValue === 2 ? 'selected' : ''}>تأخیر</option>
+                                                <option value="3" ${statusValue === 3 ? 'selected' : ''}>مرخصی</option>
                                             </select>
                                         </div>
                                         <div class="control-group">
                                             <label class="control-label">میزان مشارکت</label>
                                             <div class="participation-slider-container">
                                                 <input type="range" class="participation-score" data-student-id="${member.studentId}" 
-                                                       min="0" max="100" value="100" step="5">
-                                                <span class="participation-display">100%</span>
+                                                       min="0" max="100" value="${participationValue}" step="5">
+                                                <span class="participation-display">${participationValue}%</span>
                                             </div>
                                         </div>
                                         <div class="control-group">
                                             <label class="control-label">یادداشت</label>
                                             <input type="text" class="attendance-comment" data-student-id="${member.studentId}" 
-                                                   placeholder="یادداشت (اختیاری)" maxlength="200">
+                                                   value="${commentValue}" placeholder="یادداشت (اختیاری)" maxlength="200">
                                         </div>
                                     </div>
                                 </div>
-                            `).join('')}
+                            `;
+                            }).join('')}
                         </div>
                         <div class="group-actions">
                             <button class="btn btn-primary btn-save-tab" data-group-id="${group.id}" data-tab-index="${index}">

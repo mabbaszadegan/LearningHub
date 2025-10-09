@@ -328,7 +328,8 @@ public class TeachingSessionsController : Controller
                 m.Id, 
                 m.StudentId, 
                 m.StudentName, 
-                m.StudentEmail 
+                m.StudentEmail,
+                m.ExistingAttendance
             }).ToList()
         }), jsonOptions);
         var subtopicsJson = JsonConvert.SerializeObject(completionData.AvailableSubTopics.Select(s => new { s.Id, s.Title, s.ChapterTitle }), jsonOptions);
@@ -472,66 +473,6 @@ public class TeachingSessionsController : Controller
     }
 
     [HttpPost]
-    public async Task<IActionResult> SaveStepCompletion([FromBody] StepCompletionDataDto stepData)
-    {
-        var command = new SaveStepCompletionCommand(
-            stepData.SessionId, 
-            stepData.StepNumber, 
-            stepData.StepName, 
-            stepData.CompletionData, 
-            stepData.IsCompleted);
-        
-        var result = await _mediator.Send(command);
-        
-        if (result.IsSuccess)
-        {
-            return Json(new { success = true, message = "مرحله با موفقیت ذخیره شد." });
-        }
-
-        return Json(new { success = false, message = result.Error ?? "خطا در ذخیره مرحله." });
-    }
-
-    [HttpPost]
-    public async Task<IActionResult> UpdateAttendance([FromBody] UpdateAttendanceRequest request)
-    {
-        try
-        {
-            _logger.LogInformation("UpdateAttendance called with SessionId: {SessionId}, StudentId: {StudentId}", 
-                request.SessionId, request.StudentId);
-
-            // Create attendance DTO
-            var attendanceDto = new TeachingSessionAttendanceDto
-            {
-                Id = request.AttendanceId,
-                TeachingSessionReportId = request.SessionId,
-                StudentId = request.StudentId,
-                StudentName = "", // Will be populated by the command handler
-                Status = (AttendanceStatus)request.Status,
-                ParticipationScore = request.ParticipationScore,
-                Comment = request.Comment
-            };
-
-            // Use existing RecordAttendanceCommand
-            var command = new RecordAttendanceCommand(request.SessionId, new List<TeachingSessionAttendanceDto> { attendanceDto });
-            var result = await _mediator.Send(command);
-            
-            if (result.IsSuccess)
-            {
-                _logger.LogInformation("Successfully updated attendance");
-                return Json(new { success = true, message = "حضور و غیاب با موفقیت ذخیره شد." });
-            }
-
-            _logger.LogWarning("Failed to update attendance: {Error}", result.Error);
-            return Json(new { success = false, message = result.Error ?? "خطا در ذخیره حضور و غیاب." });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error updating attendance");
-            return Json(new { success = false, message = "خطا در پردازش داده‌ها." });
-        }
-    }
-
-    [HttpPost]
     public async Task<IActionResult> SaveTabCompletion([FromBody] TabCompletionDataDto tabData)
     {
         try
@@ -571,5 +512,25 @@ public class TeachingSessionsController : Controller
             _logger.LogError(ex, "Error saving tab completion data");
             return Json(new { success = false, message = "خطا در پردازش داده‌ها." });
         }
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> SaveStepCompletion([FromBody] StepCompletionDataDto stepData)
+    {
+        var command = new SaveStepCompletionCommand(
+            stepData.SessionId, 
+            stepData.StepNumber, 
+            stepData.StepName, 
+            stepData.CompletionData, 
+            stepData.IsCompleted);
+        
+        var result = await _mediator.Send(command);
+        
+        if (result.IsSuccess)
+        {
+            return Json(new { success = true, message = "مرحله با موفقیت ذخیره شد." });
+        }
+
+        return Json(new { success = false, message = result.Error ?? "خطا در ذخیره مرحله." });
     }
 }

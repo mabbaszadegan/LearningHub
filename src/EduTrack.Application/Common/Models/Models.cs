@@ -513,6 +513,7 @@ public class GroupMemberDto
     public string StudentId { get; set; } = string.Empty;
     public string StudentName { get; set; } = string.Empty;
     public string StudentEmail { get; set; } = string.Empty;
+    public StudentAttendanceDto? ExistingAttendance { get; set; }
 }
 
 public class SessionCompletionDataDto
