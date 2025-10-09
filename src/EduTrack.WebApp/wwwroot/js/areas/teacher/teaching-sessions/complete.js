@@ -923,29 +923,6 @@ class StepCompletionManager {
                                 <span class="progress-text">0% تکمیل شده</span>
                             </div>
                         </div>
-                        <div class="general-notes-section">
-                            <h5 class="section-title">یادداشت‌های کلی</h5>
-                            <div class="general-notes">
-                                <div class="notes-field">
-                                    <label>یادداشت‌های عمومی:</label>
-                                    <textarea class="general-notes-textarea" 
-                                              data-group-id="${group.id}"
-                                              placeholder="یادداشت‌های کلی درباره پوشش زیرمباحث این گروه..."></textarea>
-                                </div>
-                                <div class="notes-field">
-                                    <label>چالش‌های کلی:</label>
-                                    <textarea class="general-challenges-textarea" 
-                                              data-group-id="${group.id}"
-                                              placeholder="چالش‌های کلی گروه در یادگیری زیرمباحث..."></textarea>
-                                </div>
-                                <div class="notes-field">
-                                    <label>توصیه‌ها:</label>
-                                    <textarea class="recommendations-textarea" 
-                                              data-group-id="${group.id}"
-                                              placeholder="توصیه‌هایی برای جلسات آینده..."></textarea>
-                                </div>
-                            </div>
-                        </div>
                         <div class="chapters-container" id="chaptersContainer_${group.id}">
                             <!-- Chapters will be populated by JavaScript -->
                         </div>
@@ -1640,7 +1617,7 @@ class StepCompletionManager {
         });
 
         // Text areas
-        $(document).on('input', '.notes-textarea, .challenges-textarea, .general-notes-textarea, .general-challenges-textarea, .recommendations-textarea', (e) => {
+        $(document).on('input', '.notes-textarea, .challenges-textarea', (e) => {
             this.updateSubChapterCoverageTabProgress(this.currentActiveTab);
         });
     }
@@ -1800,14 +1777,6 @@ class StepCompletionManager {
             });
         }
 
-        // Collect general notes
-        const generalNotesTextarea = $(`.general-notes-textarea[data-group-id="${groupId}"]`);
-        const generalChallengesTextarea = $(`.general-challenges-textarea[data-group-id="${groupId}"]`);
-        const recommendationsTextarea = $(`.recommendations-textarea[data-group-id="${groupId}"]`);
-
-        groupCoverage.generalNotes = generalNotesTextarea.val() || null;
-        groupCoverage.challenges = generalChallengesTextarea.val() || null;
-        groupCoverage.recommendations = recommendationsTextarea.val() || null;
 
         // Return in SubChapterCoverageStepDataDto format
         return {
@@ -1888,21 +1857,6 @@ class StepCompletionManager {
                     }
                 });
                 
-                // General notes
-                const generalNotesTextarea = $(`.general-notes-textarea[data-group-id="${groupCoverage.groupId}"]`);
-                if (generalNotesTextarea.length) {
-                    generalNotesTextarea.val(groupCoverage.generalNotes || '');
-                }
-                
-                const generalChallengesTextarea = $(`.general-challenges-textarea[data-group-id="${groupCoverage.groupId}"]`);
-                if (generalChallengesTextarea.length) {
-                    generalChallengesTextarea.val(groupCoverage.challenges || '');
-                }
-                
-                const recommendationsTextarea = $(`.recommendations-textarea[data-group-id="${groupCoverage.groupId}"]`);
-                if (recommendationsTextarea.length) {
-                    recommendationsTextarea.val(groupCoverage.recommendations || '');
-                }
                 
                 // Update tab progress
                 const tabIndex = this.groups.findIndex(g => g.id === groupCoverage.groupId);

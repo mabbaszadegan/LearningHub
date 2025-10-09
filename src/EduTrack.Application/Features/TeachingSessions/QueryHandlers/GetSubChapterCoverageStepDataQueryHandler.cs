@@ -70,7 +70,7 @@ public class GetSubChapterCoverageStepDataQueryHandler : IRequestHandler<GetSubC
                         {
                             var existingCoverage = existingCoverages
                                 .FirstOrDefault(ec => ec.StudentGroupId == g.Id && 
-                                                   ec.TopicType == "SubChapter" && 
+                                                   ec.TopicType == "SubTopic" && 
                                                    ec.TopicId == item.sc.Id);
                             
                             return new SubChapterCoverageItemDto

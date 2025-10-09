@@ -112,7 +112,7 @@ public class GetSubChapterCoverageDataQueryHandler : IRequestHandler<GetSubChapt
                     }).ToList()
                 }).ToList(),
                 ExistingCoverages = existingCoverages
-                    .Where(tc => tc.TopicType == "SubChapter")
+                    .Where(tc => tc.TopicType == "SubTopic")
                     .Select(tc => new SubChapterCoverageDto
                     {
                         Id = tc.Id,

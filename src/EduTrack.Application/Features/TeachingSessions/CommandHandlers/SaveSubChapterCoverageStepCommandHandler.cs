@@ -37,7 +37,7 @@ public class SaveSubChapterCoverageStepCommandHandler : IRequestHandler<SaveSubC
 
             // Get existing subchapter coverage records for this session
             var existingCoverages = await _topicCoverageRepository.GetBySessionIdAsync(request.SessionId, cancellationToken);
-            var subChapterCoverages = existingCoverages.Where(ec => ec.TopicType == "SubChapter").ToList();
+            var subChapterCoverages = existingCoverages.Where(ec => ec.TopicType == "SubTopic").ToList();
 
             // Collect all group IDs from the current request
             var requestGroupIds = request.CoverageData.GroupCoverages.Select(gc => gc.GroupId).ToHashSet();
@@ -49,28 +49,36 @@ public class SaveSubChapterCoverageStepCommandHandler : IRequestHandler<SaveSubC
                 await _topicCoverageRepository.DeleteAsync(coverage, cancellationToken);
             }
 
-            // Add new subchapter coverage records for the groups in the current request
+            // Add new subchapter coverage records only for subchapters that have data
             foreach (var groupCoverage in request.CoverageData.GroupCoverages)
             {
                 foreach (var subChapterCoverage in groupCoverage.SubChapterCoverages)
                 {
-                    var coverage = new TeachingSessionTopicCoverage
+                    // Only save if user has provided data (checked, has percentage, status, or notes)
+                    if (subChapterCoverage.WasCovered || 
+                        subChapterCoverage.CoveragePercentage > 0 || 
+                        subChapterCoverage.CoverageStatus > 0 || 
+                        !string.IsNullOrWhiteSpace(subChapterCoverage.TeacherNotes) ||
+                        !string.IsNullOrWhiteSpace(subChapterCoverage.Challenges))
                     {
-                        TeachingSessionReportId = request.SessionId,
-                        StudentGroupId = groupCoverage.GroupId,
-                        TopicType = "SubChapter",
-                        TopicId = subChapterCoverage.SubChapterId,
-                        TopicTitle = subChapterCoverage.SubChapterTitle,
-                        WasPlanned = subChapterCoverage.WasPlanned,
-                        WasCovered = subChapterCoverage.WasCovered,
-                        CoveragePercentage = subChapterCoverage.CoveragePercentage,
-                        CoverageStatus = subChapterCoverage.CoverageStatus,
-                        TeacherNotes = subChapterCoverage.TeacherNotes,
-                        Challenges = subChapterCoverage.Challenges,
-                        CreatedAt = DateTimeOffset.UtcNow
-                    };
+                        var coverage = new TeachingSessionTopicCoverage
+                        {
+                            TeachingSessionReportId = request.SessionId,
+                            StudentGroupId = groupCoverage.GroupId,
+                            TopicType = "SubTopic",
+                            TopicId = subChapterCoverage.SubChapterId,
+                            TopicTitle = subChapterCoverage.SubChapterTitle,
+                            WasPlanned = subChapterCoverage.WasPlanned,
+                            WasCovered = subChapterCoverage.WasCovered,
+                            CoveragePercentage = subChapterCoverage.CoveragePercentage,
+                            CoverageStatus = subChapterCoverage.CoverageStatus,
+                            TeacherNotes = subChapterCoverage.TeacherNotes,
+                            Challenges = subChapterCoverage.Challenges,
+                            CreatedAt = DateTimeOffset.UtcNow
+                        };
 
-                    await _topicCoverageRepository.AddAsync(coverage, cancellationToken);
+                        await _topicCoverageRepository.AddAsync(coverage, cancellationToken);
+                    }
                 }
             }
 
@@ -82,7 +90,7 @@ public class SaveSubChapterCoverageStepCommandHandler : IRequestHandler<SaveSubC
 
             stepCompletions[3] = completionData; // Step 3 is subchapter coverage
             sessionReport.StepCompletionsJson = JsonSerializer.Serialize(stepCompletions);
-            sessionReport.CurrentStep = 4; // All steps completed
+            sessionReport.CurrentStep = 3; // All steps completed
             sessionReport.IsCompleted = true;
             sessionReport.UpdatedAt = DateTimeOffset.UtcNow;
 

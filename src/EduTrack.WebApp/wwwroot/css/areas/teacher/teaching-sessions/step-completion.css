@@ -2077,80 +2077,6 @@
     border-color: #9ca3af;
 }
 
-.general-notes-section {
-    margin-top: 24px;
-    margin-bottom: 32px;
-    padding: 24px;
-    background: #f8fafc;
-    border-radius: 12px;
-    border: 1px solid #e5e7eb;
-}
-
-.section-title {
-    margin: 0 0 20px 0;
-    font-size: 16px;
-    font-weight: 600;
-    color: #1f2937;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.section-title::before {
-    content: '';
-    width: 4px;
-    height: 16px;
-    background: #10b981;
-    border-radius: 2px;
-}
-
-.general-notes {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 20px;
-}
-
-.notes-field {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.notes-field label {
-    font-size: 13px;
-    font-weight: 600;
-    color: #374151;
-    margin-bottom: 4px;
-}
-
-.general-notes-textarea,
-.general-challenges-textarea,
-.recommendations-textarea {
-    padding: 12px 14px;
-    border: 1px solid #d1d5db;
-    border-radius: 8px;
-    font-size: 13px;
-    font-family: inherit;
-    resize: vertical;
-    min-height: 90px;
-    background: #fff;
-    color: #374151;
-    transition: all 0.2s ease;
-}
-
-.general-notes-textarea:focus,
-.general-challenges-textarea:focus,
-.recommendations-textarea:focus {
-    outline: none;
-    border-color: #10b981;
-    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.1);
-}
-
-.general-notes-textarea:hover,
-.general-challenges-textarea:hover,
-.recommendations-textarea:hover {
-    border-color: #9ca3af;
-}
 
 .group-actions {
     margin-top: 32px;
@@ -2266,9 +2192,6 @@
         padding-top: 16px;
     }
     
-    .general-notes-section {
-        padding: 16px;
-    }
     
     .group-actions {
         padding: 16px;
