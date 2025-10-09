@@ -276,8 +276,8 @@ class StepCompletionManager {
                                         <div class="control-group">
                                             <label class="control-label">وضعیت حضور</label>
                                             <select class="attendance-status" data-student-id="${member.studentId}">
-                                                <option value="0" ${statusValue === 0 ? 'selected' : ''}>غایب</option>
-                                                <option value="1" ${statusValue === 1 ? 'selected' : ''}>حاضر</option>
+                                                <option value="1" ${statusValue === 0 ? 'selected' : ''}>غایب</option>
+                                                <option value="0" ${statusValue === 1 ? 'selected' : ''}>حاضر</option>
                                                 <option value="2" ${statusValue === 2 ? 'selected' : ''}>تأخیر</option>
                                                 <option value="3" ${statusValue === 3 ? 'selected' : ''}>مرخصی</option>
                                             </select>

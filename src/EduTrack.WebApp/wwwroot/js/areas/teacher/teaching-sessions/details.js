@@ -13,6 +13,13 @@ class TeachingSessionDetailsManager {
     }
 
     setupEventListeners() {
+        // Tab navigation
+        $(document).on('click', '.tab-btn', (e) => {
+            e.preventDefault();
+            const tabName = $(e.currentTarget).data('tab');
+            this.switchTab(tabName);
+        });
+
         // Edit button clicks
         $(document).on('click', '.btn-edit-attendance', (e) => {
             e.preventDefault();
@@ -40,6 +47,16 @@ class TeachingSessionDetailsManager {
                 this.cancelEdit(this.currentEditingCard);
             }
         });
+    }
+
+    switchTab(tabName) {
+        // Remove active class from all tabs and panels
+        $('.tab-btn').removeClass('active');
+        $('.tab-panel').removeClass('active');
+        
+        // Add active class to clicked tab and corresponding panel
+        $(`.tab-btn[data-tab="${tabName}"]`).addClass('active');
+        $(`#${tabName}`).addClass('active');
     }
 
     startEdit(card) {

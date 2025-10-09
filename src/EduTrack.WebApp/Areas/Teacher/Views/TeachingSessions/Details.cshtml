@@ -159,9 +159,47 @@
                         </h4>
                     </div>
                     <div class="card-body">
-                        <div class="json-content">
-                            <pre>@Model.TopicsJson</pre>
-                        </div>
+                        @if (!string.IsNullOrEmpty(Model.TopicsJson))
+                        {
+                            <div class="topics-list">
+                                @try
+                                {
+                                    var topics = Newtonsoft.Json.JsonConvert.DeserializeObject<List<string>>(Model.TopicsJson);
+                                    if (topics != null && topics.Any())
+                                    {
+                                        <ul class="topics-items">
+                                            @foreach (var topic in topics)
+                                            {
+                                                <li class="topic-item">
+                                                    <i class="fas fa-check-circle text-success"></i>
+                                                    <span>@topic</span>
+                                                </li>
+                                            }
+                                        </ul>
+                                    }
+                                    else
+                                    {
+                                        <div class="no-data">
+                                            <i class="fas fa-info-circle"></i>
+                                            <span>هیچ موضوعی ثبت نشده است</span>
+                                        </div>
+                                    }
+                                }
+                                catch
+                                {
+                                    <div class="json-content">
+                                        <pre>@Model.TopicsJson</pre>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="no-data">
+                                <i class="fas fa-info-circle"></i>
+                                <span>هیچ موضوعی ثبت نشده است</span>
+                            </div>
+                        }
                     </div>
                 </div>
 
@@ -173,17 +211,58 @@
                         </h4>
                     </div>
                     <div class="card-body">
+                        <div class="stats-grid">
+                            <div class="stat-item">
+                                <div class="stat-icon">
+                                    <i class="fas fa-users text-primary"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <h5>@Model.AttendanceCount</h5>
+                                    <p>کل دانش‌آموزان</p>
+                                </div>
+                            </div>
+                            
+                            <div class="stat-item">
+                                <div class="stat-icon">
+                                    <i class="fas fa-user-check text-success"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <h5>@Model.PresentCount</h5>
+                                    <p>حاضر/تأخیر</p>
+                                </div>
+                            </div>
+                            
+                            <div class="stat-item">
+                                <div class="stat-icon">
+                                    <i class="fas fa-user-times text-danger"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <h5>@Model.AbsentCount</h5>
+                                    <p>غایب/مرخصی</p>
+                                </div>
+                            </div>
+                            
+                            @if (Model.AttendanceCount > 0)
+                            {
+                                <div class="stat-item">
+                                    <div class="stat-icon">
+                                        <i class="fas fa-percentage text-info"></i>
+                                    </div>
+                                    <div class="stat-content">
+                                        <h5>@((Model.PresentCount * 100 / Model.AttendanceCount).ToString("F1"))%</h5>
+                                        <p>درصد حضور</p>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                        
                         @if (!string.IsNullOrEmpty(Model.StatsJson))
                         {
-                            <div class="json-content">
-                                <pre>@Model.StatsJson</pre>
-                            </div>
-                        }
-                        else
-                        {
-                            <div class="empty-content">
-                                <i class="fas fa-chart-line"></i>
-                                <p>آمار جلسه ثبت نشده</p>
+                            <div class="additional-stats">
+                                <h6>آمار اضافی:</h6>
+                                <div class="json-content">
+                                    <pre>@Model.StatsJson</pre>
+                                </div>
                             </div>
                         }
                     </div>
@@ -238,16 +317,23 @@
                         <div class="attendance-summary">
                             <span class="summary-item">
                                 <i class="fas fa-check-circle text-success"></i>
-                                <span>@Model.PresentCount حاضر</span>
+                                <span>@Model.PresentCount حاضر/تأخیر</span>
                             </span>
                             <span class="summary-item">
                                 <i class="fas fa-times-circle text-danger"></i>
-                                <span>@Model.AbsentCount غایب</span>
+                                <span>@Model.AbsentCount غایب/مرخصی</span>
                             </span>
                             <span class="summary-item">
                                 <i class="fas fa-users"></i>
                                 <span>@Model.Attendance.Count کل دانش‌آموزان</span>
                             </span>
+                            @if (Model.AttendanceCount > 0)
+                            {
+                                <span class="summary-item">
+                                    <i class="fas fa-percentage text-info"></i>
+                                    <span>@((Model.PresentCount * 100 / Model.AttendanceCount).ToString("F1"))% حضور</span>
+                                </span>
+                            }
                         </div>
                     </div>
                     
@@ -406,9 +492,6 @@
 
 @section Styles {
     <link rel="stylesheet" href="~/css/areas/teacher/teaching-sessions/details.css" />
-    <style>
-       
-    </style>
 }
 
 @section Scripts {

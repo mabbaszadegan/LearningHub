@@ -64,6 +64,68 @@ public class GetTeachingSessionReportDetailsQueryHandler : IRequestHandler<GetTe
             };
         }).ToList();
 
+        // Get topics from TeachingSessionTopicCoverages
+        var topics = sessionReport.TopicCoverages
+            .Where(tc => !string.IsNullOrEmpty(tc.TopicTitle))
+            .Select(tc => tc.TopicTitle)
+            .Distinct()
+            .ToList();
+        
+        var topicsJson = topics.Any() ? System.Text.Json.JsonSerializer.Serialize(topics) : string.Empty;
+        
+        // Parse step completions to get additional session summary data
+        var statsJson = string.Empty;
+        var attachmentsJson = string.Empty;
+        
+        // Also try to get data from step completions if available
+        if (!string.IsNullOrEmpty(sessionReport.StepCompletionsJson))
+        {
+            try
+            {
+                var stepCompletions = System.Text.Json.JsonSerializer.Deserialize<Dictionary<int, string>>(sessionReport.StepCompletionsJson);
+                if (stepCompletions != null)
+                {
+                    // Get topics from step completions if not already available
+                    if (string.IsNullOrEmpty(topicsJson) && stepCompletions.ContainsKey(1))
+                    {
+                        var step1Data = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(stepCompletions[1]);
+                        if (step1Data != null && step1Data.ContainsKey("topics"))
+                        {
+                            topicsJson = step1Data["topics"]?.ToString() ?? string.Empty;
+                        }
+                    }
+                    
+                    // Get stats from step completions if not already available
+                    if (string.IsNullOrEmpty(statsJson))
+                    {
+                        foreach (var step in stepCompletions)
+                        {
+                            if (step.Value.Contains("stats") || step.Value.Contains("summary"))
+                            {
+                                statsJson = step.Value;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    // Get attachments from step completions if not already available
+                    if (string.IsNullOrEmpty(attachmentsJson) && stepCompletions.ContainsKey(1))
+                    {
+                        var step1Data = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(stepCompletions[1]);
+                        if (step1Data != null && step1Data.ContainsKey("attachments"))
+                        {
+                            attachmentsJson = step1Data["attachments"]?.ToString() ?? string.Empty;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log error but continue with existing values
+                Console.WriteLine($"Error parsing step completions: {ex.Message}");
+            }
+        }
+
         var sessionReportDto = new TeachingSessionReportDto
         {
             Id = sessionReport.Id,
@@ -73,17 +135,17 @@ public class GetTeachingSessionReportDetailsQueryHandler : IRequestHandler<GetTe
             SessionDate = sessionReport.SessionDate,
             Mode = sessionReport.Mode,
             Location = sessionReport.Location,
-            TopicsJson = string.Empty, // Will be populated from completion data
+            TopicsJson = topicsJson,
             Notes = sessionReport.Notes,
-            StatsJson = string.Empty, // Will be populated from completion data
-            AttachmentsJson = string.Empty, // Will be populated from completion data
+            StatsJson = statsJson,
+            AttachmentsJson = attachmentsJson,
             CreatedByTeacherId = sessionReport.CreatedByTeacherId,
             CreatedByTeacherName = "Teacher", // TODO: Get from user service
             CreatedAt = sessionReport.CreatedAt,
             UpdatedAt = sessionReport.UpdatedAt,
-            AttendanceCount = sessionReport.Attendance.Count,
-            PresentCount = sessionReport.Attendance.Count(a => a.Status == AttendanceStatus.Present),
-            AbsentCount = sessionReport.Attendance.Count(a => a.Status == AttendanceStatus.Absent),
+            AttendanceCount = attendanceDtos.Count,
+            PresentCount = attendanceDtos.Count(a => a.Status == AttendanceStatus.Present || a.Status == AttendanceStatus.Late),
+            AbsentCount = attendanceDtos.Count(a => a.Status == AttendanceStatus.Absent || a.Status == AttendanceStatus.Excused),
             Attendance = attendanceDtos
         };
 
