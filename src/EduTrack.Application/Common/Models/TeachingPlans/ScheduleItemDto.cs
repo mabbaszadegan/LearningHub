@@ -1,0 +1,30 @@
+using EduTrack.Domain.Enums;
+
+namespace EduTrack.Application.Common.Models.TeachingPlans;
+
+public class ScheduleItemDto
+{
+    public int Id { get; set; }
+    public int TeachingPlanId { get; set; }
+    public int? GroupId { get; set; }
+    public string? GroupName { get; set; }
+    public int? LessonId { get; set; }
+    public string? LessonTitle { get; set; }
+    public ScheduleItemType Type { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public DateTimeOffset StartDate { get; set; }
+    public DateTimeOffset? DueDate { get; set; }
+    public bool IsMandatory { get; set; }
+    public DisciplineType? DisciplineHint { get; set; }
+    public string ContentJson { get; set; } = string.Empty;
+    public decimal? MaxScore { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
+    public DateTimeOffset UpdatedAt { get; set; }
+    public bool IsOverdue { get; set; }
+    public bool IsUpcoming { get; set; }
+    public bool IsActive { get; set; }
+    public TimeSpan? TimeUntilDue { get; set; }
+    public int SubmissionCount { get; set; }
+    public int CompletedSubmissions { get; set; }
+}

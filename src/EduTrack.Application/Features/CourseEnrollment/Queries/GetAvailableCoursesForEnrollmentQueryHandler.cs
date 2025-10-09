@@ -1,4 +1,5 @@
 using EduTrack.Application.Common.Models;
+using EduTrack.Application.Common.Models.Courses;
 using EduTrack.Application.Features.CourseEnrollment.DTOs;
 using EduTrack.Domain.Entities;
 using EduTrack.Domain.Repositories;

@@ -1,4 +1,7 @@
 using EduTrack.Application.Common.Models;
+using EduTrack.Application.Common.Models.Courses;
+using EduTrack.Application.Common.Models.TeachingPlans;
+using EduTrack.Application.Common.Models.Users;
 using EduTrack.Application.Features.CourseEnrollment.DTOs;
 using EduTrack.Domain.Enums;
 using MediatR;

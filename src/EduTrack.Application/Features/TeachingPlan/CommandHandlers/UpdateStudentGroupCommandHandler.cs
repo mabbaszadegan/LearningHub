@@ -1,5 +1,7 @@
 using EduTrack.Application.Common.Interfaces;
 using EduTrack.Application.Common.Models;
+using EduTrack.Application.Common.Models.TeachingPlans;
+using EduTrack.Application.Common.Models.TeachingSessions;
 using EduTrack.Application.Features.TeachingPlan.Commands;
 using EduTrack.Domain.Repositories;
 using FluentValidation;

@@ -1,4 +1,5 @@
-@model List<EduTrack.Application.Common.Models.LessonDto>
+@using EduTrack.Application.Common.Models.Courses
+@model List<LessonDto>
 @{
     ViewData["Title"] = "دروس ماژول";
     var moduleId = ViewBag.ModuleId as int?;

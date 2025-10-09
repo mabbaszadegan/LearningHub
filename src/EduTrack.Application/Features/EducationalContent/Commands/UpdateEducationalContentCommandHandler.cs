@@ -7,6 +7,7 @@ using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using EduTrack.Application.Common.Models.Courses;
 
 namespace EduTrack.Application.Features.EducationalContent.Commands;
 

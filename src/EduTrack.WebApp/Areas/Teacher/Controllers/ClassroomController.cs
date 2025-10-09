@@ -8,6 +8,7 @@ using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Authorization;
+using EduTrack.Application.Common.Models.Courses;
 
 namespace EduTrack.WebApp.Controllers;
 

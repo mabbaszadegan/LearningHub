@@ -1,3 +1,4 @@
+using EduTrack.Application.Common.Models.Courses;
 using EduTrack.Application.Features.Courses.Queries;
 using EduTrack.Domain.Entities;
 using MediatR;
@@ -34,7 +35,7 @@ public class CatalogController : Controller
         {
             _logger.LogError(ex, "Error loading courses for catalog");
             TempData["Error"] = "خطا در بارگذاری دوره‌ها";
-            return View(new EduTrack.Application.Common.Models.PaginatedList<EduTrack.Application.Common.Models.CourseDto>(new List<EduTrack.Application.Common.Models.CourseDto>(), 0, pageNumber, pageSize));
+            return View(new EduTrack.Application.Common.Models.PaginatedList<CourseDto>(new List<CourseDto>(), 0, pageNumber, pageSize));
         }
     }
 

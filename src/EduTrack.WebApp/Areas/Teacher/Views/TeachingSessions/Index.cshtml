@@ -1,4 +1,5 @@
-@model List<EduTrack.Application.Common.Models.TeachingSessionReportDto>
+@using EduTrack.Application.Common.Models.TeachingSessions
+@model List<TeachingSessionReportDto>
 @{
     ViewData["Title"] = "جلسات آموزشی";
     var planId = ViewBag.TeachingPlanId as int?;

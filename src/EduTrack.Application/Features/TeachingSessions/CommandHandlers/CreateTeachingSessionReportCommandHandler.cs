@@ -1,5 +1,6 @@
 using EduTrack.Application.Common.Interfaces;
 using EduTrack.Application.Common.Models;
+using EduTrack.Application.Common.Models.TeachingSessions;
 using EduTrack.Application.Features.TeachingSessions.Commands;
 using EduTrack.Domain.Entities;
 using EduTrack.Domain.Repositories;

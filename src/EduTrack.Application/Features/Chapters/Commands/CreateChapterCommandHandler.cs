@@ -1,5 +1,6 @@
 using EduTrack.Application.Common.Interfaces;
 using EduTrack.Application.Common.Models;
+using EduTrack.Application.Common.Models.Courses;
 using EduTrack.Domain.Entities;
 using EduTrack.Domain.Repositories;
 using FluentValidation;

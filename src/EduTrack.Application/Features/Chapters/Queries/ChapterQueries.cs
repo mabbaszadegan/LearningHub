@@ -1,4 +1,5 @@
 using EduTrack.Application.Common.Models;
+using EduTrack.Application.Common.Models.Courses;
 using MediatR;
 
 namespace EduTrack.Application.Features.Chapters.Queries;

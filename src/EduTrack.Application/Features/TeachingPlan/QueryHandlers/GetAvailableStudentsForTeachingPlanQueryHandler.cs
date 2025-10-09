@@ -1,6 +1,6 @@
 using EduTrack.Application.Common.Models;
+using EduTrack.Application.Common.Models.Users;
 using EduTrack.Application.Features.TeachingPlan.Queries;
-using EduTrack.Domain.Entities;
 using EduTrack.Domain.Enums;
 using EduTrack.Domain.Repositories;
 using MediatR;

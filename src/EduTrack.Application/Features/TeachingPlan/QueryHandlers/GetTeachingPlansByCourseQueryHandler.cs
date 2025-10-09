@@ -1,4 +1,5 @@
 using EduTrack.Application.Common.Models;
+using EduTrack.Application.Common.Models.TeachingPlans;
 using EduTrack.Application.Features.TeachingPlan.Queries;
 using EduTrack.Domain.Repositories;
 using MediatR;

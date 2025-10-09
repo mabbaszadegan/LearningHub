@@ -1,11 +1,13 @@
-@model EduTrack.Application.Common.Models.StudentGroupDto
+@using EduTrack.Application.Common.Models.TeachingPlans
+@using EduTrack.Application.Common.Models.Users
+@model StudentGroupDto
 @{
     ViewData["Title"] = "مدیریت اعضای گروه";
     var groupId = ViewBag.GroupId as int?;
     var groupName = ViewBag.GroupName as string;
     var teachingPlanTitle = ViewBag.TeachingPlanTitle as string;
     var courseTitle = ViewBag.CourseTitle as string;
-    var availableStudents = ViewBag.AvailableStudents as List<EduTrack.Application.Common.Models.UserDto> ?? new List<EduTrack.Application.Common.Models.UserDto>();
+    var availableStudents = ViewBag.AvailableStudents as List<UserDto> ?? new List<UserDto>();
 }
 
 <!-- Page Header -->

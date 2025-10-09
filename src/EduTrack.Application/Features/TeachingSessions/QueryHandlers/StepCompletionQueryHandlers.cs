@@ -1,4 +1,5 @@
 using EduTrack.Application.Common.Models;
+using EduTrack.Application.Common.Models.TeachingSessions;
 using EduTrack.Application.Features.TeachingSessions.Commands;
 using EduTrack.Domain.Repositories;
 using MediatR;

@@ -1,4 +1,5 @@
 using EduTrack.Application.Common.Models;
+using EduTrack.Application.Common.Models.TeachingPlans;
 using EduTrack.Domain.Enums;
 using MediatR;
 
