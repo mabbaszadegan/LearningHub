@@ -63,6 +63,12 @@ public static class DependencyInjection
         services.AddScoped<IStudentGroupRepository, StudentGroupRepository>();
         services.AddScoped<IScheduleItemRepository, ScheduleItemRepository>();
         services.AddScoped<ISubmissionRepository, SubmissionRepository>();
+        services.AddScoped<ITeachingSessionReportRepository, TeachingSessionReportRepository>();
+        services.AddScoped<ITeachingSessionExecutionRepository, TeachingSessionExecutionRepository>();
+        services.AddScoped<ITeachingSessionTopicCoverageRepository, TeachingSessionTopicCoverageRepository>();
+        services.AddScoped<ITeachingPlanProgressRepository, TeachingPlanProgressRepository>();
+        services.AddScoped<ISubChapterRepository, SubChapterRepository>();
+        services.AddScoped<ILessonRepository, LessonRepository>();
 
         // Register infrastructure services
         services.AddScoped<IFileStorageService, FileStorageService>();

@@ -111,6 +111,7 @@ public class LessonDto
     public DateTimeOffset UpdatedAt { get; set; }
     public List<ResourceDto> Resources { get; set; } = new();
     public ProgressStatus? ProgressStatus { get; set; }
+    public string ModuleTitle { get; set; } = string.Empty;
 }
 
 public class ResourceDto
@@ -337,15 +338,6 @@ public class StudentGroupDto
     public List<GroupMemberDto> Members { get; set; } = new();
 }
 
-public class GroupMemberDto
-{
-    public int Id { get; set; }
-    public int StudentGroupId { get; set; }
-    public string StudentId { get; set; } = string.Empty;
-    public string StudentName { get; set; } = string.Empty;
-    public string StudentEmail { get; set; } = string.Empty;
-}
-
 public class ScheduleItemDto
 {
     public int Id { get; set; }
@@ -463,7 +455,7 @@ public class TeachingSessionReportDto
     public string? Notes { get; set; }
     public string? StatsJson { get; set; }
     public string? AttachmentsJson { get; set; }
-    public int CreatedByTeacherId { get; set; }
+    public string CreatedByTeacherId { get; set; } = string.Empty;
     public string CreatedByTeacherName { get; set; } = string.Empty;
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
@@ -492,4 +484,57 @@ public class ScheduleItemAssignmentDto
     public string? StudentName { get; set; }
     public int? GroupId { get; set; }
     public string? GroupName { get; set; }
+}
+
+public class SubTopicDto
+{
+    public int Id { get; set; }
+    public int ChapterId { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public string Objective { get; set; } = string.Empty;
+    public bool IsActive { get; set; }
+    public int Order { get; set; }
+    public string ChapterTitle { get; set; } = string.Empty;
+}
+
+public class GroupDataDto
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public int MemberCount { get; set; }
+    public List<GroupMemberDto> Members { get; set; } = new();
+}
+
+public class GroupMemberDto
+{
+    public int Id { get; set; }
+    public int StudentGroupId { get; set; }
+    public string StudentId { get; set; } = string.Empty;
+    public string StudentName { get; set; } = string.Empty;
+    public string StudentEmail { get; set; } = string.Empty;
+}
+
+public class SessionCompletionDataDto
+{
+    public int SessionId { get; set; }
+    public string SessionTitle { get; set; } = string.Empty;
+    public DateTimeOffset SessionDate { get; set; }
+    public int TeachingPlanId { get; set; }
+    public string TeachingPlanTitle { get; set; } = string.Empty;
+    public string CourseTitle { get; set; } = string.Empty;
+    public bool HasPlan { get; set; }
+    public List<GroupDataDto> Groups { get; set; } = new();
+    public List<SubTopicDto> AvailableSubTopics { get; set; } = new();
+    public List<LessonDto> AvailableLessons { get; set; } = new();
+    public List<PlannedItemDto>? PlannedItems { get; set; }
+}
+
+public class PlannedItemDto
+{
+    public int StudentGroupId { get; set; }
+    public string? PlannedObjectives { get; set; }
+    public List<int> PlannedSubTopics { get; set; } = new();
+    public List<int> PlannedLessons { get; set; } = new();
+    public string? AdditionalTopics { get; set; }
 }

@@ -16,8 +16,6 @@ public class CreateTeachingSessionReportCommandValidator : AbstractValidator<Cre
             .GreaterThan(0).WithMessage("Teaching Plan ID must be greater than 0");
         RuleFor(x => x.SessionDate)
             .NotEmpty().WithMessage("Session Date is required");
-        RuleFor(x => x.TopicsJson)
-            .NotEmpty().WithMessage("Topics JSON is required");
         RuleFor(x => x.Title)
             .MaximumLength(200).WithMessage("Title cannot exceed 200 characters");
         RuleFor(x => x.Location)
@@ -30,15 +28,18 @@ public class CreateTeachingSessionReportCommandValidator : AbstractValidator<Cre
 public class CreateTeachingSessionReportCommandHandler : IRequestHandler<CreateTeachingSessionReportCommand, Result<TeachingSessionReportDto>>
 {
     private readonly ITeachingPlanRepository _teachingPlanRepository;
+    private readonly ITeachingSessionReportRepository _sessionReportRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICurrentUserService _currentUserService;
 
     public CreateTeachingSessionReportCommandHandler(
         ITeachingPlanRepository teachingPlanRepository,
+        ITeachingSessionReportRepository sessionReportRepository,
         IUnitOfWork unitOfWork,
         ICurrentUserService currentUserService)
     {
         _teachingPlanRepository = teachingPlanRepository;
+        _sessionReportRepository = sessionReportRepository;
         _unitOfWork = unitOfWork;
         _currentUserService = currentUserService;
     }
@@ -69,16 +70,14 @@ public class CreateTeachingSessionReportCommandHandler : IRequestHandler<CreateT
             SessionDate = request.SessionDate,
             Mode = request.Mode,
             Location = request.Location,
-            TopicsJson = request.TopicsJson,
             Notes = request.Notes,
-            StatsJson = request.StatsJson,
-            AttachmentsJson = request.AttachmentsJson,
-            CreatedByTeacherId = int.Parse(teacherId),
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            CreatedByTeacherId = teacherId,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
         };
 
-        // Add to context and save
+        // Add to repository and save
+        await _sessionReportRepository.AddAsync(sessionReport, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         var sessionReportDto = new TeachingSessionReportDto
@@ -90,10 +89,10 @@ public class CreateTeachingSessionReportCommandHandler : IRequestHandler<CreateT
             SessionDate = sessionReport.SessionDate,
             Mode = sessionReport.Mode,
             Location = sessionReport.Location,
-            TopicsJson = sessionReport.TopicsJson,
+            TopicsJson = string.Empty, // Will be populated from completion data
             Notes = sessionReport.Notes,
-            StatsJson = sessionReport.StatsJson,
-            AttachmentsJson = sessionReport.AttachmentsJson,
+            StatsJson = string.Empty, // Will be populated from completion data
+            AttachmentsJson = string.Empty, // Will be populated from completion data
             CreatedByTeacherId = sessionReport.CreatedByTeacherId,
             CreatedByTeacherName = _currentUserService.UserName ?? "Unknown",
             CreatedAt = sessionReport.CreatedAt,

@@ -4,31 +4,46 @@
     var planId = ViewBag.TeachingPlanId as int?;
     var planTitle = ViewBag.TeachingPlanTitle as string;
     var courseTitle = ViewBag.CourseTitle as string;
+    
+    // Prepare navigation actions
+    var navigationActions = new List<NavigationAction>
+    {
+        new NavigationAction
+        {
+            Text = "جلسه جدید",
+            Url = Url.Action("Create", new { planId = planId }) ?? "#",
+            CssClass = "btn-action-primary",
+            Icon = "fas fa-plus"
+        }
+    };
+    
+    // Prepare breadcrumb items
+    var breadcrumbItems = new List<BreadcrumbItem>
+    {
+        new BreadcrumbItem
+        {
+            Text = "دوره‌ها",
+            Url = Url.Action("Index", "Courses"),
+            Icon = "fas fa-chevron-right"
+        },
+        new BreadcrumbItem
+        {
+            Text = courseTitle ?? "دوره",
+            Url = Url.Action("Index", "TeachingPlan", new { courseId = ViewBag.CourseId })
+        },
+        new BreadcrumbItem
+        {
+            Text = planTitle ?? "پلن آموزشی",
+            IsActive = true
+        }
+    };
 }
 
-<!-- Page Header -->
-<div class="page-header-minimal mb-3">
-    <div class="d-flex justify-content-between align-items-center">
-        <div>
-            <h1 class="page-title">جلسات آموزشی</h1>
-            <p class="page-subtitle mb-0">
-                <a asp-controller="Courses" asp-action="Index" class="breadcrumb-link">
-                    <i class="fas fa-chevron-right"></i> دوره‌ها
-                </a>
-                <span class="mx-2">/</span>
-                <a asp-controller="TeachingPlan" asp-action="Index" asp-route-courseId="@ViewBag.CourseId" class="breadcrumb-link">
-                    @courseTitle
-                </a>
-                <span class="mx-2">/</span>
-                <span>@planTitle</span>
-            </p>
-        </div>
-        <a asp-action="Create" asp-route-planId="@planId" class="btn-action-primary">
-            <i class="fas fa-plus"></i>
-            <span>جلسه جدید</span>
-        </a>
-    </div>
-</div>
+@await Component.InvokeAsync("PageNavigation", new { 
+    title = "جلسات آموزشی", 
+    breadcrumbItems = breadcrumbItems, 
+    actions = navigationActions 
+})
 
 <!-- Filter Bar -->
 @if (Model.Any())
@@ -119,6 +134,10 @@
 
                 <!-- Session Actions -->
                 <div class="session-actions">
+                    <a asp-action="Complete" asp-route-id="@session.Id" class="action-btn success">
+                        <i class="fas fa-check-circle"></i>
+                        <span>تکمیل گزارش</span>
+                    </a>
                     <a asp-action="Details" asp-route-id="@session.Id" class="action-btn primary">
                         <i class="fas fa-eye"></i>
                         <span>جزئیات</span>
@@ -429,6 +448,17 @@ else
 
         .action-btn.info:hover {
             background: #17a2b8;
+            color: white;
+        }
+
+        .action-btn.success {
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+            border-color: rgba(16, 185, 129, 0.2);
+        }
+
+        .action-btn.success:hover {
+            background: #10b981;
             color: white;
         }
 

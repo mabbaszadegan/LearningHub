@@ -108,18 +108,6 @@
                 <p class="section-subtitle">موضوعات و یادداشت‌های جلسه را وارد کنید</p>
             </div>
             
-            <div class="form-group">
-                <label asp-for="TopicsJson" class="form-label">
-                    <i class="fas fa-list-ul"></i>
-                    موضوعات تدریس شده
-                </label>
-                <textarea asp-for="TopicsJson" class="form-control modern-textarea" rows="4" placeholder='{"topics":["مرور زمان گذشته ساده"],"subtopics":["افعال بی‌قاعده","جمله‌های سوالی"],"materials":["کتاب صفحه 25-30"]}'></textarea>
-                <div class="form-help">
-                    <i class="fas fa-info-circle"></i>
-                    موضوعات را به صورت JSON وارد کنید. مثال: {"topics":["موضوع اصلی"],"subtopics":["زیرموضوع"]}
-                </div>
-                            <span asp-validation-for="TopicsJson" class="text-danger"></span>
-                        </div>
 
             <div class="form-group">
                 <label asp-for="Notes" class="form-label">
@@ -135,31 +123,20 @@
         <div class="form-section">
             <div class="section-header">
                 <h3 class="section-title">
-                    <i class="fas fa-chart-bar"></i>
+                    <i class="fas fa-info-circle"></i>
                     اطلاعات تکمیلی
                 </h3>
-                <p class="section-subtitle">آمار و ضمائم جلسه (اختیاری)</p>
+                <p class="section-subtitle">جزئیات تکمیلی جلسه (اختیاری)</p>
             </div>
             
-            <div class="form-grid">
-                <div class="form-group">
-                    <label asp-for="StatsJson" class="form-label">
-                        <i class="fas fa-chart-line"></i>
-                        آمار جلسه
-                    </label>
-                    <textarea asp-for="StatsJson" class="form-control modern-textarea" rows="3" placeholder='{"duration":90,"participation":85,"homework_completed":12}'></textarea>
-                                    <span asp-validation-for="StatsJson" class="text-danger"></span>
-                                </div>
-                
-                <div class="form-group">
-                    <label asp-for="AttachmentsJson" class="form-label">
-                        <i class="fas fa-paperclip"></i>
-                        ضمائم
-                    </label>
-                    <textarea asp-for="AttachmentsJson" class="form-control modern-textarea" rows="3" placeholder='{"files":["worksheet1.pdf","audio1.mp3"],"links":["https://example.com"]}'></textarea>
-                                    <span asp-validation-for="AttachmentsJson" class="text-danger"></span>
-                                </div>
-                            </div>
+            <div class="form-group">
+                <label asp-for="Location" class="form-label">
+                    <i class="fas fa-map-marker-alt"></i>
+                    مکان برگزاری
+                </label>
+                <input asp-for="Location" class="form-control" placeholder="مثال: کلاس 101، سالن کنفرانس، آنلاین" />
+                <span asp-validation-for="Location" class="text-danger"></span>
+            </div>
                         </div>
 
         <!-- Form Actions -->

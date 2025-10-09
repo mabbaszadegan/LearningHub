@@ -1,0 +1,19 @@
+@model EduTrack.WebApp.Areas.Teacher.Views.Shared.Components.SessionOverview.SessionOverviewViewModel
+
+<!-- Session Overview Cards -->
+<div class="session-overview mb-4">
+    <div class="overview-grid">
+        @foreach (var item in Model.Items)
+        {
+            <div class="overview-card">
+                <div class="overview-icon">
+                    <i class="@item.Icon"></i>
+                </div>
+                <div class="overview-content">
+                    <h3 class="overview-title">@item.Title</h3>
+                    <p class="overview-value">@Html.Raw(item.Value)</p>
+                </div>
+            </div>
+        }
+    </div>
+</div>

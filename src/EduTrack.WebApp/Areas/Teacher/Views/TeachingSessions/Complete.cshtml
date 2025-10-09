@@ -1,0 +1,268 @@
+@using EduTrack.WebApp.Areas.Teacher.Views.Shared.Components.PageNavigation
+@using EduTrack.WebApp.Areas.Teacher.Views.Shared.Components.SessionOverview
+@model EduTrack.Application.Common.Models.SessionCompletionDataDto
+@{
+    ViewData["Title"] = "تکمیل گزارش جلسه آموزشی";
+    var courseTitle = ViewBag.CourseTitle as string;
+
+    // Prepare navigation actions
+    var navigationActions = new List<NavigationAction>
+    {
+        new NavigationAction
+        {
+            Text = "مشاهده جزئیات",
+            Url = Url.Action("Details", new { id = Model.SessionId }) ?? "#",
+            CssClass = "btn-action-secondary",
+            Icon = "fas fa-eye"
+        },
+        new NavigationAction
+        {
+            Text = "بازگشت",
+            Url = Url.Action("Index", new { planId = Model.TeachingPlanId }) ?? "#",
+            CssClass = "btn-action-primary",
+            Icon = "fas fa-arrow-right"
+        }
+    };
+
+    // Prepare breadcrumb items
+    var breadcrumbItems = new List<BreadcrumbItem>
+    {
+        new BreadcrumbItem
+        {
+            Text = "دوره‌ها",
+            Url = Url.Action("Index", "Courses"),
+            Icon = "fas fa-chevron-right"
+        },
+        new BreadcrumbItem
+        {
+            Text = courseTitle ?? "دوره",
+            Url = Url.Action("Index", "TeachingPlan", new { courseId = ViewBag.CourseId })
+        },
+        new BreadcrumbItem
+        {
+            Text = "جلسات آموزشی",
+            Url = Url.Action("Index", new { planId = Model.TeachingPlanId })
+        },
+        new BreadcrumbItem
+        {
+            Text = Model.SessionTitle,
+            IsActive = true
+        }
+    };
+
+    // Prepare overview items
+    var overviewItems = new List<OverviewItem>
+    {
+        new OverviewItem
+        {
+            Title = "تاریخ جلسه",
+            Value = Model.SessionDate.ToString("yyyy/MM/dd"),
+            Icon = "fas fa-calendar-alt"
+        },
+        new OverviewItem
+        {
+            Title = "زمان جلسه",
+            Value = Model.SessionDate.ToString("HH:mm"),
+            Icon = "fas fa-clock"
+        },
+        new OverviewItem
+        {
+            Title = "تعداد گروه‌ها",
+            Value = $"{Model.Groups.Count} گروه",
+            Icon = "fas fa-users"
+        },
+        new OverviewItem
+        {
+            Title = "وضعیت برنامه‌ریزی",
+            Value = Model.HasPlan
+                ? "<span class='status-badge status-planned'><i class='fas fa-check-circle'></i> برنامه‌ریزی شده</span>"
+                : "<span class='status-badge status-unplanned'><i class='fas fa-exclamation-circle'></i> بدون برنامه‌ریزی</span>",
+            Icon = "fas fa-clipboard-check"
+        }
+    };
+}
+
+@await Component.InvokeAsync("PageNavigation", new {
+title = "تکمیل گزارش جلسه آموزشی",
+    breadcrumbItems = breadcrumbItems,
+    actions = navigationActions
+})
+
+@await Component.InvokeAsync("SessionOverview", overviewItems)
+
+<!-- Completion Form -->
+<div class="completion-form-container">
+    <form asp-action="SaveCompletion" method="post" class="completion-form" id="completionForm"
+          data-has-plan="@Model.HasPlan.ToString().ToLower()"
+          data-groups="@ViewBag.GroupsJson"
+          data-available-subtopics="@ViewBag.AvailableSubTopicsJson"
+          data-available-lessons="@ViewBag.AvailableLessonsJson"
+          data-planned-items="@ViewBag.PlannedItemsJson">
+
+        <input type="hidden" name="TeachingSessionReportId" value="@Model.SessionId" />
+
+        <!-- Group Selection -->
+        <div class="group-selection">
+            <h3>انتخاب گروه‌ها</h3>
+            <div class="group-checkboxes">
+                @foreach (var group in Model.Groups)
+                {
+                    <div class="group-checkbox">
+                        <input type="checkbox" id="group_@group.Id" name="SelectedGroupIds" value="@group.Id" class="group-selector" />
+                        <label for="group_@group.Id">@group.Name</label>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Group Sections -->
+        @foreach (var group in Model.Groups)
+        {
+            <div class="group-section" data-group-id="@group.Id">
+                <div class="group-header">
+                    <h3 class="group-title">@group.Name</h3>
+                    <p class="group-subtitle">نتایج و بازخورد گروه @group.Name</p>
+                </div>
+
+                <!-- Group Feedback -->
+                <div class="form-section">
+                    <div class="section-header">
+                        <h3 class="section-title">
+                            <i class="fas fa-comment-alt"></i>
+                            بازخورد گروه
+                        </h3>
+                        <p class="section-subtitle">نظرات و بازخورد کلی درباره عملکرد گروه</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-star"></i>
+                            سطح درک
+                        </label>
+                        <div class="rating-controls">
+                            <div class="rating-group">
+                                <label class="rating-label">درک مطلب</label>
+                                <input type="range" name="GroupFeedbacks[@group.Id][UnderstandingLevel]"
+                                       class="rating-slider" min="1" max="5" value="3">
+                                <span class="rating-display">3</span>
+                            </div>
+                            <div class="rating-group">
+                                <label class="rating-label">مشارکت</label>
+                                <input type="range" name="GroupFeedbacks[@group.Id][ParticipationLevel]"
+                                       class="rating-slider" min="1" max="5" value="3">
+                                <span class="rating-display">3</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-edit"></i>
+                            بازخورد کلی
+                        </label>
+                        <textarea name="GroupFeedbacks[@group.Id][GroupFeedback]" class="form-control modern-textarea"
+                              placeholder="بازخورد کلی درباره عملکرد گروه..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            چالش‌ها
+                        </label>
+                        <textarea name="GroupFeedbacks[@group.Id][Challenges]" class="form-control modern-textarea"
+                              placeholder="چالش‌ها و مشکلات پیش آمده..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-lightbulb"></i>
+                            پیشنهادات جلسه بعد
+                        </label>
+                        <textarea name="GroupFeedbacks[@group.Id][NextSessionRecommendations]" class="form-control modern-textarea"
+                              placeholder="پیشنهادات برای جلسه بعد..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Topic Coverage -->
+                <div class="form-section">
+                    <div class="section-header">
+                        <h3 class="section-title">
+                            <i class="fas fa-check-square"></i>
+                            پوشش موضوعات
+                        </h3>
+                        <p class="section-subtitle">موضوعاتی که برای این گروه پوشش داده شد</p>
+                    </div>
+
+                    <div class="topic-coverage">
+                        <h4>زیرمباحث</h4>
+                        <div class="topic-coverage-container">
+                            @foreach (var subTopic in Model.AvailableSubTopics)
+                            {
+                                <div class="topic-coverage-item" data-topic-type="SubTopic" data-topic-id="@subTopic.Id">
+                                    <div class="topic-info">
+                                        <span class="topic-title">@subTopic.Title</span>
+                                    </div>
+                                    <div class="coverage-controls">
+                                        <label class="coverage-checkbox">
+                                            <input type="checkbox" name="TopicCoverages[@group.Id][SubTopic][@subTopic.Id][WasCovered]" class="coverage-check">
+                                            <span>پوشش داده شد</span>
+                                        </label>
+                                        <input type="range" name="TopicCoverages[@group.Id][SubTopic][@subTopic.Id][CoveragePercentage]"
+                                               class="coverage-percentage" min="0" max="100" value="0">
+                                        <span class="coverage-display">0%</span>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="topic-coverage">
+                        <h4>درس‌ها</h4>
+                        <div class="topic-coverage-container">
+                            @foreach (var lesson in Model.AvailableLessons)
+                            {
+                                <div class="topic-coverage-item" data-topic-type="Lesson" data-topic-id="@lesson.Id">
+                                    <div class="topic-info">
+                                        <span class="topic-title">@lesson.Title</span>
+                                    </div>
+                                    <div class="coverage-controls">
+                                        <label class="coverage-checkbox">
+                                            <input type="checkbox" name="TopicCoverages[@group.Id][Lesson][@lesson.Id][WasCovered]" class="coverage-check">
+                                            <span>پوشش داده شد</span>
+                                        </label>
+                                        <input type="range" name="TopicCoverages[@group.Id][Lesson][@lesson.Id][CoveragePercentage]"
+                                               class="coverage-percentage" min="0" max="100" value="0">
+                                        <span class="coverage-display">0%</span>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <!-- Form Actions -->
+        <div class="form-actions">
+            <a asp-action="Index" asp-route-planId="@Model.TeachingPlanId" class="btn-cancel">
+                <i class="fas fa-times"></i>
+                <span>لغو</span>
+            </a>
+            <button type="submit" class="btn-submit">
+                <i class="fas fa-save"></i>
+                <span>ذخیره گزارش</span>
+            </button>
+        </div>
+    </form>
+</div>
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/areas/teacher/teaching-sessions/complete.css" />
+}
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script src="~/js/areas/teacher/teaching-sessions/complete.js"></script>
+}

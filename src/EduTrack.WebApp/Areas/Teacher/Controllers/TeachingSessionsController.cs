@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Newtonsoft.Json;
 
 namespace EduTrack.WebApp.Areas.Teacher.Controllers;
 
@@ -277,5 +278,106 @@ public class TeachingSessionsController : Controller
             ViewBag.ScheduleItemTypes = new SelectList(Enum.GetValues(typeof(ScheduleItemType)), command.Type);
         }
         return View(command);
+    }
+
+    public async Task<IActionResult> Complete(int id)
+    {
+        var currentUser = await _userManager.GetUserAsync(User);
+        if (currentUser == null)
+        {
+            return RedirectToAction("Login", "Account", new { area = "Public" });
+        }
+
+        var completionDataResult = await _mediator.Send(new GetSessionCompletionDataQuery(id));
+        if (!completionDataResult.IsSuccess || completionDataResult.Value == null)
+        {
+            TempData["ErrorMessage"] = completionDataResult.Error ?? "خطا در بارگذاری اطلاعات جلسه.";
+            return RedirectToAction("Index", "TeachingPlan");
+        }
+
+        // Debug: Log completion data
+        var completionData = completionDataResult.Value;
+        System.Diagnostics.Debug.WriteLine($"Completion Data - Groups Count: {completionData.Groups.Count}");
+        System.Diagnostics.Debug.WriteLine($"Completion Data - AvailableSubTopics Count: {completionData.AvailableSubTopics.Count}");
+        System.Diagnostics.Debug.WriteLine($"Completion Data - AvailableLessons Count: {completionData.AvailableLessons.Count}");
+        System.Diagnostics.Debug.WriteLine($"Completion Data - PlannedItems Count: {completionData.PlannedItems?.Count ?? 0}");
+
+        // Create simple JSON data for JavaScript using System.Text.Json
+        var jsonOptions = new JsonSerializerSettings
+        {
+        };
+
+        var groupsJson = JsonConvert.SerializeObject(completionData.Groups.Select(g => new { g.Id, g.Name, g.MemberCount }), jsonOptions);
+        var subtopicsJson = JsonConvert.SerializeObject(completionData.AvailableSubTopics.Select(s => new { s.Id, s.Title, s.ChapterTitle }), jsonOptions);
+        var lessonsJson = JsonConvert.SerializeObject(completionData.AvailableLessons.Select(l => new { l.Id, l.Title, l.ModuleTitle }), jsonOptions);
+        var plannedItemsJson = JsonConvert.SerializeObject((completionData.PlannedItems ?? new List<PlannedItemDto>()).Select(p => new { p.StudentGroupId, p.PlannedObjectives }), jsonOptions);
+
+        ViewBag.GroupsJson = groupsJson;
+        ViewBag.AvailableSubTopicsJson = subtopicsJson;
+        ViewBag.AvailableLessonsJson = lessonsJson;
+        ViewBag.PlannedItemsJson = plannedItemsJson;
+
+        // Debug: Log JSON strings
+        System.Diagnostics.Debug.WriteLine($"Groups JSON: {groupsJson}");
+        System.Diagnostics.Debug.WriteLine($"SubTopics JSON: {subtopicsJson}");
+        System.Diagnostics.Debug.WriteLine($"Lessons JSON: {lessonsJson}");
+        System.Diagnostics.Debug.WriteLine($"PlannedItems JSON: {plannedItemsJson}");
+
+        // Get course information for breadcrumb
+        var teachingPlanResult = await _mediator.Send(new GetTeachingPlanByIdQuery(completionDataResult.Value.TeachingPlanId));
+        if (teachingPlanResult.IsSuccess && teachingPlanResult.Value != null)
+        {
+            ViewBag.CourseId = teachingPlanResult.Value.CourseId;
+            ViewBag.CourseTitle = teachingPlanResult.Value.CourseTitle;
+        }
+
+        return View(completionDataResult.Value);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> SaveCompletion(SaveSessionCompletionCommand command)
+    {
+        if (!ModelState.IsValid)
+        {
+            TempData["ErrorMessage"] = "خطا در اعتبارسنجی داده‌ها.";
+            return RedirectToAction("Complete", new { id = command.TeachingSessionReportId });
+        }
+
+        var result = await _mediator.Send(command);
+        if (result.IsSuccess)
+        {
+            TempData["SuccessMessage"] = "گزارش جلسه با موفقیت تکمیل شد.";
+            return RedirectToAction("Details", new { id = command.TeachingSessionReportId });
+        }
+
+        TempData["ErrorMessage"] = result.Error ?? "خطا در ذخیره گزارش جلسه.";
+        return RedirectToAction("Complete", new { id = command.TeachingSessionReportId });
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> HasPlan(int sessionId)
+    {
+        var hasPlanResult = await _mediator.Send(new CheckIfSessionHasPlanQuery(sessionId));
+        return Json(hasPlanResult.IsSuccess ? hasPlanResult.Value : false);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetAvailableContent(int planId)
+    {
+        var subtopicsResult = await _mediator.Send(new GetSubTopicsByTeachingPlanQuery(planId));
+        var lessonsResult = await _mediator.Send(new GetLessonsByTeachingPlanQuery(planId));
+        
+        return Json(new {
+            subtopics = subtopicsResult.IsSuccess ? subtopicsResult.Value : new List<SubTopicDto>(),
+            lessons = lessonsResult.IsSuccess ? lessonsResult.Value : new List<LessonDto>()
+        });
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetPlannedItems(int sessionId)
+    {
+        var plannedItemsResult = await _mediator.Send(new GetPlannedItemsQuery(sessionId));
+        return Json(plannedItemsResult.IsSuccess ? plannedItemsResult.Value : new List<PlannedItemDto>());
     }
 }

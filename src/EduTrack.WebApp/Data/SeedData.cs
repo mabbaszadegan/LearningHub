@@ -399,16 +399,13 @@ public static class SeedData
         {
             TeachingPlanId = teachingPlan.Id,
             Title = "Past Simple Review Session",
-            SessionDate = DateTime.UtcNow.AddDays(-1),
+            SessionDate = DateTimeOffset.UtcNow.AddDays(-1),
             Mode = SessionMode.InPerson,
             Location = "Classroom A-101",
-            TopicsJson = """{"topics":["Past Simple review"],"subtopics":["EF 2A Holidays","Regular/Irregular verbs"]}""",
             Notes = "Good participation overall. Students struggled with irregular verbs but showed improvement by the end of the session.",
-            StatsJson = """{"duration":90,"participation":85,"exercises_completed":5}""",
-            AttachmentsJson = """{"files":["past_simple_worksheet.pdf","irregular_verbs_list.pdf"]}""",
-            CreatedByTeacherId = int.Parse(teacher.Id),
-            CreatedAt = DateTime.UtcNow.AddDays(-1),
-            UpdatedAt = DateTime.UtcNow.AddDays(-1)
+            CreatedByTeacherId = teacher.Id,
+            CreatedAt = DateTimeOffset.UtcNow.AddDays(-1),
+            UpdatedAt = DateTimeOffset.UtcNow.AddDays(-1)
         };
 
         context.TeachingSessionReports.Add(sessionReport);

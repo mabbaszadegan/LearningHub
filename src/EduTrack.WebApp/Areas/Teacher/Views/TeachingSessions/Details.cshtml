@@ -1,42 +1,67 @@
+@using EduTrack.WebApp.Areas.Teacher.Views.Shared.Components.PageNavigation
 @model EduTrack.Application.Common.Models.TeachingSessionReportDto
 @{
     ViewData["Title"] = "جزئیات جلسه آموزشی";
     var courseTitle = ViewBag.CourseTitle as string;
+    
+    // Prepare navigation actions
+    var navigationActions = new List<NavigationAction>
+    {
+        new NavigationAction
+        {
+            Text = "تکمیل گزارش",
+            Url = Url.Action("Complete", new { id = Model.Id }) ?? "#",
+            CssClass = "btn-action-success",
+            Icon = "fas fa-check-circle"
+        },
+        new NavigationAction
+        {
+            Text = "ویرایش",
+            Url = Url.Action("Edit", new { id = Model.Id }) ?? "#",
+            CssClass = "btn-action-secondary",
+            Icon = "fas fa-edit"
+        },
+        new NavigationAction
+        {
+            Text = "بازگشت",
+            Url = Url.Action("Index", new { planId = Model.TeachingPlanId }) ?? "#",
+            CssClass = "btn-action-primary",
+            Icon = "fas fa-arrow-right"
+        }
+    };
+    
+    // Prepare breadcrumb items
+    var breadcrumbItems = new List<BreadcrumbItem>
+    {
+        new BreadcrumbItem
+        {
+            Text = "دوره‌ها",
+            Url = Url.Action("Index", "Courses"),
+            Icon = "fas fa-chevron-right"
+        },
+        new BreadcrumbItem
+        {
+            Text = courseTitle ?? "دوره",
+            Url = Url.Action("Index", "TeachingPlan", new { courseId = ViewBag.CourseId })
+        },
+        new BreadcrumbItem
+        {
+            Text = "جلسات آموزشی",
+            Url = Url.Action("Index", new { planId = Model.TeachingPlanId })
+        },
+        new BreadcrumbItem
+        {
+            Text = Model.Title ?? "جلسه بدون عنوان",
+            IsActive = true
+        }
+    };
 }
 
-<!-- Page Header -->
-<div class="page-header-minimal mb-3">
-    <div class="d-flex justify-content-between align-items-center">
-        <div>
-            <h1 class="page-title">جزئیات جلسه آموزشی</h1>
-            <p class="page-subtitle mb-0">
-                <a asp-controller="Courses" asp-action="Index" class="breadcrumb-link">
-                    <i class="fas fa-chevron-right"></i> دوره‌ها
-                </a>
-                <span class="mx-2">/</span>
-                <a asp-controller="TeachingPlan" asp-action="Index" asp-route-courseId="@ViewBag.CourseId" class="breadcrumb-link">
-                    @courseTitle
-                </a>
-                <span class="mx-2">/</span>
-                <a asp-action="Index" asp-route-planId="@Model.TeachingPlanId" class="breadcrumb-link">
-                    جلسات آموزشی
-                </a>
-                <span class="mx-2">/</span>
-                <span>@(Model.Title ?? "جلسه بدون عنوان")</span>
-            </p>
-        </div>
-        <div class="header-actions">
-            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn-action-secondary">
-                <i class="fas fa-edit"></i>
-                <span>ویرایش</span>
-            </a>
-            <a asp-action="Index" asp-route-planId="@Model.TeachingPlanId" class="btn-action-primary">
-                <i class="fas fa-arrow-right"></i>
-                <span>بازگشت</span>
-            </a>
-        </div>
-    </div>
-</div>
+@await Component.InvokeAsync("PageNavigation", new { 
+    title = "جزئیات جلسه آموزشی", 
+    breadcrumbItems = breadcrumbItems, 
+    actions = navigationActions 
+})
 
 <!-- Session Overview Cards -->
 <div class="session-overview mb-4">
@@ -314,6 +339,27 @@
         .btn-action-primary:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            color: white;
+        }
+
+        .btn-action-success {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.625rem 1.125rem;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 0.813rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            border: none;
+        }
+
+        .btn-action-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
             color: white;
         }
 

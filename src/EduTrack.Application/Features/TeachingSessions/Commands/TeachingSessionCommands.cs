@@ -10,10 +10,7 @@ public record CreateTeachingSessionReportCommand(
     DateTimeOffset SessionDate,
     SessionMode Mode,
     string? Location,
-    string TopicsJson,
-    string? Notes,
-    string? StatsJson,
-    string? AttachmentsJson) : IRequest<Result<TeachingSessionReportDto>>;
+    string? Notes) : IRequest<Result<TeachingSessionReportDto>>;
 
 public record UpdateTeachingSessionReportCommand(
     int Id,
@@ -21,10 +18,7 @@ public record UpdateTeachingSessionReportCommand(
     DateTimeOffset SessionDate,
     SessionMode Mode,
     string? Location,
-    string TopicsJson,
-    string? Notes,
-    string? StatsJson,
-    string? AttachmentsJson) : IRequest<Result<TeachingSessionReportDto>>;
+    string? Notes) : IRequest<Result<TeachingSessionReportDto>>;
 
 public record RecordAttendanceCommand(
     int TeachingSessionReportId,

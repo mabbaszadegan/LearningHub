@@ -10,11 +10,8 @@ public class TeachingSessionReport
     public DateTimeOffset SessionDate { get; set; }
     public SessionMode Mode { get; set; }
     public string? Location { get; set; }
-    public string TopicsJson { get; set; } = string.Empty;
     public string? Notes { get; set; }
-    public string? StatsJson { get; set; }
-    public string? AttachmentsJson { get; set; }
-    public int CreatedByTeacherId { get; set; }
+    public string CreatedByTeacherId { get; set; } = string.Empty;
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
 

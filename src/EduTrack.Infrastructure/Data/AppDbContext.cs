@@ -710,10 +710,8 @@ public class AppDbContext : IdentityDbContext<User>
             entity.HasKey(x => x.Id);
             entity.Property(x => x.Title).HasMaxLength(200);
             entity.Property(x => x.Location).HasMaxLength(500);
-            entity.Property(x => x.TopicsJson).IsRequired();
             entity.Property(x => x.Notes).HasMaxLength(4000);
-            entity.Property(x => x.StatsJson).HasMaxLength(2000);
-            entity.Property(x => x.AttachmentsJson).HasMaxLength(2000);
+            entity.Property(x => x.CreatedByTeacherId).HasMaxLength(450);
             entity.HasOne(x => x.TeachingPlan)
                 .WithMany()
                 .HasForeignKey(x => x.TeachingPlanId)
