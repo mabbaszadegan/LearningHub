@@ -2327,7 +2327,6 @@ p {
     background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
     border-radius: var(--radius-md);
     width: 0;
-    animation: progressFill 3s ease-in-out infinite;
 }
 
 @keyframes progressFill {

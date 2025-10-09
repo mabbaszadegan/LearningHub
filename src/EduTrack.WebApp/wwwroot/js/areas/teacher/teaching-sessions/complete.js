@@ -26,6 +26,8 @@ class StepCompletionManager {
         this.currentStep = 1;
         this.completionProgress = null;
         this.stepData = {};
+        this.currentActiveTab = 0; // Index of currently active tab
+        this.tabData = {}; // Store data for each tab
     }
 
     async init() {
@@ -90,7 +92,7 @@ class StepCompletionManager {
 
         // Step indicator clicks
         $(document).on('click', '.step-indicator', (e) => {
-            const step = $(e.target).data('step');
+            const step = $(e.currentTarget).data('step');
             if (this.canNavigateToStep(step)) {
                 this.goToStep(step);
             }
@@ -180,51 +182,317 @@ class StepCompletionManager {
         }
     }
 
-    populateAttendanceStep() {
-        const container = $('#attendanceContainer');
-        container.empty();
+    async populateAttendanceStep() {
+        const navContainer = $('#attendanceTabsNav');
+        const contentContainer = $('#attendanceTabsContent');
+        
+        navContainer.empty();
+        contentContainer.empty();
 
         console.log('Groups data:', this.groups);
 
-        this.groups.forEach(group => {
-            console.log(`Group ${group.name}:`, group);
-            console.log(`Group members:`, group.members);
-            const groupHtml = `
-                <div class="group-attendance-section" data-group-id="${group.id}">
-                    <div class="group-attendance-header">
-                        <h4 class="group-attendance-title">${group.name}</h4>
-                        <p class="group-attendance-subtitle">${group.memberCount} دانش‌آموز</p>
+        if (this.groups.length === 0) {
+            contentContainer.html(`
+                <div class="attendance-loading">
+                    <div class="loading-spinner">
+                        <i class="fas fa-exclamation-circle"></i>
                     </div>
-                    <div class="students-attendance-list">
-                        ${group.members.map(member => `
-                            <div class="student-attendance-item">
-                                <div class="student-info">
-                                    <span class="student-name">${member.studentName}</span>
+                    <p class="loading-text">هیچ گروهی یافت نشد</p>
+                </div>
+            `);
+            return;
+        }
+
+        // Create tab navigation
+        this.groups.forEach((group, index) => {
+            const tabNavHtml = `
+                <div class="attendance-tab-nav-item ${index === 0 ? 'active' : ''}" 
+                     data-tab-index="${index}" data-group-id="${group.id}">
+                    <div class="attendance-tab-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="attendance-tab-info">
+                        <div class="attendance-tab-title">${group.name}</div>
+                        <div class="attendance-tab-subtitle">${group.memberCount} دانش‌آموز</div>
+                    </div>
+                    <div class="attendance-tab-status">در انتظار</div>
+                </div>
+            `;
+            navContainer.append(tabNavHtml);
+        });
+
+        // Create tab content panels
+        this.groups.forEach((group, index) => {
+            const tabContentHtml = `
+                <div class="attendance-tab-panel ${index === 0 ? 'active' : ''}" 
+                     data-tab-index="${index}" data-group-id="${group.id}">
+                    <div class="group-attendance-section" data-group-id="${group.id}">
+                        <div class="group-attendance-header">
+                            <h4 class="group-attendance-title">
+                                <i class="fas fa-users"></i>
+                                ${group.name}
+                            </h4>
+                            <p class="group-attendance-subtitle">${group.memberCount} دانش‌آموز</p>
+                            <div class="group-progress">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 0%"></div>
                                 </div>
-                                <div class="attendance-controls">
-                                    <select class="attendance-status" data-student-id="${member.studentId}">
-                                        <option value="0">غایب</option>
-                                        <option value="1" selected>حاضر</option>
-                                        <option value="2">تأخیر</option>
-                                        <option value="3">مرخصی</option>
-                                    </select>
-                                    <input type="number" class="participation-score" data-student-id="${member.studentId}" 
-                                           min="0" max="100" value="100" placeholder="امتیاز مشارکت">
-                                    <textarea class="attendance-comment" data-student-id="${member.studentId}" 
-                                              placeholder="یادداشت (اختیاری)"></textarea>
-                                </div>
+                                <span class="progress-text">0/${group.memberCount} تکمیل شده</span>
                             </div>
-                        `).join('')}
+                        </div>
+                        <div class="students-attendance-list">
+                            ${group.members.map(member => `
+                                <div class="student-attendance-item" data-student-id="${member.studentId}">
+                                    <div class="student-info">
+                                        <div class="student-avatar">
+                                            <i class="fas fa-user"></i>
+                                        </div>
+                                        <div class="student-details">
+                                            <span class="student-name">${member.studentName}</span>
+                                            <span class="student-email">${member.studentEmail || ''}</span>
+                                        </div>
+                                    </div>
+                                    <div class="attendance-controls">
+                                        <div class="control-group">
+                                            <label class="control-label">وضعیت حضور</label>
+                                            <select class="attendance-status" data-student-id="${member.studentId}">
+                                                <option value="0">غایب</option>
+                                                <option value="1" selected>حاضر</option>
+                                                <option value="2">تأخیر</option>
+                                                <option value="3">مرخصی</option>
+                                            </select>
+                                        </div>
+                                        <div class="control-group">
+                                            <label class="control-label">میزان مشارکت</label>
+                                            <div class="participation-slider-container">
+                                                <input type="range" class="participation-score" data-student-id="${member.studentId}" 
+                                                       min="0" max="100" value="100" step="5">
+                                                <span class="participation-display">100%</span>
+                                            </div>
+                                        </div>
+                                        <div class="control-group">
+                                            <label class="control-label">یادداشت</label>
+                                            <input type="text" class="attendance-comment" data-student-id="${member.studentId}" 
+                                                   placeholder="یادداشت (اختیاری)" maxlength="200">
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div class="group-actions">
+                            <button class="btn btn-primary btn-save-tab" data-group-id="${group.id}" data-tab-index="${index}">
+                                <i class="fas fa-save"></i>
+                                ذخیره حضور و غیاب ${group.name}
+                            </button>
+                        </div>
                     </div>
                 </div>
             `;
-            container.append(groupHtml);
+            contentContainer.append(tabContentHtml);
         });
+
+        // Setup event listeners
+        this.setupTabEventListeners();
+        this.setupAttendanceEventListeners();
 
         // Load existing data if available
         if (this.stepData[1]) {
             this.loadAttendanceData(this.stepData[1].completionData);
         }
+
+        // Initialize first tab
+        this.currentActiveTab = 0;
+        this.updateTabProgress(0);
+    }
+
+
+    setupTabEventListeners() {
+        // Tab navigation clicks
+        $(document).on('click', '.attendance-tab-nav-item', (e) => {
+            const tabIndex = parseInt($(e.currentTarget).data('tab-index'));
+            this.switchTab(tabIndex);
+        });
+
+        // Individual tab save button
+        $(document).on('click', '.btn-save-tab', (e) => {
+            e.preventDefault();
+            const tabIndex = parseInt($(e.target).data('tab-index'));
+            const groupId = $(e.target).data('group-id');
+            this.saveTabData(tabIndex, groupId);
+        });
+    }
+
+    setupAttendanceEventListeners() {
+        // Participation score slider updates
+        $(document).on('input', '.participation-score', (e) => {
+            const value = $(e.target).val();
+            $(e.target).siblings('.participation-display').text(`${value}%`);
+            const tabIndex = parseInt($(e.target).closest('.attendance-tab-panel').data('tab-index'));
+            this.updateTabProgress(tabIndex);
+        });
+
+        // Attendance status changes
+        $(document).on('change', '.attendance-status', (e) => {
+            const tabIndex = parseInt($(e.target).closest('.attendance-tab-panel').data('tab-index'));
+            this.updateTabProgress(tabIndex);
+        });
+
+        // Comment changes
+        $(document).on('input', '.attendance-comment', (e) => {
+            const tabIndex = parseInt($(e.target).closest('.attendance-tab-panel').data('tab-index'));
+            this.updateTabProgress(tabIndex);
+        });
+    }
+
+    switchTab(tabIndex) {
+        if (tabIndex === this.currentActiveTab) return;
+
+        // Update navigation
+        $('.attendance-tab-nav-item').removeClass('active');
+        $(`.attendance-tab-nav-item[data-tab-index="${tabIndex}"]`).addClass('active');
+
+        // Update content
+        $('.attendance-tab-panel').removeClass('active');
+        $(`.attendance-tab-panel[data-tab-index="${tabIndex}"]`).addClass('active');
+
+        this.currentActiveTab = tabIndex;
+    }
+
+    updateTabProgress(tabIndex) {
+        const tabPanel = $(`.attendance-tab-panel[data-tab-index="${tabIndex}"]`);
+        const groupSection = tabPanel.find('.group-attendance-section');
+        const students = groupSection.find('.student-attendance-item');
+        let completedCount = 0;
+
+        students.each((index, studentElement) => {
+            const $student = $(studentElement);
+            const status = $student.find('.attendance-status').val();
+            const participation = $student.find('.participation-score').val();
+            const comment = $student.find('.attendance-comment').val().trim();
+
+            // Consider completed if status is not absent (0) or has any data
+            if (status !== '0' || participation !== '0' || comment !== '') {
+                completedCount++;
+            }
+        });
+
+        const totalStudents = students.length;
+        const progressPercentage = totalStudents > 0 ? (completedCount / totalStudents) * 100 : 0;
+        
+        // Update progress bar instantly without animation
+        groupSection.find('.progress-fill').css('width', `${progressPercentage}%`);
+        groupSection.find('.progress-text').text(`${completedCount}/${totalStudents} تکمیل شده`);
+
+        // Update tab navigation status
+        const tabNavItem = $(`.attendance-tab-nav-item[data-tab-index="${tabIndex}"]`);
+        const statusElement = tabNavItem.find('.attendance-tab-status');
+        
+        if (completedCount === totalStudents) {
+            statusElement.text('تکمیل شده').removeClass('pending').addClass('completed');
+            tabNavItem.addClass('completed');
+            groupSection.addClass('completed');
+        } else if (completedCount > 0) {
+            statusElement.text('در حال تکمیل').removeClass('pending completed');
+            tabNavItem.removeClass('completed');
+            groupSection.removeClass('completed');
+        } else {
+            statusElement.text('در انتظار').removeClass('completed').addClass('pending');
+            tabNavItem.removeClass('completed');
+            groupSection.removeClass('completed');
+        }
+    }
+
+    updateGroupProgress(groupSection) {
+        const groupId = groupSection.data('group-id');
+        const students = groupSection.find('.student-attendance-item');
+        let completedCount = 0;
+
+        students.each((index, studentElement) => {
+            const $student = $(studentElement);
+            const status = $student.find('.attendance-status').val();
+            const participation = $student.find('.participation-score').val();
+            const comment = $student.find('.attendance-comment').val().trim();
+
+            // Consider completed if status is not absent (0) or has any data
+            if (status !== '0' || participation !== '0' || comment !== '') {
+                completedCount++;
+            }
+        });
+
+        const totalStudents = students.length;
+        const progressPercentage = totalStudents > 0 ? (completedCount / totalStudents) * 100 : 0;
+        
+        // Update progress bar instantly without animation
+        groupSection.find('.progress-fill').css('width', `${progressPercentage}%`);
+        
+        groupSection.find('.progress-text').text(`${completedCount}/${totalStudents} تکمیل شده`);
+
+        // Update visual state
+        if (completedCount === totalStudents) {
+            groupSection.addClass('completed');
+            groupSection.find('.btn-complete-group').addClass('btn-success').removeClass('btn-primary');
+            groupSection.find('.btn-complete-group').html('<i class="fas fa-check"></i> تکمیل شده');
+        } else {
+            groupSection.removeClass('completed');
+            groupSection.find('.btn-complete-group').removeClass('btn-success').addClass('btn-primary');
+            groupSection.find('.btn-complete-group').html(`<i class="fas fa-check"></i> تکمیل حضور و غیاب ${groupSection.find('.group-attendance-title').text().replace('👥 ', '')}`);
+        }
+    }
+
+    completeGroupAttendance(groupId) {
+        const groupSection = $(`.group-attendance-section[data-group-id="${groupId}"]`);
+        const groupName = groupSection.find('.group-attendance-title').text().replace('👥 ', '');
+        
+        // Show completion animation
+        groupSection.addClass('completing');
+        
+        // Simulate completion process
+        setTimeout(() => {
+            groupSection.removeClass('completing').addClass('completed');
+            groupSection.find('.btn-complete-group').addClass('btn-success').removeClass('btn-primary');
+            groupSection.find('.btn-complete-group').html('<i class="fas fa-check"></i> تکمیل شده');
+            
+            // Show success message
+            this.showNotification(`حضور و غیاب گروه ${groupName} با موفقیت تکمیل شد`, 'success');
+            
+            // Check if all groups are completed
+            this.checkAllGroupsCompleted();
+        }, 1000);
+    }
+
+    checkAllGroupsCompleted() {
+        const allGroups = $('.group-attendance-section');
+        const completedGroups = $('.group-attendance-section.completed');
+        
+        if (allGroups.length === completedGroups.length) {
+            // All groups completed
+            this.showNotification('همه گروه‌ها تکمیل شدند! می‌توانید به مرحله بعد بروید.', 'success');
+            
+            // Enable next step button
+            $('.btn-next-step').prop('disabled', false).removeClass('disabled');
+        }
+    }
+
+    showNotification(message, type = 'info') {
+        const notification = $(`
+            <div class="notification notification-${type}">
+                <i class="fas fa-${type === 'success' ? 'check-circle' : 'info-circle'}"></i>
+                <span>${message}</span>
+            </div>
+        `);
+        
+        $('body').append(notification);
+        
+        // Animate in
+        notification.css({ opacity: 0, transform: 'translateY(-20px)' });
+        notification.animate({ opacity: 1 }, 300).css('transform', 'translateY(0)');
+        
+        // Auto remove after 3 seconds
+        setTimeout(() => {
+            notification.animate({ opacity: 0 }, 300, () => {
+                notification.remove();
+            });
+        }, 3000);
     }
 
     populateFeedbackStep() {
@@ -352,6 +620,54 @@ class StepCompletionManager {
         }
     }
 
+    async saveTabData(tabIndex, groupId) {
+        try {
+            const group = this.groups[tabIndex];
+            if (!group) {
+                this.showErrorMessage('گروه یافت نشد');
+                return;
+            }
+
+            const tabData = this.collectTabAttendanceData(tabIndex, groupId);
+            
+            const response = await fetch(`/Teacher/TeachingSessions/SaveTabCompletion`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    sessionId: this.sessionId,
+                    groupId: groupId,
+                    tabIndex: tabIndex,
+                    completionData: JSON.stringify(tabData),
+                    isCompleted: true
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                this.showNotification(`حضور و غیاب گروه ${group.name} با موفقیت ذخیره شد`, 'success');
+                
+                // Update tab status
+                const tabNavItem = $(`.attendance-tab-nav-item[data-tab-index="${tabIndex}"]`);
+                tabNavItem.addClass('completed');
+                tabNavItem.find('.attendance-tab-status').text('ذخیره شده').addClass('completed');
+                
+                // Store tab data
+                this.tabData[tabIndex] = tabData;
+                
+                // Check if all tabs are completed
+                this.checkAllTabsCompleted();
+            } else {
+                this.showErrorMessage(result.message);
+            }
+        } catch (error) {
+            console.error('Error saving tab data:', error);
+            this.showErrorMessage('خطا در ذخیره داده‌های تب');
+        }
+    }
+
     async saveStep(stepNumber) {
         try {
             let stepData;
@@ -397,37 +713,65 @@ class StepCompletionManager {
         }
     }
 
+    collectTabAttendanceData(tabIndex, groupId) {
+        const group = this.groups[tabIndex];
+        if (!group) return null;
+
+        const groupAttendance = {
+            groupId: group.id,
+            groupName: group.name,
+            students: []
+        };
+
+        group.members.forEach(member => {
+            const status = $(`.attendance-status[data-student-id="${member.studentId}"]`).val();
+            const participationScore = $(`.participation-score[data-student-id="${member.studentId}"]`).val();
+            const comment = $(`.attendance-comment[data-student-id="${member.studentId}"]`).val();
+
+            groupAttendance.students.push({
+                studentId: member.studentId,
+                studentName: member.studentName,
+                status: parseInt(status),
+                participationScore: participationScore ? parseFloat(participationScore) : null,
+                comment: comment || null
+            });
+        });
+
+        return groupAttendance;
+    }
+
     collectAttendanceData() {
         const attendanceData = {
             sessionId: this.sessionId,
             groupAttendances: []
         };
 
-        this.groups.forEach(group => {
-            const groupAttendance = {
-                groupId: group.id,
-                groupName: group.name,
-                students: []
-            };
-
-            group.members.forEach(member => {
-                const status = $(`.attendance-status[data-student-id="${member.studentId}"]`).val();
-                const participationScore = $(`.participation-score[data-student-id="${member.studentId}"]`).val();
-                const comment = $(`.attendance-comment[data-student-id="${member.studentId}"]`).val();
-
-                groupAttendance.students.push({
-                    studentId: member.studentId,
-                    studentName: member.studentName,
-                    status: parseInt(status),
-                    participationScore: participationScore ? parseFloat(participationScore) : null,
-                    comment: comment || null
-                });
-            });
-
-            attendanceData.groupAttendances.push(groupAttendance);
+        this.groups.forEach((group, index) => {
+            // Use saved tab data if available, otherwise collect current data
+            if (this.tabData[index]) {
+                attendanceData.groupAttendances.push(this.tabData[index]);
+            } else {
+                const groupAttendance = this.collectTabAttendanceData(index, group.id);
+                if (groupAttendance) {
+                    attendanceData.groupAttendances.push(groupAttendance);
+                }
+            }
         });
 
         return attendanceData;
+    }
+
+    checkAllTabsCompleted() {
+        const allTabs = $('.attendance-tab-nav-item');
+        const completedTabs = $('.attendance-tab-nav-item.completed');
+        
+        if (allTabs.length === completedTabs.length) {
+            // All tabs completed
+            this.showNotification('همه گروه‌ها تکمیل شدند! می‌توانید به مرحله بعد بروید.', 'success');
+            
+            // Enable next step button
+            $('.btn-next-step').prop('disabled', false).removeClass('disabled');
+        }
     }
 
     collectFeedbackData() {

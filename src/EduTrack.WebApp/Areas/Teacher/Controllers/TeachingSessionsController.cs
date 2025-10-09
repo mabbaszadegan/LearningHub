@@ -218,6 +218,7 @@ public class TeachingSessionsController : Controller
     }
 
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> SaveAttendance(int reportId, List<TeachingSessionAttendanceDto> attendance)
     {
         var command = new RecordAttendanceCommand(reportId, attendance);
@@ -488,5 +489,38 @@ public class TeachingSessionsController : Controller
         }
 
         return Json(new { success = false, message = result.Error ?? "خطا در ذخیره مرحله." });
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> SaveTabCompletion([FromBody] TabCompletionDataDto tabData)
+    {
+        try
+        {
+            // Parse the completion data
+            var attendanceData = JsonConvert.DeserializeObject<AttendanceStepDataDto>(tabData.CompletionData);
+            if (attendanceData == null)
+            {
+                return Json(new { success = false, message = "داده‌های نامعتبر." });
+            }
+
+            // Set the session ID
+            attendanceData.SessionId = tabData.SessionId;
+
+            // Use the existing SaveAttendanceStepCommand
+            var command = new SaveAttendanceStepCommand(tabData.SessionId, attendanceData);
+            var result = await _mediator.Send(command);
+            
+            if (result.IsSuccess)
+            {
+                return Json(new { success = true, message = "حضور و غیاب گروه با موفقیت ذخیره شد." });
+            }
+
+            return Json(new { success = false, message = result.Error ?? "خطا در ذخیره حضور و غیاب گروه." });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error saving tab completion data");
+            return Json(new { success = false, message = "خطا در پردازش داده‌ها." });
+        }
     }
 }
