@@ -49,6 +49,12 @@ public class TeachingSessionExecutionRepository : ITeachingSessionExecutionRepos
         await Task.CompletedTask;
     }
 
+    public async Task DeleteAsync(TeachingSessionExecution execution, CancellationToken cancellationToken = default)
+    {
+        _context.TeachingSessionExecutions.Remove(execution);
+        await Task.CompletedTask;
+    }
+
     public async Task DeleteAsync(int id, CancellationToken cancellationToken = default)
     {
         var execution = await GetByIdAsync(id, cancellationToken);

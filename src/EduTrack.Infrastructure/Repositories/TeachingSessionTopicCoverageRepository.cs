@@ -58,6 +58,12 @@ public class TeachingSessionTopicCoverageRepository : ITeachingSessionTopicCover
         await Task.CompletedTask;
     }
 
+    public async Task DeleteAsync(TeachingSessionTopicCoverage coverage, CancellationToken cancellationToken = default)
+    {
+        _context.TeachingSessionTopicCoverages.Remove(coverage);
+        await Task.CompletedTask;
+    }
+
     public async Task DeleteAsync(int id, CancellationToken cancellationToken = default)
     {
         var coverage = await GetByIdAsync(id, cancellationToken);

@@ -10,5 +10,6 @@ public interface ITeachingSessionTopicCoverageRepository
     Task<IEnumerable<TeachingSessionTopicCoverage>> GetByTopicAsync(string topicType, int? topicId, CancellationToken cancellationToken = default);
     Task AddAsync(TeachingSessionTopicCoverage coverage, CancellationToken cancellationToken = default);
     Task UpdateAsync(TeachingSessionTopicCoverage coverage, CancellationToken cancellationToken = default);
+    Task DeleteAsync(TeachingSessionTopicCoverage coverage, CancellationToken cancellationToken = default);
     Task DeleteAsync(int id, CancellationToken cancellationToken = default);
 }

@@ -4,6 +4,7 @@ using EduTrack.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EduTrack.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251009121134_AddStepCompletionFields")]
+    partial class AddStepCompletionFields
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -70,7 +73,7 @@ namespace EduTrack.Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("ActivityLogs", (string)null);
+                    b.ToTable("ActivityLogs");
                 });
 
             modelBuilder.Entity("EduTrack.Domain.Entities.Answer", b =>
@@ -108,7 +111,7 @@ namespace EduTrack.Infrastructure.Migrations
 
                     b.HasIndex("SelectedChoiceId");
 
-                    b.ToTable("Answers", (string)null);
+                    b.ToTable("Answers");
                 });
 
             modelBuilder.Entity("EduTrack.Domain.Entities.Attempt", b =>
@@ -159,7 +162,7 @@ namespace EduTrack.Infrastructure.Migrations
 
                     b.HasIndex("SubmittedAt");
 
-                    b.ToTable("Attempts", (string)null);
+                    b.ToTable("Attempts");
                 });
 
             modelBuilder.Entity("EduTrack.Domain.Entities.Chapter", b =>
@@ -205,7 +208,7 @@ namespace EduTrack.Infrastructure.Migrations
 
                     b.HasIndex("CourseId", "Order");
 
-                    b.ToTable("Chapters", (string)null);
+                    b.ToTable("Chapters");
                 });
 
             modelBuilder.Entity("EduTrack.Domain.Entities.Choice", b =>
@@ -234,7 +237,7 @@ namespace EduTrack.Infrastructure.Migrations
 
                     b.HasIndex("QuestionId", "Order");
 
-                    b.ToTable("Choices", (string)null);
+                    b.ToTable("Choices");
                 });
 
             modelBuilder.Entity("EduTrack.Domain.Entities.Class", b =>
@@ -285,7 +288,7 @@ namespace EduTrack.Infrastructure.Migrations
 
                     b.HasIndex("TeacherId");
 
-                    b.ToTable("Classes", (string)null);
+                    b.ToTable("Classes");
                 });
 
             modelBuilder.Entity("EduTrack.Domain.Entities.Course", b =>
@@ -337,7 +340,7 @@ namespace EduTrack.Infrastructure.Migrations
 
                     b.HasIndex("Order");
 
-                    b.ToTable("Courses", (string)null);
+                    b.ToTable("Courses");
                 });
 
             modelBuilder.Entity("EduTrack.Domain.Entities.CourseAccess", b =>
@@ -389,7 +392,7 @@ namespace EduTrack.Infrastructure.Migrations
                     b.HasIndex("CourseId", "StudentId")
                         .IsUnique();
 
-                    b.ToTable("CourseAccesses", (string)null);
+                    b.ToTable("CourseAccesses");
                 });
 
             modelBuilder.Entity("EduTrack.Domain.Entities.CourseEnrollment", b =>
@@ -439,7 +442,7 @@ namespace EduTrack.Infrastructure.Migrations
                     b.HasIndex("CourseId", "StudentId")
                         .IsUnique();
 
-                    b.ToTable("CourseEnrollments", (string)null);
+                    b.ToTable("CourseEnrollments");
                 });
 
             modelBuilder.Entity("EduTrack.Domain.Entities.EducationalContent", b =>
@@ -502,7 +505,7 @@ namespace EduTrack.Infrastructure.Migrations
 
                     b.HasIndex("SubChapterId", "Order");
 
-                    b.ToTable("EducationalContents", (string)null);
+                    b.ToTable("EducationalContents");
                 });
 
             modelBuilder.Entity("EduTrack.Domain.Entities.Enrollment", b =>
@@ -539,7 +542,7 @@ namespace EduTrack.Infrastructure.Migrations
                     b.HasIndex("ClassId", "StudentId")
                         .IsUnique();
 
-                    b.ToTable("Enrollments", (string)null);
+                    b.ToTable("Enrollments");
                 });
 
             modelBuilder.Entity("EduTrack.Domain.Entities.Exam", b =>
@@ -586,7 +589,7 @@ namespace EduTrack.Infrastructure.Migrations
 
                     b.HasIndex("IsActive");
 
-                    b.ToTable("Exams", (string)null);
+                    b.ToTable("Exams");
                 });
 
             modelBuilder.Entity("EduTrack.Domain.Entities.ExamQuestion", b =>
@@ -615,7 +618,7 @@ namespace EduTrack.Infrastructure.Migrations
                     b.HasIndex("ExamId", "QuestionId")
                         .IsUnique();
 
-                    b.ToTable("ExamQuestions", (string)null);
+                    b.ToTable("ExamQuestions");
                 });
 
             modelBuilder.Entity("EduTrack.Domain.Entities.File", b =>
@@ -674,7 +677,7 @@ namespace EduTrack.Infrastructure.Migrations
                     b.HasIndex("MD5Hash")
                         .IsUnique();
 
-                    b.ToTable("Files", (string)null);
+                    b.ToTable("Files");
                 });
 
             modelBuilder.Entity("EduTrack.Domain.Entities.GroupMember", b =>
@@ -702,7 +705,7 @@ namespace EduTrack.Infrastructure.Migrations
                     b.HasIndex("StudentGroupId", "StudentId")
                         .IsUnique();
 
-                    b.ToTable("GroupMembers", (string)null);
+                    b.ToTable("GroupMembers");
                 });
 
             modelBuilder.Entity("EduTrack.Domain.Entities.InteractiveContentItem", b =>
@@ -741,7 +744,7 @@ namespace EduTrack.Infrastructure.Migrations
 
                     b.HasIndex("InteractiveLessonId", "Order");
 
-                    b.ToTable("InteractiveContentItems", (string)null);
+                    b.ToTable("InteractiveContentItems");
                 });
 
             modelBuilder.Entity("EduTrack.Domain.Entities.InteractiveLesson", b =>
@@ -787,7 +790,7 @@ namespace EduTrack.Infrastructure.Migrations
 
                     b.HasIndex("CourseId", "Order");
 
-                    b.ToTable("InteractiveLessons", (string)null);
+                    b.ToTable("InteractiveLessons");
                 });
 
             modelBuilder.Entity("EduTrack.Domain.Entities.InteractiveLessonAssignment", b =>
@@ -829,7 +832,7 @@ namespace EduTrack.Infrastructure.Migrations
                     b.HasIndex("InteractiveLessonId", "ClassId")
                         .IsUnique();
 
-                    b.ToTable("InteractiveLessonAssignments", (string)null);
+                    b.ToTable("InteractiveLessonAssignments");
                 });
 
             modelBuilder.Entity("EduTrack.Domain.Entities.InteractiveLessonStage", b =>
@@ -883,7 +886,7 @@ namespace EduTrack.Infrastructure.Migrations
 
                     b.HasIndex("InteractiveLessonId", "Order");
 
-                    b.ToTable("InteractiveLessonStages", (string)null);
+                    b.ToTable("InteractiveLessonStages");
                 });
 
             modelBuilder.Entity("EduTrack.Domain.Entities.InteractiveLessonSubChapter", b =>
@@ -923,7 +926,7 @@ namespace EduTrack.Infrastructure.Migrations
                     b.HasIndex("InteractiveLessonId", "SubChapterId")
                         .IsUnique();
 
-                    b.ToTable("InteractiveLessonSubChapters", (string)null);
+                    b.ToTable("InteractiveLessonSubChapters");
                 });
 
             modelBuilder.Entity("EduTrack.Domain.Entities.InteractiveQuestion", b =>
@@ -973,7 +976,7 @@ namespace EduTrack.Infrastructure.Migrations
 
                     b.HasIndex("Type");
 
-                    b.ToTable("InteractiveQuestions", (string)null);
+                    b.ToTable("InteractiveQuestions");
                 });
 
             modelBuilder.Entity("EduTrack.Domain.Entities.Lesson", b =>
@@ -1020,7 +1023,7 @@ namespace EduTrack.Infrastructure.Migrations
 
                     b.HasIndex("ModuleId", "Order");
 
-                    b.ToTable("Lessons", (string)null);
+                    b.ToTable("Lessons");
                 });
 
             modelBuilder.Entity("EduTrack.Domain.Entities.Module", b =>
@@ -1061,7 +1064,7 @@ namespace EduTrack.Infrastructure.Migrations
 
                     b.HasIndex("CourseId", "Order");
 
-                    b.ToTable("Modules", (string)null);
+                    b.ToTable("Modules");
                 });
 
             modelBuilder.Entity("EduTrack.Domain.Entities.Profile", b =>
@@ -1103,7 +1106,7 @@ namespace EduTrack.Infrastructure.Migrations
                     b.HasIndex("UserId")
                         .IsUnique();
 
-                    b.ToTable("Profiles", (string)null);
+                    b.ToTable("Profiles");
                 });
 
             modelBuilder.Entity("EduTrack.Domain.Entities.Progress", b =>
@@ -1153,7 +1156,7 @@ namespace EduTrack.Infrastructure.Migrations
 
                     b.HasIndex("StudentId");
 
-                    b.ToTable("Progresses", (string)null);
+                    b.ToTable("Progresses");
                 });
 
             modelBuilder.Entity("EduTrack.Domain.Entities.Question", b =>
@@ -1199,7 +1202,7 @@ namespace EduTrack.Infrastructure.Migrations
 
                     b.HasIndex("Type");
 
-                    b.ToTable("Questions", (string)null);
+                    b.ToTable("Questions");
                 });
 
             modelBuilder.Entity("EduTrack.Domain.Entities.QuestionChoice", b =>
@@ -1231,7 +1234,7 @@ namespace EduTrack.Infrastructure.Migrations
 
                     b.HasIndex("InteractiveQuestionId", "Order");
 
-                    b.ToTable("QuestionChoices", (string)null);
+                    b.ToTable("QuestionChoices");
                 });
 
             modelBuilder.Entity("EduTrack.Domain.Entities.Resource", b =>
@@ -1288,7 +1291,7 @@ namespace EduTrack.Infrastructure.Migrations
 
                     b.HasIndex("LessonId", "Order");
 
-                    b.ToTable("Resources", (string)null);
+                    b.ToTable("Resources");
                 });
 
             modelBuilder.Entity("EduTrack.Domain.Entities.ScheduleItem", b =>
@@ -1367,7 +1370,7 @@ namespace EduTrack.Infrastructure.Migrations
 
                     b.HasIndex("TeachingPlanId", "StartDate");
 
-                    b.ToTable("ScheduleItems", (string)null);
+                    b.ToTable("ScheduleItems");
                 });
 
             modelBuilder.Entity("EduTrack.Domain.Entities.ScheduleItemAssignment", b =>
@@ -1436,7 +1439,7 @@ namespace EduTrack.Infrastructure.Migrations
 
                     b.HasIndex("InteractiveLessonStageId", "Order");
 
-                    b.ToTable("StageContentItems", (string)null);
+                    b.ToTable("StageContentItems");
                 });
 
             modelBuilder.Entity("EduTrack.Domain.Entities.StudentAnswer", b =>
@@ -1491,7 +1494,7 @@ namespace EduTrack.Infrastructure.Migrations
 
                     b.HasIndex("StudentId");
 
-                    b.ToTable("StudentAnswers", (string)null);
+                    b.ToTable("StudentAnswers");
                 });
 
             modelBuilder.Entity("EduTrack.Domain.Entities.StudentGroup", b =>
@@ -1514,7 +1517,7 @@ namespace EduTrack.Infrastructure.Migrations
 
                     b.HasIndex("TeachingPlanId");
 
-                    b.ToTable("StudentGroups", (string)null);
+                    b.ToTable("StudentGroups");
                 });
 
             modelBuilder.Entity("EduTrack.Domain.Entities.SubChapter", b =>
@@ -1560,7 +1563,7 @@ namespace EduTrack.Infrastructure.Migrations
 
                     b.HasIndex("ChapterId", "Order");
 
-                    b.ToTable("SubChapters", (string)null);
+                    b.ToTable("SubChapters");
                 });
 
             modelBuilder.Entity("EduTrack.Domain.Entities.Submission", b =>
@@ -1625,7 +1628,7 @@ namespace EduTrack.Infrastructure.Migrations
                     b.HasIndex("ScheduleItemId", "StudentId")
                         .IsUnique();
 
-                    b.ToTable("Submissions", (string)null);
+                    b.ToTable("Submissions");
                 });
 
             modelBuilder.Entity("EduTrack.Domain.Entities.TeachingPlan", b =>
@@ -1671,7 +1674,7 @@ namespace EduTrack.Infrastructure.Migrations
 
                     b.HasIndex("TeacherId");
 
-                    b.ToTable("TeachingPlans", (string)null);
+                    b.ToTable("TeachingPlans");
                 });
 
             modelBuilder.Entity("EduTrack.Domain.Entities.TeachingPlanProgress", b =>

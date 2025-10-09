@@ -528,6 +528,101 @@ public class SessionCompletionDataDto
     public List<SubTopicDto> AvailableSubTopics { get; set; } = new();
     public List<LessonDto> AvailableLessons { get; set; } = new();
     public List<PlannedItemDto>? PlannedItems { get; set; }
+    public SessionCompletionProgressDto? CompletionProgress { get; set; }
+}
+
+public class SessionCompletionProgressDto
+{
+    public int SessionId { get; set; }
+    public int CurrentStep { get; set; }
+    public bool IsCompleted { get; set; }
+    public List<StepCompletionDto> Steps { get; set; } = new();
+}
+
+public class StepCompletionDto
+{
+    public int StepNumber { get; set; }
+    public string StepName { get; set; } = string.Empty;
+    public string StepTitle { get; set; } = string.Empty;
+    public string StepDescription { get; set; } = string.Empty;
+    public bool IsCompleted { get; set; }
+    public bool IsCurrent { get; set; }
+    public DateTimeOffset? CompletedAt { get; set; }
+    public string? CompletionData { get; set; } // JSON data for this step
+}
+
+public class StepCompletionDataDto
+{
+    public int SessionId { get; set; }
+    public int StepNumber { get; set; }
+    public string StepName { get; set; } = string.Empty;
+    public string CompletionData { get; set; } = string.Empty; // JSON data
+    public bool IsCompleted { get; set; }
+}
+
+// Step-specific data models
+public class AttendanceStepDataDto
+{
+    public int SessionId { get; set; }
+    public List<GroupAttendanceDto> GroupAttendances { get; set; } = new();
+}
+
+public class GroupAttendanceDto
+{
+    public int GroupId { get; set; }
+    public string GroupName { get; set; } = string.Empty;
+    public List<StudentAttendanceDto> Students { get; set; } = new();
+}
+
+public class StudentAttendanceDto
+{
+    public int StudentId { get; set; }
+    public string StudentName { get; set; } = string.Empty;
+    public AttendanceStatus Status { get; set; }
+    public decimal? ParticipationScore { get; set; }
+    public string? Comment { get; set; }
+}
+
+public class FeedbackStepDataDto
+{
+    public int SessionId { get; set; }
+    public List<GroupFeedbackDto> GroupFeedbacks { get; set; } = new();
+}
+
+public class GroupFeedbackDto
+{
+    public int GroupId { get; set; }
+    public string GroupName { get; set; } = string.Empty;
+    public int UnderstandingLevel { get; set; }
+    public int ParticipationLevel { get; set; }
+    public string? GroupFeedback { get; set; }
+    public string? Challenges { get; set; }
+    public string? NextSessionRecommendations { get; set; }
+}
+
+public class TopicCoverageStepDataDto
+{
+    public int SessionId { get; set; }
+    public List<GroupTopicCoverageDto> GroupTopicCoverages { get; set; } = new();
+}
+
+public class GroupTopicCoverageDto
+{
+    public int GroupId { get; set; }
+    public string GroupName { get; set; } = string.Empty;
+    public List<TopicCoverageItemDto> SubTopicCoverages { get; set; } = new();
+    public List<TopicCoverageItemDto> LessonCoverages { get; set; } = new();
+}
+
+public class TopicCoverageItemDto
+{
+    public int TopicId { get; set; }
+    public string TopicTitle { get; set; } = string.Empty;
+    public bool WasPlanned { get; set; }
+    public bool WasCovered { get; set; }
+    public int CoveragePercentage { get; set; }
+    public string? TeacherNotes { get; set; }
+    public string? Challenges { get; set; }
 }
 
 public class PlannedItemDto

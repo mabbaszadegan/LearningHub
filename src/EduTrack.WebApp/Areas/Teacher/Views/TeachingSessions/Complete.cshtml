@@ -112,175 +112,150 @@
     </div>
 </div>
 
-<!-- Completion Form -->
-<div class="completion-form-container">
-    <form asp-action="SaveCompletion" method="post" class="completion-form" id="completionForm"
-          data-has-plan="@Model.HasPlan.ToString().ToLower()"
-          data-groups="@ViewBag.GroupsJson"
-          data-available-subtopics="@ViewBag.AvailableSubTopicsJson"
-          data-available-lessons="@ViewBag.AvailableLessonsJson"
-          data-planned-items="@ViewBag.PlannedItemsJson">
+<!-- Step-by-Step Completion Form -->
+<div class="step-completion-container">
+    <!-- Step Progress Indicator -->
+    <div class="step-progress">
+        <div class="step-progress-bar">
+            <div class="step-progress-fill" id="stepProgressFill"></div>
+        </div>
+        <div class="step-indicators" id="stepIndicators">
+            <!-- Steps will be populated by JavaScript -->
+        </div>
+    </div>
 
-        <input type="hidden" name="TeachingSessionReportId" value="@Model.SessionId" />
+    <!-- Step Content -->
+    <div class="step-content">
+        <!-- Step 1: Attendance -->
+        <div class="step-panel" id="step-1" data-step="1">
+            <div class="step-header">
+                <h3 class="step-title">
+                    <i class="fas fa-user-check"></i>
+                    مرحله ۱: حضور و غیاب
+                </h3>
+                <p class="step-description">ثبت حضور و غیاب دانش‌آموزان هر گروه</p>
+            </div>
 
-        <!-- Group Selection -->
-        <div class="group-selection">
-            <h3>انتخاب گروه‌ها</h3>
-            <div class="group-checkboxes">
-                @foreach (var group in Model.Groups)
-                {
-                    <div class="group-checkbox">
-                        <input type="checkbox" id="group_@group.Id" name="SelectedGroupIds" value="@group.Id" class="group-selector" />
-                        <label for="group_@group.Id">@group.Name</label>
-                    </div>
-                }
+            <div class="step-body">
+                <div class="group-attendance-container" id="attendanceContainer">
+                    <!-- Attendance forms will be populated by JavaScript -->
+                </div>
+            </div>
+
+            <div class="step-actions">
+                <button type="button" class="btn-save-step" data-step="1">
+                    <i class="fas fa-save"></i>
+                    ذخیره حضور و غیاب
+                </button>
+                <button type="button" class="btn-next-step" data-next-step="2">
+                    <i class="fas fa-arrow-left"></i>
+                    مرحله بعد
+                </button>
             </div>
         </div>
 
-        <!-- Group Sections -->
-        @foreach (var group in Model.Groups)
-        {
-            <div class="group-section" data-group-id="@group.Id">
-                <div class="group-header">
-                    <h3 class="group-title">@group.Name</h3>
-                    <p class="group-subtitle">نتایج و بازخورد گروه @group.Name</p>
-                </div>
+        <!-- Step 2: Feedback -->
+        <div class="step-panel" id="step-2" data-step="2" style="display: none;">
+            <div class="step-header">
+                <h3 class="step-title">
+                    <i class="fas fa-comment-alt"></i>
+                    مرحله ۲: بازخورد گروه‌ها
+                </h3>
+                <p class="step-description">ارائه بازخورد برای هر گروه</p>
+            </div>
 
-                <!-- Group Feedback -->
-                <div class="form-section">
-                    <div class="section-header">
-                        <h3 class="section-title">
-                            <i class="fas fa-comment-alt"></i>
-                            بازخورد گروه
-                        </h3>
-                        <p class="section-subtitle">نظرات و بازخورد کلی درباره عملکرد گروه</p>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">
-                            <i class="fas fa-star"></i>
-                            سطح درک
-                        </label>
-                        <div class="rating-controls">
-                            <div class="rating-group">
-                                <label class="rating-label">درک مطلب</label>
-                                <input type="range" name="GroupFeedbacks[@group.Id][UnderstandingLevel]"
-                                       class="rating-slider" min="1" max="5" value="3">
-                                <span class="rating-display">3</span>
-                            </div>
-                            <div class="rating-group">
-                                <label class="rating-label">مشارکت</label>
-                                <input type="range" name="GroupFeedbacks[@group.Id][ParticipationLevel]"
-                                       class="rating-slider" min="1" max="5" value="3">
-                                <span class="rating-display">3</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">
-                            <i class="fas fa-edit"></i>
-                            بازخورد کلی
-                        </label>
-                        <textarea name="GroupFeedbacks[@group.Id][GroupFeedback]" class="form-control modern-textarea"
-                              placeholder="بازخورد کلی درباره عملکرد گروه..."></textarea>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">
-                            <i class="fas fa-exclamation-triangle"></i>
-                            چالش‌ها
-                        </label>
-                        <textarea name="GroupFeedbacks[@group.Id][Challenges]" class="form-control modern-textarea"
-                              placeholder="چالش‌ها و مشکلات پیش آمده..."></textarea>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">
-                            <i class="fas fa-lightbulb"></i>
-                            پیشنهادات جلسه بعد
-                        </label>
-                        <textarea name="GroupFeedbacks[@group.Id][NextSessionRecommendations]" class="form-control modern-textarea"
-                              placeholder="پیشنهادات برای جلسه بعد..."></textarea>
-                    </div>
-                </div>
-
-                <!-- Topic Coverage -->
-                <div class="form-section">
-                    <div class="section-header">
-                        <h3 class="section-title">
-                            <i class="fas fa-check-square"></i>
-                            پوشش موضوعات
-                        </h3>
-                        <p class="section-subtitle">موضوعاتی که برای این گروه پوشش داده شد</p>
-                    </div>
-
-                    <div class="topic-coverage">
-                        <h4>زیرمباحث</h4>
-                        <div class="topic-coverage-container">
-                            @foreach (var subTopic in Model.AvailableSubTopics)
-                            {
-                                <div class="topic-coverage-item" data-topic-type="SubTopic" data-topic-id="@subTopic.Id">
-                                    <div class="topic-info">
-                                        <span class="topic-title">@subTopic.Title</span>
-                                    </div>
-                                    <div class="coverage-controls">
-                                        <label class="coverage-checkbox">
-                                            <input type="checkbox" name="TopicCoverages[@group.Id][SubTopic][@subTopic.Id][WasCovered]" class="coverage-check">
-                                            <span>پوشش داده شد</span>
-                                        </label>
-                                        <input type="range" name="TopicCoverages[@group.Id][SubTopic][@subTopic.Id][CoveragePercentage]"
-                                               class="coverage-percentage" min="0" max="100" value="0">
-                                        <span class="coverage-display">0%</span>
-                                    </div>
-                                </div>
-                            }
-                        </div>
-                    </div>
-
-                    <div class="topic-coverage">
-                        <h4>درس‌ها</h4>
-                        <div class="topic-coverage-container">
-                            @foreach (var lesson in Model.AvailableLessons)
-                            {
-                                <div class="topic-coverage-item" data-topic-type="Lesson" data-topic-id="@lesson.Id">
-                                    <div class="topic-info">
-                                        <span class="topic-title">@lesson.Title</span>
-                                    </div>
-                                    <div class="coverage-controls">
-                                        <label class="coverage-checkbox">
-                                            <input type="checkbox" name="TopicCoverages[@group.Id][Lesson][@lesson.Id][WasCovered]" class="coverage-check">
-                                            <span>پوشش داده شد</span>
-                                        </label>
-                                        <input type="range" name="TopicCoverages[@group.Id][Lesson][@lesson.Id][CoveragePercentage]"
-                                               class="coverage-percentage" min="0" max="100" value="0">
-                                        <span class="coverage-display">0%</span>
-                                    </div>
-                                </div>
-                            }
-                        </div>
-                    </div>
+            <div class="step-body">
+                <div class="group-feedback-container" id="feedbackContainer">
+                    <!-- Feedback forms will be populated by JavaScript -->
                 </div>
             </div>
-        }
 
-        <!-- Form Actions -->
-        <div class="form-actions">
-            <a asp-action="Index" asp-route-planId="@Model.TeachingPlanId" class="btn-cancel">
-                <i class="fas fa-times"></i>
-                <span>لغو</span>
+            <div class="step-actions">
+                <button type="button" class="btn-prev-step" data-prev-step="1">
+                    <i class="fas fa-arrow-right"></i>
+                    مرحله قبل
+                </button>
+                <button type="button" class="btn-save-step" data-step="2">
+                    <i class="fas fa-save"></i>
+                    ذخیره بازخورد
+                </button>
+                <button type="button" class="btn-next-step" data-next-step="3">
+                    <i class="fas fa-arrow-left"></i>
+                    مرحله بعد
+                </button>
+            </div>
+        </div>
+
+        <!-- Step 3: Topic Coverage -->
+        <div class="step-panel" id="step-3" data-step="3" style="display: none;">
+            <div class="step-header">
+                <h3 class="step-title">
+                    <i class="fas fa-check-square"></i>
+                    مرحله ۳: پوشش موضوعات
+                </h3>
+                <p class="step-description">ثبت موضوعات پوشش داده شده برای هر گروه</p>
+            </div>
+
+            <div class="step-body">
+                <div class="group-topic-coverage-container" id="topicCoverageContainer">
+                    <!-- Topic coverage forms will be populated by JavaScript -->
+                </div>
+            </div>
+
+            <div class="step-actions">
+                <button type="button" class="btn-prev-step" data-prev-step="2">
+                    <i class="fas fa-arrow-right"></i>
+                    مرحله قبل
+                </button>
+                <button type="button" class="btn-save-step" data-step="3">
+                    <i class="fas fa-save"></i>
+                    ذخیره پوشش موضوعات
+                </button>
+                <button type="button" class="btn-complete-session" id="completeSession">
+                    <i class="fas fa-check-circle"></i>
+                    تکمیل گزارش
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Completion Summary -->
+    <div class="completion-summary" id="completionSummary" style="display: none;">
+        <div class="summary-header">
+            <h3 class="summary-title">
+                <i class="fas fa-check-circle text-success"></i>
+                گزارش جلسه با موفقیت تکمیل شد
+            </h3>
+            <p class="summary-description">تمام مراحل تکمیل گزارش جلسه آموزشی انجام شد.</p>
+        </div>
+
+        <div class="summary-actions">
+            <a asp-action="Details" asp-route-id="@Model.SessionId" class="btn-view-report">
+                <i class="fas fa-eye"></i>
+                مشاهده گزارش
             </a>
-            <button type="submit" class="btn-submit">
-                <i class="fas fa-save"></i>
-                <span>ذخیره گزارش</span>
-            </button>
+            <a asp-action="Index" asp-route-planId="@Model.TeachingPlanId" class="btn-back-to-sessions">
+                <i class="fas fa-list"></i>
+                بازگشت به جلسات
+            </a>
         </div>
-    </form>
+    </div>
 </div>
+
+<!-- Hidden form for data -->
+<form id="hiddenForm" style="display: none;">
+    <input type="hidden" id="sessionId" value="@Model.SessionId" />
+    <input type="hidden" id="hasPlan" value="@Model.HasPlan.ToString().ToLower()" />
+    <input type="hidden" id="groupsData" value="@ViewBag.GroupsJson" />
+    <input type="hidden" id="subTopicsData" value="@ViewBag.AvailableSubTopicsJson" />
+    <input type="hidden" id="lessonsData" value="@ViewBag.AvailableLessonsJson" />
+    <input type="hidden" id="plannedItemsData" value="@ViewBag.PlannedItemsJson" />
+</form>
 
 @section Styles {
     <link rel="stylesheet" href="~/css/areas/teacher/teaching-sessions/details.css" />
     <link rel="stylesheet" href="~/css/areas/teacher/teaching-sessions/complete.css" />
+    <link rel="stylesheet" href="~/css/areas/teacher/teaching-sessions/step-completion.css" />
 }
 
 @section Scripts {

@@ -14,6 +14,11 @@ public class TeachingSessionReport
     public string CreatedByTeacherId { get; set; } = string.Empty;
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
+    
+    // Step completion fields
+    public int CurrentStep { get; set; } = 1;
+    public bool IsCompleted { get; set; } = false;
+    public string? StepCompletionsJson { get; set; }
 
     public TeachingPlan TeachingPlan { get; set; } = null!;
     public ICollection<TeachingSessionAttendance> Attendance { get; set; } = new List<TeachingSessionAttendance>();

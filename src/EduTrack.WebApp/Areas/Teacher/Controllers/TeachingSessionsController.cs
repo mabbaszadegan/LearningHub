@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 
 namespace EduTrack.WebApp.Areas.Teacher.Controllers;
 
@@ -301,13 +302,34 @@ public class TeachingSessionsController : Controller
         System.Diagnostics.Debug.WriteLine($"Completion Data - AvailableSubTopics Count: {completionData.AvailableSubTopics.Count}");
         System.Diagnostics.Debug.WriteLine($"Completion Data - AvailableLessons Count: {completionData.AvailableLessons.Count}");
         System.Diagnostics.Debug.WriteLine($"Completion Data - PlannedItems Count: {completionData.PlannedItems?.Count ?? 0}");
+        
+        foreach (var group in completionData.Groups)
+        {
+            System.Diagnostics.Debug.WriteLine($"Group: {group.Name} (ID: {group.Id}) - Members: {group.MemberCount}");
+            foreach (var member in group.Members)
+            {
+                System.Diagnostics.Debug.WriteLine($"  Member: {member.StudentName} (ID: {member.StudentId})");
+            }
+        }
 
         // Create simple JSON data for JavaScript using System.Text.Json
         var jsonOptions = new JsonSerializerSettings
         {
+            ContractResolver = new CamelCasePropertyNamesContractResolver(),
+            Formatting = Formatting.Indented // اختیاری؛ فقط برای خوانایی بهتر خروجی 
         };
 
-        var groupsJson = JsonConvert.SerializeObject(completionData.Groups.Select(g => new { g.Id, g.Name, g.MemberCount }), jsonOptions);
+        var groupsJson = JsonConvert.SerializeObject(completionData.Groups.Select(g => new { 
+            g.Id, 
+            g.Name, 
+            g.MemberCount,
+            Members = g.Members.Select(m => new { 
+                m.Id, 
+                m.StudentId, 
+                m.StudentName, 
+                m.StudentEmail 
+            }).ToList()
+        }), jsonOptions);
         var subtopicsJson = JsonConvert.SerializeObject(completionData.AvailableSubTopics.Select(s => new { s.Id, s.Title, s.ChapterTitle }), jsonOptions);
         var lessonsJson = JsonConvert.SerializeObject(completionData.AvailableLessons.Select(l => new { l.Id, l.Title, l.ModuleTitle }), jsonOptions);
         var plannedItemsJson = JsonConvert.SerializeObject((completionData.PlannedItems ?? new List<PlannedItemDto>()).Select(p => new { p.StudentGroupId, p.PlannedObjectives }), jsonOptions);
@@ -379,5 +401,92 @@ public class TeachingSessionsController : Controller
     {
         var plannedItemsResult = await _mediator.Send(new GetPlannedItemsQuery(sessionId));
         return Json(plannedItemsResult.IsSuccess ? plannedItemsResult.Value : new List<PlannedItemDto>());
+    }
+
+    // Step-by-step completion endpoints
+    [HttpGet]
+    public async Task<IActionResult> GetCompletionProgress(int sessionId)
+    {
+        var progressResult = await _mediator.Send(new GetSessionCompletionProgressQuery(sessionId));
+        if (!progressResult.IsSuccess)
+        {
+            return Json(new { success = false, message = progressResult.Error });
+        }
+
+        return Json(new { success = true, data = progressResult.Value });
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetStepData(int sessionId, int stepNumber)
+    {
+        var stepDataResult = await _mediator.Send(new GetStepCompletionDataQuery(sessionId, stepNumber));
+        if (!stepDataResult.IsSuccess)
+        {
+            return Json(new { success = false, message = stepDataResult.Error });
+        }
+
+        return Json(new { success = true, data = stepDataResult.Value });
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> SaveAttendanceStep([FromBody] AttendanceStepDataDto attendanceData)
+    {
+        var command = new SaveAttendanceStepCommand(attendanceData.SessionId, attendanceData);
+        var result = await _mediator.Send(command);
+        
+        if (result.IsSuccess)
+        {
+            return Json(new { success = true, message = "حضور و غیاب با موفقیت ذخیره شد." });
+        }
+
+        return Json(new { success = false, message = result.Error ?? "خطا در ذخیره حضور و غیاب." });
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> SaveFeedbackStep([FromBody] FeedbackStepDataDto feedbackData)
+    {
+        var command = new SaveFeedbackStepCommand(feedbackData.SessionId, feedbackData);
+        var result = await _mediator.Send(command);
+        
+        if (result.IsSuccess)
+        {
+            return Json(new { success = true, message = "بازخورد با موفقیت ذخیره شد." });
+        }
+
+        return Json(new { success = false, message = result.Error ?? "خطا در ذخیره بازخورد." });
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> SaveTopicCoverageStep([FromBody] TopicCoverageStepDataDto topicCoverageData)
+    {
+        var command = new SaveTopicCoverageStepCommand(topicCoverageData.SessionId, topicCoverageData);
+        var result = await _mediator.Send(command);
+        
+        if (result.IsSuccess)
+        {
+            return Json(new { success = true, message = "پوشش موضوعات با موفقیت ذخیره شد." });
+        }
+
+        return Json(new { success = false, message = result.Error ?? "خطا در ذخیره پوشش موضوعات." });
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> SaveStepCompletion([FromBody] StepCompletionDataDto stepData)
+    {
+        var command = new SaveStepCompletionCommand(
+            stepData.SessionId, 
+            stepData.StepNumber, 
+            stepData.StepName, 
+            stepData.CompletionData, 
+            stepData.IsCompleted);
+        
+        var result = await _mediator.Send(command);
+        
+        if (result.IsSuccess)
+        {
+            return Json(new { success = true, message = "مرحله با موفقیت ذخیره شد." });
+        }
+
+        return Json(new { success = false, message = result.Error ?? "خطا در ذخیره مرحله." });
     }
 }
