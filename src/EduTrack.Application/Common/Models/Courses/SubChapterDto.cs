@@ -12,5 +12,6 @@ public class SubChapterDto
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
     public int ContentCount { get; set; }
+    public string ChapterTitle { get; set; } = string.Empty;
     public List<EducationalContentDto> EducationalContents { get; set; } = new();
 }

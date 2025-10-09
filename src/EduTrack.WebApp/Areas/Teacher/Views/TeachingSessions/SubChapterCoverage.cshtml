@@ -1,0 +1,279 @@
+@using EduTrack.Application.Common.Models
+@using EduTrack.Application.Common.Models.TeachingSessions
+@using EduTrack.WebApp.Areas.Teacher.Views.Shared.Components.PageNavigation
+@model SubChapterCoverageDataDto
+@{
+    ViewData["Title"] = "پوشش زیرمباحث";
+    var courseTitle = ViewBag.CourseTitle as string;
+
+    // Prepare navigation actions
+    var navigationActions = new List<NavigationAction>
+    {
+        new NavigationAction
+        {
+            Text = "مشاهده جزئیات",
+            Url = Url.Action("Details", new { id = Model.SessionId }) ?? "#",
+            CssClass = "btn-action-secondary",
+            Icon = "fas fa-eye"
+        },
+        new NavigationAction
+        {
+            Text = "بازگشت",
+            Url = Url.Action("Index", new { planId = Model.TeachingPlanId }) ?? "#",
+            CssClass = "btn-action-primary",
+            Icon = "fas fa-arrow-right"
+        }
+    };
+
+    // Prepare breadcrumb items
+    var breadcrumbItems = new List<BreadcrumbItem>
+    {
+        new BreadcrumbItem
+        {
+            Text = "دوره‌ها",
+            Url = Url.Action("Index", "Courses"),
+            Icon = "fas fa-chevron-right"
+        },
+        new BreadcrumbItem
+        {
+            Text = courseTitle ?? "دوره",
+            Url = Url.Action("Index", "TeachingPlan", new { courseId = ViewBag.CourseId })
+        },
+        new BreadcrumbItem
+        {
+            Text = "جلسات آموزشی",
+            Url = Url.Action("Index", new { planId = Model.TeachingPlanId })
+        },
+        new BreadcrumbItem
+        {
+            Text = Model.SessionTitle,
+            Url = Url.Action("Details", new { id = Model.SessionId })
+        },
+        new BreadcrumbItem
+        {
+            Text = "پوشش زیرمباحث",
+            IsActive = true
+        }
+    };
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/areas/teacher/teaching-sessions/subchapter-coverage.css" />
+}
+
+<div class="subchapter-coverage-container">
+    @await Component.InvokeAsync("PageNavigation", new { 
+        Title = "پوشش زیرمباحث", 
+        Subtitle = Model.SessionTitle,
+        Actions = navigationActions,
+        BreadcrumbItems = breadcrumbItems
+    })
+
+    <div class="coverage-content">
+        <div class="coverage-layout">
+            <!-- Groups List -->
+            <div class="groups-panel">
+                <div class="panel-header">
+                    <h3 class="panel-title">
+                        <i class="fas fa-users"></i>
+                        گروه‌ها
+                    </h3>
+                    <span class="group-count">@Model.Groups.Count گروه</span>
+                </div>
+                <div class="groups-list">
+                    @foreach (var group in Model.Groups)
+                    {
+                        <div class="group-item" data-group-id="@group.Id">
+                            <div class="group-info">
+                                <div class="group-name">@group.Name</div>
+                                <div class="group-members">@group.MemberCount عضو</div>
+                            </div>
+                            <div class="group-status">
+                                <div class="status-indicator" data-group-id="@group.Id">
+                                    <i class="fas fa-circle status-pending"></i>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Coverage Content -->
+            <div class="coverage-panel">
+                <div class="panel-header">
+                    <h3 class="panel-title">
+                        <i class="fas fa-book"></i>
+                        پوشش زیرمباحث
+                    </h3>
+                </div>
+                
+                <div class="coverage-tabs">
+                    @foreach (var group in Model.Groups)
+                    {
+                        <div class="coverage-tab" data-group-id="@group.Id" style="display: none;">
+                            <div class="tab-header">
+                                <h4 class="tab-title">گروه @group.Name</h4>
+                                <div class="tab-summary">
+                                    <span class="summary-item">
+                                        <i class="fas fa-users"></i>
+                                        @group.MemberCount عضو
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="tab-content">
+                                <!-- Chapters and SubChapters -->
+                                <div class="chapters-container">
+                                    @foreach (var chapter in Model.Chapters)
+                                    {
+                                        <div class="chapter-section">
+                                            <div class="chapter-header" data-chapter-id="@chapter.Id">
+                                                <div class="chapter-info">
+                                                    <i class="fas fa-chevron-down chapter-toggle"></i>
+                                                    <h5 class="chapter-title">@chapter.Title</h5>
+                                                    <span class="chapter-subchapters-count">@chapter.SubChapters.Count زیرمبحث</span>
+                                                </div>
+                                                <div class="chapter-progress">
+                                                    <div class="progress-bar">
+                                                        <div class="progress-fill" style="width: 0%"></div>
+                                                    </div>
+                                                    <span class="progress-text">0%</span>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="subchapters-container" style="display: none;">
+                                                @foreach (var subChapter in chapter.SubChapters)
+                                                {
+                                                    <div class="subchapter-item" data-subchapter-id="@subChapter.Id">
+                                                        <div class="subchapter-header">
+                                                            <div class="subchapter-info">
+                                                                <h6 class="subchapter-title">@subChapter.Title</h6>
+                                                                @if (!string.IsNullOrEmpty(subChapter.Description))
+                                                                {
+                                                                    <p class="subchapter-description">@subChapter.Description</p>
+                                                                }
+                                                            </div>
+                                                            <div class="subchapter-controls">
+                                                                <div class="coverage-toggle">
+                                                                    <input type="checkbox" 
+                                                                           class="coverage-checkbox" 
+                                                                           data-group-id="@group.Id" 
+                                                                           data-subchapter-id="@subChapter.Id"
+                                                                           id="coverage_@(group.Id)_@(subChapter.Id)">
+                                                                    <label for="coverage_@(group.Id)_@(subChapter.Id)">
+                                                                        <span class="toggle-text">پوشش داده شد</span>
+                                                                    </label>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        <div class="subchapter-details">
+                                                            <div class="coverage-percentage">
+                                                                <label>درصد پوشش:</label>
+                                                                <div class="percentage-input">
+                                                                    <input type="range" 
+                                                                           class="percentage-slider" 
+                                                                           data-group-id="@group.Id" 
+                                                                           data-subchapter-id="@subChapter.Id"
+                                                                           min="0" max="100" value="0">
+                                                                    <span class="percentage-value">0%</span>
+                                                                </div>
+                                                            </div>
+                                                            
+                                                            <div class="coverage-status">
+                                                                <label>وضعیت پوشش:</label>
+                                                                <select class="status-select" 
+                                                                        data-group-id="@group.Id" 
+                                                                        data-subchapter-id="@subChapter.Id">
+                                                                    <option value="0">پوشش داده نشده</option>
+                                                                    <option value="1">نیمه پوشش</option>
+                                                                    <option value="2">کامل پوشش</option>
+                                                                    <option value="3">به تعویق افتاده</option>
+                                                                </select>
+                                                            </div>
+                                                            
+                                                            <div class="teacher-notes">
+                                                                <label>یادداشت‌های معلم:</label>
+                                                                <textarea class="notes-textarea" 
+                                                                          data-group-id="@group.Id" 
+                                                                          data-subchapter-id="@subChapter.Id"
+                                                                          placeholder="یادداشت‌های خود را وارد کنید..."></textarea>
+                                                            </div>
+                                                            
+                                                            <div class="challenges">
+                                                                <label>مشکلات و چالش‌ها:</label>
+                                                                <textarea class="challenges-textarea" 
+                                                                          data-group-id="@group.Id" 
+                                                                          data-subchapter-id="@subChapter.Id"
+                                                                          placeholder="مشکلات و چالش‌های موجود را شرح دهید..."></textarea>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                }
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+
+                                <!-- General Notes -->
+                                <div class="general-notes-section">
+                                    <h5 class="section-title">یادداشت‌های کلی</h5>
+                                    <div class="general-notes">
+                                        <div class="notes-field">
+                                            <label>یادداشت‌های عمومی:</label>
+                                            <textarea class="general-notes-textarea" 
+                                                      data-group-id="@group.Id"
+                                                      placeholder="یادداشت‌های کلی درباره پوشش زیرمباحث این گروه..."></textarea>
+                                        </div>
+                                        <div class="notes-field">
+                                            <label>چالش‌های کلی:</label>
+                                            <textarea class="general-challenges-textarea" 
+                                                      data-group-id="@group.Id"
+                                                      placeholder="چالش‌های کلی گروه در یادگیری زیرمباحث..."></textarea>
+                                        </div>
+                                        <div class="notes-field">
+                                            <label>توصیه‌ها:</label>
+                                            <textarea class="recommendations-textarea" 
+                                                      data-group-id="@group.Id"
+                                                      placeholder="توصیه‌هایی برای جلسات آینده..."></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Save Button -->
+                                <div class="save-section">
+                                    <button type="button" 
+                                            class="btn-save-group" 
+                                            data-group-id="@group.Id">
+                                        <i class="fas fa-save"></i>
+                                        ذخیره اطلاعات گروه
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/areas/teacher/teaching-sessions/subchapter-coverage.js"></script>
+    <script>
+        // Initialize page with data
+        document.addEventListener('DOMContentLoaded', function() {
+            const sessionId = @Model.SessionId;
+            const groups = @Html.Raw(Json.Serialize(Model.Groups.Select(g => new { g.Id, g.Name, g.MemberCount })));
+            const chapters = @Html.Raw(Json.Serialize(Model.Chapters.Select(c => new { 
+                c.Id, 
+                c.Title, 
+                SubChapters = c.SubChapters.Select(sc => new { sc.Id, sc.Title, sc.Description })
+            })));
+            
+            if (typeof SubChapterCoverageManager !== 'undefined') {
+                SubChapterCoverageManager.init(sessionId, groups, chapters);
+            }
+        });
+    </script>
+}

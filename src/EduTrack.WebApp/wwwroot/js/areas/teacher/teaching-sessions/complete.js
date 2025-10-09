@@ -106,7 +106,7 @@ class StepCompletionManager {
         const steps = [
             { number: 1, title: 'حضور و غیاب', icon: 'fas fa-user-check' },
             { number: 2, title: 'بازخورد', icon: 'fas fa-comment-alt' },
-            { number: 3, title: 'پوشش موضوعات', icon: 'fas fa-check-square' }
+            { number: 3, title: 'پوشش زیرمباحث', icon: 'fas fa-book-open' }
         ];
 
         steps.forEach(step => {
@@ -177,7 +177,7 @@ class StepCompletionManager {
                 this.populateFeedbackStep();
                 break;
             case 3:
-                this.populateTopicCoverageStep();
+                this.populateSubChapterCoverageStep();
                 break;
         }
     }
@@ -864,6 +864,137 @@ class StepCompletionManager {
         }
     }
 
+    async populateSubChapterCoverageStep() {
+        const navContainer = $('#subchapterCoverageTabsNav');
+        const contentContainer = $('#subchapterCoverageTabsContent');
+        
+        navContainer.empty();
+        contentContainer.empty();
+
+        if (this.groups.length === 0) {
+            contentContainer.html(`
+                <div class="subchapter-coverage-loading">
+                    <div class="loading-spinner">
+                        <i class="fas fa-exclamation-circle"></i>
+                    </div>
+                    <p class="loading-text">هیچ گروهی یافت نشد</p>
+                </div>
+            `);
+            return;
+        }
+
+        // Create tab navigation (vertical layout like attendance and feedback)
+        this.groups.forEach((group, index) => {
+            const completionStatus = this.calculateSubChapterGroupCompletionStatus(group);
+            const tabNavHtml = `
+                <div class="subchapter-coverage-tab-nav-item ${index === 0 ? 'active' : ''}" 
+                     data-tab-index="${index}" data-group-id="${group.id}">
+                    ${completionStatus.isCompleted ? '<div class="completion-badge"><i class="fas fa-check"></i></div>' : ''}
+                    <div class="subchapter-coverage-tab-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="subchapter-coverage-tab-info">
+                        <div class="subchapter-coverage-tab-title">${group.name} (${group.memberCount})</div>
+                    </div>
+                    <div class="subchapter-coverage-tab-status ${completionStatus.isCompleted ? 'completed' : 'pending'}">
+                        ${completionStatus.text}
+                    </div>
+                </div>
+            `;
+            navContainer.append(tabNavHtml);
+        });
+
+        // Create tab content panels
+        this.groups.forEach((group, index) => {
+            const tabContentHtml = `
+                <div class="subchapter-coverage-tab-panel ${index === 0 ? 'active' : ''}" 
+                     data-tab-index="${index}" data-group-id="${group.id}">
+                    <div class="group-subchapter-coverage-section" data-group-id="${group.id}">
+                        <div class="group-subchapter-coverage-header">
+                            <h4 class="group-subchapter-coverage-title">
+                                <i class="fas fa-book-open"></i>
+                                ${group.name}
+                            </h4>
+                            <p class="group-subchapter-coverage-subtitle">${group.memberCount} دانش‌آموز</p>
+                            <div class="group-progress">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 0%"></div>
+                                </div>
+                                <span class="progress-text">0% تکمیل شده</span>
+                            </div>
+                        </div>
+                        <div class="general-notes-section">
+                            <h5 class="section-title">یادداشت‌های کلی</h5>
+                            <div class="general-notes">
+                                <div class="notes-field">
+                                    <label>یادداشت‌های عمومی:</label>
+                                    <textarea class="general-notes-textarea" 
+                                              data-group-id="${group.id}"
+                                              placeholder="یادداشت‌های کلی درباره پوشش زیرمباحث این گروه..."></textarea>
+                                </div>
+                                <div class="notes-field">
+                                    <label>چالش‌های کلی:</label>
+                                    <textarea class="general-challenges-textarea" 
+                                              data-group-id="${group.id}"
+                                              placeholder="چالش‌های کلی گروه در یادگیری زیرمباحث..."></textarea>
+                                </div>
+                                <div class="notes-field">
+                                    <label>توصیه‌ها:</label>
+                                    <textarea class="recommendations-textarea" 
+                                              data-group-id="${group.id}"
+                                              placeholder="توصیه‌هایی برای جلسات آینده..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="chapters-container" id="chaptersContainer_${group.id}">
+                            <!-- Chapters will be populated by JavaScript -->
+                        </div>
+                        <div class="group-actions">
+                            <button class="btn btn-primary btn-save-tab" data-group-id="${group.id}" data-tab-index="${index}">
+                                <i class="fas fa-save"></i>
+                                ذخیره پوشش زیرمباحث ${group.name}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            contentContainer.append(tabContentHtml);
+        });
+
+        // Setup event listeners
+        this.setupSubChapterCoverageTabEventListeners();
+        this.setupSubChapterCoverageEventListeners();
+
+        // Load chapters data
+        await this.loadChaptersData();
+
+        // Load existing data if available
+        if (this.stepData[3]) {
+            this.loadSubChapterCoverageData(this.stepData[3].completionData);
+        }
+
+        // Initialize first tab
+        this.currentActiveTab = 0;
+        this.updateSubChapterCoverageTabProgress(0);
+        
+        // Ensure all subchapters are closed by default
+        this.closeAllSubchapters();
+    }
+
+    closeAllSubchapters() {
+        // Close all subchapters and reset toggle icons
+        $('.subchapters-container').hide();
+        $('.chapter-toggle').removeClass('fa-chevron-up').addClass('fa-chevron-down');
+        $('.subchapter-card-body').hide();
+        $('.subchapter-toggle').removeClass('fa-chevron-up').addClass('fa-chevron-down');
+    }
+
+    closeAllSubChapterCards() {
+        // Close all subchapter card bodies but keep headers visible
+        $('.subchapter-card-body').slideUp();
+        $('.subchapter-toggle').removeClass('fa-chevron-up').addClass('fa-chevron-down');
+    }
+
     async saveTabData(tabIndex, groupId) {
         try {
             const group = this.groups[tabIndex];
@@ -940,7 +1071,7 @@ class StepCompletionManager {
                     stepData = this.collectFeedbackData();
                     break;
                 case 3:
-                    stepData = this.collectTopicCoverageData();
+                    stepData = this.collectSubChapterCoverageData();
                     break;
             }
 
@@ -1134,8 +1265,8 @@ class StepCompletionManager {
                 body: JSON.stringify({
                     sessionId: this.sessionId,
                     stepNumber: 3,
-                    stepName: 'topic-coverage',
-                    completionData: JSON.stringify(this.collectTopicCoverageData()),
+                    stepName: 'subchapter-coverage',
+                    completionData: JSON.stringify(this.collectSubChapterCoverageData()),
                     isCompleted: true
                 })
             });
@@ -1162,7 +1293,7 @@ class StepCompletionManager {
         const stepNames = {
             1: 'attendance',
             2: 'feedback',
-            3: 'topic-coverage'
+            3: 'subchapter-coverage'
         };
         return stepNames[stepNumber] || 'unknown';
     }
@@ -1277,6 +1408,512 @@ class StepCompletionManager {
     showErrorMessage(message) {
         // Show error message (you can implement a toast notification here)
         alert('خطا: ' + message);
+    }
+
+    // SubChapter Coverage helper methods
+    calculateSubChapterGroupCompletionStatus(group) {
+        // This will be implemented based on existing coverage data
+        return { isCompleted: false, text: 'در انتظار', completedCount: 0, totalCount: 0 };
+    }
+
+    async loadChaptersData() {
+        try {
+            const response = await fetch(`/Teacher/TeachingSessions/GetSubChapterCoverageData?sessionId=${this.sessionId}`);
+            const result = await response.json();
+            
+            if (result.success && result.data) {
+                this.chaptersData = result.data.chapters;
+                this.populateChaptersForGroups();
+            }
+        } catch (error) {
+            console.error('Error loading chapters data:', error);
+        }
+    }
+
+    populateChaptersForGroups() {
+        if (!this.chaptersData) return;
+
+        this.groups.forEach(group => {
+            const container = $(`#chaptersContainer_${group.id}`);
+            if (container.length === 0) return;
+
+            container.empty();
+
+            this.chaptersData.forEach(chapter => {
+                const chapterHtml = `
+                    <div class="chapter-section">
+                        <div class="chapter-header" data-chapter-id="${chapter.id}">
+                            <div class="chapter-info">
+                                <i class="fas fa-chevron-down chapter-toggle"></i>
+                                <h5 class="chapter-title">${chapter.title}</h5>
+                                <span class="chapter-subchapters-count">${chapter.subChapters.length} زیرمبحث</span>
+                            </div>
+                            <div class="chapter-progress">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 0%"></div>
+                                </div>
+                                <span class="progress-text">0%</span>
+                            </div>
+                        </div>
+                        <div class="subchapters-container" style="display: none;">
+                            ${chapter.subChapters.map(subChapter => `
+                                <div class="subchapter-card" data-subchapter-id="${subChapter.id}">
+                                    <div class="subchapter-card-header" data-subchapter-id="${subChapter.id}">
+                                        <div class="subchapter-card-info">
+                                            <i class="fas fa-chevron-down subchapter-toggle"></i>
+                                            <div class="subchapter-text-content">
+                                                <h6 class="subchapter-title">${subChapter.title}</h6>
+                                                ${subChapter.description ? `<p class="subchapter-description">${subChapter.description}</p>` : ''}
+                                            </div>
+                                        </div>
+                                        <div class="subchapter-card-controls">
+                                            <div class="coverage-toggle">
+                                                <input type="checkbox" 
+                                                       class="coverage-checkbox" 
+                                                       data-group-id="${group.id}" 
+                                                       data-subchapter-id="${subChapter.id}"
+                                                       id="coverage_${group.id}_${subChapter.id}">
+                                                <label for="coverage_${group.id}_${subChapter.id}">
+                                                    <span class="toggle-text">پوشش داده شد</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="subchapter-card-body" style="display: none;">
+                                        <div class="subchapter-details">
+                                            <div class="coverage-percentage">
+                                                <label>درصد پوشش:</label>
+                                                <div class="percentage-input">
+                                                    <input type="range" 
+                                                           class="percentage-slider" 
+                                                           data-group-id="${group.id}" 
+                                                           data-subchapter-id="${subChapter.id}"
+                                                           min="0" max="100" value="0">
+                                                    <span class="percentage-value">0%</span>
+                                                </div>
+                                            </div>
+                                            <div class="coverage-status">
+                                                <label>وضعیت پوشش:</label>
+                                                <select class="status-select" 
+                                                        data-group-id="${group.id}" 
+                                                        data-subchapter-id="${subChapter.id}">
+                                                    <option value="0">پوشش داده نشده</option>
+                                                    <option value="1">نیمه پوشش</option>
+                                                    <option value="2">کامل پوشش</option>
+                                                    <option value="3">به تعویق افتاده</option>
+                                                </select>
+                                            </div>
+                                            <div class="teacher-notes">
+                                                <label>یادداشت‌های معلم:</label>
+                                                <textarea class="notes-textarea" 
+                                                          data-group-id="${group.id}" 
+                                                          data-subchapter-id="${subChapter.id}"
+                                                          placeholder="یادداشت‌های خود را وارد کنید..."></textarea>
+                                            </div>
+                                            <div class="challenges">
+                                                <label>مشکلات و چالش‌ها:</label>
+                                                <textarea class="challenges-textarea" 
+                                                          data-group-id="${group.id}" 
+                                                          data-subchapter-id="${subChapter.id}"
+                                                          placeholder="مشکلات و چالش‌های موجود را شرح دهید..."></textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+                container.append(chapterHtml);
+            });
+
+            // Ensure all subchapters are closed by default after populating
+            container.find('.subchapters-container').hide();
+            container.find('.chapter-toggle').removeClass('fa-chevron-up').addClass('fa-chevron-down');
+            container.find('.subchapter-card-body').hide();
+            container.find('.subchapter-toggle').removeClass('fa-chevron-up').addClass('fa-chevron-down');
+        });
+    }
+
+    setupSubChapterCoverageTabEventListeners() {
+        // Tab navigation clicks
+        $(document).on('click', '.subchapter-coverage-tab-nav-item', (e) => {
+            const tabIndex = parseInt($(e.currentTarget).data('tab-index'));
+            this.switchSubChapterCoverageTab(tabIndex);
+        });
+
+        // Individual tab save button
+        $(document).on('click', '.btn-save-tab', (e) => {
+            e.preventDefault();
+            const tabIndex = parseInt($(e.target).data('tab-index'));
+            const groupId = $(e.target).data('group-id');
+            this.saveSubChapterCoverageTabData(tabIndex, groupId);
+        });
+    }
+
+    setupSubChapterCoverageEventListeners() {
+        // Chapter toggle
+        $(document).on('click', '.chapter-header', (e) => {
+            const chapterHeader = $(e.currentTarget);
+            const subchaptersContainer = chapterHeader.next('.subchapters-container');
+            const toggleIcon = chapterHeader.find('.chapter-toggle');
+            
+            if (subchaptersContainer.is(':hidden')) {
+                subchaptersContainer.slideDown();
+                toggleIcon.removeClass('fa-chevron-down').addClass('fa-chevron-up');
+                
+                // Ensure all subchapter cards are closed when chapter opens
+                subchaptersContainer.find('.subchapter-card-body').hide();
+                subchaptersContainer.find('.subchapter-toggle').removeClass('fa-chevron-up').addClass('fa-chevron-down');
+            } else {
+                subchaptersContainer.slideUp();
+                toggleIcon.removeClass('fa-chevron-up').addClass('fa-chevron-down');
+            }
+        });
+
+        // SubChapter card toggle
+        $(document).on('click', '.subchapter-card-header', (e) => {
+            // Don't toggle if clicking on checkbox or its label
+            if ($(e.target).is('input[type="checkbox"]') || $(e.target).is('label') || $(e.target).closest('label').length > 0) {
+                return;
+            }
+            
+            const subchapterHeader = $(e.currentTarget);
+            const subchapterBody = subchapterHeader.next('.subchapter-card-body');
+            const toggleIcon = subchapterHeader.find('.subchapter-toggle');
+            
+            if (subchapterBody.is(':hidden')) {
+                subchapterBody.slideDown();
+                toggleIcon.removeClass('fa-chevron-down').addClass('fa-chevron-up');
+            } else {
+                subchapterBody.slideUp();
+                toggleIcon.removeClass('fa-chevron-up').addClass('fa-chevron-down');
+            }
+        });
+
+        // Ensure all subchapters are closed by default
+        $('.subchapters-container').hide();
+        $('.chapter-toggle').removeClass('fa-chevron-up').addClass('fa-chevron-down');
+        $('.subchapter-card-body').hide();
+        $('.subchapter-toggle').removeClass('fa-chevron-up').addClass('fa-chevron-down');
+
+        // Coverage checkbox
+        $(document).on('change', '.coverage-checkbox', (e) => {
+            const groupId = parseInt($(e.target).data('group-id'));
+            const subChapterId = parseInt($(e.target).data('subchapter-id'));
+            const isChecked = $(e.target).is(':checked');
+            
+            // Auto-set percentage if checked
+            if (isChecked) {
+                const slider = $(`.percentage-slider[data-group-id="${groupId}"][data-subchapter-id="${subChapterId}"]`);
+                if (slider.val() === '0') {
+                    slider.val('50');
+                    slider.siblings('.percentage-value').text('50%');
+                }
+            }
+            
+            this.updateSubChapterCoverageTabProgress(this.currentActiveTab);
+        });
+
+        // Prevent event bubbling for checkbox and label clicks
+        $(document).on('click', '.coverage-checkbox, .coverage-toggle label', (e) => {
+            e.stopPropagation();
+        });
+
+        // Percentage slider
+        $(document).on('input', '.percentage-slider', (e) => {
+            const value = $(e.target).val();
+            $(e.target).siblings('.percentage-value').text(value + '%');
+            
+            // Auto-check checkbox if percentage > 0
+            const checkbox = $(e.target).siblings('.coverage-checkbox');
+            if (parseInt(value) > 0) {
+                checkbox.prop('checked', true);
+            }
+            
+            this.updateSubChapterCoverageTabProgress(this.currentActiveTab);
+        });
+
+        // Status select
+        $(document).on('change', '.status-select', (e) => {
+            this.updateSubChapterCoverageTabProgress(this.currentActiveTab);
+        });
+
+        // Text areas
+        $(document).on('input', '.notes-textarea, .challenges-textarea, .general-notes-textarea, .general-challenges-textarea, .recommendations-textarea', (e) => {
+            this.updateSubChapterCoverageTabProgress(this.currentActiveTab);
+        });
+    }
+
+    switchSubChapterCoverageTab(tabIndex) {
+        if (tabIndex === this.currentActiveTab) return;
+
+        // Update navigation
+        $('.subchapter-coverage-tab-nav-item').removeClass('active');
+        $(`.subchapter-coverage-tab-nav-item[data-tab-index="${tabIndex}"]`).addClass('active');
+
+        // Update content
+        $('.subchapter-coverage-tab-panel').removeClass('active');
+        $(`.subchapter-coverage-tab-panel[data-tab-index="${tabIndex}"]`).addClass('active');
+
+        this.currentActiveTab = tabIndex;
+        
+        // Ensure all subchapters are closed when switching tabs
+        this.closeAllSubchapters();
+    }
+
+    updateSubChapterCoverageTabProgress(tabIndex) {
+        const tabPanel = $(`.subchapter-coverage-tab-panel[data-tab-index="${tabIndex}"]`);
+        const groupSection = tabPanel.find('.group-subchapter-coverage-section');
+        const subChapters = groupSection.find('.subchapter-card');
+        let completedCount = 0;
+
+        subChapters.each((index, subChapterElement) => {
+            const $subChapter = $(subChapterElement);
+            const isChecked = $subChapter.find('.coverage-checkbox').is(':checked');
+            const percentage = parseInt($subChapter.find('.percentage-slider').val());
+            const status = parseInt($subChapter.find('.status-select').val());
+            const notes = $subChapter.find('.notes-textarea').val().trim();
+            const challenges = $subChapter.find('.challenges-textarea').val().trim();
+
+            // Consider completed if checked or has any data
+            if (isChecked || percentage > 0 || status > 0 || notes !== '' || challenges !== '') {
+                completedCount++;
+            }
+        });
+
+        const totalSubChapters = subChapters.length;
+        const progressPercentage = totalSubChapters > 0 ? (completedCount / totalSubChapters) * 100 : 0;
+        
+        // Update progress bar
+        groupSection.find('.progress-fill').css('width', `${progressPercentage}%`);
+        groupSection.find('.progress-text').text(`${Math.round(progressPercentage)}% تکمیل شده`);
+
+        // Update tab navigation status
+        const tabNavItem = $(`.subchapter-coverage-tab-nav-item[data-tab-index="${tabIndex}"]`);
+        const statusElement = tabNavItem.find('.subchapter-coverage-tab-status');
+        
+        if (completedCount === totalSubChapters && totalSubChapters > 0) {
+            statusElement.text('تکمیل شده').removeClass('pending').addClass('completed');
+            tabNavItem.addClass('completed');
+            
+            // Add completion badge if not exists
+            if (!tabNavItem.find('.completion-badge').length) {
+                tabNavItem.prepend('<div class="completion-badge"><i class="fas fa-check"></i></div>');
+            }
+        } else if (completedCount > 0) {
+            statusElement.text(`${completedCount}/${totalSubChapters} تکمیل شده`).removeClass('pending completed');
+            tabNavItem.removeClass('completed');
+            
+            // Remove completion badge
+            tabNavItem.find('.completion-badge').remove();
+        } else {
+            statusElement.text('در انتظار').removeClass('completed').addClass('pending');
+            tabNavItem.removeClass('completed');
+            
+            // Remove completion badge
+            tabNavItem.find('.completion-badge').remove();
+        }
+    }
+
+    async saveSubChapterCoverageTabData(tabIndex, groupId) {
+        try {
+            const group = this.groups[tabIndex];
+            if (!group) {
+                this.showNotification('گروه یافت نشد', 'error');
+                return;
+            }
+
+            const tabData = this.collectSubChapterCoverageTabData(tabIndex, groupId);
+            
+            const response = await fetch(`/Teacher/TeachingSessions/SaveSubChapterCoverageStep`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(tabData)
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+
+            if (result.success) {
+                this.showNotification(`پوشش زیرمباحث گروه ${group.name} با موفقیت ذخیره شد`, 'success');
+                
+                // Update tab status
+                const tabNavItem = $(`.subchapter-coverage-tab-nav-item[data-tab-index="${tabIndex}"]`);
+                tabNavItem.addClass('completed');
+                tabNavItem.find('.subchapter-coverage-tab-status').text('ذخیره شده').addClass('completed');
+                
+                // Store tab data
+                this.tabData[tabIndex] = tabData;
+                
+                // Check if all tabs are completed
+                this.checkAllSubChapterCoverageTabsCompleted();
+            } else {
+                this.showNotification(result.message || 'خطا در ذخیره پوشش زیرمباحث', 'error');
+            }
+        } catch (error) {
+            console.error('Error saving subchapter coverage tab data:', error);
+            this.showNotification('خطا در ذخیره داده‌های تب: ' + error.message, 'error');
+        }
+    }
+
+    collectSubChapterCoverageTabData(tabIndex, groupId) {
+        const group = this.groups[tabIndex];
+        if (!group) return null;
+
+        const groupCoverage = {
+            groupId: group.id,
+            groupName: group.name,
+            subChapterCoverages: [],
+            generalNotes: '',
+            challenges: '',
+            recommendations: ''
+        };
+
+        // Collect subchapter coverages
+        if (this.chaptersData) {
+            this.chaptersData.forEach(chapter => {
+                chapter.subChapters.forEach(subChapter => {
+                    const checkbox = $(`.coverage-checkbox[data-group-id="${groupId}"][data-subchapter-id="${subChapter.id}"]`);
+                    const slider = $(`.percentage-slider[data-group-id="${groupId}"][data-subchapter-id="${subChapter.id}"]`);
+                    const statusSelect = $(`.status-select[data-group-id="${groupId}"][data-subchapter-id="${subChapter.id}"]`);
+                    const notesTextarea = $(`.notes-textarea[data-group-id="${groupId}"][data-subchapter-id="${subChapter.id}"]`);
+                    const challengesTextarea = $(`.challenges-textarea[data-group-id="${groupId}"][data-subchapter-id="${subChapter.id}"]`);
+
+                    groupCoverage.subChapterCoverages.push({
+                        subChapterId: subChapter.id,
+                        subChapterTitle: subChapter.title,
+                        chapterTitle: chapter.title,
+                        wasPlanned: false, // TODO: Check if was planned
+                        wasCovered: checkbox.is(':checked'),
+                        coveragePercentage: parseInt(slider.val() || '0'),
+                        coverageStatus: parseInt(statusSelect.val() || '0'),
+                        teacherNotes: notesTextarea.val() || null,
+                        challenges: challengesTextarea.val() || null
+                    });
+                });
+            });
+        }
+
+        // Collect general notes
+        const generalNotesTextarea = $(`.general-notes-textarea[data-group-id="${groupId}"]`);
+        const generalChallengesTextarea = $(`.general-challenges-textarea[data-group-id="${groupId}"]`);
+        const recommendationsTextarea = $(`.recommendations-textarea[data-group-id="${groupId}"]`);
+
+        groupCoverage.generalNotes = generalNotesTextarea.val() || null;
+        groupCoverage.challenges = generalChallengesTextarea.val() || null;
+        groupCoverage.recommendations = recommendationsTextarea.val() || null;
+
+        // Return in SubChapterCoverageStepDataDto format
+        return {
+            sessionId: this.sessionId,
+            groupCoverages: [groupCoverage]
+        };
+    }
+
+    collectSubChapterCoverageData() {
+        const coverageData = {
+            sessionId: this.sessionId,
+            groupCoverages: []
+        };
+
+        this.groups.forEach((group, index) => {
+            // Use saved tab data if available, otherwise collect current data
+            if (this.tabData[index]) {
+                coverageData.groupCoverages.push(...this.tabData[index].groupCoverages);
+            } else {
+                const tabData = this.collectSubChapterCoverageTabData(index, group.id);
+                if (tabData) {
+                    coverageData.groupCoverages.push(...tabData.groupCoverages);
+                }
+            }
+        });
+
+        return coverageData;
+    }
+
+    checkAllSubChapterCoverageTabsCompleted() {
+        const allTabs = $('.subchapter-coverage-tab-nav-item');
+        const completedTabs = $('.subchapter-coverage-tab-nav-item.completed');
+        
+        if (allTabs.length === completedTabs.length) {
+            // All tabs completed
+            this.showNotification('همه گروه‌ها تکمیل شدند! می‌توانید گزارش را تکمیل کنید.', 'success');
+            
+            // Enable complete session button
+            $('.btn-complete-session').prop('disabled', false).removeClass('disabled');
+        }
+    }
+
+    loadSubChapterCoverageData(data) {
+        // Load existing subchapter coverage data
+        if (data) {
+            const coverageData = JSON.parse(data);
+            coverageData.groupCoverages.forEach(groupCoverage => {
+                groupCoverage.subChapterCoverages.forEach(coverage => {
+                    // Checkbox
+                    const checkbox = $(`.coverage-checkbox[data-group-id="${groupCoverage.groupId}"][data-subchapter-id="${coverage.subChapterId}"]`);
+                    if (checkbox.length) {
+                        checkbox.prop('checked', coverage.wasCovered);
+                    }
+                    
+                    // Percentage slider
+                    const slider = $(`.percentage-slider[data-group-id="${groupCoverage.groupId}"][data-subchapter-id="${coverage.subChapterId}"]`);
+                    if (slider.length) {
+                        slider.val(coverage.coveragePercentage);
+                        slider.siblings('.percentage-value').text(coverage.coveragePercentage + '%');
+                    }
+                    
+                    // Status select
+                    const statusSelect = $(`.status-select[data-group-id="${groupCoverage.groupId}"][data-subchapter-id="${coverage.subChapterId}"]`);
+                    if (statusSelect.length) {
+                        statusSelect.val(coverage.coverageStatus);
+                    }
+                    
+                    // Notes textarea
+                    const notesTextarea = $(`.notes-textarea[data-group-id="${groupCoverage.groupId}"][data-subchapter-id="${coverage.subChapterId}"]`);
+                    if (notesTextarea.length) {
+                        notesTextarea.val(coverage.teacherNotes || '');
+                    }
+                    
+                    // Challenges textarea
+                    const challengesTextarea = $(`.challenges-textarea[data-group-id="${groupCoverage.groupId}"][data-subchapter-id="${coverage.subChapterId}"]`);
+                    if (challengesTextarea.length) {
+                        challengesTextarea.val(coverage.challenges || '');
+                    }
+                });
+                
+                // General notes
+                const generalNotesTextarea = $(`.general-notes-textarea[data-group-id="${groupCoverage.groupId}"]`);
+                if (generalNotesTextarea.length) {
+                    generalNotesTextarea.val(groupCoverage.generalNotes || '');
+                }
+                
+                const generalChallengesTextarea = $(`.general-challenges-textarea[data-group-id="${groupCoverage.groupId}"]`);
+                if (generalChallengesTextarea.length) {
+                    generalChallengesTextarea.val(groupCoverage.challenges || '');
+                }
+                
+                const recommendationsTextarea = $(`.recommendations-textarea[data-group-id="${groupCoverage.groupId}"]`);
+                if (recommendationsTextarea.length) {
+                    recommendationsTextarea.val(groupCoverage.recommendations || '');
+                }
+                
+                // Update tab progress
+                const tabIndex = this.groups.findIndex(g => g.id === groupCoverage.groupId);
+                if (tabIndex !== -1) {
+                    this.updateSubChapterCoverageTabProgress(tabIndex);
+                }
+            });
+            
+            // Ensure all subchapters remain closed after loading data
+            this.closeAllSubchapters();
+        }
     }
 }
 

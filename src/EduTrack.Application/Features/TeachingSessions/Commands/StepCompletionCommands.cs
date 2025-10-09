@@ -27,6 +27,7 @@ public record SaveTopicCoverageStepCommand(
     int SessionId,
     TopicCoverageStepDataDto TopicCoverageData) : IRequest<Result<bool>>;
 
+
 // Get completion progress
 public record GetSessionCompletionProgressQuery(int SessionId) : IRequest<Result<SessionCompletionProgressDto>>;
 

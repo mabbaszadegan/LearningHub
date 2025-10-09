@@ -537,4 +537,69 @@ public class TeachingSessionsController : Controller
 
         return Json(new { success = false, message = result.Error ?? "خطا در ذخیره مرحله." });
     }
+
+    // SubChapter Coverage endpoints
+    public async Task<IActionResult> SubChapterCoverage(int id)
+    {
+        var currentUser = await _userManager.GetUserAsync(User);
+        if (currentUser == null)
+        {
+            return RedirectToAction("Login", "Account", new { area = "Public" });
+        }
+
+        var coverageDataResult = await _mediator.Send(new GetSubChapterCoverageDataQuery(id));
+        if (!coverageDataResult.IsSuccess || coverageDataResult.Value == null)
+        {
+            TempData["ErrorMessage"] = coverageDataResult.Error ?? "خطا در بارگذاری اطلاعات پوشش زیرمباحث.";
+            return RedirectToAction("Index", "TeachingPlan");
+        }
+
+        // Get course information for breadcrumb
+        var teachingPlanResult = await _mediator.Send(new GetTeachingPlanByIdQuery(coverageDataResult.Value.TeachingPlanId));
+        if (teachingPlanResult.IsSuccess && teachingPlanResult.Value != null)
+        {
+            ViewBag.CourseId = teachingPlanResult.Value.CourseId;
+            ViewBag.CourseTitle = teachingPlanResult.Value.CourseTitle;
+        }
+
+        return View(coverageDataResult.Value);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> SaveSubChapterCoverageStep([FromBody] SubChapterCoverageStepDataDto coverageData)
+    {
+        var command = new SaveSubChapterCoverageStepCommand(coverageData.SessionId, coverageData);
+        var result = await _mediator.Send(command);
+        
+        if (result.IsSuccess)
+        {
+            return Json(new { success = true, message = "پوشش زیرمباحث با موفقیت ذخیره شد." });
+        }
+
+        return Json(new { success = false, message = result.Error ?? "خطا در ذخیره پوشش زیرمباحث." });
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetSubChapterCoverageStepData(int sessionId)
+    {
+        var stepDataResult = await _mediator.Send(new GetSubChapterCoverageStepDataQuery(sessionId));
+        if (!stepDataResult.IsSuccess)
+        {
+            return Json(new { success = false, message = stepDataResult.Error });
+        }
+
+        return Json(new { success = true, data = stepDataResult.Value });
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetSubChapterCoverageData(int sessionId)
+    {
+        var coverageDataResult = await _mediator.Send(new GetSubChapterCoverageDataQuery(sessionId));
+        if (!coverageDataResult.IsSuccess)
+        {
+            return Json(new { success = false, message = coverageDataResult.Error });
+        }
+
+        return Json(new { success = true, data = coverageDataResult.Value });
+    }
 }

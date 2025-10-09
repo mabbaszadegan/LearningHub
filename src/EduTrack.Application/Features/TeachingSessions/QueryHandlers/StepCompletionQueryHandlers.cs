@@ -39,7 +39,7 @@ public class GetSessionCompletionProgressQueryHandler : IRequestHandler<GetSessi
             {
                 new { Number = 1, Name = "attendance", Title = "حضور و غیاب", Description = "ثبت حضور و غیاب دانش‌آموزان هر گروه" },
                 new { Number = 2, Name = "feedback", Title = "بازخورد گروه‌ها", Description = "ارائه بازخورد برای هر گروه" },
-                new { Number = 3, Name = "topic-coverage", Title = "پوشش موضوعات", Description = "ثبت موضوعات پوشش داده شده برای هر گروه" }
+                new { Number = 3, Name = "subchapter-coverage", Title = "پوشش زیرمباحث", Description = "ثبت پوشش زیرمباحث برای هر گروه" }
             };
 
             // Parse step completions
@@ -121,7 +121,7 @@ public class GetStepCompletionDataQueryHandler : IRequestHandler<GetStepCompleti
         {
             1 => "attendance",
             2 => "feedback",
-            3 => "topic-coverage",
+            3 => "subchapter-coverage",
             _ => "unknown"
         };
     }
