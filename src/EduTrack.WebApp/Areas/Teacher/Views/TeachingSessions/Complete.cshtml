@@ -1,5 +1,4 @@
 @using EduTrack.WebApp.Areas.Teacher.Views.Shared.Components.PageNavigation
-@using EduTrack.WebApp.Areas.Teacher.Views.Shared.Components.SessionOverview
 @model EduTrack.Application.Common.Models.SessionCompletionDataDto
 @{
     ViewData["Title"] = "تکمیل گزارش جلسه آموزشی";
@@ -50,45 +49,68 @@
         }
     };
 
-    // Prepare overview items
-    var overviewItems = new List<OverviewItem>
-    {
-        new OverviewItem
-        {
-            Title = "تاریخ جلسه",
-            Value = Model.SessionDate.ToString("yyyy/MM/dd"),
-            Icon = "fas fa-calendar-alt"
-        },
-        new OverviewItem
-        {
-            Title = "زمان جلسه",
-            Value = Model.SessionDate.ToString("HH:mm"),
-            Icon = "fas fa-clock"
-        },
-        new OverviewItem
-        {
-            Title = "تعداد گروه‌ها",
-            Value = $"{Model.Groups.Count} گروه",
-            Icon = "fas fa-users"
-        },
-        new OverviewItem
-        {
-            Title = "وضعیت برنامه‌ریزی",
-            Value = Model.HasPlan
-                ? "<span class='status-badge status-planned'><i class='fas fa-check-circle'></i> برنامه‌ریزی شده</span>"
-                : "<span class='status-badge status-unplanned'><i class='fas fa-exclamation-circle'></i> بدون برنامه‌ریزی</span>",
-            Icon = "fas fa-clipboard-check"
-        }
-    };
 }
 
 @await Component.InvokeAsync("PageNavigation", new {
-title = "تکمیل گزارش جلسه آموزشی",
+    title = "تکمیل گزارش جلسه آموزشی",
     breadcrumbItems = breadcrumbItems,
     actions = navigationActions
 })
 
-@await Component.InvokeAsync("SessionOverview", overviewItems)
+<!-- Session Overview Cards -->
+<div class="session-overview mb-4">
+    <div class="overview-grid">
+        <div class="overview-card">
+            <div class="overview-icon">
+                <i class="fas fa-calendar-alt"></i>
+            </div>
+            <div class="overview-content">
+                <h3 class="overview-title">تاریخ جلسه</h3>
+                <p class="overview-value">@Model.SessionDate.ToString("yyyy/MM/dd")</p>
+            </div>
+        </div>
+        <div class="overview-card">
+            <div class="overview-icon">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div class="overview-content">
+                <h3 class="overview-title">زمان جلسه</h3>
+                <p class="overview-value">@Model.SessionDate.ToString("HH:mm")</p>
+            </div>
+        </div>
+        <div class="overview-card">
+            <div class="overview-icon">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="overview-content">
+                <h3 class="overview-title">تعداد گروه‌ها</h3>
+                <p class="overview-value">@Model.Groups.Count گروه</p>
+            </div>
+        </div>
+        <div class="overview-card">
+            <div class="overview-icon">
+                <i class="fas fa-clipboard-check"></i>
+            </div>
+            <div class="overview-content">
+                <h3 class="overview-title">وضعیت برنامه‌ریزی</h3>
+                <p class="overview-value">
+                    @if (Model.HasPlan)
+                    {
+                        <span class="status-badge status-planned">
+                            <i class="fas fa-check-circle"></i> برنامه‌ریزی شده
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="status-badge status-unplanned">
+                            <i class="fas fa-exclamation-circle"></i> بدون برنامه‌ریزی
+                        </span>
+                    }
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- Completion Form -->
 <div class="completion-form-container">
@@ -257,6 +279,7 @@ title = "تکمیل گزارش جلسه آموزشی",
 </div>
 
 @section Styles {
+    <link rel="stylesheet" href="~/css/areas/teacher/teaching-sessions/details.css" />
     <link rel="stylesheet" href="~/css/areas/teacher/teaching-sessions/complete.css" />
 }
 

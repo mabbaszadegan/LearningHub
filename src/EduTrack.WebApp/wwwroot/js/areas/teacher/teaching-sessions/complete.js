@@ -181,35 +181,23 @@ $(document).ready(function() {
         // Safe JSON parsing with debugging
         const groupsData = $('#completionForm').data('groups');
         console.log('Groups data:', groupsData);
-        const groups = safeJsonParse(groupsData, []);
         
         const subTopicsData = $('#completionForm').data('available-subtopics');
         console.log('SubTopics data:', subTopicsData);
-        const availableSubTopics = safeJsonParse(subTopicsData, []);
         
         const lessonsData = $('#completionForm').data('available-lessons');
         console.log('Lessons data:', lessonsData);
-        const availableLessons = safeJsonParse(lessonsData, []);
         
         const plannedItemsData = $('#completionForm').data('planned-items');
         console.log('PlannedItems data:', plannedItemsData);
-        const plannedItems = safeJsonParse(plannedItemsData, []);
-        
-        console.log('Parsed data:', {
-            hasPlan,
-            groups,
-            availableSubTopics,
-            availableLessons,
-            plannedItems
-        });
         
         // Initialize completion form manager
         const completionManager = new SessionCompletionManager({
             hasPlan: hasPlan,
-            groups: groups,
-            availableSubTopics: availableSubTopics,
-            availableLessons: availableLessons,
-            plannedItems: plannedItems
+            groups: groupsData,
+            availableSubTopics: subTopicsData,
+            availableLessons: lessonsData,
+            plannedItems: plannedItemsData
         });
         
         completionManager.init();

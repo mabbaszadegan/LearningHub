@@ -1,0 +1,280 @@
+/* Page Header */
+.btn-action-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1.125rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 0.813rem;
+    font-weight: 500;
+    transition: all 0.2s;
+    border: none;
+}
+
+    .btn-action-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        color: white;
+    }
+
+/* Breadcrumb Link */
+.breadcrumb-link {
+    color: #667eea;
+    text-decoration: none;
+    font-size: 0.813rem;
+    transition: all 0.2s;
+}
+
+    .breadcrumb-link:hover {
+        color: #5a6fd8;
+        text-decoration: underline;
+    }
+
+/* Session Form Container */
+.session-form-container {
+    background: white;
+    border-radius: 12px;
+    border: 1px solid #e9ecef;
+    overflow: hidden;
+}
+
+.session-form {
+    padding: 0;
+}
+
+/* Form Sections */
+.form-section {
+    padding: 2rem;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+    .form-section:last-child {
+        border-bottom: none;
+    }
+
+.section-header {
+    margin-bottom: 1.5rem;
+}
+
+.section-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin: 0 0 0.5rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+    .section-title i {
+        color: #667eea;
+        font-size: 1.125rem;
+    }
+
+.section-subtitle {
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin: 0;
+}
+
+/* Form Grid */
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+/* Form Groups */
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.5rem;
+}
+
+    .form-label i {
+        color: #667eea;
+        font-size: 0.813rem;
+    }
+
+/* Modern Form Controls */
+.modern-input,
+.modern-select,
+.modern-textarea {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    transition: all 0.2s;
+    background: white;
+}
+
+    .modern-input:focus,
+    .modern-select:focus,
+    .modern-textarea:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+.modern-textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+/* Form Help */
+.form-help {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    font-size: 0.75rem;
+    color: #6b7280;
+}
+
+    .form-help i {
+        color: #667eea;
+    }
+
+/* Form Actions */
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    padding: 2rem;
+    background: #f8f9fa;
+    border-top: 1px solid #e9ecef;
+}
+
+.btn-cancel,
+.btn-submit {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-cancel {
+    background: #f3f4f6;
+    color: #6b7280;
+    border: 1px solid #d1d5db;
+}
+
+    .btn-cancel:hover {
+        background: #e5e7eb;
+        color: #374151;
+    }
+
+.btn-submit {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+    .btn-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+
+
+/* Responsive */
+@media (max-width: 767.98px) {
+    .form-section {
+        padding: 1.5rem;
+    }
+
+    .form-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .form-actions {
+        flex-direction: column;
+        padding: 1.5rem;
+    }
+
+    .btn-cancel,
+    .btn-submit {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* Validation Styles */
+.text-danger {
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+    display: block;
+}
+
+.field-validation-error {
+    color: #dc3545;
+}
+
+.input-validation-error {
+    border-color: #dc3545 !important;
+}
+
+/* Date Time Container */
+.date-time-container {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 0.75rem;
+}
+
+.date-input-wrapper,
+.time-input-wrapper {
+    position: relative;
+}
+
+    .date-input-wrapper .persian-datepicker {
+        padding-left: 2.5rem;
+    }
+
+    .time-input-wrapper input[type="time"] {
+        text-align: center;
+    }
+
+/* Persian Date Picker Integration */
+.persian-datepicker-wrapper {
+    position: relative;
+}
+
+.persian-datepicker-icon {
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #667eea;
+    pointer-events: none;
+    z-index: 2;
+}
+
+.persian-datepicker-input {
+    padding-left: 2.5rem !important;
+}
+
+/* Responsive adjustments for date-time */
+@media (max-width: 767.98px) {
+    .date-time-container {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+    }
+}

@@ -1,0 +1,544 @@
+ /* Page Header */
+        .btn-action-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.625rem 1.125rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 0.813rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            border: none;
+        }
+
+        .btn-action-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            color: white;
+        }
+
+        .btn-action-success {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.625rem 1.125rem;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 0.813rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            border: none;
+        }
+
+        .btn-action-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+            color: white;
+        }
+
+        .btn-action-secondary {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.625rem 1.125rem;
+            background: #6c757d;
+            color: white;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 0.813rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            border: none;
+        }
+
+        .btn-action-secondary:hover {
+            background: #5a6268;
+            color: white;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        /* Breadcrumb Link */
+        .breadcrumb-link {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 0.813rem;
+            transition: all 0.2s;
+        }
+
+        .breadcrumb-link:hover {
+            color: #5a6fd8;
+            text-decoration: underline;
+        }
+
+        /* Session Overview */
+        .session-overview {
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #e9ecef;
+            padding: 1.5rem;
+        }
+
+        .overview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .overview-card {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+
+        .overview-icon {
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 8px;
+            font-size: 1.25rem;
+        }
+
+        .overview-content h3 {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #6c757d;
+            margin: 0 0 0.5rem 0;
+        }
+
+        .overview-date {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin: 0;
+        }
+
+        .overview-time {
+            font-size: 0.813rem;
+            color: #6c757d;
+            margin: 0;
+        }
+
+        .mode-badge {
+            padding: 0.375rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.813rem;
+            font-weight: 500;
+        }
+
+        .attendance-stats {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-present {
+            color: #28a745;
+            font-weight: 600;
+            font-size: 0.813rem;
+        }
+
+        .stat-absent {
+            color: #dc3545;
+            font-weight: 600;
+            font-size: 0.813rem;
+        }
+
+        .stat-total {
+            font-size: 0.75rem;
+            color: #6c757d;
+            margin: 0;
+        }
+
+        .overview-teacher {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #1a1a1a;
+            margin: 0;
+        }
+
+        /* Location Info */
+        .location-info {
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #e9ecef;
+            padding: 1.5rem;
+        }
+
+        .location-card {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: rgba(102, 126, 234, 0.05);
+            border-radius: 8px;
+            border-right: 4px solid #667eea;
+        }
+
+        .location-card i {
+            font-size: 1.5rem;
+            color: #667eea;
+        }
+
+        .location-card h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin: 0 0 0.25rem 0;
+        }
+
+        .location-card p {
+            font-size: 0.875rem;
+            color: #6c757d;
+            margin: 0;
+        }
+
+        /* Session Tabs */
+        .session-tabs-container {
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #e9ecef;
+            overflow: hidden;
+        }
+
+        .tabs-header {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .tab-btn {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 1rem;
+            background: none;
+            border: none;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #6c757d;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tab-btn:hover {
+            background: #e9ecef;
+            color: #495057;
+        }
+
+        .tab-btn.active {
+            background: white;
+            color: #667eea;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .tabs-content {
+            padding: 2rem;
+        }
+
+        .tab-panel {
+            display: none;
+        }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+        /* Content Grid */
+        .content-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .content-card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+            overflow: hidden;
+        }
+
+        .content-card.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .card-header {
+            padding: 1rem;
+            background: white;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .card-header h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card-header i {
+            color: #667eea;
+        }
+
+        .card-body {
+            padding: 1rem;
+        }
+
+        .json-content pre {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 1rem;
+            border-radius: 6px;
+            font-size: 0.813rem;
+            line-height: 1.5;
+            margin: 0;
+            overflow-x: auto;
+        }
+
+        .empty-content {
+            text-align: center;
+            padding: 2rem;
+            color: #6c757d;
+        }
+
+        .empty-content i {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: #dee2e6;
+        }
+
+        .notes-content p {
+            font-size: 0.875rem;
+            line-height: 1.6;
+            color: #374151;
+            margin: 0;
+        }
+
+        /* Attendance Table */
+        .attendance-container {
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+            overflow: hidden;
+        }
+
+        .table-header {
+            padding: 1rem;
+            background: white;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .table-header h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .table-header i {
+            color: #667eea;
+        }
+
+        .table-content {
+            padding: 1rem;
+        }
+
+        .attendance-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 2fr;
+            gap: 1rem;
+            align-items: center;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 0.75rem;
+            border: 1px solid #e9ecef;
+        }
+
+        .student-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .student-avatar {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 50%;
+            color: #667eea;
+        }
+
+        .student-details h5 {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin: 0;
+        }
+
+        .status-badge {
+            padding: 0.375rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.813rem;
+            font-weight: 500;
+        }
+
+        .score-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 30px;
+            height: 30px;
+            background: #667eea;
+            color: white;
+            border-radius: 50%;
+            font-size: 0.813rem;
+            font-weight: 600;
+        }
+
+        .no-score,
+        .no-comment {
+            color: #6c757d;
+            font-style: italic;
+        }
+
+        .attendance-comment p {
+            font-size: 0.813rem;
+            color: #6c757d;
+            margin: 0;
+        }
+
+        /* Assignments */
+        .assignments-container {
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+            padding: 2rem;
+        }
+
+        .assignment-card {
+            text-align: center;
+        }
+
+        .assignment-header h4 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin: 0 0 0.5rem 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .assignment-header i {
+            color: #667eea;
+        }
+
+        .assignment-header p {
+            font-size: 0.875rem;
+            color: #6c757d;
+            margin: 0 0 1.5rem 0;
+        }
+
+        .btn-create-assignment {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .btn-create-assignment:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            color: white;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+        }
+
+        .empty-icon {
+            font-size: 3rem;
+            color: #dee2e6;
+            margin-bottom: 1.5rem;
+        }
+
+        .empty-state h3 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-state p {
+            font-size: 0.875rem;
+            color: #6c757d;
+            margin: 0;
+        }
+
+        /* Responsive */
+        @@media (max-width: 767.98px) {
+            .overview-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header-actions {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .tabs-header {
+                flex-direction: column;
+            }
+
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .attendance-row {
+                grid-template-columns: 1fr;
+                gap: 0.75rem;
+                text-align: center;
+            }
+
+            .student-info {
+                justify-content: center;
+            }
+        }
