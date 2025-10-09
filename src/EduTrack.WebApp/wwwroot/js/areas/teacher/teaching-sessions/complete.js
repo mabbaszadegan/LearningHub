@@ -214,17 +214,20 @@ class StepCompletionManager {
 
         // Create tab navigation
         this.groups.forEach((group, index) => {
+            const completionStatus = this.calculateGroupCompletionStatus(group);
             const tabNavHtml = `
                 <div class="attendance-tab-nav-item ${index === 0 ? 'active' : ''}" 
                      data-tab-index="${index}" data-group-id="${group.id}">
+                    ${completionStatus.isCompleted ? '<div class="completion-badge"><i class="fas fa-check"></i></div>' : ''}
                     <div class="attendance-tab-icon">
                         <i class="fas fa-users"></i>
                     </div>
                     <div class="attendance-tab-info">
-                        <div class="attendance-tab-title">${group.name}</div>
-                        <div class="attendance-tab-subtitle">${group.memberCount} دانش‌آموز</div>
+                        <div class="attendance-tab-title">${group.name} (${group.memberCount})</div>
                     </div>
-                    <div class="attendance-tab-status">در انتظار</div>
+                    <div class="attendance-tab-status ${completionStatus.isCompleted ? 'completed' : 'pending'}">
+                        ${completionStatus.text}
+                    </div>
                 </div>
             `;
             navContainer.append(tabNavHtml);
@@ -409,14 +412,25 @@ class StepCompletionManager {
             statusElement.text('تکمیل شده').removeClass('pending').addClass('completed');
             tabNavItem.addClass('completed');
             groupSection.addClass('completed');
+            
+            // Add completion badge if not exists
+            if (!tabNavItem.find('.completion-badge').length) {
+                tabNavItem.prepend('<div class="completion-badge"><i class="fas fa-check"></i></div>');
+            }
         } else if (completedCount > 0) {
-            statusElement.text('در حال تکمیل').removeClass('pending completed');
+            statusElement.text(`${completedCount}/${totalStudents} تکمیل شده`).removeClass('pending completed');
             tabNavItem.removeClass('completed');
             groupSection.removeClass('completed');
+            
+            // Remove completion badge
+            tabNavItem.find('.completion-badge').remove();
         } else {
             statusElement.text('در انتظار').removeClass('completed').addClass('pending');
             tabNavItem.removeClass('completed');
             groupSection.removeClass('completed');
+            
+            // Remove completion badge
+            tabNavItem.find('.completion-badge').remove();
         }
     }
 
@@ -937,6 +951,23 @@ class StepCompletionManager {
             3: 'topic-coverage'
         };
         return stepNames[stepNumber] || 'unknown';
+    }
+
+    calculateGroupCompletionStatus(group) {
+        if (!group.members || group.members.length === 0) {
+            return { isCompleted: false, text: 'در انتظار', completedCount: 0, totalCount: 0 };
+        }
+
+        const totalCount = group.members.length;
+        const completedCount = group.members.filter(member => member.existingAttendance).length;
+        
+        if (completedCount === 0) {
+            return { isCompleted: false, text: 'در انتظار', completedCount, totalCount };
+        } else if (completedCount === totalCount) {
+            return { isCompleted: true, text: 'تکمیل شده', completedCount, totalCount };
+        } else {
+            return { isCompleted: false, text: `${completedCount}/${totalCount} تکمیل شده`, completedCount, totalCount };
+        }
     }
 
     loadAttendanceData(data) {

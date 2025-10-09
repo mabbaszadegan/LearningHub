@@ -325,7 +325,7 @@
     content: '✓';
     position: absolute;
     top: 15px;
-    right: 15px;
+    left: 15px;
     background: #28a745;
     color: white;
     width: 30px;
@@ -452,6 +452,153 @@
     border-radius: 10px;
     margin-top: 4px;
     font-weight: 500;
+}
+
+/* Tab Status Styles */
+.attendance-tab-status {
+    font-size: 11px;
+    font-weight: 500;
+    padding: 2px 6px;
+    border-radius: 8px;
+    text-align: center;
+    min-width: 60px;
+}
+
+.attendance-tab-status.pending {
+    background: #f8f9fa;
+    color: #6c757d;
+    border: 1px solid #dee2e6;
+}
+
+.attendance-tab-status.completed {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.attendance-tab-nav-item {
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.attendance-tab-nav-item:hover {
+    background: #f8f9fa;
+}
+
+.attendance-tab-nav-item.active {
+    background: #2196f3;
+    border-left: 3px solid #1976d2;
+    color: white;
+}
+
+.attendance-tab-nav-item.active .attendance-tab-title {
+    color: white;
+    font-weight: 600;
+}
+
+.attendance-tab-nav-item.active .attendance-tab-icon {
+    color: white;
+}
+
+.attendance-tab-nav-item.active .attendance-tab-status {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.attendance-tab-nav-item.active .completion-badge {
+    background: #4caf50;
+    box-shadow: 0 1px 3px rgba(76, 175, 80, 0.4);
+}
+
+/* Completion Badge */
+.completion-badge {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    background: #28a745;
+    color: white;
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 8px;
+    box-shadow: 0 1px 3px rgba(40, 167, 69, 0.3);
+    z-index: 1;
+}
+
+/* Student Section Width Fix */
+.students-attendance-list {
+    max-width: 100%;
+    overflow-x: hidden;
+    padding: 0 10px;
+}
+
+.student-attendance-item {
+    max-width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 15px;
+    padding: 15px;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    background: white;
+    overflow: hidden;
+}
+
+.attendance-controls {
+    max-width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.control-group label {
+    font-size: 12px;
+    font-weight: 500;
+    color: #495057;
+}
+
+.form-control, .attendance-status, .participation-score, .attendance-comment {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 6px 8px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 13px;
+}
+
+.participation-slider-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.participation-score {
+    flex: 1;
+}
+
+.participation-display {
+    font-size: 12px;
+    font-weight: 500;
+    color: #495057;
+    min-width: 35px;
+}
+
+/* Tab Title Styling */
+.attendance-tab-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: #495057;
+    line-height: 1.3;
 }
 
 /* Group Actions */
