@@ -102,11 +102,11 @@ public class GetSubChapterCoverageDataQueryHandler : IRequestHandler<GetSubChapt
                         WasPlanned = tc.WasPlanned,
                         WasCovered = tc.WasCovered,
                         CoveragePercentage = tc.CoveragePercentage,
-                        CoverageStatus = tc.CoverageStatus,
                         TeacherNotes = tc.TeacherNotes,
                         Challenges = tc.Challenges,
                         CreatedAt = tc.CreatedAt
-                    }).ToList()
+                    }).ToList(),
+                GroupCoverageStats = new List<GroupCoverageStatsDto>()
             };
 
             // Populate chapters sequentially to avoid DbContext concurrency issues
@@ -165,6 +165,44 @@ public class GetSubChapterCoverageDataQueryHandler : IRequestHandler<GetSubChapt
                 {
                     coverage.ChapterTitle = chapter.Title;
                 }
+            }
+
+            // Calculate group-based coverage statistics
+            foreach (var group in groups)
+            {
+                var groupStats = new GroupCoverageStatsDto
+                {
+                    GroupId = group.Id,
+                    GroupName = group.Name,
+                    ChapterStats = new List<ChapterGroupStatsDto>()
+                };
+
+                foreach (var chapter in chapters)
+                {
+                    var chapterGroupStats = new ChapterGroupStatsDto
+                    {
+                        ChapterId = chapter.Id,
+                        ChapterTitle = chapter.Title,
+                        TotalCoverageCount = await _progressRepository.GetTotalCoverageCountForChapterByGroupAsync(chapter.Id, group.Id, cancellationToken),
+                        AverageProgressPercentage = await _progressRepository.GetAverageProgressForChapterByGroupAsync(chapter.Id, group.Id, cancellationToken),
+                        SubChapterStats = new List<SubChapterGroupStatsDto>()
+                    };
+
+                    foreach (var subChapter in chapter.SubChapters.OrderBy(sc => sc.Order))
+                    {
+                        chapterGroupStats.SubChapterStats.Add(new SubChapterGroupStatsDto
+                        {
+                            SubChapterId = subChapter.Id,
+                            SubChapterTitle = subChapter.Title,
+                            CoverageCount = await _progressRepository.GetCoverageCountForSubTopicByGroupAsync(subChapter.Id, group.Id, cancellationToken),
+                            AverageProgressPercentage = await _progressRepository.GetAverageProgressForSubTopicByGroupAsync(subChapter.Id, group.Id, cancellationToken)
+                        });
+                    }
+
+                    groupStats.ChapterStats.Add(chapterGroupStats);
+                }
+
+                result.GroupCoverageStats.Add(groupStats);
             }
 
             return Result<SubChapterCoverageDataDto>.Success(result);

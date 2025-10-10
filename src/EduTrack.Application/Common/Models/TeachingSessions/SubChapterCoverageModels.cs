@@ -12,6 +12,31 @@ public class SubChapterCoverageDataDto
     public List<GroupDataDto> Groups { get; set; } = new();
     public List<Courses.ChapterDto> Chapters { get; set; } = new();
     public List<SubChapterCoverageDto> ExistingCoverages { get; set; } = new();
+    public List<GroupCoverageStatsDto> GroupCoverageStats { get; set; } = new();
+}
+
+public class GroupCoverageStatsDto
+{
+    public int GroupId { get; set; }
+    public string GroupName { get; set; } = string.Empty;
+    public List<ChapterGroupStatsDto> ChapterStats { get; set; } = new();
+}
+
+public class ChapterGroupStatsDto
+{
+    public int ChapterId { get; set; }
+    public string ChapterTitle { get; set; } = string.Empty;
+    public int TotalCoverageCount { get; set; }
+    public double AverageProgressPercentage { get; set; }
+    public List<SubChapterGroupStatsDto> SubChapterStats { get; set; } = new();
+}
+
+public class SubChapterGroupStatsDto
+{
+    public int SubChapterId { get; set; }
+    public string SubChapterTitle { get; set; } = string.Empty;
+    public int CoverageCount { get; set; }
+    public double AverageProgressPercentage { get; set; }
 }
 
 public class SubChapterCoverageDto
@@ -26,7 +51,6 @@ public class SubChapterCoverageDto
     public bool WasPlanned { get; set; }
     public bool WasCovered { get; set; }
     public int CoveragePercentage { get; set; }
-    public int CoverageStatus { get; set; }
     public string? TeacherNotes { get; set; }
     public string? Challenges { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
@@ -56,7 +80,6 @@ public class SubChapterCoverageItemDto
     public bool WasPlanned { get; set; }
     public bool WasCovered { get; set; }
     public int CoveragePercentage { get; set; }
-    public int CoverageStatus { get; set; }
     public string? TeacherNotes { get; set; }
     public string? Challenges { get; set; }
 }

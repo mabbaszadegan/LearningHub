@@ -1701,6 +1701,25 @@
     color: #155724;
 }
 
+/* Completion Badge */
+.completion-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    width: 20px;
+    height: 20px;
+    background: #28a745;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 10px;
+    z-index: 10;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+
 .subchapter-coverage-tabs-content {
     background: #fff;
     border-radius: 12px;

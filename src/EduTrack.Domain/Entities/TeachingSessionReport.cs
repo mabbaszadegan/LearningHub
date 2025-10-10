@@ -18,7 +18,6 @@ public class TeachingSessionReport
     // Step completion fields
     public int CurrentStep { get; set; } = 1;
     public bool IsCompleted { get; set; } = false;
-    public string? StepCompletionsJson { get; set; }
 
     public TeachingPlan TeachingPlan { get; set; } = null!;
     public ICollection<TeachingSessionAttendance> Attendance { get; set; } = new List<TeachingSessionAttendance>();

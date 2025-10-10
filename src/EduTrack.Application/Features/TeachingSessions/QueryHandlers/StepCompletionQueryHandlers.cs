@@ -43,15 +43,28 @@ public class GetSessionCompletionProgressQueryHandler : IRequestHandler<GetSessi
                 new { Number = 3, Name = "subchapter-coverage", Title = "پوشش زیرمباحث", Description = "ثبت پوشش زیرمباحث برای هر گروه" }
             };
 
-            // Parse step completions
-            var stepCompletions = string.IsNullOrEmpty(sessionReport.StepCompletionsJson) 
-                ? new Dictionary<int, string>() 
-                : JsonConvert.DeserializeObject<Dictionary<int, string>>(sessionReport.StepCompletionsJson) ?? new Dictionary<int, string>();
-
+            // Check step completion status based on related tables
             foreach (var step in steps)
             {
-                var isCompleted = stepCompletions.ContainsKey(step.Number);
+                var isCompleted = false;
                 var isCurrent = step.Number == progress.CurrentStep;
+                DateTimeOffset? completedAt = null;
+
+                switch (step.Number)
+                {
+                    case 1: // Attendance step
+                        isCompleted = sessionReport.Attendance.Any();
+                        completedAt = sessionReport.Attendance.Any() ? DateTimeOffset.UtcNow : null;
+                        break;
+                    case 2: // Feedback step
+                        isCompleted = sessionReport.Executions.Any();
+                        completedAt = sessionReport.Executions.Any() ? sessionReport.Executions.Min(e => e.CompletedAt) : null;
+                        break;
+                    case 3: // Subchapter coverage step
+                        isCompleted = sessionReport.TopicCoverages.Any();
+                        completedAt = sessionReport.TopicCoverages.Any() ? sessionReport.TopicCoverages.Min(tc => tc.CreatedAt) : null;
+                        break;
+                }
 
                 progress.Steps.Add(new StepCompletionDto
                 {
@@ -61,8 +74,8 @@ public class GetSessionCompletionProgressQueryHandler : IRequestHandler<GetSessi
                     StepDescription = step.Description,
                     IsCompleted = isCompleted,
                     IsCurrent = isCurrent,
-                    CompletedAt = isCompleted ? DateTimeOffset.UtcNow : null,
-                    CompletionData = isCompleted ? stepCompletions[step.Number] : null
+                    CompletedAt = completedAt,
+                    CompletionData = null // No longer needed since we query tables directly
                 });
             }
 
@@ -94,18 +107,28 @@ public class GetStepCompletionDataQueryHandler : IRequestHandler<GetStepCompleti
                 return Result<StepCompletionDataDto>.Failure("جلسه یافت نشد.");
             }
 
-            // Parse step completions
-            var stepCompletions = string.IsNullOrEmpty(sessionReport.StepCompletionsJson) 
-                ? new Dictionary<int, string>() 
-                : JsonConvert.DeserializeObject<Dictionary<int, string>>(sessionReport.StepCompletionsJson) ?? new Dictionary<int, string>();
+            // Check step completion based on related tables
+            var isCompleted = false;
+            switch (request.StepNumber)
+            {
+                case 1: // Attendance step
+                    isCompleted = sessionReport.Attendance.Any();
+                    break;
+                case 2: // Feedback step
+                    isCompleted = sessionReport.Executions.Any();
+                    break;
+                case 3: // Subchapter coverage step
+                    isCompleted = sessionReport.TopicCoverages.Any();
+                    break;
+            }
 
             var stepData = new StepCompletionDataDto
             {
                 SessionId = request.SessionId,
                 StepNumber = request.StepNumber,
                 StepName = GetStepName(request.StepNumber),
-                CompletionData = stepCompletions.ContainsKey(request.StepNumber) ? stepCompletions[request.StepNumber] : string.Empty,
-                IsCompleted = stepCompletions.ContainsKey(request.StepNumber)
+                CompletionData = string.Empty, // No longer needed since we query tables directly
+                IsCompleted = isCompleted
             };
 
             return Result<StepCompletionDataDto>.Success(stepData);

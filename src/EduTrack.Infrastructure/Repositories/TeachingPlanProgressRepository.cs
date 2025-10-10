@@ -125,4 +125,42 @@ public class TeachingPlanProgressRepository : ITeachingPlanProgressRepository
 
         return progressRecords.Average(p => p.OverallProgressPercentage);
     }
+
+    public async Task<int> GetTotalCoverageCountForChapterByGroupAsync(int chapterId, int groupId, CancellationToken cancellationToken = default)
+    {
+        return await _context.TeachingPlanProgresses
+            .Where(p => p.SubTopic.ChapterId == chapterId && p.StudentGroupId == groupId)
+            .SumAsync(p => p.SessionsCount, cancellationToken);
+    }
+
+    public async Task<double> GetAverageProgressForChapterByGroupAsync(int chapterId, int groupId, CancellationToken cancellationToken = default)
+    {
+        var progressRecords = await _context.TeachingPlanProgresses
+            .Where(p => p.SubTopic.ChapterId == chapterId && p.StudentGroupId == groupId && p.SessionsCount > 0)
+            .ToListAsync(cancellationToken);
+
+        if (!progressRecords.Any())
+            return 0;
+
+        return progressRecords.Average(p => p.OverallProgressPercentage);
+    }
+
+    public async Task<int> GetCoverageCountForSubTopicByGroupAsync(int subtopicId, int groupId, CancellationToken cancellationToken = default)
+    {
+        return await _context.TeachingPlanProgresses
+            .Where(p => p.SubTopicId == subtopicId && p.StudentGroupId == groupId)
+            .SumAsync(p => p.SessionsCount, cancellationToken);
+    }
+
+    public async Task<double> GetAverageProgressForSubTopicByGroupAsync(int subtopicId, int groupId, CancellationToken cancellationToken = default)
+    {
+        var progressRecords = await _context.TeachingPlanProgresses
+            .Where(p => p.SubTopicId == subtopicId && p.StudentGroupId == groupId && p.SessionsCount > 0)
+            .ToListAsync(cancellationToken);
+
+        if (!progressRecords.Any())
+            return 0;
+
+        return progressRecords.Average(p => p.OverallProgressPercentage);
+    }
 }

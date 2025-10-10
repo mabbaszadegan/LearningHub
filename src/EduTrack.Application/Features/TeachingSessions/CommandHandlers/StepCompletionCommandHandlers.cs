@@ -32,18 +32,7 @@ public class SaveStepCompletionCommandHandler : IRequestHandler<SaveStepCompleti
                 return Result<bool>.Failure("جلسه یافت نشد.");
             }
 
-            // Update session report with step completion data
-            var stepCompletions = string.IsNullOrEmpty(sessionReport.StepCompletionsJson) 
-                ? new Dictionary<int, string>() 
-                : JsonConvert.DeserializeObject<Dictionary<int, string>>(sessionReport.StepCompletionsJson) ?? new Dictionary<int, string>();
-
-            stepCompletions[request.StepNumber] = request.CompletionData;
-
-            var jsonSettings = new JsonSerializerSettings
-            {
-                ContractResolver = new CamelCasePropertyNamesContractResolver()
-            };
-            sessionReport.StepCompletionsJson = JsonConvert.SerializeObject(stepCompletions, jsonSettings);
+            // Update session report step tracking
             sessionReport.CurrentStep = request.IsCompleted ? request.StepNumber + 1 : request.StepNumber;
             sessionReport.IsCompleted = request.IsCompleted && request.StepNumber >= 3; // Assuming 3 steps total
             sessionReport.UpdatedAt = DateTimeOffset.UtcNow;
@@ -122,17 +111,7 @@ public class SaveAttendanceStepCommandHandler : IRequestHandler<SaveAttendanceSt
             }
 
             // Update session report
-            var jsonSettings = new JsonSerializerSettings
-            {
-                ContractResolver = new CamelCasePropertyNamesContractResolver()
-            };
-            var completionData = JsonConvert.SerializeObject(request.AttendanceData, jsonSettings);
-            var stepCompletions = string.IsNullOrEmpty(sessionReport.StepCompletionsJson) 
-                ? new Dictionary<int, string>() 
-                : JsonConvert.DeserializeObject<Dictionary<int, string>>(sessionReport.StepCompletionsJson) ?? new Dictionary<int, string>();
-
-            stepCompletions[1] = completionData; // Step 1 is attendance
-            sessionReport.StepCompletionsJson = JsonConvert.SerializeObject(stepCompletions, jsonSettings);
+            // Update session report step tracking
             sessionReport.CurrentStep = 1;
             sessionReport.UpdatedAt = DateTimeOffset.UtcNow;
 
@@ -208,17 +187,7 @@ public class SaveFeedbackStepCommandHandler : IRequestHandler<SaveFeedbackStepCo
             }
 
             // Update session report
-            var jsonSettings = new JsonSerializerSettings
-            {
-                ContractResolver = new CamelCasePropertyNamesContractResolver()
-            };
-            var completionData = JsonConvert.SerializeObject(request.FeedbackData, jsonSettings);
-            var stepCompletions = string.IsNullOrEmpty(sessionReport.StepCompletionsJson) 
-                ? new Dictionary<int, string>() 
-                : JsonConvert.DeserializeObject<Dictionary<int, string>>(sessionReport.StepCompletionsJson) ?? new Dictionary<int, string>();
-
-            stepCompletions[2] = completionData; // Step 2 is feedback
-            sessionReport.StepCompletionsJson = JsonConvert.SerializeObject(stepCompletions, jsonSettings);
+            // Update session report step tracking
             sessionReport.CurrentStep = 2; 
             sessionReport.UpdatedAt = DateTimeOffset.UtcNow;
 
@@ -313,17 +282,7 @@ public class SaveTopicCoverageStepCommandHandler : IRequestHandler<SaveTopicCove
             }
 
             // Update session report
-            var jsonSettings = new JsonSerializerSettings
-            {
-                ContractResolver = new CamelCasePropertyNamesContractResolver()
-            };
-            var completionData = JsonConvert.SerializeObject(request.TopicCoverageData, jsonSettings);
-            var stepCompletions = string.IsNullOrEmpty(sessionReport.StepCompletionsJson) 
-                ? new Dictionary<int, string>() 
-                : JsonConvert.DeserializeObject<Dictionary<int, string>>(sessionReport.StepCompletionsJson) ?? new Dictionary<int, string>();
-
-            stepCompletions[3] = completionData; // Step 3 is topic coverage
-            sessionReport.StepCompletionsJson = JsonConvert.SerializeObject(stepCompletions, jsonSettings);
+            // Update session report step tracking
             sessionReport.CurrentStep = 3; 
             sessionReport.IsCompleted = true;
             sessionReport.UpdatedAt = DateTimeOffset.UtcNow;

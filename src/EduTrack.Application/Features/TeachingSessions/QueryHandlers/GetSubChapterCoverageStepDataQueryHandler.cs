@@ -81,7 +81,6 @@ public class GetSubChapterCoverageStepDataQueryHandler : IRequestHandler<GetSubC
                                 WasPlanned = existingCoverage?.WasPlanned ?? false,
                                 WasCovered = existingCoverage?.WasCovered ?? false,
                                 CoveragePercentage = existingCoverage?.CoveragePercentage ?? 0,
-                                CoverageStatus = existingCoverage?.CoverageStatus ?? 0,
                                 TeacherNotes = existingCoverage?.TeacherNotes,
                                 Challenges = existingCoverage?.Challenges
                             };

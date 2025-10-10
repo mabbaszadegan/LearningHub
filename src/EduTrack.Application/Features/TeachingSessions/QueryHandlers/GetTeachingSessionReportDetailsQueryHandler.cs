@@ -83,54 +83,48 @@ public class GetTeachingSessionReportDetailsQueryHandler : IRequestHandler<GetTe
         var statsJson = string.Empty;
         var attachmentsJson = string.Empty;
         
-        // Also try to get data from step completions if available
-        if (!string.IsNullOrEmpty(sessionReport.StepCompletionsJson))
+        // Generate stats from related tables
+        var attendanceStats = new
         {
-            try
-            {
-                var stepCompletions = JsonConvert.DeserializeObject<Dictionary<int, string>>(sessionReport.StepCompletionsJson);
-                if (stepCompletions != null)
-                {
-                    // Get topics from step completions if not already available
-                    if (string.IsNullOrEmpty(topicsJson) && stepCompletions.ContainsKey(1))
-                    {
-                        var step1Data = JsonConvert.DeserializeObject<Dictionary<string, object>>(stepCompletions[1]);
-                        if (step1Data != null && step1Data.ContainsKey("topics"))
-                        {
-                            topicsJson = step1Data["topics"]?.ToString() ?? string.Empty;
-                        }
-                    }
-                    
-                    // Get stats from step completions if not already available
-                    if (string.IsNullOrEmpty(statsJson))
-                    {
-                        foreach (var step in stepCompletions)
-                        {
-                            if (step.Value.Contains("stats") || step.Value.Contains("summary"))
-                            {
-                                statsJson = step.Value;
-                                break;
-                            }
-                        }
-                    }
-                    
-                    // Get attachments from step completions if not already available
-                    if (string.IsNullOrEmpty(attachmentsJson) && stepCompletions.ContainsKey(1))
-                    {
-                        var step1Data = JsonConvert.DeserializeObject<Dictionary<string, object>>(stepCompletions[1]);
-                        if (step1Data != null && step1Data.ContainsKey("attachments"))
-                        {
-                            attachmentsJson = step1Data["attachments"]?.ToString() ?? string.Empty;
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                // Log error but continue with existing values
-                Console.WriteLine($"Error parsing step completions: {ex.Message}");
-            }
-        }
+            totalStudents = sessionReport.Attendance.Count,
+            presentCount = sessionReport.Attendance.Count(a => a.Status == AttendanceStatus.Present),
+            absentCount = sessionReport.Attendance.Count(a => a.Status == AttendanceStatus.Absent),
+            participationAverage = sessionReport.Attendance.Where(a => a.ParticipationScore.HasValue).Any() 
+                ? sessionReport.Attendance.Where(a => a.ParticipationScore.HasValue).Average(a => a.ParticipationScore!.Value) 
+                : 0
+        };
+
+        var coverageStats = new
+        {
+            totalTopics = sessionReport.TopicCoverages.Count,
+            coveredTopics = sessionReport.TopicCoverages.Count(tc => tc.WasCovered),
+            averageCoveragePercentage = sessionReport.TopicCoverages.Any() 
+                ? sessionReport.TopicCoverages.Average(tc => tc.CoveragePercentage) 
+                : 0
+        };
+
+        var executionStats = new
+        {
+            totalGroups = sessionReport.Executions.Count,
+            averageUnderstandingLevel = sessionReport.Executions.Any() 
+                ? sessionReport.Executions.Average(e => e.UnderstandingLevel) 
+                : 0,
+            averageParticipationLevel = sessionReport.Executions.Any() 
+                ? sessionReport.Executions.Average(e => e.ParticipationLevel) 
+                : 0,
+            averageTeacherSatisfaction = sessionReport.Executions.Any() 
+                ? sessionReport.Executions.Average(e => e.TeacherSatisfaction) 
+                : 0
+        };
+
+        var combinedStats = new
+        {
+            attendance = attendanceStats,
+            coverage = coverageStats,
+            execution = executionStats
+        };
+
+        statsJson = JsonConvert.SerializeObject(combinedStats, jsonSettings);
 
         var sessionReportDto = new TeachingSessionReportDto
         {

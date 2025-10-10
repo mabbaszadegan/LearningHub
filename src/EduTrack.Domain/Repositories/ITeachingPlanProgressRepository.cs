@@ -19,4 +19,10 @@ public interface ITeachingPlanProgressRepository
     Task<double> GetAverageProgressForChapterAsync(int chapterId, CancellationToken cancellationToken = default);
     Task<int> GetCoverageCountForSubTopicAsync(int subtopicId, CancellationToken cancellationToken = default);
     Task<double> GetAverageProgressForSubTopicAsync(int subtopicId, CancellationToken cancellationToken = default);
+    
+    // Group-based coverage statistics methods
+    Task<int> GetTotalCoverageCountForChapterByGroupAsync(int chapterId, int groupId, CancellationToken cancellationToken = default);
+    Task<double> GetAverageProgressForChapterByGroupAsync(int chapterId, int groupId, CancellationToken cancellationToken = default);
+    Task<int> GetCoverageCountForSubTopicByGroupAsync(int subtopicId, int groupId, CancellationToken cancellationToken = default);
+    Task<double> GetAverageProgressForSubTopicByGroupAsync(int subtopicId, int groupId, CancellationToken cancellationToken = default);
 }

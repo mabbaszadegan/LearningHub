@@ -43,61 +43,65 @@ public class SaveSubChapterCoverageStepCommandHandler : IRequestHandler<SaveSubC
             var existingCoverages = await _topicCoverageRepository.GetBySessionIdAsync(request.SessionId, cancellationToken);
             var subChapterCoverages = existingCoverages.Where(ec => ec.TopicType == "SubTopic").ToList();
 
-            // Collect all group IDs from the current request
-            var requestGroupIds = request.CoverageData.GroupCoverages.Select(gc => gc.GroupId).ToHashSet();
-
-            // Delete only subchapter coverages for groups that are in the current request
-            var coveragesToDelete = subChapterCoverages.Where(c => requestGroupIds.Contains(c.StudentGroupId)).ToList();
-            foreach (var coverage in coveragesToDelete)
-            {
-                await _topicCoverageRepository.DeleteAsync(coverage, cancellationToken);
-            }
-
-            // Add new subchapter coverage records only for subchapters that have data
+            // Process each group coverage
             foreach (var groupCoverage in request.CoverageData.GroupCoverages)
             {
                 foreach (var subChapterCoverage in groupCoverage.SubChapterCoverages)
                 {
-                    // Only save if user has provided data (checked, has percentage, status, or notes)
+                    // Find existing coverage for this specific group and subchapter
+                    var existingCoverage = subChapterCoverages.FirstOrDefault(c => 
+                        c.StudentGroupId == groupCoverage.GroupId && 
+                        c.TopicId == subChapterCoverage.SubChapterId);
+
+                    // Only save if user has provided data (checked, has percentage, or notes)
                     if (subChapterCoverage.WasCovered ||
                         subChapterCoverage.CoveragePercentage > 0 ||
-                        subChapterCoverage.CoverageStatus > 0 ||
                         !string.IsNullOrWhiteSpace(subChapterCoverage.TeacherNotes) ||
                         !string.IsNullOrWhiteSpace(subChapterCoverage.Challenges))
                     {
-                        var coverage = new TeachingSessionTopicCoverage
+                        if (existingCoverage != null)
                         {
-                            TeachingSessionReportId = request.SessionId,
-                            StudentGroupId = groupCoverage.GroupId,
-                            TopicType = "SubTopic",
-                            TopicId = subChapterCoverage.SubChapterId,
-                            TopicTitle = subChapterCoverage.SubChapterTitle,
-                            WasPlanned = subChapterCoverage.WasPlanned,
-                            WasCovered = subChapterCoverage.WasCovered,
-                            CoveragePercentage = subChapterCoverage.CoveragePercentage,
-                            CoverageStatus = subChapterCoverage.CoverageStatus,
-                            TeacherNotes = subChapterCoverage.TeacherNotes,
-                            Challenges = subChapterCoverage.Challenges,
-                            CreatedAt = DateTimeOffset.UtcNow
-                        };
+                            // Update existing coverage
+                            existingCoverage.WasPlanned = subChapterCoverage.WasPlanned;
+                            existingCoverage.WasCovered = subChapterCoverage.WasCovered;
+                            existingCoverage.CoveragePercentage = subChapterCoverage.CoveragePercentage;
+                            existingCoverage.TeacherNotes = subChapterCoverage.TeacherNotes;
+                            existingCoverage.Challenges = subChapterCoverage.Challenges;
 
-                        await _topicCoverageRepository.AddAsync(coverage, cancellationToken);
+                            await _topicCoverageRepository.UpdateAsync(existingCoverage, cancellationToken);
+                        }
+                        else
+                        {
+                            // Create new coverage
+                            var coverage = new TeachingSessionTopicCoverage
+                            {
+                                TeachingSessionReportId = request.SessionId,
+                                StudentGroupId = groupCoverage.GroupId,
+                                TopicType = "SubTopic",
+                                TopicId = subChapterCoverage.SubChapterId,
+                                TopicTitle = subChapterCoverage.SubChapterTitle,
+                                WasPlanned = subChapterCoverage.WasPlanned,
+                                WasCovered = subChapterCoverage.WasCovered,
+                                CoveragePercentage = subChapterCoverage.CoveragePercentage,
+                                CoverageStatus = 0, // Default status
+                                TeacherNotes = subChapterCoverage.TeacherNotes,
+                                Challenges = subChapterCoverage.Challenges,
+                                CreatedAt = DateTimeOffset.UtcNow
+                            };
+
+                            await _topicCoverageRepository.AddAsync(coverage, cancellationToken);
+                        }
+                    }
+                    else if (existingCoverage != null)
+                    {
+                        // If no data provided and existing coverage exists, delete it
+                        await _topicCoverageRepository.DeleteAsync(existingCoverage, cancellationToken);
                     }
                 }
             }
 
             // Update session report
-            var jsonSettings = new JsonSerializerSettings
-            {
-                ContractResolver = new CamelCasePropertyNamesContractResolver()
-            };
-            var completionData = JsonConvert.SerializeObject(request.CoverageData, jsonSettings);
-            var stepCompletions = string.IsNullOrEmpty(sessionReport.StepCompletionsJson)
-                ? new Dictionary<int, string>()
-                : JsonConvert.DeserializeObject<Dictionary<int, string>>(sessionReport.StepCompletionsJson) ?? new Dictionary<int, string>();
-
-            stepCompletions[3] = completionData; // Step 3 is subchapter coverage
-            sessionReport.StepCompletionsJson = JsonConvert.SerializeObject(stepCompletions, jsonSettings);
+            // Update session report step tracking
             sessionReport.CurrentStep = 3; // All steps completed
             sessionReport.IsCompleted = true;
             sessionReport.UpdatedAt = DateTimeOffset.UtcNow;
@@ -125,8 +129,7 @@ public class SaveSubChapterCoverageStepCommandHandler : IRequestHandler<SaveSubC
             {
                 // Only update progress for subchapters that were actually covered
                 if (subChapterCoverage.WasCovered ||
-                    subChapterCoverage.CoveragePercentage > 0 ||
-                    subChapterCoverage.CoverageStatus > 0)
+                    subChapterCoverage.CoveragePercentage > 0)
                 {
                     // Get or create TeachingPlanProgress record
                     var progress = await _teachingPlanProgressRepository.GetByPlanSubTopicAndGroupAsync(
@@ -143,7 +146,7 @@ public class SaveSubChapterCoverageStepCommandHandler : IRequestHandler<SaveSubC
                             TeachingPlanId = teachingPlanId,
                             SubTopicId = subChapterCoverage.SubChapterId,
                             StudentGroupId = groupCoverage.GroupId,
-                            OverallStatus = CalculateOverallStatus(subChapterCoverage.CoverageStatus),
+                            OverallStatus = CalculateOverallStatus(0), // Default status
                             FirstTaughtDate = DateTimeOffset.UtcNow,
                             LastTaughtDate = DateTimeOffset.UtcNow,
                             SessionsCount = 1,
@@ -159,7 +162,7 @@ public class SaveSubChapterCoverageStepCommandHandler : IRequestHandler<SaveSubC
                         // Update existing progress record
                         progress.LastTaughtDate = DateTimeOffset.UtcNow;
                         progress.SessionsCount = await CalculateSessionsCount(teachingPlanId, subChapterCoverage.SubChapterId, groupCoverage.GroupId, cancellationToken);
-                        progress.OverallStatus = CalculateOverallStatus(subChapterCoverage.CoverageStatus);
+                        progress.OverallStatus = CalculateOverallStatus(0); // Default status
                         progress.OverallProgressPercentage = Math.Max(progress.OverallProgressPercentage, subChapterCoverage.CoveragePercentage);
                         progress.UpdatedAt = DateTimeOffset.UtcNow;
 
