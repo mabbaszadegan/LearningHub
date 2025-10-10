@@ -124,7 +124,7 @@ public class SaveAttendanceStepCommandHandler : IRequestHandler<SaveAttendanceSt
 
             stepCompletions[1] = completionData; // Step 1 is attendance
             sessionReport.StepCompletionsJson = JsonSerializer.Serialize(stepCompletions);
-            sessionReport.CurrentStep = 2; // Move to next step
+            sessionReport.CurrentStep = 1;
             sessionReport.UpdatedAt = DateTimeOffset.UtcNow;
 
             await _sessionReportRepository.UpdateAsync(sessionReport, cancellationToken);
@@ -206,7 +206,7 @@ public class SaveFeedbackStepCommandHandler : IRequestHandler<SaveFeedbackStepCo
 
             stepCompletions[2] = completionData; // Step 2 is feedback
             sessionReport.StepCompletionsJson = JsonSerializer.Serialize(stepCompletions);
-            sessionReport.CurrentStep = 3; // Move to next step
+            sessionReport.CurrentStep = 2; 
             sessionReport.UpdatedAt = DateTimeOffset.UtcNow;
 
             await _sessionReportRepository.UpdateAsync(sessionReport, cancellationToken);
@@ -307,7 +307,7 @@ public class SaveTopicCoverageStepCommandHandler : IRequestHandler<SaveTopicCove
 
             stepCompletions[3] = completionData; // Step 3 is topic coverage
             sessionReport.StepCompletionsJson = JsonSerializer.Serialize(stepCompletions);
-            sessionReport.CurrentStep = 4; // All steps completed
+            sessionReport.CurrentStep = 3; 
             sessionReport.IsCompleted = true;
             sessionReport.UpdatedAt = DateTimeOffset.UtcNow;
 
