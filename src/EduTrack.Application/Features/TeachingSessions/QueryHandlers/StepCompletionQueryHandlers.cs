@@ -3,7 +3,8 @@ using EduTrack.Application.Common.Models.TeachingSessions;
 using EduTrack.Application.Features.TeachingSessions.Commands;
 using EduTrack.Domain.Repositories;
 using MediatR;
-using System.Text.Json;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 
 namespace EduTrack.Application.Features.TeachingSessions.QueryHandlers;
 
@@ -45,7 +46,7 @@ public class GetSessionCompletionProgressQueryHandler : IRequestHandler<GetSessi
             // Parse step completions
             var stepCompletions = string.IsNullOrEmpty(sessionReport.StepCompletionsJson) 
                 ? new Dictionary<int, string>() 
-                : JsonSerializer.Deserialize<Dictionary<int, string>>(sessionReport.StepCompletionsJson) ?? new Dictionary<int, string>();
+                : JsonConvert.DeserializeObject<Dictionary<int, string>>(sessionReport.StepCompletionsJson) ?? new Dictionary<int, string>();
 
             foreach (var step in steps)
             {
@@ -96,7 +97,7 @@ public class GetStepCompletionDataQueryHandler : IRequestHandler<GetStepCompleti
             // Parse step completions
             var stepCompletions = string.IsNullOrEmpty(sessionReport.StepCompletionsJson) 
                 ? new Dictionary<int, string>() 
-                : JsonSerializer.Deserialize<Dictionary<int, string>>(sessionReport.StepCompletionsJson) ?? new Dictionary<int, string>();
+                : JsonConvert.DeserializeObject<Dictionary<int, string>>(sessionReport.StepCompletionsJson) ?? new Dictionary<int, string>();
 
             var stepData = new StepCompletionDataDto
             {

@@ -8,7 +8,8 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using System.Text.Json;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 using EduTrack.Application.Common.Models.TeachingPlans;
 
 namespace EduTrack.WebApp.Areas.Student.Controllers;
@@ -135,17 +136,22 @@ public class AgendaController : Controller
     {
         try
         {
+            var jsonSettings = new JsonSerializerSettings
+            {
+                ContractResolver = new CamelCasePropertyNamesContractResolver()
+            };
+            
             return type switch
             {
-                ScheduleItemType.Reminder => JsonSerializer.Deserialize<ReminderContent>(contentJson),
-                ScheduleItemType.Writing => JsonSerializer.Deserialize<WritingContent>(contentJson),
-                ScheduleItemType.Audio => JsonSerializer.Deserialize<AudioContent>(contentJson),
-                ScheduleItemType.GapFill => JsonSerializer.Deserialize<GapFillContent>(contentJson),
-                ScheduleItemType.MultipleChoice => JsonSerializer.Deserialize<MultipleChoiceContent>(contentJson),
-                ScheduleItemType.Match => JsonSerializer.Deserialize<MatchContent>(contentJson),
-                ScheduleItemType.ErrorFinding => JsonSerializer.Deserialize<ErrorFindingContent>(contentJson),
-                ScheduleItemType.CodeExercise => JsonSerializer.Deserialize<CodeExerciseContent>(contentJson),
-                ScheduleItemType.Quiz => JsonSerializer.Deserialize<QuizContent>(contentJson),
+                ScheduleItemType.Reminder => JsonConvert.DeserializeObject<ReminderContent>(contentJson, jsonSettings),
+                ScheduleItemType.Writing => JsonConvert.DeserializeObject<WritingContent>(contentJson, jsonSettings),
+                ScheduleItemType.Audio => JsonConvert.DeserializeObject<AudioContent>(contentJson, jsonSettings),
+                ScheduleItemType.GapFill => JsonConvert.DeserializeObject<GapFillContent>(contentJson, jsonSettings),
+                ScheduleItemType.MultipleChoice => JsonConvert.DeserializeObject<MultipleChoiceContent>(contentJson, jsonSettings),
+                ScheduleItemType.Match => JsonConvert.DeserializeObject<MatchContent>(contentJson, jsonSettings),
+                ScheduleItemType.ErrorFinding => JsonConvert.DeserializeObject<ErrorFindingContent>(contentJson, jsonSettings),
+                ScheduleItemType.CodeExercise => JsonConvert.DeserializeObject<CodeExerciseContent>(contentJson, jsonSettings),
+                ScheduleItemType.Quiz => JsonConvert.DeserializeObject<QuizContent>(contentJson, jsonSettings),
                 _ => null
             };
         }

@@ -87,37 +87,7 @@ public class GetSubChapterCoverageDataQueryHandler : IRequestHandler<GetSubChapt
                         StudentEmail = m.Student.Email ?? string.Empty
                     }).ToList()
                 }).ToList(),
-                Chapters = (await Task.WhenAll(chapters.Select(async c => new EduTrack.Application.Common.Models.Courses.ChapterDto
-                {
-                    Id = c.Id,
-                    CourseId = c.CourseId,
-                    Title = c.Title,
-                    Description = c.Description,
-                    Objective = c.Objective,
-                    IsActive = c.IsActive,
-                    Order = c.Order,
-                    CreatedAt = c.CreatedAt,
-                    UpdatedAt = c.UpdatedAt,
-                    SubChapterCount = c.SubChapters.Count,
-                    TotalCoverageCount = await _progressRepository.GetTotalCoverageCountForChapterAsync(c.Id, cancellationToken),
-                    AverageProgressPercentage = await _progressRepository.GetAverageProgressForChapterAsync(c.Id, cancellationToken),
-                    SubChapters = (await Task.WhenAll(c.SubChapters.OrderBy(sc => sc.Order).Select(async sc => new EduTrack.Application.Common.Models.Courses.SubChapterDto
-                    {
-                        Id = sc.Id,
-                        ChapterId = sc.ChapterId,
-                        Title = sc.Title,
-                        Description = sc.Description,
-                        Objective = sc.Objective,
-                        IsActive = sc.IsActive,
-                        Order = sc.Order,
-                        CreatedAt = sc.CreatedAt,
-                        UpdatedAt = sc.UpdatedAt,
-                        ContentCount = 0, // We don't need this for coverage
-                        ChapterTitle = c.Title,
-                        CoverageCount = await _progressRepository.GetCoverageCountForSubTopicAsync(sc.Id, cancellationToken),
-                        AverageProgressPercentage = await _progressRepository.GetAverageProgressForSubTopicAsync(sc.Id, cancellationToken)
-                    }))).ToList()
-                }))).ToList(),
+                Chapters = new List<EduTrack.Application.Common.Models.Courses.ChapterDto>(),
                 ExistingCoverages = existingCoverages
                     .Where(tc => tc.TopicType == "SubTopic")
                     .Select(tc => new SubChapterCoverageDto
@@ -138,6 +108,54 @@ public class GetSubChapterCoverageDataQueryHandler : IRequestHandler<GetSubChapt
                         CreatedAt = tc.CreatedAt
                     }).ToList()
             };
+
+            // Populate chapters sequentially to avoid DbContext concurrency issues
+            foreach (var chapter in chapters)
+            {
+                var totalCoverageCount = await _progressRepository.GetTotalCoverageCountForChapterAsync(chapter.Id, cancellationToken);
+                var averageProgressPercentage = await _progressRepository.GetAverageProgressForChapterAsync(chapter.Id, cancellationToken);
+
+                var subChapters = new List<EduTrack.Application.Common.Models.Courses.SubChapterDto>();
+                foreach (var subChapter in chapter.SubChapters.OrderBy(sc => sc.Order))
+                {
+                    var coverageCount = await _progressRepository.GetCoverageCountForSubTopicAsync(subChapter.Id, cancellationToken);
+                    var subChapterAverageProgress = await _progressRepository.GetAverageProgressForSubTopicAsync(subChapter.Id, cancellationToken);
+
+                    subChapters.Add(new EduTrack.Application.Common.Models.Courses.SubChapterDto
+                    {
+                        Id = subChapter.Id,
+                        ChapterId = subChapter.ChapterId,
+                        Title = subChapter.Title,
+                        Description = subChapter.Description,
+                        Objective = subChapter.Objective,
+                        IsActive = subChapter.IsActive,
+                        Order = subChapter.Order,
+                        CreatedAt = subChapter.CreatedAt,
+                        UpdatedAt = subChapter.UpdatedAt,
+                        ContentCount = 0, // We don't need this for coverage
+                        ChapterTitle = chapter.Title,
+                        CoverageCount = coverageCount,
+                        AverageProgressPercentage = subChapterAverageProgress
+                    });
+                }
+
+                result.Chapters.Add(new EduTrack.Application.Common.Models.Courses.ChapterDto
+                {
+                    Id = chapter.Id,
+                    CourseId = chapter.CourseId,
+                    Title = chapter.Title,
+                    Description = chapter.Description,
+                    Objective = chapter.Objective,
+                    IsActive = chapter.IsActive,
+                    Order = chapter.Order,
+                    CreatedAt = chapter.CreatedAt,
+                    UpdatedAt = chapter.UpdatedAt,
+                    SubChapterCount = chapter.SubChapters.Count,
+                    TotalCoverageCount = totalCoverageCount,
+                    AverageProgressPercentage = averageProgressPercentage,
+                    SubChapters = subChapters
+                });
+            }
 
             // Fill chapter titles for existing coverages
             foreach (var coverage in result.ExistingCoverages)

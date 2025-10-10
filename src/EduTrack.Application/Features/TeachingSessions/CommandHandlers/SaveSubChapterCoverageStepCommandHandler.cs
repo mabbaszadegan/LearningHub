@@ -4,7 +4,8 @@ using EduTrack.Application.Features.TeachingSessions.Commands;
 using EduTrack.Domain.Entities;
 using EduTrack.Domain.Repositories;
 using MediatR;
-using System.Text.Json;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 
 namespace EduTrack.Application.Features.TeachingSessions.CommandHandlers;
 
@@ -86,13 +87,17 @@ public class SaveSubChapterCoverageStepCommandHandler : IRequestHandler<SaveSubC
             }
 
             // Update session report
-            var completionData = JsonSerializer.Serialize(request.CoverageData);
+            var jsonSettings = new JsonSerializerSettings
+            {
+                ContractResolver = new CamelCasePropertyNamesContractResolver()
+            };
+            var completionData = JsonConvert.SerializeObject(request.CoverageData, jsonSettings);
             var stepCompletions = string.IsNullOrEmpty(sessionReport.StepCompletionsJson)
                 ? new Dictionary<int, string>()
-                : JsonSerializer.Deserialize<Dictionary<int, string>>(sessionReport.StepCompletionsJson) ?? new Dictionary<int, string>();
+                : JsonConvert.DeserializeObject<Dictionary<int, string>>(sessionReport.StepCompletionsJson) ?? new Dictionary<int, string>();
 
             stepCompletions[3] = completionData; // Step 3 is subchapter coverage
-            sessionReport.StepCompletionsJson = JsonSerializer.Serialize(stepCompletions);
+            sessionReport.StepCompletionsJson = JsonConvert.SerializeObject(stepCompletions, jsonSettings);
             sessionReport.CurrentStep = 3; // All steps completed
             sessionReport.IsCompleted = true;
             sessionReport.UpdatedAt = DateTimeOffset.UtcNow;

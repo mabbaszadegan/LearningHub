@@ -5,6 +5,8 @@ using EduTrack.Application.Features.TeachingSessions.Queries;
 using EduTrack.Domain.Enums;
 using EduTrack.Domain.Repositories;
 using MediatR;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 
 namespace EduTrack.Application.Features.TeachingSessions.QueryHandlers;
 
@@ -71,7 +73,11 @@ public class GetTeachingSessionReportDetailsQueryHandler : IRequestHandler<GetTe
             .Distinct()
             .ToList();
         
-        var topicsJson = topics.Any() ? System.Text.Json.JsonSerializer.Serialize(topics) : string.Empty;
+        var jsonSettings = new JsonSerializerSettings
+        {
+            ContractResolver = new CamelCasePropertyNamesContractResolver()
+        };
+        var topicsJson = topics.Any() ? JsonConvert.SerializeObject(topics, jsonSettings) : string.Empty;
         
         // Parse step completions to get additional session summary data
         var statsJson = string.Empty;
@@ -82,13 +88,13 @@ public class GetTeachingSessionReportDetailsQueryHandler : IRequestHandler<GetTe
         {
             try
             {
-                var stepCompletions = System.Text.Json.JsonSerializer.Deserialize<Dictionary<int, string>>(sessionReport.StepCompletionsJson);
+                var stepCompletions = JsonConvert.DeserializeObject<Dictionary<int, string>>(sessionReport.StepCompletionsJson);
                 if (stepCompletions != null)
                 {
                     // Get topics from step completions if not already available
                     if (string.IsNullOrEmpty(topicsJson) && stepCompletions.ContainsKey(1))
                     {
-                        var step1Data = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(stepCompletions[1]);
+                        var step1Data = JsonConvert.DeserializeObject<Dictionary<string, object>>(stepCompletions[1]);
                         if (step1Data != null && step1Data.ContainsKey("topics"))
                         {
                             topicsJson = step1Data["topics"]?.ToString() ?? string.Empty;
@@ -111,7 +117,7 @@ public class GetTeachingSessionReportDetailsQueryHandler : IRequestHandler<GetTe
                     // Get attachments from step completions if not already available
                     if (string.IsNullOrEmpty(attachmentsJson) && stepCompletions.ContainsKey(1))
                     {
-                        var step1Data = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(stepCompletions[1]);
+                        var step1Data = JsonConvert.DeserializeObject<Dictionary<string, object>>(stepCompletions[1]);
                         if (step1Data != null && step1Data.ContainsKey("attachments"))
                         {
                             attachmentsJson = step1Data["attachments"]?.ToString() ?? string.Empty;

@@ -3,6 +3,8 @@ using EduTrack.Application.Common.Models.TeachingSessions;
 using EduTrack.Application.Features.TeachingSessions.Queries;
 using EduTrack.Domain.Repositories;
 using MediatR;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 
 namespace EduTrack.Application.Features.TeachingSessions.QueryHandlers;
 
@@ -45,7 +47,11 @@ public class GetPlannedItemsQueryHandler : IRequestHandler<GetPlannedItemsQuery,
 
         try
         {
-            return System.Text.Json.JsonSerializer.Deserialize<List<int>>(json) ?? new List<int>();
+            var jsonSettings = new JsonSerializerSettings
+            {
+                ContractResolver = new CamelCasePropertyNamesContractResolver()
+            };
+            return JsonConvert.DeserializeObject<List<int>>(json, jsonSettings) ?? new List<int>();
         }
         catch
         {
