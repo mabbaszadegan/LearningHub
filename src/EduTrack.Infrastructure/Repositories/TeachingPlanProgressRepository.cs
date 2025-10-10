@@ -78,4 +78,51 @@ public class TeachingPlanProgressRepository : ITeachingPlanProgressRepository
             _context.TeachingPlanProgresses.Remove(progress);
         }
     }
+
+    public async Task<IEnumerable<TeachingPlanProgress>> GetByChapterIdAsync(int chapterId, CancellationToken cancellationToken = default)
+    {
+        return await _context.TeachingPlanProgresses
+            .Include(p => p.SubTopic)
+            .Include(p => p.StudentGroup)
+            .Where(p => p.SubTopic.ChapterId == chapterId)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<int> GetTotalCoverageCountForChapterAsync(int chapterId, CancellationToken cancellationToken = default)
+    {
+        return await _context.TeachingPlanProgresses
+            .Where(p => p.SubTopic.ChapterId == chapterId)
+            .SumAsync(p => p.SessionsCount, cancellationToken);
+    }
+
+    public async Task<double> GetAverageProgressForChapterAsync(int chapterId, CancellationToken cancellationToken = default)
+    {
+        var progressRecords = await _context.TeachingPlanProgresses
+            .Where(p => p.SubTopic.ChapterId == chapterId && p.SessionsCount > 0)
+            .ToListAsync(cancellationToken);
+
+        if (!progressRecords.Any())
+            return 0;
+
+        return progressRecords.Average(p => p.OverallProgressPercentage);
+    }
+
+    public async Task<int> GetCoverageCountForSubTopicAsync(int subtopicId, CancellationToken cancellationToken = default)
+    {
+        return await _context.TeachingPlanProgresses
+            .Where(p => p.SubTopicId == subtopicId)
+            .SumAsync(p => p.SessionsCount, cancellationToken);
+    }
+
+    public async Task<double> GetAverageProgressForSubTopicAsync(int subtopicId, CancellationToken cancellationToken = default)
+    {
+        var progressRecords = await _context.TeachingPlanProgresses
+            .Where(p => p.SubTopicId == subtopicId && p.SessionsCount > 0)
+            .ToListAsync(cancellationToken);
+
+        if (!progressRecords.Any())
+            return 0;
+
+        return progressRecords.Average(p => p.OverallProgressPercentage);
+    }
 }

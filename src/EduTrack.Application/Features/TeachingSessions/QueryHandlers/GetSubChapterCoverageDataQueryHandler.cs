@@ -14,19 +14,22 @@ public class GetSubChapterCoverageDataQueryHandler : IRequestHandler<GetSubChapt
     private readonly IRepository<Domain.Entities.Chapter> _chapterRepository;
     private readonly IRepository<Domain.Entities.SubChapter> _subChapterRepository;
     private readonly ITeachingSessionTopicCoverageRepository _topicCoverageRepository;
+    private readonly ITeachingPlanProgressRepository _progressRepository;
 
     public GetSubChapterCoverageDataQueryHandler(
         IRepository<Domain.Entities.TeachingSessionReport> sessionRepository,
         IRepository<Domain.Entities.StudentGroup> groupRepository,
         IRepository<Domain.Entities.Chapter> chapterRepository,
         IRepository<Domain.Entities.SubChapter> subChapterRepository,
-        ITeachingSessionTopicCoverageRepository topicCoverageRepository)
+        ITeachingSessionTopicCoverageRepository topicCoverageRepository,
+        ITeachingPlanProgressRepository progressRepository)
     {
         _sessionRepository = sessionRepository;
         _groupRepository = groupRepository;
         _chapterRepository = chapterRepository;
         _subChapterRepository = subChapterRepository;
         _topicCoverageRepository = topicCoverageRepository;
+        _progressRepository = progressRepository;
     }
 
     public async Task<Result<SubChapterCoverageDataDto>> Handle(GetSubChapterCoverageDataQuery request, CancellationToken cancellationToken)
@@ -84,7 +87,7 @@ public class GetSubChapterCoverageDataQueryHandler : IRequestHandler<GetSubChapt
                         StudentEmail = m.Student.Email ?? string.Empty
                     }).ToList()
                 }).ToList(),
-                Chapters = chapters.Select(c => new EduTrack.Application.Common.Models.Courses.ChapterDto
+                Chapters = (await Task.WhenAll(chapters.Select(async c => new EduTrack.Application.Common.Models.Courses.ChapterDto
                 {
                     Id = c.Id,
                     CourseId = c.CourseId,
@@ -96,7 +99,9 @@ public class GetSubChapterCoverageDataQueryHandler : IRequestHandler<GetSubChapt
                     CreatedAt = c.CreatedAt,
                     UpdatedAt = c.UpdatedAt,
                     SubChapterCount = c.SubChapters.Count,
-                    SubChapters = c.SubChapters.OrderBy(sc => sc.Order).Select(sc => new EduTrack.Application.Common.Models.Courses.SubChapterDto
+                    TotalCoverageCount = await _progressRepository.GetTotalCoverageCountForChapterAsync(c.Id, cancellationToken),
+                    AverageProgressPercentage = await _progressRepository.GetAverageProgressForChapterAsync(c.Id, cancellationToken),
+                    SubChapters = (await Task.WhenAll(c.SubChapters.OrderBy(sc => sc.Order).Select(async sc => new EduTrack.Application.Common.Models.Courses.SubChapterDto
                     {
                         Id = sc.Id,
                         ChapterId = sc.ChapterId,
@@ -108,9 +113,11 @@ public class GetSubChapterCoverageDataQueryHandler : IRequestHandler<GetSubChapt
                         CreatedAt = sc.CreatedAt,
                         UpdatedAt = sc.UpdatedAt,
                         ContentCount = 0, // We don't need this for coverage
-                        ChapterTitle = c.Title
-                    }).ToList()
-                }).ToList(),
+                        ChapterTitle = c.Title,
+                        CoverageCount = await _progressRepository.GetCoverageCountForSubTopicAsync(sc.Id, cancellationToken),
+                        AverageProgressPercentage = await _progressRepository.GetAverageProgressForSubTopicAsync(sc.Id, cancellationToken)
+                    }))).ToList()
+                }))).ToList(),
                 ExistingCoverages = existingCoverages
                     .Where(tc => tc.TopicType == "SubTopic")
                     .Select(tc => new SubChapterCoverageDto

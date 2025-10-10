@@ -13,4 +13,8 @@ public class ChapterDto
     public DateTimeOffset UpdatedAt { get; set; }
     public int SubChapterCount { get; set; }
     public List<SubChapterDto> SubChapters { get; set; } = new();
+    
+    // Coverage statistics
+    public int TotalCoverageCount { get; set; }
+    public double AverageProgressPercentage { get; set; }
 }

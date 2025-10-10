@@ -1424,12 +1424,16 @@ class StepCompletionManager {
                                 <i class="fas fa-chevron-down chapter-toggle"></i>
                                 <h5 class="chapter-title">${chapter.title}</h5>
                                 <span class="chapter-subchapters-count">${chapter.subChapters.length} زیرمبحث</span>
+                                <div class="chapter-coverage-stats">
+                                    <span class="coverage-count">${chapter.totalCoverageCount || 0} بار پوشش داده شده</span>
+                                    <span class="average-progress">میانگین: ${Math.round(chapter.averageProgressPercentage || 0)}%</span>
+                                </div>
                             </div>
                             <div class="chapter-progress">
                                 <div class="progress-bar">
-                                    <div class="progress-fill" style="width: 0%"></div>
+                                    <div class="progress-fill" style="width: ${chapter.averageProgressPercentage || 0}%"></div>
                                 </div>
-                                <span class="progress-text">0%</span>
+                                <span class="progress-text">${Math.round(chapter.averageProgressPercentage || 0)}%</span>
                             </div>
                         </div>
                         <div class="subchapters-container" style="display: none;">
@@ -1441,6 +1445,10 @@ class StepCompletionManager {
                                             <div class="subchapter-text-content">
                                                 <h6 class="subchapter-title">${subChapter.title}</h6>
                                                 ${subChapter.description ? `<p class="subchapter-description">${subChapter.description}</p>` : ''}
+                                                <div class="subchapter-coverage-stats">
+                                                    <span class="coverage-count">${subChapter.coverageCount || 0} بار پوشش داده شده</span>
+                                                    <span class="average-progress">میانگین: ${Math.round(subChapter.averageProgressPercentage || 0)}%</span>
+                                                </div>
                                             </div>
                                         </div>
                                         <div class="subchapter-card-controls">
@@ -1824,7 +1832,7 @@ class StepCompletionManager {
         if (data) {
             const coverageData = JSON.parse(data);
             coverageData.groupCoverages.forEach(groupCoverage => {
-                groupCoverage.subChapterCoverages.forEach(coverage => {
+                        groupCoverage.subChapterCoverages.forEach(coverage => {
                     // Checkbox
                     const checkbox = $(`.coverage-checkbox[data-group-id="${groupCoverage.groupId}"][data-subchapter-id="${coverage.subChapterId}"]`);
                     if (checkbox.length) {
@@ -1856,7 +1864,6 @@ class StepCompletionManager {
                         challengesTextarea.val(coverage.challenges || '');
                     }
                 });
-                
                 
                 // Update tab progress
                 const tabIndex = this.groups.findIndex(g => g.id === groupCoverage.groupId);

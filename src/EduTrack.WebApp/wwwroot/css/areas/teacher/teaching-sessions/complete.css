@@ -426,6 +426,27 @@
     box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
 }
 
+/* Coverage Statistics Styles */
+.chapter-coverage-stats,
+.subchapter-coverage-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    margin-top: 0.5rem;
+    font-size: 0.75rem;
+    color: #6b7280;
+}
+
+.coverage-count {
+    font-weight: 500;
+    color: #059669;
+}
+
+.average-progress {
+    font-weight: 500;
+    color: #2563eb;
+}
+
 /* Responsive */
 @media (max-width: 767.98px) {
     .form-section {
@@ -453,5 +474,10 @@
     
     .group-checkboxes {
         grid-template-columns: 1fr;
+    }
+    
+    .chapter-coverage-stats,
+    .subchapter-coverage-stats {
+        font-size: 0.7rem;
     }
 }

@@ -14,4 +14,8 @@ public class SubChapterDto
     public int ContentCount { get; set; }
     public string ChapterTitle { get; set; } = string.Empty;
     public List<EducationalContentDto> EducationalContents { get; set; } = new();
+    
+    // Coverage statistics
+    public int CoverageCount { get; set; }
+    public double AverageProgressPercentage { get; set; }
 }

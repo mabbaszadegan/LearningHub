@@ -12,4 +12,11 @@ public interface ITeachingPlanProgressRepository
     Task AddAsync(TeachingPlanProgress progress, CancellationToken cancellationToken = default);
     Task UpdateAsync(TeachingPlanProgress progress, CancellationToken cancellationToken = default);
     Task DeleteAsync(int id, CancellationToken cancellationToken = default);
+    
+    // Coverage statistics methods
+    Task<IEnumerable<TeachingPlanProgress>> GetByChapterIdAsync(int chapterId, CancellationToken cancellationToken = default);
+    Task<int> GetTotalCoverageCountForChapterAsync(int chapterId, CancellationToken cancellationToken = default);
+    Task<double> GetAverageProgressForChapterAsync(int chapterId, CancellationToken cancellationToken = default);
+    Task<int> GetCoverageCountForSubTopicAsync(int subtopicId, CancellationToken cancellationToken = default);
+    Task<double> GetAverageProgressForSubTopicAsync(int subtopicId, CancellationToken cancellationToken = default);
 }
