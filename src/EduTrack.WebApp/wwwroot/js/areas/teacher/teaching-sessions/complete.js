@@ -1449,6 +1449,20 @@ class StepCompletionManager {
                                                     <span class="coverage-count">${subChapter.coverageCount || 0} بار پوشش داده شده</span>
                                                     <span class="average-progress">میانگین: ${Math.round(subChapter.averageProgressPercentage || 0)}%</span>
                                                 </div>
+                                                <div class="subchapter-existing-notes" id="existing-notes-${group.id}-${subChapter.id}" style="display: none;">
+                                                    <div class="existing-notes-content">
+                                                        <div class="existing-notes-section" id="existing-teacher-notes-${group.id}-${subChapter.id}" style="display: none;">
+                                                            <i class="fas fa-sticky-note"></i>
+                                                            <span class="notes-label">یادداشت:</span>
+                                                            <span class="notes-text"></span>
+                                                        </div>
+                                                        <div class="existing-challenges-section" id="existing-challenges-${group.id}-${subChapter.id}" style="display: none;">
+                                                            <i class="fas fa-exclamation-triangle"></i>
+                                                            <span class="challenges-label">چالش:</span>
+                                                            <span class="challenges-text"></span>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                         <div class="subchapter-card-controls">
@@ -1627,6 +1641,24 @@ class StepCompletionManager {
         // Text areas
         $(document).on('input', '.notes-textarea, .challenges-textarea', (e) => {
             this.updateSubChapterCoverageTabProgress(this.currentActiveTab);
+            
+            // Update existing notes display in header
+            const groupId = parseInt($(e.target).data('group-id'));
+            const subChapterId = parseInt($(e.target).data('subchapter-id'));
+            const isNotesTextarea = $(e.target).hasClass('notes-textarea');
+            const isChallengesTextarea = $(e.target).hasClass('challenges-textarea');
+            
+            if (isNotesTextarea || isChallengesTextarea) {
+                const notesTextarea = $(`.notes-textarea[data-group-id="${groupId}"][data-subchapter-id="${subChapterId}"]`);
+                const challengesTextarea = $(`.challenges-textarea[data-group-id="${groupId}"][data-subchapter-id="${subChapterId}"]`);
+                
+                this.showExistingNotesInHeader(
+                    groupId, 
+                    subChapterId, 
+                    notesTextarea.val(), 
+                    challengesTextarea.val()
+                );
+            }
         });
     }
 
@@ -1863,6 +1895,9 @@ class StepCompletionManager {
                     if (challengesTextarea.length) {
                         challengesTextarea.val(coverage.challenges || '');
                     }
+                    
+                    // Show existing notes and challenges in card header
+                    this.showExistingNotesInHeader(groupCoverage.groupId, coverage.subChapterId, coverage.teacherNotes, coverage.challenges);
                 });
                 
                 // Update tab progress
@@ -1874,6 +1909,41 @@ class StepCompletionManager {
             
             // Ensure all subchapters remain closed after loading data
             this.closeAllSubchapters();
+        }
+    }
+
+    showExistingNotesInHeader(groupId, subChapterId, teacherNotes, challenges) {
+        const existingNotesContainer = $(`#existing-notes-${groupId}-${subChapterId}`);
+        const teacherNotesSection = $(`#existing-teacher-notes-${groupId}-${subChapterId}`);
+        const challengesSection = $(`#existing-challenges-${groupId}-${subChapterId}`);
+        
+        if (existingNotesContainer.length === 0) return;
+        
+        let hasContent = false;
+        
+        // Show teacher notes if exists
+        if (teacherNotes && teacherNotes.trim()) {
+            teacherNotesSection.find('.notes-text').text(teacherNotes);
+            teacherNotesSection.show();
+            hasContent = true;
+        } else {
+            teacherNotesSection.hide();
+        }
+        
+        // Show challenges if exists
+        if (challenges && challenges.trim()) {
+            challengesSection.find('.challenges-text').text(challenges);
+            challengesSection.show();
+            hasContent = true;
+        } else {
+            challengesSection.hide();
+        }
+        
+        // Show container if there's any content
+        if (hasContent) {
+            existingNotesContainer.show();
+        } else {
+            existingNotesContainer.hide();
         }
     }
 }
