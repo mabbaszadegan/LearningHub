@@ -36,3 +36,21 @@ public record DeleteScheduleItemCommand(int Id) : IRequest<Result>;
 public record PublishScheduleItemCommand(int Id) : IRequest<Result>;
 
 public record UnpublishScheduleItemCommand(int Id) : IRequest<Result>;
+
+public record SaveScheduleItemStepCommand(
+    int? Id,
+    int TeachingPlanId,
+    int Step,
+    ScheduleItemType? Type,
+    string? Title,
+    string? Description,
+    DateTimeOffset? StartDate,
+    DateTimeOffset? DueDate,
+    bool? IsMandatory,
+    string? ContentJson,
+    decimal? MaxScore,
+    int? GroupId,
+    int? LessonId
+) : IRequest<Result<int>>;
+
+public record CompleteScheduleItemCommand(int Id) : IRequest<Result>;

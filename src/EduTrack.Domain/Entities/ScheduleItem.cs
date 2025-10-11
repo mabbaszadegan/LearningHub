@@ -21,6 +21,8 @@ public class ScheduleItem
     public string ContentJson { get; private set; } = string.Empty;
     public decimal? MaxScore { get; private set; }
     public int? SessionReportId { get; set; }
+    public int CurrentStep { get; private set; } = 1;
+    public bool IsCompleted { get; private set; } = false;
     public DateTimeOffset CreatedAt { get; private set; }
     public DateTimeOffset UpdatedAt { get; private set; }
 
@@ -113,6 +115,35 @@ public class ScheduleItem
             throw new ArgumentException("Max score cannot be negative", nameof(maxScore));
 
         MaxScore = maxScore;
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
+    public void UpdateCurrentStep(int step)
+    {
+        if (step < 1 || step > 4)
+            throw new ArgumentException("Step must be between 1 and 4", nameof(step));
+
+        CurrentStep = step;
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
+    public void MarkAsCompleted()
+    {
+        IsCompleted = true;
+        CurrentStep = 4;
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
+    public void MarkAsIncomplete()
+    {
+        IsCompleted = false;
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
+    public void UpdateAssignment(int? groupId, int? lessonId)
+    {
+        GroupId = groupId;
+        LessonId = lessonId;
         UpdatedAt = DateTimeOffset.UtcNow;
     }
 

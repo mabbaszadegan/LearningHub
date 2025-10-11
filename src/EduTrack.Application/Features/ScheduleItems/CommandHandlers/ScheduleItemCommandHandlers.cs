@@ -3,6 +3,7 @@ using EduTrack.Application.Features.ScheduleItems.Commands;
 using EduTrack.Domain.Entities;
 using EduTrack.Domain.Repositories;
 using MediatR;
+using Newtonsoft.Json;
 
 namespace EduTrack.Application.Features.ScheduleItems.CommandHandlers;
 
@@ -211,6 +212,161 @@ public class UnpublishScheduleItemCommandHandler : IRequestHandler<UnpublishSche
         catch (Exception ex)
         {
             return Result.Failure($"خطا در لغو انتشار آیتم آموزشی: {ex.Message}");
+        }
+    }
+}
+
+public class SaveScheduleItemStepCommandHandler : IRequestHandler<SaveScheduleItemStepCommand, Result<int>>
+{
+    private readonly IScheduleItemRepository _scheduleItemRepository;
+    private readonly ITeachingPlanRepository _teachingPlanRepository;
+    private readonly IUnitOfWork _unitOfWork;
+
+    public SaveScheduleItemStepCommandHandler(
+        IScheduleItemRepository scheduleItemRepository,
+        ITeachingPlanRepository teachingPlanRepository,
+        IUnitOfWork unitOfWork)
+    {
+        _scheduleItemRepository = scheduleItemRepository;
+        _teachingPlanRepository = teachingPlanRepository;
+        _unitOfWork = unitOfWork;
+    }
+
+    public async Task<Result<int>> Handle(SaveScheduleItemStepCommand request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            ScheduleItem scheduleItem;
+
+            if (request.Id.HasValue)
+            {
+                // Update existing item
+                var existingItem = await _scheduleItemRepository.GetByIdAsync(request.Id.Value, cancellationToken);
+                if (existingItem == null)
+                {
+                    return Result<int>.Failure("آیتم آموزشی یافت نشد.");
+                }
+                scheduleItem = existingItem;
+
+                // Update fields based on step
+                UpdateScheduleItemFromStep(scheduleItem, request);
+            }
+            else
+            {
+                // Create new item for first step
+                if (request.Step != 1)
+                {
+                    return Result<int>.Failure("برای ایجاد آیتم جدید باید از مرحله اول شروع کنید.");
+                }
+
+                if (!request.Type.HasValue || string.IsNullOrWhiteSpace(request.Title))
+                {
+                    return Result<int>.Failure("نوع آیتم و عنوان برای مرحله اول الزامی است.");
+                }
+
+                // Verify teaching plan exists
+                var teachingPlan = await _teachingPlanRepository.GetByIdAsync(request.TeachingPlanId, cancellationToken);
+                if (teachingPlan == null)
+                {
+                    return Result<int>.Failure("برنامه آموزشی یافت نشد.");
+                }
+
+                // Create with minimal required data
+                scheduleItem = ScheduleItem.Create(
+                    request.TeachingPlanId,
+                    request.Type.Value,
+                    request.Title,
+                    request.Description,
+                    request.StartDate ?? DateTimeOffset.UtcNow,
+                    request.DueDate,
+                    request.IsMandatory ?? false,
+                    request.ContentJson ?? "{}",
+                    request.MaxScore,
+                    request.GroupId,
+                    request.LessonId
+                );
+            }
+
+            // Update current step
+            scheduleItem.UpdateCurrentStep(request.Step);
+
+            if (request.Id.HasValue)
+            {
+                await _scheduleItemRepository.UpdateAsync(scheduleItem, cancellationToken);
+            }
+            else
+            {
+                await _scheduleItemRepository.AddAsync(scheduleItem, cancellationToken);
+            }
+
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            return Result<int>.Success(scheduleItem.Id);
+        }
+        catch (Exception ex)
+        {
+            return Result<int>.Failure($"خطا در ذخیره مرحله آیتم آموزشی: {ex.Message}");
+        }
+    }
+
+    private void UpdateScheduleItemFromStep(ScheduleItem scheduleItem, SaveScheduleItemStepCommand request)
+    {
+        switch (request.Step)
+        {
+            case 1:
+                if (!string.IsNullOrEmpty(request.Title)) scheduleItem.UpdateTitle(request.Title);
+                if (!string.IsNullOrEmpty(request.Description)) scheduleItem.UpdateDescription(request.Description);
+                break;
+            case 2:
+                if (request.StartDate.HasValue || request.DueDate.HasValue)
+                    scheduleItem.UpdateDates(request.StartDate ?? scheduleItem.StartDate, request.DueDate);
+                if (request.MaxScore.HasValue) scheduleItem.UpdateMaxScore(request.MaxScore);
+                if (request.IsMandatory.HasValue) scheduleItem.UpdateMandatory(request.IsMandatory.Value);
+                break;
+            case 3:
+                // Update group and lesson assignment
+                scheduleItem.UpdateAssignment(request.GroupId, request.LessonId);
+                break;
+            case 4:
+                if (!string.IsNullOrEmpty(request.ContentJson)) scheduleItem.UpdateContent(request.ContentJson);
+                break;
+        }
+    }
+}
+
+public class CompleteScheduleItemCommandHandler : IRequestHandler<CompleteScheduleItemCommand, Result>
+{
+    private readonly IScheduleItemRepository _scheduleItemRepository;
+    private readonly IUnitOfWork _unitOfWork;
+
+    public CompleteScheduleItemCommandHandler(
+        IScheduleItemRepository scheduleItemRepository,
+        IUnitOfWork unitOfWork)
+    {
+        _scheduleItemRepository = scheduleItemRepository;
+        _unitOfWork = unitOfWork;
+    }
+
+    public async Task<Result> Handle(CompleteScheduleItemCommand request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var scheduleItem = await _scheduleItemRepository.GetByIdAsync(request.Id, cancellationToken);
+            if (scheduleItem == null)
+            {
+                return Result.Failure("آیتم آموزشی یافت نشد.");
+            }
+
+            scheduleItem.MarkAsCompleted();
+
+            await _scheduleItemRepository.UpdateAsync(scheduleItem, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            return Result.Success();
+        }
+        catch (Exception ex)
+        {
+            return Result.Failure($"خطا در تکمیل آیتم آموزشی: {ex.Message}");
         }
     }
 }

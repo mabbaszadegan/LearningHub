@@ -1,388 +1,719 @@
 /**
- * Schedule Item Form JavaScript
- * Handles form interactions and content design for different item types
+ * Modern Schedule Item Form JavaScript
+ * Advanced form management with step-by-step creation and rich content editing
  */
 
-class ScheduleItemFormManager {
+class ModernScheduleItemFormManager {
     constructor() {
-        this.currentType = null;
-        this.contentData = {};
+        this.currentStep = 1;
+        this.totalSteps = 4;
+        this.formData = {};
+        this.contentTypes = {};
+        this.selectedContentType = null;
+        this.isPreviewMode = false;
+        this.validationErrors = {};
+        this.currentItemId = null;
+        this.isEditMode = false;
         this.init();
     }
 
     init() {
         this.setupEventListeners();
-        this.loadInitialData();
+        this.setupRichEditor();
+        this.setupStepNavigation();
+        this.setupFormValidation();
+        this.loadContentTypes();
+        this.updateProgress();
+        this.setupAutoSave();
+        this.setupPersianDatePicker();
+        this.checkForExistingItem();
     }
 
     setupEventListeners() {
-        // Item type change
+        // Step navigation
+        this.setupStepNavigationListeners();
+        
+        // Form inputs
+        this.setupFormInputListeners();
+        
+        // Rich editor
+        this.setupRichEditorListeners();
+        
+        // Preview functionality
+        this.setupPreviewListeners();
+        
+        // Content type selection
+        this.setupContentTypeListeners();
+        
+        // Datetime helpers
+        this.setupDatetimeHelpers();
+        
+        // Score presets
+        this.setupScorePresets();
+    }
+
+    setupStepNavigationListeners() {
+        const prevBtn = document.getElementById('prevStepBtn');
+        const nextBtn = document.getElementById('nextStepBtn');
+        const submitBtn = document.getElementById('submitBtn');
+
+        if (prevBtn) {
+            prevBtn.addEventListener('click', () => this.goToPreviousStep());
+        }
+
+        if (nextBtn) {
+            nextBtn.addEventListener('click', () => this.goToNextStep());
+        }
+
+        if (submitBtn) {
+            submitBtn.addEventListener('click', (e) => this.handleFormSubmit(e));
+        }
+
+        // Sidebar step navigation
+        document.querySelectorAll('.step-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                const step = parseInt(e.currentTarget.dataset.step);
+                if (step <= this.currentStep) {
+                    this.goToStep(step);
+                }
+            });
+        });
+    }
+
+    setupFormInputListeners() {
+        // Title character count
+        const titleInput = document.getElementById('itemTitle');
+        if (titleInput) {
+            titleInput.addEventListener('input', (e) => {
+                this.updateCharacterCount(e.target, 100);
+                this.validateField('title', e.target.value);
+            });
+        }
+
+        // Item type selection
         const itemTypeSelect = document.getElementById('itemType');
         if (itemTypeSelect) {
             itemTypeSelect.addEventListener('change', (e) => {
                 this.changeItemType(parseInt(e.target.value));
+                this.validateField('type', e.target.value);
             });
         }
 
-        // Form submission
-        const createForm = document.getElementById('createScheduleItemForm');
-        if (createForm) {
-            createForm.addEventListener('submit', (e) => {
-                this.handleFormSubmit(e, 'create');
-            });
-        }
-
-        const editForm = document.getElementById('editScheduleItemForm');
-        if (editForm) {
-            editForm.addEventListener('submit', (e) => {
-                this.handleFormSubmit(e, 'edit');
-            });
-        }
-    }
-
-    loadInitialData() {
-        // Load groups and lessons if needed
-        this.loadGroups();
-        this.loadLessons();
-    }
-
-    async loadGroups() {
-        try {
-            // You can implement group loading here
-            // For now, we'll add a placeholder
-            const groupSelect = document.getElementById('groupId');
-            if (groupSelect) {
-                groupSelect.innerHTML = '<option value="">همه گروه‌ها</option>';
-            }
-        } catch (error) {
-            console.error('Error loading groups:', error);
-        }
-    }
-
-    async loadLessons() {
-        try {
-            // You can implement lesson loading here
-            // For now, we'll add a placeholder
-            const lessonSelect = document.getElementById('lessonId');
-            if (lessonSelect) {
-                lessonSelect.innerHTML = '<option value="">انتخاب درس...</option>';
-            }
-        } catch (error) {
-            console.error('Error loading lessons:', error);
-        }
-    }
-
-    changeItemType(type) {
-        this.currentType = type;
-        this.showContentDesign(type);
-    }
-
-    showContentDesign(type) {
-        const contentSection = document.getElementById('contentDesignSection');
-        const contentContainer = document.getElementById('contentDesignContainer');
+        // Datetime inputs
+        const startDateInput = document.getElementById('startDate');
+        const dueDateInput = document.getElementById('dueDate');
         
-        if (!contentSection || !contentContainer) return;
+        if (startDateInput) {
+            startDateInput.addEventListener('change', () => {
+                this.updateDurationCalculator();
+                this.validateField('startDate', startDateInput.value);
+            });
+        }
 
-        if (type && type !== 0) { // 0 is Reminder, doesn't need content design
-            contentSection.style.display = 'block';
-            contentContainer.innerHTML = this.getContentDesign(type);
-            contentContainer.classList.add('has-content');
+        if (dueDateInput) {
+            dueDateInput.addEventListener('change', () => {
+                this.updateDurationCalculator();
+                this.validateField('dueDate', dueDateInput.value);
+            });
+        }
+
+        // Group and lesson selection
+        const groupSelect = document.getElementById('groupId');
+        const lessonSelect = document.getElementById('lessonId');
+
+        if (groupSelect) {
+            groupSelect.addEventListener('change', () => {
+                this.updateAssignmentPreview();
+            });
+        }
+
+        if (lessonSelect) {
+            lessonSelect.addEventListener('change', () => {
+                this.updateAssignmentPreview();
+            });
+        }
+
+        // Mandatory checkbox
+        const mandatoryCheckbox = document.getElementById('isMandatory');
+        if (mandatoryCheckbox) {
+            mandatoryCheckbox.addEventListener('change', () => {
+                this.updateAssignmentPreview();
+            });
+        }
+    }
+
+    setupRichEditorListeners() {
+        const editor = document.getElementById('descriptionEditor');
+        if (!editor) return;
+
+        // Toolbar buttons
+        document.querySelectorAll('.toolbar-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.executeEditorCommand(e.currentTarget.dataset.command);
+            });
+        });
+
+        // Editor content changes
+        editor.addEventListener('input', () => {
+            this.updateHiddenDescription();
+            this.validateField('description', editor.innerHTML);
+        });
+
+        // Editor focus/blur
+        editor.addEventListener('focus', () => {
+            editor.parentElement.classList.add('focused');
+        });
+
+        editor.addEventListener('blur', () => {
+            editor.parentElement.classList.remove('focused');
+        });
+    }
+
+    setupPreviewListeners() {
+        const previewBtn = document.getElementById('previewBtn');
+        const previewContentBtn = document.getElementById('previewContentBtn');
+        const saveFromPreviewBtn = document.getElementById('saveFromPreviewBtn');
+
+        if (previewBtn) {
+            previewBtn.addEventListener('click', () => this.showPreview());
+        }
+
+        if (previewContentBtn) {
+            previewContentBtn.addEventListener('click', () => this.showContentPreview());
+        }
+
+        if (saveFromPreviewBtn) {
+            saveFromPreviewBtn.addEventListener('click', () => this.saveFromPreview());
+        }
+    }
+
+    setupContentTypeListeners() {
+        // Content type selection will be set up dynamically
+    }
+
+    setupDatetimeHelpers() {
+        const setNowBtn = document.getElementById('setNowBtn');
+        const setWeekBtn = document.getElementById('setWeekBtn');
+
+        if (setNowBtn) {
+            setNowBtn.addEventListener('click', () => {
+                const now = new Date();
+                const startDateInput = document.getElementById('startDate');
+                if (startDateInput) {
+                    startDateInput.value = this.formatDateTimeLocal(now);
+                    this.updateDurationCalculator();
+                }
+            });
+        }
+
+        if (setWeekBtn) {
+            setWeekBtn.addEventListener('click', () => {
+                const weekFromNow = new Date();
+                weekFromNow.setDate(weekFromNow.getDate() + 7);
+                const dueDateInput = document.getElementById('dueDate');
+                if (dueDateInput) {
+                    dueDateInput.value = this.formatDateTimeLocal(weekFromNow);
+                    this.updateDurationCalculator();
+                }
+            });
+        }
+    }
+
+    setupScorePresets() {
+        document.querySelectorAll('.score-preset').forEach(preset => {
+            preset.addEventListener('click', (e) => {
+                const score = e.currentTarget.dataset.score;
+                const maxScoreInput = document.getElementById('maxScore');
+                if (maxScoreInput) {
+                    maxScoreInput.value = score;
+                    this.updateScorePresets(score);
+                }
+            });
+        });
+
+        const maxScoreInput = document.getElementById('maxScore');
+        if (maxScoreInput) {
+            maxScoreInput.addEventListener('input', (e) => {
+                this.updateScorePresets(e.target.value);
+            });
+        }
+    }
+
+    setupStepNavigation() {
+        this.updateStepVisibility();
+        this.updateStepIndicators();
+    }
+
+    setupFormValidation() {
+        // Real-time validation setup
+        this.validationRules = {
+            title: { required: true, minLength: 3, maxLength: 100 },
+            type: { required: true },
+            startDate: { required: true },
+            description: { maxLength: 1000 }
+        };
+    }
+
+    setupAutoSave() {
+        // Auto-save form data every 30 seconds
+        setInterval(() => {
+            this.saveFormData();
+        }, 30000);
+    }
+
+    // Step Navigation Methods
+    goToStep(step) {
+        if (step < 1 || step > this.totalSteps) return;
+        
+        // Validate current step before moving
+        if (step > this.currentStep && !this.validateCurrentStep()) {
+            return;
+        }
+
+        this.currentStep = step;
+        this.updateStepVisibility();
+        this.updateStepIndicators();
+        this.updateProgress();
+        this.updateNavigationButtons();
+    }
+
+    goToNextStep() {
+        if (this.currentStep < this.totalSteps) {
+            // Save current step before moving to next
+            this.saveCurrentStep().then(() => {
+                this.goToStep(this.currentStep + 1);
+            }).catch(error => {
+                console.error('Error saving step:', error);
+                this.showErrorMessage('خطا در ذخیره مرحله');
+            });
+        }
+    }
+
+    goToPreviousStep() {
+        if (this.currentStep > 1) {
+            this.goToStep(this.currentStep - 1);
+        }
+    }
+
+    updateStepVisibility() {
+        document.querySelectorAll('.form-step').forEach((step, index) => {
+            step.classList.toggle('active', index + 1 === this.currentStep);
+        });
+
+        document.querySelectorAll('.step-item').forEach((item, index) => {
+            const stepNumber = index + 1;
+            item.classList.remove('active', 'completed');
+            
+            if (stepNumber === this.currentStep) {
+                item.classList.add('active');
+            } else if (stepNumber < this.currentStep) {
+                item.classList.add('completed');
+            }
+        });
+    }
+
+    updateStepIndicators() {
+        // Update sidebar step indicators
+        document.querySelectorAll('.step-item').forEach((item, index) => {
+            const stepNumber = index + 1;
+            const stepNumberEl = item.querySelector('.step-number');
+            
+            if (stepNumberEl) {
+                if (stepNumber < this.currentStep) {
+                    stepNumberEl.innerHTML = '<i class="fas fa-check"></i>';
+                } else {
+                    stepNumberEl.textContent = stepNumber;
+                }
+            }
+        });
+    }
+
+    updateProgress() {
+        const progressFill = document.getElementById('progressFill');
+        const progressText = document.getElementById('progressText');
+        
+        if (progressFill) {
+            const percentage = (this.currentStep / this.totalSteps) * 100;
+            progressFill.style.width = `${percentage}%`;
+        }
+        
+        if (progressText) {
+            progressText.textContent = `مرحله ${this.currentStep} از ${this.totalSteps}`;
+        }
+    }
+
+    updateNavigationButtons() {
+        const prevBtn = document.getElementById('prevStepBtn');
+        const nextBtn = document.getElementById('nextStepBtn');
+        const submitBtn = document.getElementById('submitBtn');
+
+        if (prevBtn) {
+            prevBtn.disabled = this.currentStep === 1;
+        }
+
+        if (nextBtn) {
+            nextBtn.style.display = this.currentStep < this.totalSteps ? 'flex' : 'none';
+        }
+
+        if (submitBtn) {
+            submitBtn.style.display = this.currentStep === this.totalSteps ? 'flex' : 'none';
+        }
+    }
+
+    // Form Validation Methods
+    validateCurrentStep() {
+        const stepElement = document.querySelector(`.form-step[data-step="${this.currentStep}"]`);
+        if (!stepElement) return true;
+
+        let isValid = true;
+        const requiredFields = stepElement.querySelectorAll('[required]');
+        
+        requiredFields.forEach(field => {
+            if (!this.validateField(field.name, field.value)) {
+                isValid = false;
+            }
+        });
+
+        return isValid;
+    }
+
+    validateField(fieldName, value) {
+        const rules = this.validationRules[fieldName];
+        if (!rules) return true;
+
+        let isValid = true;
+        let errorMessage = '';
+
+        // Required validation
+        if (rules.required && (!value || value.trim() === '')) {
+            isValid = false;
+            errorMessage = 'این فیلد الزامی است';
+        }
+
+        // Length validations
+        if (value && rules.minLength && value.length < rules.minLength) {
+            isValid = false;
+            errorMessage = `حداقل ${rules.minLength} کاراکتر لازم است`;
+        }
+
+        if (value && rules.maxLength && value.length > rules.maxLength) {
+            isValid = false;
+            errorMessage = `حداکثر ${rules.maxLength} کاراکتر مجاز است`;
+        }
+
+        // Update validation state
+        this.validationErrors[fieldName] = isValid ? null : errorMessage;
+        this.updateFieldValidation(fieldName, isValid, errorMessage);
+
+        return isValid;
+    }
+
+    updateFieldValidation(fieldName, isValid, errorMessage) {
+        const field = document.querySelector(`[name="${fieldName}"]`);
+        if (!field) return;
+
+        const errorElement = field.parentElement.querySelector('.validation-error-modern');
+        
+        if (errorElement) {
+            errorElement.textContent = errorMessage || '';
+            errorElement.style.display = errorMessage ? 'block' : 'none';
+        }
+
+        // Update field styling
+        field.classList.toggle('is-invalid', !isValid);
+        field.classList.toggle('is-valid', isValid && value);
+    }
+
+    // Rich Editor Methods
+    setupRichEditor() {
+        const editor = document.getElementById('descriptionEditor');
+        if (!editor) return;
+
+        // Set up basic editor functionality
+        editor.addEventListener('paste', (e) => {
+            e.preventDefault();
+            const text = e.clipboardData.getData('text/plain');
+            document.execCommand('insertText', false, text);
+        });
+    }
+
+    executeEditorCommand(command) {
+        document.execCommand(command, false, null);
+        this.updateToolbarState();
+    }
+
+    updateToolbarState() {
+        document.querySelectorAll('.toolbar-btn').forEach(btn => {
+            const command = btn.dataset.command;
+            btn.classList.toggle('active', document.queryCommandState(command));
+        });
+    }
+
+    updateHiddenDescription() {
+        const editor = document.getElementById('descriptionEditor');
+        const hiddenField = document.getElementById('descriptionHidden');
+        
+        if (editor && hiddenField) {
+            hiddenField.value = editor.innerHTML;
+        }
+    }
+
+    // Content Type Methods
+    async loadContentTypes() {
+        try {
+            // Load content types based on selected item type
+            const itemType = document.getElementById('itemType')?.value;
+            if (!itemType) return;
+
+            // This would typically fetch from an API
+            this.contentTypes = {
+                0: { name: 'یادآوری', description: 'یادآوری ساده برای دانش‌آموزان' },
+                1: { name: 'نوشتاری', description: 'تمرین نوشتاری و انشا' },
+                2: { name: 'صوتی', description: 'فایل صوتی و پادکست' },
+                3: { name: 'پر کردن جای خالی', description: 'سوالات جای خالی' },
+                4: { name: 'چند گزینه‌ای', description: 'سوالات تستی' },
+                5: { name: 'تطبیق', description: 'تطبیق آیتم‌ها' },
+                6: { name: 'پیدا کردن خطا', description: 'شناسایی و تصحیح خطا' },
+                7: { name: 'تمرین کد', description: 'برنامه‌نویسی و کدنویسی' },
+                8: { name: 'کویز', description: 'آزمون کوتاه' }
+            };
+
+            this.showContentTypeSelector();
+        } catch (error) {
+            console.error('Error loading content types:', error);
+        }
+    }
+
+    changeItemType(typeId) {
+        this.currentType = typeId;
+        this.selectedContentType = null;
+        
+        // Show type preview
+        this.showTypePreview(typeId);
+        
+        // Load content types for this item type
+        this.loadContentTypes();
+        
+        // Update sidebar
+        this.updateStepIndicators();
+    }
+
+    showTypePreview(typeId) {
+        const preview = document.getElementById('typePreview');
+        const previewContent = document.getElementById('typePreviewContent');
+        
+        if (!preview || !previewContent) return;
+
+        const typeInfo = this.contentTypes[typeId];
+        if (typeInfo) {
+            previewContent.innerHTML = `
+                <div class="type-info">
+                    <h4>${typeInfo.name}</h4>
+                    <p>${typeInfo.description}</p>
+                    <div class="type-features">
+                        <span class="feature-tag">تعاملی</span>
+                        <span class="feature-tag">جذاب</span>
+                        <span class="feature-tag">آموزشی</span>
+                    </div>
+                </div>
+            `;
+            preview.style.display = 'block';
         } else {
-            contentSection.style.display = 'none';
-            contentContainer.innerHTML = '';
-            contentContainer.classList.remove('has-content');
+            preview.style.display = 'none';
         }
     }
 
-    getContentDesign(type) {
-        switch (type) {
+    showContentTypeSelector() {
+        const selector = document.getElementById('contentTypeSelector');
+        const grid = document.getElementById('contentTypesGrid');
+        
+        if (!selector || !grid) return;
+
+        // Clear existing content
+        grid.innerHTML = '';
+
+        // Add content type options
+        Object.entries(this.contentTypes).forEach(([id, type]) => {
+            const typeCard = document.createElement('div');
+            typeCard.className = 'content-type-card';
+            typeCard.innerHTML = `
+                <div class="type-icon">
+                    <i class="fas fa-${this.getTypeIcon(id)}"></i>
+                </div>
+                <div class="type-info">
+                    <h4>${type.name}</h4>
+                    <p>${type.description}</p>
+                </div>
+                <button class="select-type-btn" data-type-id="${id}">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+            `;
+            
+            typeCard.addEventListener('click', () => {
+                this.selectContentType(parseInt(id));
+            });
+            
+            grid.appendChild(typeCard);
+        });
+
+        selector.style.display = 'block';
+    }
+
+    selectContentType(typeId) {
+        this.selectedContentType = typeId;
+        
+        // Hide selector and show designer
+        document.getElementById('contentTypeSelector').style.display = 'none';
+        document.getElementById('contentDesigner').style.display = 'block';
+        
+        // Load content designer for this type
+        this.loadContentDesigner(typeId);
+    }
+
+    loadContentDesigner(typeId) {
+        const container = document.getElementById('contentDesignContainer');
+        if (!container) return;
+
+        // Load appropriate designer based on type
+        switch (typeId) {
+            case 0: // Reminder
+                this.loadReminderDesigner(container);
+                break;
             case 1: // Writing
-                return this.getWritingDesign();
-            case 2: // Audio
-                return this.getAudioDesign();
-            case 3: // Gap Fill
-                return this.getGapFillDesign();
+                this.loadWritingDesigner(container);
+                break;
             case 4: // Multiple Choice
-                return this.getMultipleChoiceDesign();
-            case 5: // Matching
-                return this.getMatchingDesign();
-            case 6: // Error Finding
-                return this.getErrorFindingDesign();
-            case 7: // Code Exercise
-                return this.getCodeExerciseDesign();
-            case 8: // Quiz
-                return this.getQuizDesign();
+                this.loadMultipleChoiceDesigner(container);
+                break;
+            case 3: // Gap Fill
+                this.loadGapFillDesigner(container);
+                break;
             default:
-                return '<p class="text-muted">محتوای این نوع آیتم نیازی به طراحی خاص ندارد.</p>';
+                this.loadGenericDesigner(container);
         }
     }
 
-    getWritingDesign() {
-        return `
-            <div class="item-design writing-design active">
-                <div class="design-header">
-                    <h6><i class="fas fa-pen"></i> طراحی تمرین نوشتاری</h6>
+    loadReminderDesigner(container) {
+        container.innerHTML = `
+            <div class="designer-section">
+                <h4>طراحی یادآوری</h4>
+                <div class="form-group-modern">
+                    <label class="form-label-modern">
+                        <i class="fas fa-bell"></i>
+                        <span>متن یادآوری</span>
+                    </label>
+                    <textarea class="form-input-modern" rows="4" placeholder="متن یادآوری را وارد کنید..."></textarea>
                 </div>
-                
-                <div class="problem-section">
-                    <div class="form-group">
-                        <label class="form-label">صورت مسئله:</label>
-                        <textarea class="form-control" id="writingPrompt" rows="4" placeholder="صورت مسئله را اینجا بنویسید..."></textarea>
-                    </div>
-                </div>
-
-                <div class="settings-section">
-                    <div class="settings-row">
-                        <div class="form-group">
-                            <label class="form-label">حد کلمات:</label>
-                            <input type="number" class="form-control" id="wordLimit" min="50" max="2000" value="200" placeholder="200">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">دستورالعمل‌ها:</label>
-                            <textarea class="form-control" id="writingInstructions" rows="2" placeholder="دستورالعمل‌های اضافی..."></textarea>
-                        </div>
-                    </div>
+                <div class="form-group-modern">
+                    <label class="form-label-modern">
+                        <i class="fas fa-calendar"></i>
+                        <span>تاریخ یادآوری</span>
+                    </label>
+                    <input type="datetime-local" class="form-input-modern" />
                 </div>
             </div>
         `;
     }
 
-    getAudioDesign() {
-        return `
-            <div class="item-design audio-design active">
-                <div class="design-header">
-                    <h6><i class="fas fa-volume-up"></i> طراحی تمرین صوتی</h6>
+    loadWritingDesigner(container) {
+        container.innerHTML = `
+            <div class="designer-section">
+                <h4>طراحی تمرین نوشتاری</h4>
+                <div class="form-group-modern">
+                    <label class="form-label-modern">
+                        <i class="fas fa-question-circle"></i>
+                        <span>سوال یا موضوع</span>
+                    </label>
+                    <textarea class="form-input-modern" rows="3" placeholder="سوال یا موضوع نوشتاری را وارد کنید..."></textarea>
                 </div>
-                
-                <div class="instruction-section">
-                    <div class="form-group">
-                        <label class="form-label">دستورالعمل:</label>
-                        <textarea class="form-control" id="audioInstruction" rows="3" placeholder="دستورالعمل تمرین صوتی..."></textarea>
-                    </div>
+                <div class="form-group-modern">
+                    <label class="form-label-modern">
+                        <i class="fas fa-align-left"></i>
+                        <span>راهنمایی</span>
+                    </label>
+                    <textarea class="form-input-modern" rows="3" placeholder="راهنمایی‌های لازم برای دانش‌آموزان..."></textarea>
                 </div>
-
-                <div class="audio-section">
-                    <div class="form-group">
-                        <label class="form-label">فایل صوتی:</label>
-                        <input type="file" class="form-control" id="audioFile" accept="audio/*">
-                        <small class="form-text">فرمت‌های پشتیبانی شده: MP3, WAV, OGG</small>
-                    </div>
-                </div>
-
-                <div class="settings-section">
-                    <div class="settings-row">
-                        <div class="form-group">
-                            <label class="form-label">مدت زمان (ثانیه):</label>
-                            <input type="number" class="form-control" id="audioDuration" min="10" max="600" value="60" placeholder="60">
-                        </div>
-                        <div class="form-group">
-                            <div class="form-check">
-                                <input type="checkbox" class="form-check-input" id="allowRecording">
-                                <label class="form-check-label" for="allowRecording">اجازه ضبط پاسخ</label>
-                            </div>
-                        </div>
-                    </div>
+                <div class="form-group-modern">
+                    <label class="form-label-modern">
+                        <i class="fas fa-ruler"></i>
+                        <span>حداقل تعداد کلمات</span>
+                    </label>
+                    <input type="number" class="form-input-modern" placeholder="100" min="0" />
                 </div>
             </div>
         `;
     }
 
-    getGapFillDesign() {
-        return `
-            <div class="item-design gap-fill-design active">
-                <div class="design-header">
-                    <h6><i class="fas fa-edit"></i> طراحی تمرین پر کردن جای خالی</h6>
+    loadMultipleChoiceDesigner(container) {
+        container.innerHTML = `
+            <div class="designer-section">
+                <h4>طراحی سوالات چند گزینه‌ای</h4>
+                <div class="form-group-modern">
+                    <label class="form-label-modern">
+                        <i class="fas fa-question-circle"></i>
+                        <span>سوال</span>
+                    </label>
+                    <textarea class="form-input-modern" rows="2" placeholder="سوال را وارد کنید..."></textarea>
                 </div>
-                
-                <div class="text-section">
-                    <div class="form-group">
-                        <label class="form-label">متن اصلی:</label>
-                        <div class="gap-fill-editor">
-                            <div class="editor-toolbar">
-                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="scheduleItemFormManager.addGap()">
-                                    <i class="fas fa-square"></i> افزودن جای خالی
-                                </button>
-                                <button type="button" class="btn btn-sm btn-outline-info" onclick="scheduleItemFormManager.previewGapFill()">
-                                    <i class="fas fa-eye"></i> پیش‌نمایش
-                                </button>
-                            </div>
-                            <div class="editor-content" id="gapFillEditor" contenteditable="true">
-                                متن خود را اینجا بنویسید و برای ایجاد جای خالی روی دکمه "افزودن جای خالی" کلیک کنید.
-                            </div>
+                <div class="form-group-modern">
+                    <label class="form-label-modern">
+                        <i class="fas fa-list"></i>
+                        <span>گزینه‌ها</span>
+                    </label>
+                    <div class="options-container">
+                        <div class="option-item">
+                            <input type="radio" name="correctAnswer" value="0" />
+                            <input type="text" class="form-input-modern" placeholder="گزینه اول..." />
+                            <button type="button" class="remove-option-btn">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="option-item">
+                            <input type="radio" name="correctAnswer" value="1" />
+                            <input type="text" class="form-input-modern" placeholder="گزینه دوم..." />
+                            <button type="button" class="remove-option-btn">
+                                <i class="fas fa-times"></i>
+                            </button>
                         </div>
                     </div>
-                </div>
-
-                <div class="gaps-section">
-                    <div class="gaps-header">
-                        <label class="form-label">جای‌های خالی:</label>
-                        <span class="badge bg-primary" id="gapCount">0 جای خالی</span>
-                    </div>
-                    
-                    <div class="gaps-container" id="gapsContainer">
-                        <!-- جای‌های خالی اینجا نمایش داده می‌شوند -->
-                    </div>
-                </div>
-
-                <div class="settings-section">
-                    <div class="settings-row">
-                        <div class="form-group">
-                            <label class="form-label">نوع پاسخ:</label>
-                            <select class="form-select" id="gapAnswerType">
-                                <option value="exact">دقیق</option>
-                                <option value="similar">مشابه</option>
-                                <option value="keyword">کلمه کلیدی</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <div class="form-check">
-                                <input type="checkbox" class="form-check-input" id="caseSensitive">
-                                <label class="form-check-label" for="caseSensitive">حساسیت به حروف</label>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-
-    getMultipleChoiceDesign() {
-        return `
-            <div class="item-design multiple-choice-design active">
-                <div class="design-header">
-                    <h6><i class="fas fa-list-ul"></i> طراحی سوال چند گزینه‌ای</h6>
-                </div>
-                
-                <div class="question-section">
-                    <div class="form-group">
-                        <label class="form-label">متن سوال:</label>
-                        <textarea class="form-control" id="questionText" rows="3" placeholder="سوال خود را اینجا بنویسید..."></textarea>
-                    </div>
-                </div>
-
-                <div class="options-section">
-                    <div class="options-header">
-                        <label class="form-label">گزینه‌ها:</label>
-                        <button type="button" class="add-option-btn" onclick="scheduleItemFormManager.addOption()">
-                            <i class="fas fa-plus"></i> افزودن گزینه
-                        </button>
-                    </div>
-                    
-                    <div class="options-container" id="optionsContainer">
-                        <!-- گزینه‌ها اینجا اضافه می‌شوند -->
-                    </div>
-                </div>
-
-                <div class="settings-section">
-                    <div class="settings-row">
-                        <div class="form-group">
-                            <label class="form-label">نوع پاسخ:</label>
-                            <select class="form-select" id="answerType">
-                                <option value="single">تک انتخابی</option>
-                                <option value="multiple">چند انتخابی</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <div class="form-check">
-                                <input type="checkbox" class="form-check-input" id="randomizeOptions">
-                                <label class="form-check-label" for="randomizeOptions">ترتیب تصادفی گزینه‌ها</label>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-
-    getMatchingDesign() {
-        return `
-            <div class="item-design matching-design active">
-                <div class="design-header">
-                    <h6><i class="fas fa-link"></i> طراحی تمرین تطبیق</h6>
-                </div>
-                
-                <div class="matching-section">
-                    <div class="matching-columns">
-                        <div class="matching-column">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <label class="form-label">ستون چپ (مطابقت‌ها):</label>
-                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="scheduleItemFormManager.addLeftItem()">
-                                    <i class="fas fa-plus"></i>
-                                </button>
-                            </div>
-                            <div class="matching-items" id="leftItems">
-                                <!-- آیتم‌های چپ -->
-                            </div>
-                        </div>
-                        
-                        <div class="matching-column">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <label class="form-label">ستون راست (پاسخ‌ها):</label>
-                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="scheduleItemFormManager.addRightItem()">
-                                    <i class="fas fa-plus"></i>
-                                </button>
-                            </div>
-                            <div class="matching-items" id="rightItems">
-                                <!-- آیتم‌های راست -->
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="connections-section">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <label class="form-label">اتصالات:</label>
-                        <button type="button" class="btn btn-sm btn-outline-success" onclick="scheduleItemFormManager.addConnection()">
-                            <i class="fas fa-link"></i> افزودن اتصال
-                        </button>
-                    </div>
-                    
-                    <div class="connections-container" id="connectionsContainer">
-                        <!-- اتصالات اینجا نمایش داده می‌شوند -->
-                    </div>
-                </div>
-
-                <div class="preview-section">
-                    <button type="button" class="btn btn-outline-info" onclick="scheduleItemFormManager.previewMatching()">
-                        <i class="fas fa-eye"></i> پیش‌نمایش تمرین تطبیق
+                    <button type="button" class="add-option-btn">
+                        <i class="fas fa-plus"></i>
+                        <span>افزودن گزینه</span>
                     </button>
                 </div>
             </div>
         `;
     }
 
-    getErrorFindingDesign() {
-        return `
-            <div class="item-design error-finding-design active">
-                <div class="design-header">
-                    <h6><i class="fas fa-search"></i> طراحی تمرین پیدا کردن خطا</h6>
-                </div>
-                
-                <div class="text-section">
-                    <div class="form-group">
-                        <label class="form-label">متن حاوی خطا:</label>
-                        <textarea class="form-control" id="errorText" rows="8" placeholder="متن حاوی خطا را اینجا بنویسید..."></textarea>
+    loadGapFillDesigner(container) {
+        container.innerHTML = `
+            <div class="designer-section">
+                <h4>طراحی سوالات جای خالی</h4>
+                <div class="form-group-modern">
+                    <label class="form-label-modern">
+                        <i class="fas fa-align-left"></i>
+                        <span>متن با جای خالی</span>
+                    </label>
+                    <div class="gap-fill-editor">
+                        <div class="editor-toolbar">
+                            <button type="button" class="toolbar-btn" data-action="add-gap">
+                                <i class="fas fa-plus"></i>
+                                <span>افزودن جای خالی</span>
+                            </button>
+                        </div>
+                        <div class="editor-content" contenteditable="true" placeholder="متن خود را بنویسید و برای افزودن جای خالی از دکمه بالا استفاده کنید..."></div>
                     </div>
                 </div>
-
-                <div class="errors-section">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <label class="form-label">خطاهای موجود:</label>
-                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="scheduleItemFormManager.addError()">
-                            <i class="fas fa-plus"></i> افزودن خطا
-                        </button>
-                    </div>
-                    
-                    <div class="errors-container" id="errorsContainer">
-                        <!-- خطاها اینجا نمایش داده می‌شوند -->
-                    </div>
-                </div>
-
-                <div class="settings-section">
-                    <div class="form-group">
-                        <div class="form-check">
-                            <input type="checkbox" class="form-check-input" id="showLineNumbers">
-                            <label class="form-check-label" for="showLineNumbers">نمایش شماره خطوط</label>
+                <div class="form-group-modern">
+                    <label class="form-label-modern">
+                        <i class="fas fa-list"></i>
+                        <span>پاسخ‌های صحیح</span>
+                    </label>
+                    <div class="answers-container">
+                        <div class="answer-item">
+                            <span class="answer-label">جای خالی 1:</span>
+                            <input type="text" class="form-input-modern" placeholder="پاسخ صحیح..." />
                         </div>
                     </div>
                 </div>
@@ -390,361 +721,530 @@ class ScheduleItemFormManager {
         `;
     }
 
-    getCodeExerciseDesign() {
-        return `
-            <div class="item-design code-exercise-design active">
-                <div class="design-header">
-                    <h6><i class="fas fa-code"></i> طراحی تمرین برنامه‌نویسی</h6>
-                </div>
-                
-                <div class="problem-section">
-                    <div class="form-group">
-                        <label class="form-label">صورت مسئله:</label>
-                        <textarea class="form-control" id="problemStatement" rows="4" placeholder="صورت مسئله را اینجا بنویسید..."></textarea>
-                    </div>
-                </div>
-
-                <div class="code-section">
-                    <div class="form-group">
-                        <label class="form-label">زبان برنامه‌نویسی:</label>
-                        <select class="form-select" id="programmingLanguage">
-                            <option value="javascript">JavaScript</option>
-                            <option value="python">Python</option>
-                            <option value="java">Java</option>
-                            <option value="csharp">C#</option>
-                            <option value="cpp">C++</option>
-                            <option value="sql">SQL</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">کد اولیه (اختیاری):</label>
-                        <div class="code-editor-container">
-                            <div class="code-editor-toolbar">
-                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="scheduleItemFormManager.formatCode()">
-                                    <i class="fas fa-magic"></i> فرمت
-                                </button>
-                                <button type="button" class="btn btn-sm btn-outline-info" onclick="scheduleItemFormManager.runCode()">
-                                    <i class="fas fa-play"></i> اجرا
-                                </button>
-                            </div>
-                            <textarea class="code-editor" id="initialCode" rows="10" placeholder="کد اولیه را اینجا بنویسید..."></textarea>
+    loadGenericDesigner(container) {
+        container.innerHTML = `
+            <div class="designer-section">
+                <h4>طراحی محتوا</h4>
+                <div class="form-group-modern">
+                    <label class="form-label-modern">
+                        <i class="fas fa-edit"></i>
+                        <span>محتوای آموزشی</span>
+                    </label>
+                    <div class="rich-editor-container">
+                        <div class="editor-toolbar">
+                            <button type="button" class="toolbar-btn" data-command="bold">
+                                <i class="fas fa-bold"></i>
+                            </button>
+                            <button type="button" class="toolbar-btn" data-command="italic">
+                                <i class="fas fa-italic"></i>
+                            </button>
+                            <button type="button" class="toolbar-btn" data-command="insertUnorderedList">
+                                <i class="fas fa-list-ul"></i>
+                            </button>
                         </div>
-                    </div>
-                </div>
-
-                <div class="test-cases-section">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <label class="form-label">تست کیس‌ها:</label>
-                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="scheduleItemFormManager.addTestCase()">
-                            <i class="fas fa-plus"></i> افزودن تست کیس
-                        </button>
-                    </div>
-                    
-                    <div class="test-cases-container" id="testCasesContainer">
-                        <!-- تست کیس‌ها اینجا نمایش داده می‌شوند -->
-                    </div>
-                </div>
-
-                <div class="settings-section">
-                    <div class="settings-row">
-                        <div class="form-group">
-                            <label class="form-label">زمان محدود (دقیقه):</label>
-                            <input type="number" class="form-control" id="timeLimit" min="1" max="120" value="30">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">امتیاز:</label>
-                            <input type="number" class="form-control" id="codeScore" min="1" max="100" value="10">
-                        </div>
+                        <div class="editor-content" contenteditable="true" placeholder="محتوای آموزشی خود را اینجا بنویسید..."></div>
                     </div>
                 </div>
             </div>
         `;
     }
 
-    getQuizDesign() {
-        return `
-            <div class="item-design quiz-design active">
-                <div class="design-header">
-                    <h6><i class="fas fa-question-circle"></i> طراحی کویز</h6>
-                </div>
-                
-                <div class="quiz-info-section">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label class="form-label">عنوان کویز:</label>
-                                <input type="text" class="form-control" id="quizTitle" placeholder="عنوان کویز...">
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label class="form-label">زمان محدود (دقیقه):</label>
-                                <input type="number" class="form-control" id="quizTimeLimit" min="5" max="180" value="30">
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">توضیحات کویز:</label>
-                        <textarea class="form-control" id="quizDescription" rows="2" placeholder="توضیحات کویز..."></textarea>
-                    </div>
-                </div>
-
-                <div class="questions-section">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <label class="form-label">سوالات کویز:</label>
-                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="scheduleItemFormManager.addQuizQuestion()">
-                            <i class="fas fa-plus"></i> افزودن سوال
-                        </button>
-                    </div>
-                    
-                    <div class="questions-container" id="questionsContainer">
-                        <!-- سوالات اینجا نمایش داده می‌شوند -->
-                    </div>
-                </div>
-
-                <div class="settings-section">
-                    <div class="settings-row">
-                        <div class="form-group">
-                            <div class="form-check">
-                                <input type="checkbox" class="form-check-input" id="randomizeQuestions">
-                                <label class="form-check-label" for="randomizeQuestions">ترتیب تصادفی سوالات</label>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <div class="form-check">
-                                <input type="checkbox" class="form-check-input" id="showResultsImmediately">
-                                <label class="form-check-label" for="showResultsImmediately">نمایش نتایج فوری</label>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
+    getTypeIcon(typeId) {
+        const icons = {
+            0: 'bell',
+            1: 'pen',
+            2: 'volume-up',
+            3: 'edit',
+            4: 'list-ul',
+            5: 'link',
+            6: 'bug',
+            7: 'code',
+            8: 'clipboard-check'
+        };
+        return icons[typeId] || 'file';
     }
 
-    // Methods for handling different item types
-    addOption() {
-        const container = document.getElementById('optionsContainer');
-        if (!container) return;
-
-        const optionIndex = container.children.length;
-        const optionHtml = `
-            <div class="option-item" data-index="${optionIndex}">
-                <input type="radio" name="correctAnswer" value="${optionIndex}" class="option-radio">
-                <input type="text" class="option-text" placeholder="متن گزینه...">
-                <button type="button" class="option-remove" onclick="scheduleItemFormManager.removeOption(${optionIndex})">
-                    <i class="fas fa-trash"></i>
-                </button>
-            </div>
-        `;
-        
-        container.insertAdjacentHTML('beforeend', optionHtml);
-    }
-
-    removeOption(index) {
-        const option = document.querySelector(`[data-index="${index}"]`);
-        if (option) {
-            option.remove();
+    // Utility Methods
+    updateCharacterCount(input, maxLength) {
+        const charCount = input.parentElement.querySelector('.char-count');
+        if (charCount) {
+            const currentLength = input.value.length;
+            charCount.textContent = `${currentLength}/${maxLength}`;
+            charCount.classList.toggle('over-limit', currentLength > maxLength);
         }
     }
 
-    addGap() {
-        const editor = document.getElementById('gapFillEditor');
-        if (!editor) return;
-
-        const gapHtml = '<span class="gap-placeholder" contenteditable="false" data-gap-index="' + Date.now() + '">____</span>';
-        editor.insertAdjacentHTML('beforeend', gapHtml);
+    formatDateTimeLocal(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
         
-        this.updateGapCount();
+        return `${year}-${month}-${day}T${hours}:${minutes}`;
     }
 
-    updateGapCount() {
-        const gapCount = document.getElementById('gapCount');
-        const gaps = document.querySelectorAll('.gap-placeholder');
-        if (gapCount) {
-            gapCount.textContent = `${gaps.length} جای خالی`;
+    updateDurationCalculator() {
+        const startDateInput = document.getElementById('startDate');
+        const dueDateInput = document.getElementById('dueDate');
+        const calculator = document.getElementById('durationCalculator');
+        const durationValue = document.getElementById('durationValue');
+        
+        if (!startDateInput || !dueDateInput || !calculator || !durationValue) return;
+
+        const startDate = new Date(startDateInput.value);
+        const dueDate = new Date(dueDateInput.value);
+
+        if (startDateInput.value && dueDateInput.value && dueDate > startDate) {
+            const diffMs = dueDate - startDate;
+            const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+            const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            
+            durationValue.textContent = `${diffDays} روز و ${diffHours} ساعت`;
+            calculator.style.display = 'block';
+        } else {
+            calculator.style.display = 'none';
         }
     }
 
-    addLeftItem() {
-        // Implementation for adding left items in matching exercise
+    updateScorePresets(score) {
+        document.querySelectorAll('.score-preset').forEach(preset => {
+            preset.classList.toggle('active', preset.dataset.score === score);
+        });
     }
 
-    addRightItem() {
-        // Implementation for adding right items in matching exercise
+    updateAssignmentPreview() {
+        const groupSelect = document.getElementById('groupId');
+        const lessonSelect = document.getElementById('lessonId');
+        const targetGroups = document.getElementById('targetGroups');
+        const relatedLesson = document.getElementById('relatedLesson');
+
+        if (groupSelect && targetGroups) {
+            const selectedOption = groupSelect.options[groupSelect.selectedIndex];
+            targetGroups.textContent = selectedOption.text || 'همه گروه‌ها';
+        }
+
+        if (lessonSelect && relatedLesson) {
+            const selectedOption = lessonSelect.options[lessonSelect.selectedIndex];
+            relatedLesson.textContent = selectedOption.text || 'تعیین نشده';
+        }
     }
 
-    addConnection() {
-        // Implementation for adding connections in matching exercise
+    // Preview Methods
+    showPreview() {
+        const previewContent = document.getElementById('previewContent');
+        if (!previewContent) return;
+
+        // Collect form data
+        const formData = this.collectFormData();
+        
+        // Generate preview HTML
+        previewContent.innerHTML = this.generatePreviewHTML(formData);
+        
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('previewModal'));
+        modal.show();
     }
 
-    addError() {
-        // Implementation for adding errors in error finding exercise
+    showContentPreview() {
+        // Show content-specific preview
+        console.log('Content preview functionality');
     }
 
-    addTestCase() {
-        // Implementation for adding test cases in code exercise
+    saveFromPreview() {
+        // Save form from preview mode
+        const form = document.getElementById('createItemForm');
+        if (form) {
+            form.submit();
+        }
     }
 
-    addQuizQuestion() {
-        // Implementation for adding questions in quiz
+    collectFormData() {
+        const form = document.getElementById('createItemForm');
+        if (!form) return {};
+
+        const formData = new FormData(form);
+        const data = {};
+        
+        for (let [key, value] of formData.entries()) {
+            data[key] = value;
+        }
+
+        return data;
     }
 
-    previewGapFill() {
-        // Implementation for previewing gap fill exercise
+    generatePreviewHTML(data) {
+        return `
+            <div class="preview-item">
+                <div class="preview-header">
+                    <h3>${data.title || 'عنوان آیتم'}</h3>
+                    <span class="preview-type">${this.contentTypes[data.type]?.name || 'نوع آیتم'}</span>
+                </div>
+                <div class="preview-content">
+                    <div class="preview-description">
+                        ${data.description || 'توضیحات آیتم'}
+                    </div>
+                    <div class="preview-meta">
+                        <div class="meta-item">
+                            <i class="fas fa-calendar"></i>
+                            <span>شروع: ${data.startDate || 'تعیین نشده'}</span>
+                        </div>
+                        <div class="meta-item">
+                            <i class="fas fa-clock"></i>
+                            <span>مهلت: ${data.dueDate || 'تعیین نشده'}</span>
+                        </div>
+                        <div class="meta-item">
+                            <i class="fas fa-star"></i>
+                            <span>امتیاز: ${data.maxScore || '0'}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
     }
 
-    previewMatching() {
-        // Implementation for previewing matching exercise
-    }
-
-    formatCode() {
-        // Implementation for formatting code
-    }
-
-    runCode() {
-        // Implementation for running code
-    }
-
-    handleFormSubmit(e, formType) {
+    // Form Submission
+    handleFormSubmit(e) {
         e.preventDefault();
         
-        // Collect form data
-        const formData = new FormData(e.target);
-        const data = Object.fromEntries(formData.entries());
-        
-        // Collect content data based on item type
-        if (this.currentType) {
-            data.ContentJson = this.collectContentData();
+        // Validate all steps
+        if (!this.validateAllSteps()) {
+            this.showValidationErrors();
+            return;
         }
+
+        // Collect form data
+        const formData = this.collectFormData();
+        
+        // Add content data
+        formData.contentData = this.collectContentData();
         
         // Submit form
-        this.submitForm(data, formType);
+        this.submitForm(formData);
+    }
+
+    validateAllSteps() {
+        let isValid = true;
+        
+        for (let step = 1; step <= this.totalSteps; step++) {
+            const stepElement = document.querySelector(`.form-step[data-step="${step}"]`);
+            if (stepElement) {
+                const requiredFields = stepElement.querySelectorAll('[required]');
+                requiredFields.forEach(field => {
+                    if (!this.validateField(field.name, field.value)) {
+                        isValid = false;
+                    }
+                });
+            }
+        }
+        
+        return isValid;
+    }
+
+    showValidationErrors() {
+        // Show validation errors to user
+        const errors = Object.values(this.validationErrors).filter(error => error);
+        if (errors.length > 0) {
+            alert('لطفاً خطاهای فرم را برطرف کنید:\n' + errors.join('\n'));
+        }
     }
 
     collectContentData() {
-        const contentData = {
-            type: this.currentType
-        };
+        // Collect content-specific data based on selected type
+        const container = document.getElementById('contentDesignContainer');
+        if (!container) return "{}";
 
-        switch (this.currentType) {
-            case 1: // Writing
-                contentData.prompt = document.getElementById('writingPrompt')?.value || '';
-                contentData.wordLimit = parseInt(document.getElementById('wordLimit')?.value) || 200;
-                contentData.instructions = document.getElementById('writingInstructions')?.value || '';
-                break;
-                
-            case 2: // Audio
-                contentData.instruction = document.getElementById('audioInstruction')?.value || '';
-                contentData.duration = parseInt(document.getElementById('audioDuration')?.value) || 60;
-                contentData.allowRecording = document.getElementById('allowRecording')?.checked || false;
-                break;
-                
-            case 3: // Gap Fill
-                contentData.text = document.getElementById('gapFillEditor')?.innerHTML || '';
-                contentData.answerType = document.getElementById('gapAnswerType')?.value || 'exact';
-                contentData.caseSensitive = document.getElementById('caseSensitive')?.checked || false;
-                break;
-                
-            case 4: // Multiple Choice
-                contentData.question = document.getElementById('questionText')?.value || '';
-                contentData.answerType = document.getElementById('answerType')?.value || 'single';
-                contentData.randomizeOptions = document.getElementById('randomizeOptions')?.checked || false;
-                contentData.options = this.collectOptions();
-                break;
-                
-            case 7: // Code Exercise
-                contentData.problemStatement = document.getElementById('problemStatement')?.value || '';
-                contentData.programmingLanguage = document.getElementById('programmingLanguage')?.value || 'javascript';
-                contentData.initialCode = document.getElementById('initialCode')?.value || '';
-                contentData.timeLimit = parseInt(document.getElementById('timeLimit')?.value) || 30;
-                break;
-                
-            case 8: // Quiz
-                contentData.title = document.getElementById('quizTitle')?.value || '';
-                contentData.description = document.getElementById('quizDescription')?.value || '';
-                contentData.timeLimit = parseInt(document.getElementById('quizTimeLimit')?.value) || 30;
-                contentData.randomizeQuestions = document.getElementById('randomizeQuestions')?.checked || false;
-                contentData.showResultsImmediately = document.getElementById('showResultsImmediately')?.checked || false;
-                break;
-        }
+        const contentData = {};
+        
+        // Collect data from content designer
+        container.querySelectorAll('input, textarea, select').forEach(input => {
+            contentData[input.name || input.id] = input.value;
+        });
 
         return JSON.stringify(contentData);
     }
 
-    collectOptions() {
-        const options = [];
-        const optionItems = document.querySelectorAll('.option-item');
-        
-        optionItems.forEach((item, index) => {
-            const text = item.querySelector('.option-text')?.value || '';
-            const isCorrect = item.querySelector('.option-radio')?.checked || false;
-            
-            if (text.trim()) {
-                options.push({
-                    index: index,
-                    text: text,
-                    isCorrect: isCorrect
-                });
-            }
-        });
-        
-        return options;
-    }
-
-    async submitForm(data, formType) {
+    async submitForm(formData) {
         try {
-            const url = formType === 'create' 
-                ? '/Teacher/ScheduleItem/CreateScheduleItem'
-                : '/Teacher/ScheduleItem/UpdateScheduleItem';
-                
-            const response = await fetch(url, {
+            const response = await fetch('/Teacher/ScheduleItem/Create', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(data)
+                body: JSON.stringify(formData)
             });
-            
-            const result = await response.json();
-            
-            if (result.success) {
-                this.showSuccess(formType === 'create' ? 'آیتم آموزشی با موفقیت ایجاد شد' : 'آیتم آموزشی با موفقیت به‌روزرسانی شد');
-                this.closeModal();
+
+            if (response.ok) {
+                // Success
+                this.showSuccessMessage();
+                // Redirect or close modal
             } else {
-                this.showError('خطا: ' + result.message);
+                // Error
+                const error = await response.json();
+                this.showErrorMessage(error.message || 'خطا در ایجاد آیتم');
             }
         } catch (error) {
             console.error('Error submitting form:', error);
-            this.showError('خطا در ارسال فرم');
+            this.showErrorMessage('خطا در ارسال فرم');
         }
     }
 
-    closeModal() {
-        // Close the current modal
-        const modals = document.querySelectorAll('.modal.show');
-        modals.forEach(modal => {
-            const bsModal = bootstrap.Modal.getInstance(modal);
-            if (bsModal) {
-                bsModal.hide();
+    showSuccessMessage(message = 'عملیات با موفقیت انجام شد') {
+        // Show success message
+        console.log(message);
+        // You can replace this with a proper notification system
+        alert('موفق: ' + message);
+    }
+
+    showErrorMessage(message) {
+        // Show error message
+        alert('خطا: ' + message);
+    }
+
+    saveFormData() {
+        // Auto-save form data to localStorage
+        const formData = this.collectFormData();
+        localStorage.setItem('scheduleItemFormData', JSON.stringify(formData));
+    }
+
+    loadFormData() {
+        // Load form data from localStorage
+        const savedData = localStorage.getItem('scheduleItemFormData');
+        if (savedData) {
+            const formData = JSON.parse(savedData);
+            this.populateForm(formData);
+        }
+    }
+
+    populateForm(data) {
+        // Populate form fields with saved data
+        Object.entries(data).forEach(([key, value]) => {
+            const field = document.querySelector(`[name="${key}"]`);
+            if (field) {
+                field.value = value;
             }
         });
     }
 
-    showSuccess(message) {
-        // You can implement a toast notification system here
-        alert(message);
+    // Persian Date Picker Setup
+    setupPersianDatePicker() {
+        // Initialize Persian date pickers
+        if (typeof initializeAllDatePickers === 'function') {
+            initializeAllDatePickers();
+        }
+
+        // Setup time inputs
+        this.setupTimeInputs();
     }
 
-    showError(message) {
-        // You can implement a toast notification system here
-        alert(message);
+    setupTimeInputs() {
+        const startTimeInput = document.getElementById('StartTime');
+        const dueTimeInput = document.getElementById('DueTime');
+        const startDateInput = document.getElementById('StartDate');
+        const dueDateInput = document.getElementById('DueDate');
+
+        if (startTimeInput && startDateInput) {
+            startTimeInput.addEventListener('change', () => {
+                this.updateDateTimeField(startDateInput, startTimeInput);
+            });
+        }
+
+        if (dueTimeInput && dueDateInput) {
+            dueTimeInput.addEventListener('change', () => {
+                this.updateDateTimeField(dueDateInput, dueTimeInput);
+            });
+        }
+    }
+
+    updateDateTimeField(dateInput, timeInput) {
+        if (dateInput.value && timeInput.value) {
+            const date = new Date(dateInput.value);
+            const [hours, minutes] = timeInput.value.split(':');
+            date.setHours(parseInt(hours), parseInt(minutes));
+            dateInput.value = date.toISOString();
+        }
+    }
+
+    // Step Saving Methods
+    async saveCurrentStep() {
+        const stepData = this.collectStepData(this.currentStep);
+        
+        const requestData = {
+            Id: this.currentItemId,
+            TeachingPlanId: parseInt(document.querySelector('[name="TeachingPlanId"]').value),
+            Step: this.currentStep,
+            ...stepData
+        };
+
+        try {
+            console.log('Request data:', requestData);
+            
+            const response = await fetch('/Teacher/ScheduleItem/SaveStep', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(requestData)
+            });
+
+            // Check if response is ok and has content
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Response not OK:', response.status, errorText);
+                throw new Error(`HTTP ${response.status}: ${errorText}`);
+            }
+
+            const responseText = await response.text();
+            console.log('Response text:', responseText);
+            
+            if (!responseText) {
+                throw new Error('Empty response from server');
+            }
+
+            const result = JSON.parse(responseText);
+            
+            if (result.success) {
+                this.currentItemId = result.id;
+                this.isEditMode = true;
+                this.showSuccessMessage('مرحله با موفقیت ذخیره شد');
+                return result;
+            } else {
+                throw new Error(result.message || 'خطا در ذخیره مرحله');
+            }
+        } catch (error) {
+            console.error('Error saving step:', error);
+            throw error;
+        }
+    }
+
+    collectStepData(step) {
+        const stepData = {};
+
+        switch (step) {
+            case 1:
+                stepData.Type = parseInt(document.getElementById('itemType')?.value);
+                stepData.Title = document.getElementById('itemTitle')?.value;
+                stepData.Description = document.getElementById('descriptionHidden')?.value;
+                break;
+            case 2:
+                stepData.StartDate = document.getElementById('StartDate')?.value;
+                stepData.DueDate = document.getElementById('DueDate')?.value;
+                stepData.MaxScore = parseFloat(document.getElementById('maxScore')?.value) || null;
+                stepData.IsMandatory = document.getElementById('isMandatory')?.checked || false;
+                break;
+            case 3:
+                stepData.GroupId = parseInt(document.getElementById('groupId')?.value) || null;
+                stepData.LessonId = parseInt(document.getElementById('lessonId')?.value) || null;
+                break;
+            case 4:
+                stepData.ContentJson = this.collectContentData();
+                break;
+        }
+
+        return stepData;
+    }
+
+    // Check for existing item
+    checkForExistingItem() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const itemId = urlParams.get('id');
+        
+        if (itemId) {
+            this.currentItemId = parseInt(itemId);
+            this.isEditMode = true;
+            this.loadExistingItem();
+        }
+    }
+
+    async loadExistingItem() {
+        if (!this.currentItemId) return;
+
+        try {
+            const response = await fetch(`/Teacher/ScheduleItem/GetById/${this.currentItemId}`);
+            const result = await response.json();
+            
+            if (result.success) {
+                this.populateFormWithExistingData(result.data);
+            }
+        } catch (error) {
+            console.error('Error loading existing item:', error);
+        }
+    }
+
+    populateFormWithExistingData(data) {
+        // Populate form fields with existing data
+        if (data.title) document.getElementById('itemTitle').value = data.title;
+        if (data.type) document.getElementById('itemType').value = data.type;
+        if (data.description) {
+            document.getElementById('descriptionEditor').innerHTML = data.description;
+            document.getElementById('descriptionHidden').value = data.description;
+        }
+        if (data.startDate) {
+            document.getElementById('StartDate').value = data.startDate;
+            this.updatePersianDateDisplay('PersianStartDate', data.startDate);
+        }
+        if (data.dueDate) {
+            document.getElementById('DueDate').value = data.dueDate;
+            this.updatePersianDateDisplay('PersianDueDate', data.dueDate);
+        }
+        if (data.maxScore) document.getElementById('maxScore').value = data.maxScore;
+        if (data.isMandatory) document.getElementById('isMandatory').checked = data.isMandatory;
+        if (data.groupId) document.getElementById('groupId').value = data.groupId;
+        if (data.lessonId) document.getElementById('lessonId').value = data.lessonId;
+
+        // Update current step
+        if (data.currentStep) {
+            this.currentStep = data.currentStep;
+            this.updateStepVisibility();
+            this.updateStepIndicators();
+            this.updateProgress();
+            this.updateNavigationButtons();
+        }
+    }
+
+    updatePersianDateDisplay(inputId, isoDate) {
+        if (isoDate && typeof window.persianDate !== 'undefined') {
+            const date = new Date(isoDate);
+            const persianDate = window.persianDate.gregorianToPersian(date);
+            const formattedDate = `${persianDate.year}/${persianDate.month.toString().padStart(2, '0')}/${persianDate.day.toString().padStart(2, '0')}`;
+            document.getElementById(inputId).value = formattedDate;
+        }
+    }
+
+    // Enhanced form submission
+    async submitForm(formData) {
+        try {
+            // Save final step first
+            await this.saveCurrentStep();
+            
+            // Complete the item
+            const response = await fetch('/Teacher/ScheduleItem/Complete', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ Id: this.currentItemId })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                this.showSuccessMessage('آیتم آموزشی با موفقیت تکمیل شد');
+                // Redirect to index page
+                setTimeout(() => {
+                    window.location.href = `/Teacher/ScheduleItem/Index?teachingPlanId=${formData.TeachingPlanId}`;
+                }, 2000);
+            } else {
+                throw new Error(result.message || 'خطا در تکمیل آیتم');
+            }
+        } catch (error) {
+            console.error('Error submitting form:', error);
+            this.showErrorMessage('خطا در ارسال فرم');
+        }
     }
 }
 
-// Initialize the form manager when DOM is loaded
+// Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    window.scheduleItemFormManager = new ScheduleItemFormManager();
+    new ModernScheduleItemFormManager();
 });

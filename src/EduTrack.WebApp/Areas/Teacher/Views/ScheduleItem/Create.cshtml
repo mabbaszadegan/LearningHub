@@ -8,226 +8,556 @@
     var scheduleItemTypes = ViewBag.ScheduleItemTypes as List<object> ?? new List<object>();
 }
 
-<div class="row justify-content-center">
-    <div class="col-lg-10">
-        <!-- Back Button -->
-        <div class="mb-3">
-            <a asp-action="Index" asp-route-teachingPlanId="@teachingPlanId" class="btn-back-minimal">
-                <i class="fas fa-arrow-right"></i>
-                <span>بازگشت به لیست</span>
-            </a>
-        </div>
-
-        <!-- Form Card -->
-        <div class="form-card-minimal">
-            <div class="form-header-minimal">
-                <div class="form-icon-minimal">
-                    <i class="fas fa-plus"></i>
+<!-- Modern Page Header -->
+<div class="modern-page-header">
+    <div class="container-fluid">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <nav class="breadcrumb-nav">
+                    <a asp-controller="Courses" asp-action="Index" class="breadcrumb-item">
+                        <i class="fas fa-home"></i>
+                        <span>دوره‌ها</span>
+                    </a>
+                    <span class="breadcrumb-separator">/</span>
+                    <a asp-controller="TeachingPlan" asp-action="Index" asp-route-courseId="@courseId" class="breadcrumb-item">
+                        @courseTitle
+                    </a>
+                    <span class="breadcrumb-separator">/</span>
+                    <a asp-controller="ScheduleItem" asp-action="Index" asp-route-teachingPlanId="@teachingPlanId" class="breadcrumb-item">
+                        آیتم‌های آموزشی
+                    </a>
+                    <span class="breadcrumb-separator">/</span>
+                    <span class="breadcrumb-current">ایجاد آیتم جدید</span>
+                </nav>
+                <h1 class="page-title-modern">
+                    <i class="fas fa-magic"></i>
+                    ایجاد آیتم آموزشی جدید
+                </h1>
+                <p class="page-subtitle-modern">محتوای آموزشی جذاب و تعاملی برای دانش‌آموزان ایجاد کنید</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <div class="header-actions">
+                    <button type="button" class="btn-preview-modern" id="previewBtn">
+                        <i class="fas fa-eye"></i>
+                        <span>پیش‌نمایش</span>
+                    </button>
+                    <a asp-action="Index" asp-route-teachingPlanId="@teachingPlanId" class="btn-back-modern">
+                        <i class="fas fa-arrow-right"></i>
+                        <span>بازگشت</span>
+                    </a>
                 </div>
-                <div>
-                    <h2 class="form-title-minimal">ایجاد آیتم آموزشی جدید</h2>
-                    <p class="form-subtitle-minimal">اطلاعات آیتم آموزشی را وارد کنید</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Content -->
+<div class="modern-content-container">
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-lg-3">
+                <div class="creation-sidebar">
+                    <div class="sidebar-section">
+                        <h5 class="sidebar-title">
+                            <i class="fas fa-list-check"></i>
+                            مراحل ایجاد
+                        </h5>
+                        <div class="creation-steps">
+                            <div class="step-item active" data-step="basic">
+                                <div class="step-number">1</div>
+                                <div class="step-content">
+                                    <div class="step-title">اطلاعات کلی</div>
+                                    <div class="step-desc">عنوان و نوع آیتم</div>
+                                </div>
+                            </div>
+                            <div class="step-item" data-step="schedule">
+                                <div class="step-number">2</div>
+                                <div class="step-content">
+                                    <div class="step-title">زمان‌بندی</div>
+                                    <div class="step-desc">تاریخ و امتیاز</div>
+                                </div>
+                            </div>
+                            <div class="step-item" data-step="assignment">
+                                <div class="step-number">3</div>
+                                <div class="step-content">
+                                    <div class="step-title">تخصیص</div>
+                                    <div class="step-desc">گروه و درس</div>
+                                </div>
+                            </div>
+                            <div class="step-item" data-step="content">
+                                <div class="step-number">4</div>
+                                <div class="step-content">
+                                    <div class="step-title">محتوای آموزشی</div>
+                                    <div class="step-desc">طراحی محتوا</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="sidebar-section">
+                        <h5 class="sidebar-title">
+                            <i class="fas fa-lightbulb"></i>
+                            نکات مهم
+                        </h5>
+                        <div class="tips-list">
+                            <div class="tip-item">
+                                <i class="fas fa-check-circle"></i>
+                                <span>عنوان جذاب و واضح انتخاب کنید</span>
+                            </div>
+                            <div class="tip-item">
+                                <i class="fas fa-check-circle"></i>
+                                <span>توضیحات کامل و مفید بنویسید</span>
+                            </div>
+                            <div class="tip-item">
+                                <i class="fas fa-check-circle"></i>
+                                <span>زمان‌بندی واقع‌بینانه تعیین کنید</span>
+                            </div>
+                            <div class="tip-item">
+                                <i class="fas fa-check-circle"></i>
+                                <span>محتوای تعاملی طراحی کنید</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <form asp-action="Create" method="post" class="form-body-minimal">
-                @Html.HiddenFor(m => m.TeachingPlanId)
-                
-                <!-- Basic Information -->
-                <div class="form-section-minimal">
-                    <h5 class="section-title-minimal">
-                        <i class="fas fa-info-circle"></i>
-                        اطلاعات کلی
-                    </h5>
-                    
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group-minimal">
-                                <label asp-for="Title" class="form-label-minimal">
-                                    <i class="fas fa-heading"></i>
-                                    <span>عنوان آیتم</span>
-                                    <span class="required-star">*</span>
-                                </label>
-                                <input asp-for="Title" 
-                                       class="form-input-minimal" 
-                                       placeholder="مثال: تمرین ریاضی فصل اول" 
-                                       autocomplete="off" />
-                                <span asp-validation-for="Title" class="validation-error-minimal"></span>
-                            </div>
-                        </div>
-                        
-                        <div class="col-md-6">
-                            <div class="form-group-minimal">
-                                <label asp-for="Type" class="form-label-minimal">
-                                    <i class="fas fa-tasks"></i>
-                                    <span>نوع آیتم</span>
-                                    <span class="required-star">*</span>
-                                </label>
-                                <select asp-for="Type" class="form-input-minimal" id="itemType" required>
-                                    <option value="">انتخاب کنید...</option>
-                                    @foreach (var type in scheduleItemTypes)
-                                    {
-                                        <option value="@type.GetType().GetProperty("Value")?.GetValue(type)">
-                                            @type.GetType().GetProperty("Text")?.GetValue(type)
-                                        </option>
-                                    }
-                                </select>
-                                <span asp-validation-for="Type" class="validation-error-minimal"></span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group-minimal">
-                        <label asp-for="Description" class="form-label-minimal">
-                            <i class="fas fa-align-right"></i>
-                            <span>توضیحات</span>
-                        </label>
-                        <textarea asp-for="Description" 
-                                  class="form-textarea-minimal" 
-                                  rows="3" 
-                                  placeholder="توضیحات اختیاری در مورد آیتم آموزشی..."></textarea>
-                        <span asp-validation-for="Description" class="validation-error-minimal"></span>
-                    </div>
-                </div>
-
-                <!-- Schedule Information -->
-                <div class="form-section-minimal">
-                    <h5 class="section-title-minimal">
-                        <i class="fas fa-calendar-alt"></i>
-                        زمان‌بندی
-                    </h5>
-                    
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group-minimal">
-                                <label asp-for="StartDate" class="form-label-minimal">
-                                    <i class="fas fa-play"></i>
-                                    <span>تاریخ شروع</span>
-                                    <span class="required-star">*</span>
-                                </label>
-                                <input asp-for="StartDate" type="datetime-local" class="form-input-minimal" required />
-                                <span asp-validation-for="StartDate" class="validation-error-minimal"></span>
-                            </div>
-                        </div>
-                        
-                        <div class="col-md-6">
-                            <div class="form-group-minimal">
-                                <label asp-for="DueDate" class="form-label-minimal">
-                                    <i class="fas fa-clock"></i>
-                                    <span>تاریخ مهلت</span>
-                                </label>
-                                <input asp-for="DueDate" type="datetime-local" class="form-input-minimal" />
-                                <span asp-validation-for="DueDate" class="validation-error-minimal"></span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group-minimal">
-                                <label asp-for="MaxScore" class="form-label-minimal">
-                                    <i class="fas fa-star"></i>
-                                    <span>حداکثر امتیاز</span>
-                                </label>
-                                <input asp-for="MaxScore" type="number" class="form-input-minimal" min="0" max="100" step="0.1" placeholder="0" />
-                                <span asp-validation-for="MaxScore" class="validation-error-minimal"></span>
-                            </div>
-                        </div>
-                        
-                        <div class="col-md-6">
-                            <div class="form-group-minimal">
-                                <div class="form-check-minimal">
-                                    <input asp-for="IsMandatory" class="form-check-input-minimal" type="checkbox" />
-                                    <label asp-for="IsMandatory" class="form-check-label-minimal">
-                                        <i class="fas fa-exclamation-circle"></i>
-                                        آیتم اجباری
-                                    </label>
+            <!-- Main Form -->
+            <div class="col-lg-9">
+                <div class="modern-form-container">
+                    <form asp-action="Create" method="post" id="createItemForm" class="modern-form">
+                        @Html.AntiForgeryToken()
+                        @Html.HiddenFor(m => m.TeachingPlanId)
+                        <!-- Step 1: Basic Information -->
+                        <div class="form-step active" data-step="basic">
+                            <div class="step-header">
+                                <div class="step-icon">
+                                    <i class="fas fa-info-circle"></i>
                                 </div>
-                                <span asp-validation-for="IsMandatory" class="validation-error-minimal"></span>
+                                <div class="step-info">
+                                    <h3 class="step-title">اطلاعات کلی</h3>
+                                    <p class="step-description">عنوان، نوع و توضیحات آیتم آموزشی را تعیین کنید</p>
+                                </div>
+                            </div>
+
+                            <div class="step-content">
+                                <div class="row">
+                                    <div class="col-md-8">
+                                        <div class="form-group-modern">
+                                            <label asp-for="Title" class="form-label-modern">
+                                                <i class="fas fa-heading"></i>
+                                                <span>عنوان آیتم آموزشی</span>
+                                                <span class="required-indicator">*</span>
+                                            </label>
+                                            <div class="input-group-modern">
+                                                <input asp-for="Title" 
+                                                       class="form-input-modern" 
+                                                       placeholder="مثال: تمرین ریاضی فصل اول - حل معادلات درجه دوم" 
+                                                       autocomplete="off"
+                                                       id="itemTitle" />
+                                                <div class="input-feedback">
+                                                    <span class="char-count">0/100</span>
+                                                </div>
+                                            </div>
+                                            <span asp-validation-for="Title" class="validation-error-modern"></span>
+                                            <div class="input-hint">عنوان جذاب و واضح انتخاب کنید که دانش‌آموزان را ترغیب کند</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-4">
+                                        <div class="form-group-modern">
+                                            <label asp-for="Type" class="form-label-modern">
+                                                <i class="fas fa-tasks"></i>
+                                                <span>نوع آیتم</span>
+                                                <span class="required-indicator">*</span>
+                                            </label>
+                                            <select asp-for="Type" class="form-select-modern" id="itemType" required>
+                                                <option value="">انتخاب نوع آیتم...</option>
+                                                @foreach (var type in scheduleItemTypes)
+                                                {
+                                                    <option value="@type.GetType().GetProperty("Value")?.GetValue(type)" 
+                                                            data-description="@type.GetType().GetProperty("Description")?.GetValue(type)">
+                                                        @type.GetType().GetProperty("Text")?.GetValue(type)
+                                                    </option>
+                                                }
+                                            </select>
+                                            <span asp-validation-for="Type" class="validation-error-modern"></span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group-modern">
+                                    <label asp-for="Description" class="form-label-modern">
+                                        <i class="fas fa-align-right"></i>
+                                        <span>توضیحات آیتم</span>
+                                    </label>
+                                    <div class="rich-editor-container">
+                                        <div class="editor-toolbar">
+                                            <button type="button" class="toolbar-btn" data-command="bold">
+                                                <i class="fas fa-bold"></i>
+                                            </button>
+                                            <button type="button" class="toolbar-btn" data-command="italic">
+                                                <i class="fas fa-italic"></i>
+                                            </button>
+                                            <button type="button" class="toolbar-btn" data-command="underline">
+                                                <i class="fas fa-underline"></i>
+                                            </button>
+                                            <div class="toolbar-separator"></div>
+                                            <button type="button" class="toolbar-btn" data-command="insertUnorderedList">
+                                                <i class="fas fa-list-ul"></i>
+                                            </button>
+                                            <button type="button" class="toolbar-btn" data-command="insertOrderedList">
+                                                <i class="fas fa-list-ol"></i>
+                                            </button>
+                                            <div class="toolbar-separator"></div>
+                                            <button type="button" class="toolbar-btn" data-command="createLink">
+                                                <i class="fas fa-link"></i>
+                                            </button>
+                                        </div>
+                                        <div class="editor-content" contenteditable="true" id="descriptionEditor" 
+                                             placeholder="توضیحات کامل و مفید در مورد آیتم آموزشی، اهداف یادگیری و نحوه انجام آن..."></div>
+                                    </div>
+                                    <textarea asp-for="Description" class="d-none" id="descriptionHidden"></textarea>
+                                    <span asp-validation-for="Description" class="validation-error-modern"></span>
+                                    <div class="input-hint">توضیحات کامل و جذاب بنویسید که دانش‌آموزان را راهنمایی کند</div>
+                                </div>
+
+                                <div class="type-preview" id="typePreview" style="display: none;">
+                                    <div class="preview-header">
+                                        <i class="fas fa-eye"></i>
+                                        <span>پیش‌نمایش نوع آیتم</span>
+                                    </div>
+                                    <div class="preview-content" id="typePreviewContent">
+                                        <!-- Dynamic content based on selected type -->
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </div>
 
-                <!-- Assignment Information -->
-                <div class="form-section-minimal">
-                    <h5 class="section-title-minimal">
-                        <i class="fas fa-users"></i>
-                        تخصیص
-                    </h5>
-                    
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group-minimal">
-                                <label asp-for="GroupId" class="form-label-minimal">
+                        <!-- Step 2: Schedule Information -->
+                        <div class="form-step" data-step="schedule">
+                            <div class="step-header">
+                                <div class="step-icon">
+                                    <i class="fas fa-calendar-alt"></i>
+                                </div>
+                                <div class="step-info">
+                                    <h3 class="step-title">زمان‌بندی و امتیاز</h3>
+                                    <p class="step-description">تاریخ شروع، مهلت تحویل و امتیاز آیتم را تعیین کنید</p>
+                                </div>
+                            </div>
+
+                            <div class="step-content">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group-modern">
+                                            <label asp-for="StartDate" class="form-label-modern">
+                                                <i class="fas fa-play"></i>
+                                                <span>تاریخ و زمان شروع</span>
+                                                <span class="required-indicator">*</span>
+                                            </label>
+                                            <div class="datetime-input-group">
+                                                <div class="date-input-wrapper">
+                                                    <input type="text" id="PersianStartDate" class="form-input-modern persian-datepicker" 
+                                                           placeholder="انتخاب تاریخ" data-target="StartDate" name="PersianStartDate" />
+                                                    <input asp-for="StartDate" type="hidden" id="StartDate" name="StartDate" />
+                                                </div>
+                                                <div class="time-input-wrapper">
+                                                    <input type="time" id="StartTime" class="form-input-modern" />
+                                                </div>
+                                                <button type="button" class="datetime-btn" id="setNowBtn">
+                                                    <i class="fas fa-clock"></i>
+                                                    <span>الان</span>
+                                                </button>
+                                            </div>
+                                            <span asp-validation-for="StartDate" class="validation-error-modern"></span>
+                                            <div class="input-hint">زمانی که دانش‌آموزان می‌توانند شروع به کار کنند</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <div class="form-group-modern">
+                                            <label asp-for="DueDate" class="form-label-modern">
+                                                <i class="fas fa-clock"></i>
+                                                <span>تاریخ و زمان مهلت</span>
+                                            </label>
+                                            <div class="datetime-input-group">
+                                                <div class="date-input-wrapper">
+                                                    <input type="text" id="PersianDueDate" class="form-input-modern persian-datepicker" 
+                                                           placeholder="انتخاب تاریخ" data-target="DueDate" name="PersianDueDate" />
+                                                    <input asp-for="DueDate" type="hidden" id="DueDate" name="DueDate" />
+                                                </div>
+                                                <div class="time-input-wrapper">
+                                                    <input type="time" id="DueTime" class="form-input-modern" />
+                                                </div>
+                                                <button type="button" class="datetime-btn" id="setWeekBtn">
+                                                    <i class="fas fa-calendar-week"></i>
+                                                    <span>یک هفته</span>
+                                                </button>
+                                            </div>
+                                            <span asp-validation-for="DueDate" class="validation-error-modern"></span>
+                                            <div class="input-hint">آخرین مهلت تحویل آیتم (اختیاری)</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group-modern">
+                                            <label asp-for="MaxScore" class="form-label-modern">
+                                                <i class="fas fa-star"></i>
+                                                <span>حداکثر امتیاز</span>
+                                            </label>
+                                            <div class="score-input-group">
+                                                <input asp-for="MaxScore" type="number" class="form-input-modern" min="0" max="100" step="0.1" placeholder="0" id="maxScore" />
+                                                <div class="score-presets">
+                                                    <button type="button" class="score-preset" data-score="10">10</button>
+                                                    <button type="button" class="score-preset" data-score="20">20</button>
+                                                    <button type="button" class="score-preset" data-score="50">50</button>
+                                                    <button type="button" class="score-preset" data-score="100">100</button>
+                                                </div>
+                                            </div>
+                                            <span asp-validation-for="MaxScore" class="validation-error-modern"></span>
+                                            <div class="input-hint">امتیاز کامل برای این آیتم (0-100)</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <div class="form-group-modern">
+                                            <label class="form-label-modern">
+                                                <i class="fas fa-cog"></i>
+                                                <span>تنظیمات آیتم</span>
+                                            </label>
+                                            <div class="checkbox-group-modern">
+                                                <div class="checkbox-item-modern">
+                                                    <input asp-for="IsMandatory" class="checkbox-input-modern" type="checkbox" id="isMandatory" />
+                                                    <label for="isMandatory" class="checkbox-label-modern">
+                                                        <div class="checkbox-custom"></div>
+                                                        <div class="checkbox-content">
+                                                            <div class="checkbox-title">آیتم اجباری</div>
+                                                            <div class="checkbox-desc">دانش‌آموزان باید حتماً این آیتم را انجام دهند</div>
+                                                        </div>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <span asp-validation-for="IsMandatory" class="validation-error-modern"></span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="duration-calculator" id="durationCalculator" style="display: none;">
+                                    <div class="calculator-header">
+                                        <i class="fas fa-calculator"></i>
+                                        <span>محاسبه مدت زمان</span>
+                                    </div>
+                                    <div class="calculator-content">
+                                        <div class="duration-display">
+                                            <span class="duration-label">مدت زمان:</span>
+                                            <span class="duration-value" id="durationValue">-</span>
+                                        </div>
+                                        <div class="duration-hint">مدت زمان بین شروع و مهلت تحویل</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 3: Assignment Information -->
+                        <div class="form-step" data-step="assignment">
+                            <div class="step-header">
+                                <div class="step-icon">
                                     <i class="fas fa-users"></i>
-                                    <span>گروه خاص</span>
-                                </label>
-                                <select asp-for="GroupId" class="form-input-minimal" id="groupId">
-                                    <option value="">همه گروه‌ها</option>
-                                    <!-- Groups will be loaded dynamically -->
-                                </select>
-                                <span asp-validation-for="GroupId" class="validation-error-minimal"></span>
+                                </div>
+                                <div class="step-info">
+                                    <h3 class="step-title">تخصیص و گروه‌بندی</h3>
+                                    <p class="step-description">گروه‌های هدف و درس مرتبط را انتخاب کنید</p>
+                                </div>
+                            </div>
+
+                            <div class="step-content">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group-modern">
+                                            <label asp-for="GroupId" class="form-label-modern">
+                                                <i class="fas fa-users"></i>
+                                                <span>گروه هدف</span>
+                                            </label>
+                                            <div class="select-group-modern">
+                                                <select asp-for="GroupId" class="form-select-modern" id="groupId">
+                                                    <option value="">همه گروه‌ها</option>
+                                                    <!-- Groups will be loaded dynamically -->
+                                                </select>
+                                                <div class="select-actions">
+                                                    <button type="button" class="select-action-btn" id="refreshGroupsBtn">
+                                                        <i class="fas fa-sync-alt"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <span asp-validation-for="GroupId" class="validation-error-modern"></span>
+                                            <div class="input-hint">انتخاب گروه خاص یا همه گروه‌ها</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <div class="form-group-modern">
+                                            <label asp-for="LessonId" class="form-label-modern">
+                                                <i class="fas fa-book"></i>
+                                                <span>درس مرتبط</span>
+                                            </label>
+                                            <div class="select-group-modern">
+                                                <select asp-for="LessonId" class="form-select-modern" id="lessonId">
+                                                    <option value="">انتخاب درس...</option>
+                                                    <!-- Lessons will be loaded dynamically -->
+                                                </select>
+                                                <div class="select-actions">
+                                                    <button type="button" class="select-action-btn" id="refreshLessonsBtn">
+                                                        <i class="fas fa-sync-alt"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <span asp-validation-for="LessonId" class="validation-error-modern"></span>
+                                            <div class="input-hint">درس مرتبط با این آیتم (اختیاری)</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="assignment-preview" id="assignmentPreview">
+                                    <div class="preview-header">
+                                        <i class="fas fa-eye"></i>
+                                        <span>پیش‌نمایش تخصیص</span>
+                                    </div>
+                                    <div class="preview-content">
+                                        <div class="assignment-summary">
+                                            <div class="summary-item">
+                                                <span class="summary-label">گروه‌های هدف:</span>
+                                                <span class="summary-value" id="targetGroups">همه گروه‌ها</span>
+                                            </div>
+                                            <div class="summary-item">
+                                                <span class="summary-label">درس مرتبط:</span>
+                                                <span class="summary-value" id="relatedLesson">تعیین نشده</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        
-                        <div class="col-md-6">
-                            <div class="form-group-minimal">
-                                <label asp-for="LessonId" class="form-label-minimal">
-                                    <i class="fas fa-book"></i>
-                                    <span>درس مرتبط</span>
-                                </label>
-                                <select asp-for="LessonId" class="form-input-minimal" id="lessonId">
-                                    <option value="">انتخاب درس...</option>
-                                    <!-- Lessons will be loaded dynamically -->
-                                </select>
-                                <span asp-validation-for="LessonId" class="validation-error-minimal"></span>
+
+                        <!-- Step 4: Content Design Section -->
+                        <div class="form-step" data-step="content">
+                            <div class="step-header">
+                                <div class="step-icon">
+                                    <i class="fas fa-paint-brush"></i>
+                                </div>
+                                <div class="step-info">
+                                    <h3 class="step-title">طراحی محتوای آموزشی</h3>
+                                    <p class="step-description">محتوای تعاملی و جذاب برای دانش‌آموزان طراحی کنید</p>
+                                </div>
+                            </div>
+
+                            <div class="step-content">
+                                <div class="content-type-selector" id="contentTypeSelector" style="display: none;">
+                                    <div class="selector-header">
+                                        <i class="fas fa-magic"></i>
+                                        <span>انتخاب نوع محتوا</span>
+                                    </div>
+                                    <div class="content-types-grid" id="contentTypesGrid">
+                                        <!-- Dynamic content types will be loaded here -->
+                                    </div>
+                                </div>
+
+                                <div class="content-designer" id="contentDesigner" style="display: none;">
+                                    <div class="designer-header">
+                                        <div class="designer-title">
+                                            <i class="fas fa-edit"></i>
+                                            <span>طراحی محتوا</span>
+                                        </div>
+                                        <div class="designer-actions">
+                                            <button type="button" class="designer-btn" id="previewContentBtn">
+                                                <i class="fas fa-eye"></i>
+                                                <span>پیش‌نمایش</span>
+                                            </button>
+                                            <button type="button" class="designer-btn" id="resetContentBtn">
+                                                <i class="fas fa-undo"></i>
+                                                <span>بازنشانی</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="designer-content" id="contentDesignContainer">
+                                        <!-- Content design will be loaded dynamically based on item type -->
+                                    </div>
+                                </div>
+
+                                <div class="content-templates" id="contentTemplates" style="display: none;">
+                                    <div class="templates-header">
+                                        <i class="fas fa-layer-group"></i>
+                                        <span>قالب‌های آماده</span>
+                                    </div>
+                                    <div class="templates-grid" id="templatesGrid">
+                                        <!-- Templates will be loaded dynamically -->
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </div>
 
-                <!-- Content Design Section -->
-                <div class="form-section-minimal" id="contentDesignSection" style="display: none;">
-                    <h5 class="section-title-minimal">
-                        <i class="fas fa-paint-brush"></i>
-                        طراحی محتوا
-                    </h5>
-                    
-                    <div id="contentDesignContainer">
-                        <!-- Content design will be loaded dynamically based on item type -->
-                    </div>
+                        <!-- Form Navigation -->
+                        <div class="form-navigation">
+                            <div class="nav-buttons">
+                                <button type="button" class="nav-btn nav-prev" id="prevStepBtn" disabled>
+                                    <i class="fas fa-arrow-right"></i>
+                                    <span>قبلی</span>
+                                </button>
+                                <button type="button" class="nav-btn nav-next" id="nextStepBtn">
+                                    <span>بعدی</span>
+                                    <i class="fas fa-arrow-left"></i>
+                                </button>
+                                <button type="submit" class="nav-btn nav-submit" id="submitBtn" style="display: none;">
+                                    <i class="fas fa-check"></i>
+                                    <span>ایجاد آیتم</span>
+                                </button>
+                            </div>
+                            <div class="nav-progress">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="progressFill"></div>
+                                </div>
+                                <span class="progress-text" id="progressText">مرحله 1 از 4</span>
+                            </div>
+                        </div>
+                    </form>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-                <!-- Info Box -->
-                <div class="info-box-minimal">
-                    <i class="fas fa-info-circle"></i>
-                    <div>
-                        <strong>نکته:</strong>
-                        <p>پس از انتخاب نوع آیتم، بخش طراحی محتوا نمایش داده می‌شود و می‌توانید محتوای مخصوص آن نوع را طراحی کنید.</p>
-                    </div>
+<!-- Preview Modal -->
+<div class="modal fade" id="previewModal" tabindex="-1" aria-labelledby="previewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="previewModalLabel">
+                    <i class="fas fa-eye"></i>
+                    پیش‌نمایش آیتم آموزشی
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="previewContent">
+                    <!-- Preview content will be loaded here -->
                 </div>
-
-                <!-- Action Buttons -->
-                <div class="form-actions-minimal">
-                    <button type="submit" class="btn-submit-minimal">
-                        <i class="fas fa-check"></i>
-                        <span>ایجاد آیتم</span>
-                    </button>
-                    <a asp-action="Index" asp-route-teachingPlanId="@teachingPlanId" class="btn-cancel-minimal">
-                        <i class="fas fa-times"></i>
-                        <span>انصراف</span>
-                    </a>
-                </div>
-            </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">بستن</button>
+                <button type="button" class="btn btn-primary" id="saveFromPreviewBtn">ذخیره آیتم</button>
+            </div>
         </div>
     </div>
 </div>
 
 @section Scripts {
+    <script src="~/js/persian-datepicker.js"></script>
+    <script src="~/js/datepicker-init.js"></script>
     <script src="~/js/areas/teacher/schedule-items/schedule-item-form.js"></script>
 }
 
 @section Styles {
+    <link href="~/css/persian-datepicker.css" rel="stylesheet" />
     <link href="~/css/areas/teacher/schedule-items/schedule-item-form.css" rel="stylesheet" />
 }

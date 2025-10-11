@@ -338,6 +338,80 @@ public class ScheduleItemController : Controller
         return Json(new { success = false, message = result.Error }, jsonSettings);
     }
 
+    // POST: ScheduleItem/SaveStep
+    [HttpPost]
+    public async Task<IActionResult> SaveStep([FromBody] SaveScheduleItemStepRequest request)
+    {
+        try
+        {
+            _logger.LogInformation("SaveStep called with request: {@Request}", request);
+            
+            var currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser == null)
+            {
+                _logger.LogWarning("User not found in SaveStep");
+                return Json(new { success = false, message = "کاربر یافت نشد." });
+            }
+
+        var command = new SaveScheduleItemStepCommand(
+            request.Id,
+            request.TeachingPlanId,
+            request.Step,
+            request.Type,
+            request.Title,
+            request.Description,
+            request.StartDate,
+            request.DueDate,
+            request.IsMandatory,
+            request.ContentJson,
+            request.MaxScore,
+            request.GroupId,
+            request.LessonId
+        );
+
+            var result = await _mediator.Send(command);
+
+            if (result.IsSuccess)
+            {
+                _logger.LogInformation("SaveStep successful, ID: {Id}", result.Value);
+                return Json(new { success = true, id = result.Value, message = "مرحله با موفقیت ذخیره شد." });
+            }
+            else
+            {
+                _logger.LogError("SaveStep failed: {Error}", result.Error);
+                return Json(new { success = false, message = result.Error });
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Exception in SaveStep");
+            return Json(new { success = false, message = $"خطا در ذخیره مرحله: {ex.Message}" });
+        }
+    }
+
+    // POST: ScheduleItem/Complete
+    [HttpPost]
+    public async Task<IActionResult> Complete([FromBody] CompleteScheduleItemRequest request)
+    {
+        var currentUser = await _userManager.GetUserAsync(User);
+        if (currentUser == null)
+        {
+            return Json(new { success = false, message = "کاربر یافت نشد." });
+        }
+
+        var command = new CompleteScheduleItemCommand(request.Id);
+        var result = await _mediator.Send(command);
+        
+        if (result.IsSuccess)
+        {
+            return Json(new { success = true, message = "آیتم آموزشی با موفقیت تکمیل شد." });
+        }
+        else
+        {
+            return Json(new { success = false, message = result.Error });
+        }
+    }
+
     private static List<object> GetScheduleItemTypes()
     {
         return new List<object>

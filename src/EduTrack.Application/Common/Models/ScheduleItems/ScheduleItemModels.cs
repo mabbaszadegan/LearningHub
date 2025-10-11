@@ -222,3 +222,25 @@ public enum ScheduleItemStatus
     Completed = 3,
     Expired = 4
 }
+
+public record SaveScheduleItemStepRequest
+{
+    public int? Id { get; init; }
+    public int TeachingPlanId { get; init; }
+    public int Step { get; init; }
+    public ScheduleItemType? Type { get; init; }
+    public string? Title { get; init; }
+    public string? Description { get; init; }
+    public DateTimeOffset? StartDate { get; init; }
+    public DateTimeOffset? DueDate { get; init; }
+    public bool? IsMandatory { get; init; }
+    public string? ContentJson { get; init; }
+    public decimal? MaxScore { get; init; }
+    public int? GroupId { get; init; }
+    public int? LessonId { get; init; }
+}
+
+public record CompleteScheduleItemRequest
+{
+    public int Id { get; init; }
+}
