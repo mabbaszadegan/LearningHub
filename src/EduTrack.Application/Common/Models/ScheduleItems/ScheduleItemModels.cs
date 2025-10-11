@@ -26,6 +26,8 @@ public class ScheduleItemDto
     public DateTimeOffset UpdatedAt { get; set; }
     public ScheduleItemStatus Status { get; set; }
     public string StatusText { get; set; } = string.Empty;
+    public int CurrentStep { get; set; }
+    public bool IsCompleted { get; set; }
 }
 
 public class ScheduleItemListDto

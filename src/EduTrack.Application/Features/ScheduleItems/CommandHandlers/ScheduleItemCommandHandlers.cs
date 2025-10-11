@@ -283,7 +283,8 @@ public class SaveScheduleItemStepCommandHandler : IRequestHandler<SaveScheduleIt
                     request.ContentJson ?? "{}",
                     request.MaxScore,
                     request.GroupId,
-                    request.LessonId
+                    request.LessonId,
+                    null // DisciplineHint
                 );
             }
 

@@ -389,6 +389,42 @@ public class ScheduleItemController : Controller
         }
     }
 
+    // GET: ScheduleItem/GetById/{id}
+    [HttpGet]
+    public async Task<IActionResult> GetById(int id)
+    {
+        try
+        {
+            _logger.LogInformation("GetById called with ID: {Id}", id);
+            
+            var currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser == null)
+            {
+                _logger.LogWarning("User not found in GetById");
+                return Json(new { success = false, message = "کاربر یافت نشد." });
+            }
+
+            var query = new EduTrack.Application.Features.ScheduleItems.Queries.GetScheduleItemByIdQuery(id);
+            var result = await _mediator.Send(query);
+
+            if (result.IsSuccess)
+            {
+                _logger.LogInformation("GetById successful for ID: {Id}", id);
+                return Json(new { success = true, data = result.Value });
+            }
+            else
+            {
+                _logger.LogError("GetById failed: {Error}", result.Error);
+                return Json(new { success = false, message = result.Error });
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Exception in GetById");
+            return Json(new { success = false, message = $"خطا در دریافت آیتم: {ex.Message}" });
+        }
+    }
+
     // POST: ScheduleItem/Complete
     [HttpPost]
     public async Task<IActionResult> Complete([FromBody] CompleteScheduleItemRequest request)

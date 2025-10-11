@@ -1107,6 +1107,19 @@ class ModernScheduleItemFormManager {
                 this.currentItemId = result.id;
                 this.isEditMode = true;
                 this.showSuccessMessage('مرحله با موفقیت ذخیره شد');
+                
+                // Update URL to include ID for edit mode
+                if (!window.location.search.includes('id=')) {
+                    const url = new URL(window.location);
+                    url.searchParams.set('id', result.id);
+                    window.history.replaceState({}, '', url);
+                }
+                
+                // Load existing data after first save
+                if (this.currentStep === 1) {
+                    await this.loadExistingItem();
+                }
+                
                 return result;
             } else {
                 throw new Error(result.message || 'خطا در ذخیره مرحله');
@@ -1182,10 +1195,12 @@ class ModernScheduleItemFormManager {
         if (data.startDate) {
             document.getElementById('StartDate').value = data.startDate;
             this.updatePersianDateDisplay('PersianStartDate', data.startDate);
+            this.updateTimeInput('StartTime', data.startDate);
         }
         if (data.dueDate) {
             document.getElementById('DueDate').value = data.dueDate;
             this.updatePersianDateDisplay('PersianDueDate', data.dueDate);
+            this.updateTimeInput('DueTime', data.dueDate);
         }
         if (data.maxScore) document.getElementById('maxScore').value = data.maxScore;
         if (data.isMandatory) document.getElementById('isMandatory').checked = data.isMandatory;
@@ -1200,6 +1215,9 @@ class ModernScheduleItemFormManager {
             this.updateProgress();
             this.updateNavigationButtons();
         }
+
+        // Update form state indicators
+        this.updateFormStateIndicators();
     }
 
     updatePersianDateDisplay(inputId, isoDate) {
@@ -1208,6 +1226,46 @@ class ModernScheduleItemFormManager {
             const persianDate = window.persianDate.gregorianToPersian(date);
             const formattedDate = `${persianDate.year}/${persianDate.month.toString().padStart(2, '0')}/${persianDate.day.toString().padStart(2, '0')}`;
             document.getElementById(inputId).value = formattedDate;
+        }
+    }
+
+    updateTimeInput(inputId, isoDate) {
+        if (isoDate) {
+            const date = new Date(isoDate);
+            const timeString = `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+            const timeInput = document.getElementById(inputId);
+            if (timeInput) {
+                timeInput.value = timeString;
+            }
+        }
+    }
+
+    updateFormStateIndicators() {
+        // Update page title to show edit mode
+        if (this.isEditMode && this.currentItemId) {
+            const pageTitle = document.querySelector('.modern-page-header h1');
+            if (pageTitle) {
+                pageTitle.textContent = 'ویرایش آیتم آموزشی';
+            }
+        }
+
+        // Update sidebar tips for edit mode
+        const tipsList = document.querySelector('.tips-list');
+        if (tipsList && this.isEditMode) {
+            tipsList.innerHTML = `
+                <li class="tip-item">
+                    <i class="fas fa-edit"></i>
+                    <span>در حال ویرایش آیتم آموزشی هستید</span>
+                </li>
+                <li class="tip-item">
+                    <i class="fas fa-save"></i>
+                    <span>تغییرات به صورت خودکار ذخیره می‌شوند</span>
+                </li>
+                <li class="tip-item">
+                    <i class="fas fa-step-forward"></i>
+                    <span>می‌توانید بین مراحل جابجا شوید</span>
+                </li>
+            `;
         }
     }
 

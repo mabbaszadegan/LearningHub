@@ -172,7 +172,9 @@ public class GetScheduleItemByIdQueryHandler : IRequestHandler<GetScheduleItemBy
                 CreatedAt = scheduleItem.CreatedAt,
                 UpdatedAt = scheduleItem.UpdatedAt,
                 Status = GetItemStatus(scheduleItem),
-                StatusText = GetStatusText(GetItemStatus(scheduleItem))
+                StatusText = GetStatusText(GetItemStatus(scheduleItem)),
+                CurrentStep = scheduleItem.CurrentStep,
+                IsCompleted = scheduleItem.IsCompleted
             };
 
             return Result<ScheduleItemDto>.Success(dto);
