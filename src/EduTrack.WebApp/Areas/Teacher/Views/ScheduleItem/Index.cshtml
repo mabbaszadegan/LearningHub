@@ -1,0 +1,248 @@
+@model List<EduTrack.Application.Common.Models.ScheduleItems.ScheduleItemDto>
+@{
+    ViewData["Title"] = "مدیریت آیتم‌های آموزشی";
+    var teachingPlanId = ViewBag.TeachingPlanId as int? ?? 0;
+    var teachingPlanTitle = ViewBag.TeachingPlanTitle as string ?? "برنامه آموزشی";
+    var courseTitle = ViewBag.CourseTitle as string ?? "دوره";
+    var courseId = ViewBag.CourseId as int? ?? 0;
+    var stats = ViewBag.Stats as EduTrack.Application.Common.Models.ScheduleItems.ScheduleItemStatsDto ?? new EduTrack.Application.Common.Models.ScheduleItems.ScheduleItemStatsDto();
+}
+
+<!-- Page Header -->
+<div class="page-header-minimal mb-3">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="page-title">مدیریت آیتم‌های آموزشی</h1>
+            <p class="page-subtitle mb-0">
+                <a asp-controller="Courses" asp-action="Index" class="breadcrumb-link">
+                    <i class="fas fa-chevron-right"></i> دوره‌ها
+                </a>
+                <span class="mx-2">/</span>
+                <a asp-controller="TeachingPlan" asp-action="Index" asp-route-courseId="@courseId" class="breadcrumb-link">
+                    @courseTitle
+                </a>
+                <span class="mx-2">/</span>
+                <span>@teachingPlanTitle</span>
+            </p>
+        </div>
+        <a asp-action="Create" asp-route-teachingPlanId="@teachingPlanId" class="btn-action-primary">
+            <i class="fas fa-plus"></i>
+            <span>آیتم جدید</span>
+        </a>
+    </div>
+</div>
+
+<div class="schedule-items-container">
+
+    <!-- Stats Cards -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-list"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-number">@stats.TotalItems</div>
+                <div class="stat-label">کل آیتم‌ها</div>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-play-circle"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-number">@stats.ActiveItems</div>
+                <div class="stat-label">آیتم‌های فعال</div>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-number">@stats.CompletedItems</div>
+                <div class="stat-label">تکمیل شده</div>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-number">@stats.OverdueItems</div>
+                <div class="stat-label">منقضی شده</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters and Search -->
+    <div class="filters-section-minimal">
+        <div class="filters-container">
+            <div class="search-container">
+                <div class="search-input-wrapper">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" id="searchInput" placeholder="جستجو در آیتم‌ها..." class="search-input">
+                </div>
+            </div>
+            
+            <div class="filters-row">
+                <div class="filter-group">
+                    <label class="filter-label">نوع آیتم:</label>
+                    <select id="typeFilter" class="filter-select">
+                        <option value="">همه انواع</option>
+                        <option value="0">یادآوری</option>
+                        <option value="1">نوشتاری</option>
+                        <option value="2">صوتی</option>
+                        <option value="3">پر کردن جای خالی</option>
+                        <option value="4">چند گزینه‌ای</option>
+                        <option value="5">تطبیق</option>
+                        <option value="6">پیدا کردن خطا</option>
+                        <option value="7">تمرین کد</option>
+                        <option value="8">کویز</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label class="filter-label">وضعیت:</label>
+                    <select id="statusFilter" class="filter-select">
+                        <option value="">همه وضعیت‌ها</option>
+                        <option value="0">پیش‌نویس</option>
+                        <option value="1">منتشر شده</option>
+                        <option value="2">فعال</option>
+                        <option value="3">تکمیل شده</option>
+                        <option value="4">منقضی شده</option>
+                    </select>
+                </div>
+                
+                <div class="filter-actions">
+                    <button type="button" class="btn-clear-filters" id="clearFilters">
+                        <i class="fas fa-times"></i>
+                        پاک کردن
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Schedule Items Grid -->
+    <div class="schedule-items-grid" id="scheduleItemsGrid">
+        @if (Model.Any())
+        {
+            @foreach (var item in Model)
+            {
+                <div class="schedule-item-card" data-item-id="@item.Id" data-type="@((int)item.Type)" data-status="@((int)item.Status)">
+                    <div class="item-header">
+                        <div class="item-type-badge type-@((int)item.Type)">
+                            <i class="@GetTypeIcon(item.Type)"></i>
+                            @item.TypeName
+                        </div>
+                        <div class="item-actions">
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-ellipsis-v"></i>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="#" onclick="editItem(@item.Id)">
+                                        <i class="fas fa-edit"></i> ویرایش
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="duplicateItem(@item.Id)">
+                                        <i class="fas fa-copy"></i> کپی
+                                    </a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item text-danger" href="#" onclick="deleteItem(@item.Id)">
+                                        <i class="fas fa-trash"></i> حذف
+                                    </a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="item-content">
+                        <h5 class="item-title">@item.Title</h5>
+                        @if (!string.IsNullOrEmpty(item.Description))
+                        {
+                            <p class="item-description">@item.Description</p>
+                        }
+                        
+                        <div class="item-meta">
+                            <div class="meta-item">
+                                <i class="fas fa-calendar-alt"></i>
+                                <span>شروع: @item.StartDate.ToString("yyyy/MM/dd")</span>
+                            </div>
+                            @if (item.DueDate.HasValue)
+                            {
+                                <div class="meta-item">
+                                    <i class="fas fa-clock"></i>
+                                    <span>مهلت: @item.DueDate.Value.ToString("yyyy/MM/dd")</span>
+                                </div>
+                            }
+                            @if (item.MaxScore.HasValue)
+                            {
+                                <div class="meta-item">
+                                    <i class="fas fa-star"></i>
+                                    <span>امتیاز: @item.MaxScore</span>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                    
+                    <div class="item-footer">
+                        <div class="item-status status-@((int)item.Status)">
+                            @item.StatusText
+                        </div>
+                        @if (!string.IsNullOrEmpty(item.GroupName))
+                        {
+                            <div class="item-group">
+                                <i class="fas fa-users"></i>
+                                @item.GroupName
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <i class="fas fa-tasks"></i>
+                </div>
+                <h3>هیچ آیتم آموزشی وجود ندارد</h3>
+                <p>برای شروع، اولین آیتم آموزشی خود را ایجاد کنید.</p>
+                <a asp-action="Create" asp-route-teachingPlanId="@teachingPlanId" class="btn-action-primary">
+                    <i class="fas fa-plus"></i>
+                    <span>افزودن آیتم جدید</span>
+                </a>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/areas/teacher/schedule-items/schedule-items.js"></script>
+}
+
+@section Styles {
+    <link href="~/css/areas/teacher/schedule-items/schedule-items.css" rel="stylesheet" />
+}
+
+@functions {
+    string GetTypeIcon(EduTrack.Domain.Enums.ScheduleItemType type)
+    {
+        return type switch
+        {
+            EduTrack.Domain.Enums.ScheduleItemType.Reminder => "fas fa-bell",
+            EduTrack.Domain.Enums.ScheduleItemType.Writing => "fas fa-pen",
+            EduTrack.Domain.Enums.ScheduleItemType.Audio => "fas fa-volume-up",
+            EduTrack.Domain.Enums.ScheduleItemType.GapFill => "fas fa-edit",
+            EduTrack.Domain.Enums.ScheduleItemType.MultipleChoice => "fas fa-list-ul",
+            EduTrack.Domain.Enums.ScheduleItemType.Match => "fas fa-link",
+            EduTrack.Domain.Enums.ScheduleItemType.ErrorFinding => "fas fa-search",
+            EduTrack.Domain.Enums.ScheduleItemType.CodeExercise => "fas fa-code",
+            EduTrack.Domain.Enums.ScheduleItemType.Quiz => "fas fa-question-circle",
+            _ => "fas fa-tasks"
+        };
+    }
+}

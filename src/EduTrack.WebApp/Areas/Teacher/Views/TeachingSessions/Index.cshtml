@@ -15,6 +15,13 @@
             Url = Url.Action("Create", new { planId = planId }) ?? "#",
             CssClass = "btn-action-primary",
             Icon = "fas fa-plus"
+        },
+        new NavigationAction
+        {
+            Text = "آیتم‌های آموزشی",
+            Url = Url.Action("Index", "ScheduleItem", new { teachingPlanId = planId }) ?? "#",
+            CssClass = "btn-action-info",
+            Icon = "fas fa-tasks"
         }
     };
     

@@ -145,6 +145,10 @@
             <i class="fas fa-tasks"></i>
             <span>ایجاد تکلیف</span>
         </button>
+        <button class="tab-btn" data-tab="schedule-items">
+            <i class="fas fa-calendar-check"></i>
+            <span>آیتم‌های آموزشی</span>
+        </button>
     </div>
 
     <div class="tabs-content">
@@ -483,6 +487,38 @@
                             <i class="fas fa-plus"></i>
                             <span>ایجاد تکلیف جدید</span>
                         </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Schedule Items Tab -->
+        <div class="tab-panel" id="schedule-items">
+            <div class="schedule-items-tab-content">
+                <div class="schedule-items-header">
+                    <div class="schedule-items-info">
+                        <h4>
+                            <i class="fas fa-calendar-check"></i>
+                            آیتم‌های آموزشی مرتبط با این جلسه
+                        </h4>
+                        <p>مدیریت آیتم‌های آموزشی که برای این جلسه یا برنامه آموزشی مرتبط تعریف شده‌اند</p>
+                    </div>
+                    <div class="schedule-items-actions">
+                        <a asp-controller="ScheduleItem" asp-action="Index" asp-route-teachingPlanId="@Model.TeachingPlanId" class="btn-manage-items">
+                            <i class="fas fa-cog"></i>
+                            <span>مدیریت آیتم‌ها</span>
+                        </a>
+                        <a asp-controller="ScheduleItem" asp-action="Create" asp-route-teachingPlanId="@Model.TeachingPlanId" class="btn-create-item">
+                            <i class="fas fa-plus"></i>
+                            <span>افزودن آیتم جدید</span>
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="schedule-items-preview" id="scheduleItemsPreview">
+                    <div class="loading-placeholder">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <span>در حال بارگذاری آیتم‌ها...</span>
                     </div>
                 </div>
             </div>

@@ -1,0 +1,233 @@
+@model EduTrack.Application.Common.Models.ScheduleItems.CreateScheduleItemRequest
+@{
+    ViewData["Title"] = "ایجاد آیتم آموزشی جدید";
+    var teachingPlanId = ViewBag.TeachingPlanId as int? ?? 0;
+    var teachingPlanTitle = ViewBag.TeachingPlanTitle as string ?? "برنامه آموزشی";
+    var courseTitle = ViewBag.CourseTitle as string ?? "دوره";
+    var courseId = ViewBag.CourseId as int? ?? 0;
+    var scheduleItemTypes = ViewBag.ScheduleItemTypes as List<object> ?? new List<object>();
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <!-- Back Button -->
+        <div class="mb-3">
+            <a asp-action="Index" asp-route-teachingPlanId="@teachingPlanId" class="btn-back-minimal">
+                <i class="fas fa-arrow-right"></i>
+                <span>بازگشت به لیست</span>
+            </a>
+        </div>
+
+        <!-- Form Card -->
+        <div class="form-card-minimal">
+            <div class="form-header-minimal">
+                <div class="form-icon-minimal">
+                    <i class="fas fa-plus"></i>
+                </div>
+                <div>
+                    <h2 class="form-title-minimal">ایجاد آیتم آموزشی جدید</h2>
+                    <p class="form-subtitle-minimal">اطلاعات آیتم آموزشی را وارد کنید</p>
+                </div>
+            </div>
+
+            <form asp-action="Create" method="post" class="form-body-minimal">
+                @Html.HiddenFor(m => m.TeachingPlanId)
+                
+                <!-- Basic Information -->
+                <div class="form-section-minimal">
+                    <h5 class="section-title-minimal">
+                        <i class="fas fa-info-circle"></i>
+                        اطلاعات کلی
+                    </h5>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group-minimal">
+                                <label asp-for="Title" class="form-label-minimal">
+                                    <i class="fas fa-heading"></i>
+                                    <span>عنوان آیتم</span>
+                                    <span class="required-star">*</span>
+                                </label>
+                                <input asp-for="Title" 
+                                       class="form-input-minimal" 
+                                       placeholder="مثال: تمرین ریاضی فصل اول" 
+                                       autocomplete="off" />
+                                <span asp-validation-for="Title" class="validation-error-minimal"></span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="form-group-minimal">
+                                <label asp-for="Type" class="form-label-minimal">
+                                    <i class="fas fa-tasks"></i>
+                                    <span>نوع آیتم</span>
+                                    <span class="required-star">*</span>
+                                </label>
+                                <select asp-for="Type" class="form-input-minimal" id="itemType" required>
+                                    <option value="">انتخاب کنید...</option>
+                                    @foreach (var type in scheduleItemTypes)
+                                    {
+                                        <option value="@type.GetType().GetProperty("Value")?.GetValue(type)">
+                                            @type.GetType().GetProperty("Text")?.GetValue(type)
+                                        </option>
+                                    }
+                                </select>
+                                <span asp-validation-for="Type" class="validation-error-minimal"></span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group-minimal">
+                        <label asp-for="Description" class="form-label-minimal">
+                            <i class="fas fa-align-right"></i>
+                            <span>توضیحات</span>
+                        </label>
+                        <textarea asp-for="Description" 
+                                  class="form-textarea-minimal" 
+                                  rows="3" 
+                                  placeholder="توضیحات اختیاری در مورد آیتم آموزشی..."></textarea>
+                        <span asp-validation-for="Description" class="validation-error-minimal"></span>
+                    </div>
+                </div>
+
+                <!-- Schedule Information -->
+                <div class="form-section-minimal">
+                    <h5 class="section-title-minimal">
+                        <i class="fas fa-calendar-alt"></i>
+                        زمان‌بندی
+                    </h5>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group-minimal">
+                                <label asp-for="StartDate" class="form-label-minimal">
+                                    <i class="fas fa-play"></i>
+                                    <span>تاریخ شروع</span>
+                                    <span class="required-star">*</span>
+                                </label>
+                                <input asp-for="StartDate" type="datetime-local" class="form-input-minimal" required />
+                                <span asp-validation-for="StartDate" class="validation-error-minimal"></span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="form-group-minimal">
+                                <label asp-for="DueDate" class="form-label-minimal">
+                                    <i class="fas fa-clock"></i>
+                                    <span>تاریخ مهلت</span>
+                                </label>
+                                <input asp-for="DueDate" type="datetime-local" class="form-input-minimal" />
+                                <span asp-validation-for="DueDate" class="validation-error-minimal"></span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group-minimal">
+                                <label asp-for="MaxScore" class="form-label-minimal">
+                                    <i class="fas fa-star"></i>
+                                    <span>حداکثر امتیاز</span>
+                                </label>
+                                <input asp-for="MaxScore" type="number" class="form-input-minimal" min="0" max="100" step="0.1" placeholder="0" />
+                                <span asp-validation-for="MaxScore" class="validation-error-minimal"></span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="form-group-minimal">
+                                <div class="form-check-minimal">
+                                    <input asp-for="IsMandatory" class="form-check-input-minimal" type="checkbox" />
+                                    <label asp-for="IsMandatory" class="form-check-label-minimal">
+                                        <i class="fas fa-exclamation-circle"></i>
+                                        آیتم اجباری
+                                    </label>
+                                </div>
+                                <span asp-validation-for="IsMandatory" class="validation-error-minimal"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Assignment Information -->
+                <div class="form-section-minimal">
+                    <h5 class="section-title-minimal">
+                        <i class="fas fa-users"></i>
+                        تخصیص
+                    </h5>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group-minimal">
+                                <label asp-for="GroupId" class="form-label-minimal">
+                                    <i class="fas fa-users"></i>
+                                    <span>گروه خاص</span>
+                                </label>
+                                <select asp-for="GroupId" class="form-input-minimal" id="groupId">
+                                    <option value="">همه گروه‌ها</option>
+                                    <!-- Groups will be loaded dynamically -->
+                                </select>
+                                <span asp-validation-for="GroupId" class="validation-error-minimal"></span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="form-group-minimal">
+                                <label asp-for="LessonId" class="form-label-minimal">
+                                    <i class="fas fa-book"></i>
+                                    <span>درس مرتبط</span>
+                                </label>
+                                <select asp-for="LessonId" class="form-input-minimal" id="lessonId">
+                                    <option value="">انتخاب درس...</option>
+                                    <!-- Lessons will be loaded dynamically -->
+                                </select>
+                                <span asp-validation-for="LessonId" class="validation-error-minimal"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Content Design Section -->
+                <div class="form-section-minimal" id="contentDesignSection" style="display: none;">
+                    <h5 class="section-title-minimal">
+                        <i class="fas fa-paint-brush"></i>
+                        طراحی محتوا
+                    </h5>
+                    
+                    <div id="contentDesignContainer">
+                        <!-- Content design will be loaded dynamically based on item type -->
+                    </div>
+                </div>
+
+                <!-- Info Box -->
+                <div class="info-box-minimal">
+                    <i class="fas fa-info-circle"></i>
+                    <div>
+                        <strong>نکته:</strong>
+                        <p>پس از انتخاب نوع آیتم، بخش طراحی محتوا نمایش داده می‌شود و می‌توانید محتوای مخصوص آن نوع را طراحی کنید.</p>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="form-actions-minimal">
+                    <button type="submit" class="btn-submit-minimal">
+                        <i class="fas fa-check"></i>
+                        <span>ایجاد آیتم</span>
+                    </button>
+                    <a asp-action="Index" asp-route-teachingPlanId="@teachingPlanId" class="btn-cancel-minimal">
+                        <i class="fas fa-times"></i>
+                        <span>انصراف</span>
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/areas/teacher/schedule-items/schedule-item-form.js"></script>
+}
+
+@section Styles {
+    <link href="~/css/areas/teacher/schedule-items/schedule-item-form.css" rel="stylesheet" />
+}

@@ -17,6 +17,13 @@
         },
         new NavigationAction
         {
+            Text = "آیتم‌های آموزشی",
+            Url = Url.Action("Index", "ScheduleItem", new { teachingPlanId = Model.TeachingPlanId }) ?? "#",
+            CssClass = "btn-action-info",
+            Icon = "fas fa-tasks"
+        },
+        new NavigationAction
+        {
             Text = "بازگشت",
             Url = Url.Action("Index", new { planId = Model.TeachingPlanId }) ?? "#",
             CssClass = "btn-action-primary",
