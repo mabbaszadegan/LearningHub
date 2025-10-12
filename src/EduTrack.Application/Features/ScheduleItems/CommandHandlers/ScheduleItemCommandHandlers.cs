@@ -35,6 +35,12 @@ public class CreateScheduleItemCommandHandler : IRequestHandler<CreateScheduleIt
                 return Result<int>.Failure("برنامه آموزشی یافت نشد.");
             }
 
+            // Validate subchapter selection (mandatory)
+            if (request.SubChapterIds == null || !request.SubChapterIds.Any())
+            {
+                return Result<int>.Failure("انتخاب حداقل یک زیرمبحث اجباری است.");
+            }
+
             // Create schedule item
             var scheduleItem = ScheduleItem.Create(
                 request.TeachingPlanId,
@@ -47,9 +53,29 @@ public class CreateScheduleItemCommandHandler : IRequestHandler<CreateScheduleIt
                 request.ContentJson,
                 request.MaxScore,
                 request.GroupId,
-                request.LessonId,
+                null, // lessonId
                 request.DisciplineHint
             );
+
+            // Add group assignments if specified
+            if (request.GroupIds != null && request.GroupIds.Any())
+            {
+                foreach (var groupId in request.GroupIds)
+                {
+                    var groupAssignment = ScheduleItemGroupAssignment.Create(scheduleItem.Id, groupId);
+                    scheduleItem.AddGroupAssignment(groupAssignment);
+                }
+            }
+
+            // Add subchapter assignments if specified
+            if (request.SubChapterIds != null && request.SubChapterIds.Any())
+            {
+                foreach (var subChapterId in request.SubChapterIds)
+                {
+                    var subChapterAssignment = ScheduleItemSubChapterAssignment.Create(scheduleItem.Id, subChapterId);
+                    scheduleItem.AddSubChapterAssignment(subChapterAssignment);
+                }
+            }
 
             await _scheduleItemRepository.AddAsync(scheduleItem, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
@@ -92,6 +118,42 @@ public class UpdateScheduleItemCommandHandler : IRequestHandler<UpdateScheduleIt
             scheduleItem.UpdateMandatory(request.IsMandatory);
             scheduleItem.UpdateContent(request.ContentJson);
             scheduleItem.UpdateMaxScore(request.MaxScore);
+
+            // Update group assignments
+            if (request.GroupIds != null)
+            {
+                // Remove existing group assignments
+                var existingGroupIds = scheduleItem.GroupAssignments.Select(ga => ga.StudentGroupId).ToList();
+                foreach (var existingGroupId in existingGroupIds)
+                {
+                    scheduleItem.RemoveGroupAssignment(existingGroupId);
+                }
+
+                // Add new group assignments
+                foreach (var groupId in request.GroupIds)
+                {
+                    var groupAssignment = ScheduleItemGroupAssignment.Create(scheduleItem.Id, groupId);
+                    scheduleItem.AddGroupAssignment(groupAssignment);
+                }
+            }
+
+            // Update subchapter assignments
+            if (request.SubChapterIds != null)
+            {
+                // Remove existing subchapter assignments
+                var existingSubChapterIds = scheduleItem.SubChapterAssignments.Select(sca => sca.SubChapterId).ToList();
+                foreach (var existingSubChapterId in existingSubChapterIds)
+                {
+                    scheduleItem.RemoveSubChapterAssignment(existingSubChapterId);
+                }
+
+                // Add new subchapter assignments
+                foreach (var subChapterId in request.SubChapterIds)
+                {
+                    var subChapterAssignment = ScheduleItemSubChapterAssignment.Create(scheduleItem.Id, subChapterId);
+                    scheduleItem.AddSubChapterAssignment(subChapterAssignment);
+                }
+            }
 
             await _scheduleItemRepository.UpdateAsync(scheduleItem, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
@@ -289,13 +351,58 @@ public class SaveScheduleItemStepCommandHandler : IRequestHandler<SaveScheduleIt
                     request.ContentJson ?? "{}",
                     request.MaxScore,
                     request.GroupId,
-                    request.LessonId,
+                    null, // lessonId
                     null // DisciplineHint
                 );
             }
 
             // Update current step
             scheduleItem.UpdateCurrentStep(request.Step);
+
+            // Handle group and subchapter assignments for step 3 (assignment step)
+            if (request.Step == 3)
+            {
+                // Validate subchapter selection (mandatory)
+                if (request.SubChapterIds == null || !request.SubChapterIds.Any())
+                {
+                    return Result<int>.Failure("انتخاب حداقل یک زیرمبحث اجباری است.");
+                }
+                // Update group assignments
+                if (request.GroupIds != null)
+                {
+                    // Remove existing group assignments
+                    var existingGroupIds = scheduleItem.GroupAssignments.Select(ga => ga.StudentGroupId).ToList();
+                    foreach (var existingGroupId in existingGroupIds)
+                    {
+                        scheduleItem.RemoveGroupAssignment(existingGroupId);
+                    }
+
+                    // Add new group assignments
+                    foreach (var groupId in request.GroupIds)
+                    {
+                        var groupAssignment = ScheduleItemGroupAssignment.Create(scheduleItem.Id, groupId);
+                        scheduleItem.AddGroupAssignment(groupAssignment);
+                    }
+                }
+
+                // Update subchapter assignments
+                if (request.SubChapterIds != null)
+                {
+                    // Remove existing subchapter assignments
+                    var existingSubChapterIds = scheduleItem.SubChapterAssignments.Select(sca => sca.SubChapterId).ToList();
+                    foreach (var existingSubChapterId in existingSubChapterIds)
+                    {
+                        scheduleItem.RemoveSubChapterAssignment(existingSubChapterId);
+                    }
+
+                    // Add new subchapter assignments
+                    foreach (var subChapterId in request.SubChapterIds)
+                    {
+                        var subChapterAssignment = ScheduleItemSubChapterAssignment.Create(scheduleItem.Id, subChapterId);
+                        scheduleItem.AddSubChapterAssignment(subChapterAssignment);
+                    }
+                }
+            }
 
             if (request.Id.HasValue)
             {
@@ -335,8 +442,8 @@ public class SaveScheduleItemStepCommandHandler : IRequestHandler<SaveScheduleIt
                 if (request.IsMandatory.HasValue) scheduleItem.UpdateMandatory(request.IsMandatory.Value);
                 break;
             case 3:
-                // Update group and lesson assignment
-                scheduleItem.UpdateAssignment(request.GroupId, request.LessonId);
+                // Update group assignment
+                scheduleItem.UpdateAssignment(request.GroupId, null);
                 break;
             case 4:
                 if (!string.IsNullOrEmpty(request.ContentJson)) scheduleItem.UpdateContent(request.ContentJson);

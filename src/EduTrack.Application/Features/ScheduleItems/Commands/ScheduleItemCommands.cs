@@ -5,20 +5,21 @@ using MediatR;
 
 namespace EduTrack.Application.Features.ScheduleItems.Commands;
 
-public record CreateScheduleItemCommand(
-    int TeachingPlanId,
-    int? GroupId,
-    int? LessonId,
-    ScheduleItemType Type,
-    string Title,
-    string? Description,
-    DateTimeOffset StartDate,
-    DateTimeOffset? DueDate,
-    bool IsMandatory,
-    DisciplineType? DisciplineHint,
-    string ContentJson,
-    decimal? MaxScore
-) : IRequest<Result<int>>;
+    public record CreateScheduleItemCommand(
+        int TeachingPlanId,
+        int? GroupId, // Legacy single group assignment
+        ScheduleItemType Type,
+        string Title,
+        string? Description,
+        DateTimeOffset StartDate,
+        DateTimeOffset? DueDate,
+        bool IsMandatory,
+        DisciplineType? DisciplineHint,
+        string ContentJson,
+        decimal? MaxScore,
+        List<int>? GroupIds = null, // New multi-group assignment
+        List<int>? SubChapterIds = null // New subchapter assignment
+    ) : IRequest<Result<int>>;
 
 public record UpdateScheduleItemCommand(
     int Id,
@@ -28,7 +29,9 @@ public record UpdateScheduleItemCommand(
     DateTimeOffset? DueDate,
     bool IsMandatory,
     string ContentJson,
-    decimal? MaxScore
+    decimal? MaxScore,
+    List<int>? GroupIds = null, // New multi-group assignment
+    List<int>? SubChapterIds = null // New subchapter assignment
 ) : IRequest<Result>;
 
 public record DeleteScheduleItemCommand(int Id) : IRequest<Result>;
@@ -49,12 +52,13 @@ public record SaveScheduleItemStepCommand(
     bool? IsMandatory,
     string? ContentJson,
     decimal? MaxScore,
-    int? GroupId,
-    int? LessonId,
+    int? GroupId, // Legacy single group assignment
     string? PersianStartDate,
     string? PersianDueDate,
     string? StartTime,
-    string? DueTime
+    string? DueTime,
+    List<int>? GroupIds = null, // New multi-group assignment
+    List<int>? SubChapterIds = null // New subchapter assignment
 ) : IRequest<Result<int>>;
 
 public record CompleteScheduleItemCommand(int Id) : IRequest<Result>;

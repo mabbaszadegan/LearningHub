@@ -161,6 +161,70 @@ public class ScheduleController : Controller
         return RedirectToAction(nameof(Index), new { planId = command.TeachingPlanId });
     }
 
+    [HttpGet]
+    public async Task<IActionResult> GetGroups(int teachingPlanId)
+    {
+        try
+        {
+            var groups = await _mediator.Send(new GetStudentGroupsByTeachingPlanQuery(teachingPlanId));
+            if (!groups.IsSuccess)
+            {
+                return Json(new { success = false, message = "خطا در بارگذاری گروه‌ها" });
+            }
+
+            var groupDtos = groups.Value?.Select(g => new { id = g.Id, name = g.Name }).Cast<object>().ToList() ?? new List<object>();
+            return Json(new { success = true, data = groupDtos });
+        }
+        catch (Exception)
+        {
+            return Json(new { success = false, message = "خطا در بارگذاری گروه‌ها" });
+        }
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetSubChapters(int teachingPlanId)
+    {
+        try
+        {
+            // Get teaching plan to find course
+            var teachingPlan = await _mediator.Send(new GetTeachingPlanByIdQuery(teachingPlanId));
+            if (!teachingPlan.IsSuccess || teachingPlan.Value == null)
+            {
+                return Json(new { success = false, message = "برنامه آموزشی یافت نشد" });
+            }
+
+            // Get course chapters and subchapters
+            var chapters = await _mediator.Send(new EduTrack.Application.Features.Chapters.Queries.GetChaptersByCourseIdQuery(teachingPlan.Value.CourseId));
+            if (!chapters.IsSuccess)
+            {
+                return Json(new { success = false, message = "خطا در بارگذاری فصول" });
+            }
+
+            var subChapterDtos = new List<object>();
+            foreach (var chapter in chapters.Value ?? new List<ChapterDto>())
+            {
+                var chapterSubChapters = await _mediator.Send(new EduTrack.Application.Features.Chapters.Queries.GetSubChaptersByChapterIdQuery(chapter.Id));
+                if (chapterSubChapters.IsSuccess)
+                {
+                    foreach (var subChapter in chapterSubChapters.Value ?? new List<SubChapterDto>())
+                    {
+                        subChapterDtos.Add(new { 
+                            id = subChapter.Id, 
+                            title = subChapter.Title, 
+                            chapterTitle = chapter.Title 
+                        });
+                    }
+                }
+            }
+
+            return Json(new { success = true, data = subChapterDtos });
+        }
+        catch (Exception)
+        {
+            return Json(new { success = false, message = "خطا در بارگذاری زیرمباحث" });
+        }
+    }
+
     public async Task<IActionResult> Edit(int id)
     {
         var currentUser = await _userManager.GetUserAsync(User);

@@ -18,6 +18,10 @@ public class ScheduleItemRepository : Repository<ScheduleItem>, IScheduleItemRep
     public async Task<IEnumerable<ScheduleItem>> GetScheduleItemsByTeachingPlanAsync(int teachingPlanId, CancellationToken cancellationToken = default)
     {
         return await _dbSet
+            .Include(si => si.GroupAssignments)
+                .ThenInclude(ga => ga.StudentGroup)
+            .Include(si => si.SubChapterAssignments)
+                .ThenInclude(sca => sca.SubChapter)
             .Where(si => si.TeachingPlanId == teachingPlanId)
             .OrderBy(si => si.StartDate)
             .ToListAsync(cancellationToken);
@@ -26,7 +30,11 @@ public class ScheduleItemRepository : Repository<ScheduleItem>, IScheduleItemRep
     public async Task<IEnumerable<ScheduleItem>> GetScheduleItemsByGroupAsync(int groupId, CancellationToken cancellationToken = default)
     {
         return await _dbSet
-            .Where(si => si.GroupId == groupId)
+            .Include(si => si.GroupAssignments)
+                .ThenInclude(ga => ga.StudentGroup)
+            .Include(si => si.SubChapterAssignments)
+                .ThenInclude(sca => sca.SubChapter)
+            .Where(si => si.GroupId == groupId || si.GroupAssignments.Any(ga => ga.StudentGroupId == groupId))
             .OrderBy(si => si.StartDate)
             .ToListAsync(cancellationToken);
     }
@@ -60,8 +68,50 @@ public class ScheduleItemRepository : Repository<ScheduleItem>, IScheduleItemRep
     {
         var now = DateTimeOffset.UtcNow;
         return await _dbSet
+            .Include(si => si.GroupAssignments)
+                .ThenInclude(ga => ga.StudentGroup)
+            .Include(si => si.SubChapterAssignments)
+                .ThenInclude(sca => sca.SubChapter)
             .Where(si => si.StartDate <= now && (!si.DueDate.HasValue || si.DueDate.Value >= now))
             .OrderBy(si => si.StartDate)
             .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IEnumerable<ScheduleItem>> GetScheduleItemsBySubChapterAsync(int subChapterId, CancellationToken cancellationToken = default)
+    {
+        return await _dbSet
+            .Include(si => si.GroupAssignments)
+                .ThenInclude(ga => ga.StudentGroup)
+            .Include(si => si.SubChapterAssignments)
+                .ThenInclude(sca => sca.SubChapter)
+            .Where(si => si.SubChapterAssignments.Any(sca => sca.SubChapterId == subChapterId))
+            .OrderBy(si => si.StartDate)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IEnumerable<ScheduleItem>> GetScheduleItemsByGroupAndSubChapterAsync(int groupId, int subChapterId, CancellationToken cancellationToken = default)
+    {
+        return await _dbSet
+            .Include(si => si.GroupAssignments)
+                .ThenInclude(ga => ga.StudentGroup)
+            .Include(si => si.SubChapterAssignments)
+                .ThenInclude(sca => sca.SubChapter)
+            .Where(si => (si.GroupId == groupId || si.GroupAssignments.Any(ga => ga.StudentGroupId == groupId)) &&
+                        si.SubChapterAssignments.Any(sca => sca.SubChapterId == subChapterId))
+            .OrderBy(si => si.StartDate)
+            .ToListAsync(cancellationToken);
+    }
+
+    public override async Task<ScheduleItem?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
+    {
+        return await _dbSet
+            .Include(si => si.GroupAssignments)
+                .ThenInclude(ga => ga.StudentGroup)
+            .Include(si => si.SubChapterAssignments)
+                .ThenInclude(sca => sca.SubChapter)
+            .Include(si => si.TeachingPlan)
+            .Include(si => si.Group)
+            .Include(si => si.Lesson)
+            .FirstOrDefaultAsync(si => si.Id == id, cancellationToken);
     }
 }

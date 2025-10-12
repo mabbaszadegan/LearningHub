@@ -137,7 +137,6 @@ public class ScheduleItemController : Controller
             var command = new CreateScheduleItemCommand(
                 request.TeachingPlanId,
                 request.GroupId,
-                request.LessonId,
                 request.Type,
                 request.Title,
                 request.Description,
@@ -146,7 +145,9 @@ public class ScheduleItemController : Controller
                 request.IsMandatory,
                 request.DisciplineHint,
                 request.ContentJson,
-                request.MaxScore
+                request.MaxScore,
+                request.GroupIds,
+                request.SubChapterIds
             );
 
             var result = await _mediator.Send(command);
@@ -275,7 +276,6 @@ public class ScheduleItemController : Controller
         var command = new CreateScheduleItemCommand(
             request.TeachingPlanId,
             request.GroupId,
-            request.LessonId,
             request.Type,
             request.Title,
             request.Description,
@@ -284,7 +284,9 @@ public class ScheduleItemController : Controller
             request.IsMandatory,
             request.DisciplineHint,
             request.ContentJson,
-            request.MaxScore
+            request.MaxScore,
+            request.GroupIds,
+            request.SubChapterIds
         );
 
         var result = await _mediator.Send(command);
@@ -362,6 +364,10 @@ public class ScheduleItemController : Controller
                 return Json(new { success = false, message = "کاربر یافت نشد." });
             }
 
+        // Parse comma-separated IDs if they come as strings
+        List<int>? groupIds = request.GroupIds;
+        List<int>? subChapterIds = request.SubChapterIds;
+
         var command = new SaveScheduleItemStepCommand(
             request.Id,
             request.TeachingPlanId,
@@ -375,11 +381,12 @@ public class ScheduleItemController : Controller
             request.ContentJson,
             request.MaxScore,
             request.GroupId,
-            request.LessonId,
             request.PersianStartDate,
             request.PersianDueDate,
             request.StartTime,
-            request.DueTime
+            request.DueTime,
+            groupIds,
+            subChapterIds
         );
 
             var result = await _mediator.Send(command);
@@ -475,5 +482,17 @@ public class ScheduleItemController : Controller
             new { Value = (int)ScheduleItemType.CodeExercise, Text = "تمرین کد" },
             new { Value = (int)ScheduleItemType.Quiz, Text = "کویز" }
         };
+    }
+
+    private static List<int> ParseCommaSeparatedIds(string? commaSeparatedIds)
+    {
+        if (string.IsNullOrWhiteSpace(commaSeparatedIds))
+            return new List<int>();
+
+        return commaSeparatedIds.Split(',', StringSplitOptions.RemoveEmptyEntries)
+            .Select(id => int.TryParse(id.Trim(), out var parsedId) ? parsedId : (int?)null)
+            .Where(id => id.HasValue)
+            .Select(id => id!.Value)
+            .ToList();
     }
 }

@@ -664,6 +664,38 @@ public class AppDbContext : IdentityDbContext<User>
             entity.HasIndex(e => e.DueDate);
         });
 
+        // Configure ScheduleItemGroupAssignment entity
+        builder.Entity<ScheduleItemGroupAssignment>(entity =>
+        {
+            entity.HasOne(e => e.ScheduleItem)
+                .WithMany(e => e.GroupAssignments)
+                .HasForeignKey(e => e.ScheduleItemId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.StudentGroup)
+                .WithMany()
+                .HasForeignKey(e => e.StudentGroupId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasIndex(e => new { e.ScheduleItemId, e.StudentGroupId }).IsUnique();
+            entity.HasIndex(e => e.ScheduleItemId);
+            entity.HasIndex(e => e.StudentGroupId);
+        });
+
+        // Configure ScheduleItemSubChapterAssignment entity
+        builder.Entity<ScheduleItemSubChapterAssignment>(entity =>
+        {
+            entity.HasOne(e => e.ScheduleItem)
+                .WithMany(e => e.SubChapterAssignments)
+                .HasForeignKey(e => e.ScheduleItemId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.SubChapter)
+                .WithMany()
+                .HasForeignKey(e => e.SubChapterId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasIndex(e => new { e.ScheduleItemId, e.SubChapterId }).IsUnique();
+            entity.HasIndex(e => e.ScheduleItemId);
+            entity.HasIndex(e => e.SubChapterId);
+        });
+
         // Configure Submission entity
         builder.Entity<Submission>(entity =>
         {

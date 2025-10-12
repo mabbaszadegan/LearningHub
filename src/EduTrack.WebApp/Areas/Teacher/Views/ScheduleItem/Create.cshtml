@@ -51,84 +51,67 @@
     </div>
 </div>
 
+<!-- Step Progress Indicator -->
+<div class="step-progress-container">
+    <div class="step-progress">
+        <div class="step-progress-bar">
+            <div class="step-progress-fill" id="stepProgressFill"></div>
+        </div>
+        <div class="step-indicators" id="stepIndicators">
+            <div class="step-indicator current" data-step="1">
+                <div class="step-indicator-icon">
+                    <i class="fas fa-info-circle"></i>
+                </div>
+                <div class="step-indicator-text">
+                    <div class="step-indicator-title">اطلاعات کلی</div>
+                    <div class="step-indicator-desc">عنوان و نوع آیتم</div>
+                </div>
+            </div>
+            <div class="step-indicator" data-step="2">
+                <div class="step-indicator-icon">
+                    <i class="fas fa-calendar-alt"></i>
+                </div>
+                <div class="step-indicator-text">
+                    <div class="step-indicator-title">زمان‌بندی</div>
+                    <div class="step-indicator-desc">تاریخ و امتیاز</div>
+                </div>
+            </div>
+            <div class="step-indicator" data-step="3">
+                <div class="step-indicator-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="step-indicator-text">
+                    <div class="step-indicator-title">تخصیص</div>
+                    <div class="step-indicator-desc">گروه و زیرمبحث</div>
+                </div>
+            </div>
+            <div class="step-indicator" data-step="4">
+                <div class="step-indicator-icon">
+                    <i class="fas fa-book"></i>
+                </div>
+                <div class="step-indicator-text">
+                    <div class="step-indicator-title">محتوای آموزشی</div>
+                    <div class="step-indicator-desc">طراحی محتوا</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Main Content -->
 <div class="modern-content-container">
     <div class="container-fluid">
         <div class="row">
-            <!-- Sidebar -->
-            <div class="col-lg-3">
-                <div class="creation-sidebar">
-                    <div class="sidebar-section">
-                        <h5 class="sidebar-title">
-                            <i class="fas fa-list-check"></i>
-                            مراحل ایجاد
-                        </h5>
-                        <div class="creation-steps">
-                            <div class="step-item active" data-step="basic">
-                                <div class="step-number">1</div>
-                                <div class="step-content">
-                                    <div class="step-title">اطلاعات کلی</div>
-                                    <div class="step-desc">عنوان و نوع آیتم</div>
-                                </div>
-                            </div>
-                            <div class="step-item" data-step="schedule">
-                                <div class="step-number">2</div>
-                                <div class="step-content">
-                                    <div class="step-title">زمان‌بندی</div>
-                                    <div class="step-desc">تاریخ و امتیاز</div>
-                                </div>
-                            </div>
-                            <div class="step-item" data-step="assignment">
-                                <div class="step-number">3</div>
-                                <div class="step-content">
-                                    <div class="step-title">تخصیص</div>
-                                    <div class="step-desc">گروه و درس</div>
-                                </div>
-                            </div>
-                            <div class="step-item" data-step="content">
-                                <div class="step-number">4</div>
-                                <div class="step-content">
-                                    <div class="step-title">محتوای آموزشی</div>
-                                    <div class="step-desc">طراحی محتوا</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="sidebar-section">
-                        <h5 class="sidebar-title">
-                            <i class="fas fa-lightbulb"></i>
-                            نکات مهم
-                        </h5>
-                        <div class="tips-list">
-                            <div class="tip-item">
-                                <i class="fas fa-check-circle"></i>
-                                <span>عنوان جذاب و واضح انتخاب کنید</span>
-                            </div>
-                            <div class="tip-item">
-                                <i class="fas fa-check-circle"></i>
-                                <span>توضیحات کامل و مفید بنویسید</span>
-                            </div>
-                            <div class="tip-item">
-                                <i class="fas fa-check-circle"></i>
-                                <span>زمان‌بندی واقع‌بینانه تعیین کنید</span>
-                            </div>
-                            <div class="tip-item">
-                                <i class="fas fa-check-circle"></i>
-                                <span>محتوای تعاملی طراحی کنید</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
             <!-- Main Form -->
-            <div class="col-lg-9">
+            <div class="col-12">
                 <div class="modern-form-container">
                     <form asp-action="Create" method="post" id="createItemForm" class="modern-form">
                         @Html.AntiForgeryToken()
                         @Html.HiddenFor(m => m.TeachingPlanId)
                         <input name="id" value="0" type="hidden" />
+                        <!-- Hidden fields for multi-select values -->
+                        <input type="hidden" id="selectedGroupIds" name="GroupIds" />
+                        <input type="hidden" id="selectedSubChapterIds" name="SubChapterIds" />
                         <!-- Step 1: Basic Information -->
                         <div class="form-step active" data-step="basic">
                             <div class="step-header">
@@ -371,71 +354,98 @@
                                 </div>
                                 <div class="step-info">
                                     <h3 class="step-title">تخصیص و گروه‌بندی</h3>
-                                    <p class="step-description">گروه‌های هدف و درس مرتبط را انتخاب کنید</p>
+                                    <p class="step-description">گروه‌های هدف و زیرمباحث مرتبط را انتخاب کنید</p>
                                 </div>
                             </div>
 
                             <div class="step-content">
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="form-group-modern">
-                                            <label asp-for="GroupId" class="form-label-modern">
-                                                <i class="fas fa-users"></i>
-                                                <span>گروه هدف</span>
-                                            </label>
-                                            <div class="select-group-modern">
-                                                <select asp-for="GroupId" class="form-select-modern" id="groupId">
-                                                    <option value="">همه گروه‌ها</option>
-                                                    <!-- Groups will be loaded dynamically -->
-                                                </select>
-                                                <div class="select-actions">
-                                                    <button type="button" class="select-action-btn" id="refreshGroupsBtn">
-                                                        <i class="fas fa-sync-alt"></i>
-                                                    </button>
-                                                </div>
-                                            </div>
-                                            <span asp-validation-for="GroupId" class="validation-error-modern"></span>
-                                            <div class="input-hint">انتخاب گروه خاص یا همه گروه‌ها</div>
+                                <!-- Group Selection Section -->
+                                <div class="assignment-section">
+                                    <div class="section-header">
+                                        <div class="section-icon">
+                                            <i class="fas fa-users"></i>
+                                        </div>
+                                        <div class="section-info">
+                                            <h4 class="section-title">تخصیص گروه‌ها</h4>
+                                            <p class="section-description">گروه‌های هدف را انتخاب کنید</p>
                                         </div>
                                     </div>
                                     
-                                    <div class="col-md-6">
-                                        <div class="form-group-modern">
-                                            <label asp-for="LessonId" class="form-label-modern">
-                                                <i class="fas fa-book"></i>
-                                                <span>درس مرتبط</span>
-                                            </label>
-                                            <div class="select-group-modern">
-                                                <select asp-for="LessonId" class="form-select-modern" id="lessonId">
-                                                    <option value="">انتخاب درس...</option>
-                                                    <!-- Lessons will be loaded dynamically -->
-                                                </select>
-                                                <div class="select-actions">
-                                                    <button type="button" class="select-action-btn" id="refreshLessonsBtn">
-                                                        <i class="fas fa-sync-alt"></i>
-                                                    </button>
-                                                </div>
-                                            </div>
-                                            <span asp-validation-for="LessonId" class="validation-error-modern"></span>
-                                            <div class="input-hint">درس مرتبط با این آیتم (اختیاری)</div>
+                                    <div class="badge-selection-container">
+                                        <div class="selection-hint">
+                                            <i class="fas fa-info-circle"></i>
+                                            <span>اگر گروهی انتخاب نکنید، آیتم برای همه گروه‌ها خواهد بود</span>
+                                        </div>
+                                        <div class="badge-grid" id="groupBadgeGrid">
+                                            <!-- Groups will be loaded dynamically as badges -->
+                                        </div>
+                                        <div class="selected-summary" id="groupSelectionSummary">
+                                            <span class="summary-text">هیچ گروهی انتخاب نشده - برای همه گروه‌ها</span>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div class="assignment-preview" id="assignmentPreview">
-                                    <div class="preview-header">
-                                        <i class="fas fa-eye"></i>
-                                        <span>پیش‌نمایش تخصیص</span>
+                                <!-- SubChapter Selection Section -->
+                                <div class="assignment-section">
+                                    <div class="section-header">
+                                        <div class="section-icon">
+                                            <i class="fas fa-list-alt"></i>
+                                        </div>
+                                        <div class="section-info">
+                                            <h4 class="section-title">زیرمباحث مرتبط</h4>
+                                            <p class="section-description">زیرمباحث مرتبط را انتخاب کنید</p>
+                                        </div>
+                                        <div class="required-badge">
+                                            <span>اجباری</span>
+                                        </div>
                                     </div>
-                                    <div class="preview-content">
-                                        <div class="assignment-summary">
-                                            <div class="summary-item">
-                                                <span class="summary-label">گروه‌های هدف:</span>
-                                                <span class="summary-value" id="targetGroups">همه گروه‌ها</span>
+                                    
+                                    <div class="chapter-hierarchy-container">
+                                        <div class="selection-hint">
+                                            <i class="fas fa-info-circle"></i>
+                                            <span>انتخاب حداقل یک زیرمبحث اجباری است</span>
+                                        </div>
+                                        <div class="chapter-list" id="chapterList">
+                                            <!-- Chapters and subchapters will be loaded dynamically -->
+                                        </div>
+                                        <div class="selected-summary" id="subChapterSelectionSummary">
+                                            <span class="summary-text">هیچ زیرمبحثی انتخاب نشده</span>
+                                        </div>
+                                        <div class="validation-message" id="subChapterValidationError" style="display: none;">
+                                            <i class="fas fa-exclamation-triangle"></i>
+                                            <span>انتخاب حداقل یک زیرمبحث اجباری است</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Assignment Preview Section -->
+                                <div class="assignment-preview-modern" id="assignmentPreview">
+                                    <div class="preview-header-modern">
+                                        <div class="preview-icon">
+                                            <i class="fas fa-eye"></i>
+                                        </div>
+                                        <div class="preview-title">
+                                            <h5>پیش‌نمایش تخصیص</h5>
+                                            <p>خلاصه تنظیمات انتخاب شده</p>
+                                        </div>
+                                    </div>
+                                    <div class="preview-content-modern">
+                                        <div class="preview-item">
+                                            <div class="preview-item-icon">
+                                                <i class="fas fa-users"></i>
                                             </div>
-                                            <div class="summary-item">
-                                                <span class="summary-label">درس مرتبط:</span>
-                                                <span class="summary-value" id="relatedLesson">تعیین نشده</span>
+                                            <div class="preview-item-content">
+                                                <div class="preview-item-label">گروه‌های هدف</div>
+                                                <div class="preview-item-value" id="targetGroups">همه گروه‌ها</div>
+                                            </div>
+                                        </div>
+                                        <div class="preview-item">
+                                            <div class="preview-item-icon">
+                                                <i class="fas fa-list-alt"></i>
+                                            </div>
+                                            <div class="preview-item-content">
+                                                <div class="preview-item-label">زیرمباحث مرتبط</div>
+                                                <div class="preview-item-value" id="relatedSubChapters">انتخاب نشده</div>
                                             </div>
                                         </div>
                                     </div>

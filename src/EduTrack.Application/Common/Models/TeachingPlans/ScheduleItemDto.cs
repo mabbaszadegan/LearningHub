@@ -6,7 +6,7 @@ public class ScheduleItemDto
 {
     public int Id { get; set; }
     public int TeachingPlanId { get; set; }
-    public int? GroupId { get; set; }
+    public int? GroupId { get; set; } // Legacy single group assignment
     public string? GroupName { get; set; }
     public int? LessonId { get; set; }
     public string? LessonTitle { get; set; }
@@ -27,4 +27,9 @@ public class ScheduleItemDto
     public TimeSpan? TimeUntilDue { get; set; }
     public int SubmissionCount { get; set; }
     public int CompletedSubmissions { get; set; }
+    
+    // New properties for multiple assignments
+    public List<ScheduleItemGroupAssignmentDto> GroupAssignments { get; set; } = new();
+    public List<ScheduleItemSubChapterAssignmentDto> SubChapterAssignments { get; set; } = new();
+    public bool IsAssignedToAllGroups { get; set; }
 }

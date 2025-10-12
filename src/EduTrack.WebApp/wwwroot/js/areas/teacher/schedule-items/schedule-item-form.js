@@ -14,6 +14,8 @@ class ModernScheduleItemFormManager {
         this.validationErrors = {};
         this.currentItemId = null;
         this.isEditMode = false;
+        this.selectedGroups = [];
+        this.selectedSubChapters = [];
         this.init();
     }
 
@@ -48,8 +50,14 @@ class ModernScheduleItemFormManager {
         // Datetime helpers
         this.setupDatetimeHelpers();
 
+        // Badge-based selection components
+        this.setupBadgeSelectionListeners();
+
         // Score presets
         this.setupScorePresets();
+
+        // Step progress indicators
+        this.setupStepProgressIndicators();
     }
 
     setupStepNavigationListeners() {
@@ -366,19 +374,8 @@ class ModernScheduleItemFormManager {
     }
 
     updateStepIndicators() {
-        // Update sidebar step indicators
-        document.querySelectorAll('.step-item').forEach((item, index) => {
-            const stepNumber = index + 1;
-            const stepNumberEl = item.querySelector('.step-number');
-
-            if (stepNumberEl) {
-                if (stepNumber < this.currentStep) {
-                    stepNumberEl.innerHTML = '<i class="fas fa-check"></i>';
-                } else {
-                    stepNumberEl.textContent = stepNumber;
-                }
-            }
-        });
+        // Update step progress indicators
+        this.updateStepProgress();
     }
 
     updateProgress() {
@@ -865,22 +862,6 @@ class ModernScheduleItemFormManager {
         });
     }
 
-    updateAssignmentPreview() {
-        const groupSelect = document.getElementById('groupId');
-        const lessonSelect = document.getElementById('lessonId');
-        const targetGroups = document.getElementById('targetGroups');
-        const relatedLesson = document.getElementById('relatedLesson');
-
-        if (groupSelect && targetGroups) {
-            const selectedOption = groupSelect.options[groupSelect.selectedIndex];
-            targetGroups.textContent = selectedOption.text || 'همه گروه‌ها';
-        }
-
-        if (lessonSelect && relatedLesson) {
-            const selectedOption = lessonSelect.options[lessonSelect.selectedIndex];
-            relatedLesson.textContent = selectedOption.text || 'تعیین نشده';
-        }
-    }
 
     // Preview Methods
     showPreview() {
@@ -920,6 +901,14 @@ class ModernScheduleItemFormManager {
 
         for (let [key, value] of formData.entries()) {
             data[key] = value;
+        }
+
+        // Add selected groups and subchapters for badge-based selection
+        if (this.selectedGroups.length > 0) {
+            data.GroupIds = this.selectedGroups.map(g => g.id);
+        }
+        if (this.selectedSubChapters.length > 0) {
+            data.SubChapterIds = this.selectedSubChapters.map(sc => sc.id);
         }
 
         return data;
@@ -1017,6 +1006,21 @@ class ModernScheduleItemFormManager {
     }
 
     async submitForm(formData) {
+        // Validate subchapter selection before submission
+        if (this.selectedSubChapters.length === 0) {
+            this.showErrorMessage('انتخاب حداقل یک زیرمبحث اجباری است');
+            this.goToStep(3); // Go to assignment step
+            return;
+        }
+
+        // Add selected groups and subchapters to form data
+        if (this.selectedGroups.length > 0) {
+            formData.GroupIds = this.selectedGroups.map(g => g.id);
+        }
+        if (this.selectedSubChapters.length > 0) {
+            formData.SubChapterIds = this.selectedSubChapters.map(sc => sc.id);
+        }
+
         try {
             const response = await fetch('/Teacher/ScheduleItem/Create', {
                 method: 'POST',
@@ -1409,7 +1413,13 @@ class ModernScheduleItemFormManager {
                 break;
             case 3:
                 stepData.GroupId = parseInt(document.getElementById('groupId')?.value) || null;
-                stepData.LessonId = parseInt(document.getElementById('lessonId')?.value) || null;
+                // Add selected groups and subchapters for badge-based selection
+                if (this.selectedGroups.length > 0) {
+                    stepData.GroupIds = this.selectedGroups.map(g => g.id);
+                }
+                if (this.selectedSubChapters.length > 0) {
+                    stepData.SubChapterIds = this.selectedSubChapters.map(sc => sc.id);
+                }
                 break;
             case 4:
                 stepData.ContentJson = this.collectContentData();
@@ -1474,6 +1484,14 @@ class ModernScheduleItemFormManager {
         if (data.groupId) document.getElementById('groupId').value = data.groupId;
         if (data.lessonId) document.getElementById('lessonId').value = data.lessonId;
 
+        // Load selected groups and subchapters for badge-based selection
+        if (data.groupIds && data.groupIds.length > 0) {
+            this.selectedGroups = data.groupIds.map(id => ({ id: id, name: '' })); // Name will be loaded later
+        }
+        if (data.subChapterIds && data.subChapterIds.length > 0) {
+            this.selectedSubChapters = data.subChapterIds.map(id => ({ id: id, title: '' })); // Title will be loaded later
+        }
+
         // Update current step
         if (data.currentStep) {
             this.currentStep = data.currentStep;
@@ -1489,6 +1507,8 @@ class ModernScheduleItemFormManager {
         // Update datepickers after form is populated
         setTimeout(() => {
             this.updateDatePickers();
+            // Load and select groups and subchapters after UI is ready
+            this.loadAndSelectExistingAssignments();
         }, 200);
     }
 
@@ -1513,6 +1533,58 @@ class ModernScheduleItemFormManager {
             if (timeInput) {
                 timeInput.value = timeString;
             }
+        }
+    }
+
+    async loadAndSelectExistingAssignments() {
+        // Load groups and subchapters, then select the existing ones
+        try {
+            // Load groups first
+            await this.loadGroupsAsBadges();
+            
+            // Select existing groups
+            this.selectedGroups.forEach(group => {
+                const badge = document.querySelector(`[data-group-id="${group.id}"]`);
+                if (badge) {
+                    badge.classList.add('selected');
+                    // Update the group name if we have it
+                    const nameElement = badge.querySelector('.group-badge-name');
+                    if (nameElement) {
+                        group.name = nameElement.textContent;
+                    }
+                }
+            });
+
+            // Load subchapters
+            await this.loadChaptersWithSubChapters();
+            
+            // Select existing subchapters and expand parent chapters
+            this.selectedSubChapters.forEach(subChapter => {
+                const badge = document.querySelector(`[data-sub-chapter-id="${subChapter.id}"]`);
+                if (badge) {
+                    badge.classList.add('selected');
+                    // Update the subchapter title if we have it
+                    const titleElement = badge.querySelector('.subchapter-title');
+                    if (titleElement) {
+                        subChapter.title = titleElement.textContent;
+                    }
+                    
+                    // Expand the parent chapter if it contains selected subchapters
+                    const chapterItem = badge.closest('.chapter-item');
+                    if (chapterItem && !chapterItem.classList.contains('expanded')) {
+                        chapterItem.classList.add('expanded');
+                    }
+                }
+            });
+
+            // Update summaries and preview
+            this.updateGroupSelectionSummary();
+            this.updateSubChapterSelectionSummary();
+            this.updateAssignmentPreview();
+            this.updateHiddenInputs();
+
+        } catch (error) {
+            console.error('Error loading existing assignments:', error);
         }
     }
 
@@ -1574,6 +1646,728 @@ class ModernScheduleItemFormManager {
         } catch (error) {
             console.error('Error submitting form:', error);
             this.showErrorMessage('خطا در ارسال فرم');
+        }
+    }
+
+    setupBadgeSelectionListeners() {
+        // Badge-based Group selection
+        this.setupGroupBadgeSelection();
+        
+        // Badge-based SubChapter selection
+        this.setupSubChapterBadgeSelection();
+    }
+
+    setupGroupBadgeSelection() {
+        // Load groups and render as badges
+        this.loadGroupsAsBadges();
+        
+        // Add click listeners for group badges
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.group-badge')) {
+                const badge = e.target.closest('.group-badge');
+                const groupId = parseInt(badge.dataset.groupId);
+                this.toggleGroupSelection(groupId);
+            }
+        });
+    }
+
+    setupSubChapterBadgeSelection() {
+        // Load chapters and subchapters
+        this.loadChaptersWithSubChapters();
+        
+        // Add click listeners for chapter headers
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.chapter-header')) {
+                const chapterItem = e.target.closest('.chapter-item');
+                this.toggleChapterExpansion(chapterItem);
+            }
+            
+            if (e.target.closest('.subchapter-badge')) {
+                const badge = e.target.closest('.subchapter-badge');
+                const subChapterId = parseInt(badge.dataset.subChapterId);
+                this.toggleSubChapterSelection(subChapterId);
+            }
+        });
+    }
+
+    async loadGroupsAsBadges() {
+        try {
+            const teachingPlanId = this.getTeachingPlanId();
+            const response = await fetch(`/Teacher/Schedule/GetGroups?teachingPlanId=${teachingPlanId}`);
+            const groups = await response.json();
+
+            if (groups.success) {
+                this.renderGroupBadges(groups.data);
+            }
+        } catch (error) {
+            console.error('Error loading groups:', error);
+        }
+    }
+
+    renderGroupBadges(groups) {
+        const container = document.getElementById('groupBadgeGrid');
+        if (!container) return;
+
+        container.innerHTML = groups.map(group => `
+            <div class="group-badge" data-group-id="${group.id}">
+                <div class="group-badge-content">
+                    <div class="group-badge-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="group-badge-info">
+                        <div class="group-badge-name">${group.name}</div>
+                        <div class="group-badge-count">گروه دانشجویی</div>
+                    </div>
+                </div>
+                <div class="group-badge-check"></div>
+            </div>
+        `).join('');
+    }
+
+    toggleGroupSelection(groupId) {
+        const badge = document.querySelector(`[data-group-id="${groupId}"]`);
+        if (!badge) return;
+
+        const isSelected = badge.classList.contains('selected');
+        
+        if (isSelected) {
+            badge.classList.remove('selected');
+            this.selectedGroups = this.selectedGroups.filter(g => g.id !== groupId);
+        } else {
+            badge.classList.add('selected');
+            const group = { id: groupId, name: badge.querySelector('.group-badge-name').textContent };
+            this.selectedGroups.push(group);
+        }
+
+        this.updateGroupSelectionSummary();
+        this.updateAssignmentPreview();
+        this.updateHiddenInputs();
+    }
+
+    toggleGroupSelectionLegacy(groupId, groupName, optionElement) {
+        const index = this.selectedGroups.findIndex(g => g.id === groupId);
+        
+        if (index > -1) {
+            // Remove selection
+            this.selectedGroups.splice(index, 1);
+            optionElement.classList.remove('selected');
+        } else {
+            // Add selection
+            this.selectedGroups.push({ id: groupId, name: groupName });
+            optionElement.classList.add('selected');
+        }
+
+        this.updateGroupSelection();
+        this.updateAssignmentPreview();
+    }
+
+    updateGroupSelectionSummary() {
+        const summary = document.getElementById('groupSelectionSummary');
+        if (!summary) return;
+
+        const summaryText = summary.querySelector('.summary-text');
+        if (this.selectedGroups.length === 0) {
+            summaryText.textContent = 'هیچ گروهی انتخاب نشده - برای همه گروه‌ها';
+        } else {
+            const groupNames = this.selectedGroups.map(g => g.name).join('، ');
+            summaryText.textContent = `گروه‌های انتخاب شده: ${groupNames}`;
+        }
+    }
+
+    async loadChaptersWithSubChapters() {
+        try {
+            const teachingPlanId = this.getTeachingPlanId();
+            const response = await fetch(`/Teacher/Schedule/GetSubChapters?teachingPlanId=${teachingPlanId}`);
+            const subChapters = await response.json();
+
+            if (subChapters.success) {
+                this.renderChapterHierarchy(subChapters.data);
+            }
+        } catch (error) {
+            console.error('Error loading chapters:', error);
+        }
+    }
+
+    renderChapterHierarchy(subChapters) {
+        const container = document.getElementById('chapterList');
+        if (!container) return;
+
+        // Group subchapters by chapter
+        const chaptersMap = new Map();
+        subChapters.forEach(subChapter => {
+            const chapterTitle = subChapter.chapterTitle;
+            if (!chaptersMap.has(chapterTitle)) {
+                chaptersMap.set(chapterTitle, []);
+            }
+            chaptersMap.get(chapterTitle).push(subChapter);
+        });
+
+        container.innerHTML = Array.from(chaptersMap.entries()).map(([chapterTitle, chapterSubChapters]) => `
+            <div class="chapter-item">
+                <div class="chapter-header">
+                    <div class="chapter-icon">
+                        <i class="fas fa-book"></i>
+                    </div>
+                    <div class="chapter-info">
+                        <div class="chapter-title">${chapterTitle}</div>
+                        <div class="chapter-description">${chapterSubChapters.length} زیرمبحث</div>
+                    </div>
+                    <div class="chapter-toggle">
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                </div>
+                <div class="subchapter-grid">
+                    ${chapterSubChapters.map(subChapter => `
+                        <div class="subchapter-badge" data-sub-chapter-id="${subChapter.id}">
+                            <div class="subchapter-content">
+                                <div class="subchapter-icon">
+                                    <i class="fas fa-list"></i>
+                                </div>
+                                <div class="subchapter-info">
+                                    <div class="subchapter-title">${subChapter.title}</div>
+                                    <div class="subchapter-meta">زیرمبحث</div>
+                                </div>
+                            </div>
+                            <div class="subchapter-check"></div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `).join('');
+    }
+
+    toggleChapterExpansion(chapterItem) {
+        chapterItem.classList.toggle('expanded');
+    }
+
+    toggleSubChapterSelection(subChapterId) {
+        const badge = document.querySelector(`[data-sub-chapter-id="${subChapterId}"]`);
+        if (!badge) return;
+
+        const isSelected = badge.classList.contains('selected');
+        
+        if (isSelected) {
+            badge.classList.remove('selected');
+            this.selectedSubChapters = this.selectedSubChapters.filter(sc => sc.id !== subChapterId);
+        } else {
+            badge.classList.add('selected');
+            const subChapter = { 
+                id: subChapterId, 
+                title: badge.querySelector('.subchapter-title').textContent 
+            };
+            this.selectedSubChapters.push(subChapter);
+        }
+
+        this.updateSubChapterSelectionSummary();
+        this.updateAssignmentPreview();
+        this.updateHiddenInputs();
+        this.validateSubChapterSelection();
+    }
+
+    updateSubChapterSelectionSummary() {
+        const summary = document.getElementById('subChapterSelectionSummary');
+        if (!summary) return;
+
+        const summaryText = summary.querySelector('.summary-text');
+        if (this.selectedSubChapters.length === 0) {
+            summaryText.textContent = 'هیچ زیرمبحثی انتخاب نشده';
+        } else {
+            const subChapterNames = this.selectedSubChapters.map(sc => sc.title).join('، ');
+            summaryText.textContent = `زیرمباحث انتخاب شده: ${subChapterNames}`;
+        }
+    }
+
+    getTeachingPlanId() {
+        const teachingPlanIdInput = document.querySelector('input[name="TeachingPlanId"]');
+        return teachingPlanIdInput ? teachingPlanIdInput.value : null;
+    }
+
+    setupStepProgressIndicators() {
+        const stepIndicators = document.querySelectorAll('.step-indicator');
+        const progressFill = document.getElementById('stepProgressFill');
+        
+        stepIndicators.forEach((indicator, index) => {
+            indicator.addEventListener('click', () => {
+                const stepNumber = parseInt(indicator.dataset.step);
+                this.goToStep(stepNumber);
+            });
+        });
+
+        // Update progress bar
+        this.updateStepProgress();
+    }
+
+    updateStepProgress() {
+        const progressFill = document.getElementById('stepProgressFill');
+        if (progressFill) {
+            const progress = (this.currentStep / this.totalSteps) * 100;
+            progressFill.style.width = `${progress}%`;
+        }
+
+        // Update step indicators
+        const stepIndicators = document.querySelectorAll('.step-indicator');
+        stepIndicators.forEach((indicator, index) => {
+            const stepNumber = index + 1;
+            indicator.classList.remove('current', 'completed');
+            
+            if (stepNumber === this.currentStep) {
+                indicator.classList.add('current');
+            } else if (stepNumber < this.currentStep) {
+                indicator.classList.add('completed');
+            }
+        });
+    }
+
+    updateHiddenInputs() {
+        // Update hidden inputs for server submission
+        const groupIdsInput = document.getElementById('selectedGroupIds');
+        const subChapterIdsInput = document.getElementById('selectedSubChapterIds');
+        
+        if (groupIdsInput) {
+            groupIdsInput.value = this.selectedGroups.map(g => g.id).join(',');
+        }
+        
+        if (subChapterIdsInput) {
+            subChapterIdsInput.value = this.selectedSubChapters.map(sc => sc.id).join(',');
+        }
+    }
+
+    setupModernGroupMultiSelect() {
+        const toggle = document.getElementById('groupSelectToggle');
+        const dropdown = document.getElementById('groupSelectDropdown');
+        const container = document.getElementById('groupMultiSelect');
+        const searchInput = document.getElementById('groupSearchInput');
+        const selectAllBtn = document.getElementById('selectAllGroupsBtn');
+        const clearBtn = document.getElementById('clearGroupsBtn');
+
+        if (!toggle || !dropdown || !container) return;
+
+        // Toggle dropdown
+        toggle.addEventListener('click', (e) => {
+            e.preventDefault();
+            this.toggleMultiSelectDropdown(container, dropdown);
+        });
+
+        // Search functionality
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                this.filterMultiSelectOptions('groupOptionsList', e.target.value);
+            });
+        }
+
+        // Select all
+        if (selectAllBtn) {
+            selectAllBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.selectAllGroups();
+            });
+        }
+
+        // Clear all
+        if (clearBtn) {
+            clearBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.clearAllGroups();
+            });
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!container.contains(e.target)) {
+                dropdown.style.display = 'none';
+                container.classList.remove('open');
+            }
+        });
+
+        // Load groups
+        this.loadGroups();
+    }
+
+    setupModernSubChapterMultiSelect() {
+        const toggle = document.getElementById('subChapterSelectToggle');
+        const dropdown = document.getElementById('subChapterSelectDropdown');
+        const container = document.getElementById('subChapterMultiSelect');
+        const searchInput = document.getElementById('subChapterSearchInput');
+        const selectAllBtn = document.getElementById('selectAllSubChaptersBtn');
+        const clearBtn = document.getElementById('clearSubChaptersBtn');
+
+        if (!toggle || !dropdown || !container) return;
+
+        // Toggle dropdown
+        toggle.addEventListener('click', (e) => {
+            e.preventDefault();
+            this.toggleMultiSelectDropdown(container, dropdown);
+        });
+
+        // Search functionality
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                this.filterMultiSelectOptions('subChapterOptionsList', e.target.value);
+            });
+        }
+
+        // Select all
+        if (selectAllBtn) {
+            selectAllBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.selectAllSubChapters();
+            });
+        }
+
+        // Clear all
+        if (clearBtn) {
+            clearBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.clearAllSubChapters();
+            });
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!container.contains(e.target)) {
+                dropdown.style.display = 'none';
+                container.classList.remove('open');
+            }
+        });
+
+        // Load subchapters
+        this.loadSubChapters();
+    }
+
+    toggleMultiSelectDropdown(container, dropdown) {
+        const isOpen = dropdown.style.display === 'block';
+        if (isOpen) {
+            dropdown.style.display = 'none';
+            container.classList.remove('open');
+        } else {
+            dropdown.style.display = 'block';
+            container.classList.add('open');
+        }
+    }
+
+    filterMultiSelectOptions(optionsListId, searchTerm) {
+        const optionsList = document.getElementById(optionsListId);
+        if (!optionsList) return;
+
+        const options = optionsList.querySelectorAll('.option-item');
+        const term = searchTerm.toLowerCase();
+
+        options.forEach(option => {
+            const text = option.querySelector('.option-text').textContent.toLowerCase();
+            const subtitle = option.querySelector('.option-subtitle')?.textContent.toLowerCase() || '';
+            
+            if (text.includes(term) || subtitle.includes(term)) {
+                option.style.display = 'flex';
+            } else {
+                option.style.display = 'none';
+            }
+        });
+    }
+
+    async loadGroups() {
+        try {
+            const teachingPlanId = document.querySelector('input[name="TeachingPlanId"]').value;
+            const response = await fetch(`/Teacher/Schedule/GetGroups?teachingPlanId=${teachingPlanId}`);
+            const groups = await response.json();
+
+            this.renderGroupOptions(groups.data);
+        } catch (error) {
+            console.error('Error loading groups:', error);
+        }
+    }
+
+    async loadSubChapters() {
+        try {
+            const teachingPlanId = document.querySelector('input[name="TeachingPlanId"]').value;
+            const response = await fetch(`/Teacher/Schedule/GetSubChapters?teachingPlanId=${teachingPlanId}`);
+            const subChapters = await response.json();
+
+            this.renderSubChapterOptions(subChapters.data);
+        } catch (error) {
+            console.error('Error loading subchapters:', error);
+        }
+    }
+
+    renderGroupOptions(groups) {
+        const optionsList = document.getElementById('groupOptionsList');
+        if (!optionsList) return;
+
+        optionsList.innerHTML = '';
+
+        if (groups.length === 0) {
+            optionsList.innerHTML = '<div class="no-items-message">هیچ گروهی یافت نشد</div>';
+            return;
+        }
+
+        groups.forEach(group => {
+            const option = document.createElement('button');
+            option.className = 'option-item';
+            option.dataset.groupId = group.id;
+            option.innerHTML = `
+                <div class="option-checkbox"></div>
+                <div class="option-text">${group.name}</div>
+            `;
+
+            option.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.toggleGroupSelection(group.id, group.name, option);
+            });
+
+            optionsList.appendChild(option);
+        });
+    }
+
+    renderSubChapterOptions(subChapters) {
+        const optionsList = document.getElementById('subChapterOptionsList');
+        if (!optionsList) return;
+
+        optionsList.innerHTML = '';
+
+        if (subChapters.length === 0) {
+            optionsList.innerHTML = '<div class="no-items-message">هیچ زیرمبحثی یافت نشد</div>';
+            return;
+        }
+
+        subChapters.forEach(subChapter => {
+            const option = document.createElement('button');
+            option.className = 'option-item';
+            option.dataset.subChapterId = subChapter.id;
+            option.innerHTML = `
+                <div class="option-checkbox"></div>
+                <div class="option-text">${subChapter.title}</div>
+                <div class="option-subtitle">${subChapter.chapterTitle}</div>
+            `;
+
+            option.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.toggleSubChapterSelectionLegacy(subChapter.id, subChapter.title, option);
+            });
+
+            optionsList.appendChild(option);
+        });
+    }
+
+
+    toggleSubChapterSelectionLegacy(subChapterId, subChapterTitle, optionElement) {
+        const index = this.selectedSubChapters.findIndex(sc => sc.id === subChapterId);
+        
+        if (index > -1) {
+            // Remove selection
+            this.selectedSubChapters.splice(index, 1);
+            optionElement.classList.remove('selected');
+        } else {
+            // Add selection
+            this.selectedSubChapters.push({ id: subChapterId, title: subChapterTitle });
+            optionElement.classList.add('selected');
+        }
+
+        this.updateSubChapterSelection();
+        this.updateAssignmentPreview();
+        this.validateSubChapterSelection();
+    }
+
+    updateGroupSelection() {
+        const selectedGroupsContainer = document.getElementById('selectedGroups');
+        const groupIdsInput = document.getElementById('selectedGroupIds');
+        const toggleText = document.querySelector('#groupSelectToggle .select-text');
+
+        if (!selectedGroupsContainer || !groupIdsInput) return;
+
+        // Update hidden input
+        groupIdsInput.value = this.selectedGroups.map(g => g.id).join(',');
+
+        // Update toggle text
+        if (this.selectedGroups.length === 0) {
+            toggleText.textContent = 'همه گروه‌ها';
+        } else if (this.selectedGroups.length === 1) {
+            toggleText.textContent = this.selectedGroups[0].name;
+        } else {
+            toggleText.textContent = `${this.selectedGroups.length} گروه انتخاب شده`;
+        }
+
+        // Update selected items display
+        selectedGroupsContainer.innerHTML = '';
+        this.selectedGroups.forEach(group => {
+            const item = document.createElement('div');
+            item.className = 'selected-item';
+            item.innerHTML = `
+                <span>${group.name}</span>
+                <button type="button" class="selected-item-remove" data-group-id="${group.id}">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+
+            item.querySelector('.selected-item-remove').addEventListener('click', (e) => {
+                e.preventDefault();
+                this.removeGroupSelection(group.id);
+            });
+
+            selectedGroupsContainer.appendChild(item);
+        });
+    }
+
+    updateSubChapterSelection() {
+        const selectedSubChaptersContainer = document.getElementById('selectedSubChapters');
+        const subChapterIdsInput = document.getElementById('selectedSubChapterIds');
+        const toggleText = document.querySelector('#subChapterSelectToggle .select-text');
+
+        if (!selectedSubChaptersContainer || !subChapterIdsInput) return;
+
+        // Update hidden input
+        subChapterIdsInput.value = this.selectedSubChapters.map(sc => sc.id).join(',');
+
+        // Update toggle text
+        if (this.selectedSubChapters.length === 0) {
+            toggleText.textContent = 'انتخاب زیرمباحث...';
+        } else if (this.selectedSubChapters.length === 1) {
+            toggleText.textContent = this.selectedSubChapters[0].title;
+        } else {
+            toggleText.textContent = `${this.selectedSubChapters.length} زیرمبحث انتخاب شده`;
+        }
+
+        // Update selected items display
+        selectedSubChaptersContainer.innerHTML = '';
+        this.selectedSubChapters.forEach(subChapter => {
+            const item = document.createElement('div');
+            item.className = 'selected-item';
+            item.innerHTML = `
+                <span>${subChapter.title}</span>
+                <button type="button" class="selected-item-remove" data-sub-chapter-id="${subChapter.id}">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+
+            item.querySelector('.selected-item-remove').addEventListener('click', (e) => {
+                e.preventDefault();
+                this.removeSubChapterSelection(subChapter.id);
+            });
+
+            selectedSubChaptersContainer.appendChild(item);
+        });
+    }
+
+    removeGroupSelection(groupId) {
+        this.selectedGroups = this.selectedGroups.filter(g => g.id !== groupId);
+        
+        // Update option element
+        const option = document.querySelector(`[data-group-id="${groupId}"]`);
+        if (option) {
+            option.classList.remove('selected');
+        }
+
+        this.updateGroupSelection();
+        this.updateAssignmentPreview();
+    }
+
+    removeSubChapterSelection(subChapterId) {
+        this.selectedSubChapters = this.selectedSubChapters.filter(sc => sc.id !== subChapterId);
+        
+        // Update option element
+        const option = document.querySelector(`[data-sub-chapter-id="${subChapterId}"]`);
+        if (option) {
+            option.classList.remove('selected');
+        }
+
+        this.updateSubChapterSelection();
+        this.updateAssignmentPreview();
+        this.validateSubChapterSelection();
+    }
+
+    selectAllGroups() {
+        const options = document.querySelectorAll('#groupOptionsList .option-item');
+        options.forEach(option => {
+            const groupId = parseInt(option.dataset.groupId);
+            const groupName = option.querySelector('.option-text').textContent;
+            
+            if (!this.selectedGroups.find(g => g.id === groupId)) {
+                this.selectedGroups.push({ id: groupId, name: groupName });
+                option.classList.add('selected');
+            }
+        });
+
+        this.updateGroupSelection();
+        this.updateAssignmentPreview();
+    }
+
+    clearAllGroups() {
+        this.selectedGroups = [];
+        
+        // Update option elements
+        const options = document.querySelectorAll('#groupOptionsList .option-item');
+        options.forEach(option => {
+            option.classList.remove('selected');
+        });
+
+        this.updateGroupSelection();
+        this.updateAssignmentPreview();
+    }
+
+    selectAllSubChapters() {
+        const options = document.querySelectorAll('#subChapterOptionsList .option-item');
+        options.forEach(option => {
+            const subChapterId = parseInt(option.dataset.subChapterId);
+            const subChapterTitle = option.querySelector('.option-text').textContent;
+            
+            if (!this.selectedSubChapters.find(sc => sc.id === subChapterId)) {
+                this.selectedSubChapters.push({ id: subChapterId, title: subChapterTitle });
+                option.classList.add('selected');
+            }
+        });
+
+        this.updateSubChapterSelection();
+        this.updateAssignmentPreview();
+        this.validateSubChapterSelection();
+    }
+
+    clearAllSubChapters() {
+        this.selectedSubChapters = [];
+        
+        // Update option elements
+        const options = document.querySelectorAll('#subChapterOptionsList .option-item');
+        options.forEach(option => {
+            option.classList.remove('selected');
+        });
+
+        this.updateSubChapterSelection();
+        this.updateAssignmentPreview();
+        this.validateSubChapterSelection();
+    }
+
+    validateSubChapterSelection() {
+        const errorElement = document.getElementById('subChapterValidationError');
+        const container = document.getElementById('subChapterMultiSelect');
+        
+        if (!errorElement || !container) return;
+
+        if (this.selectedSubChapters.length === 0) {
+            errorElement.style.display = 'block';
+            container.classList.add('error');
+            this.validationErrors.subChapters = 'انتخاب حداقل یک زیرمبحث اجباری است';
+        } else {
+            errorElement.style.display = 'none';
+            container.classList.remove('error');
+            delete this.validationErrors.subChapters;
+        }
+    }
+
+    updateAssignmentPreview() {
+        const targetGroupsElement = document.getElementById('targetGroups');
+        const relatedSubChaptersElement = document.getElementById('relatedSubChapters');
+
+        if (targetGroupsElement) {
+            if (this.selectedGroups.length === 0) {
+                targetGroupsElement.textContent = 'همه گروه‌ها';
+            } else {
+                targetGroupsElement.textContent = this.selectedGroups.map(g => g.name).join(', ');
+            }
+        }
+
+        if (relatedSubChaptersElement) {
+            if (this.selectedSubChapters.length === 0) {
+                relatedSubChaptersElement.textContent = 'انتخاب نشده';
+            } else {
+                relatedSubChaptersElement.textContent = this.selectedSubChapters.map(sc => sc.title).join(', ');
+            }
         }
     }
 }

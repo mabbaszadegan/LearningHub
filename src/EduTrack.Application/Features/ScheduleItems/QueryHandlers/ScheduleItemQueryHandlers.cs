@@ -46,7 +46,6 @@ public class GetScheduleItemsByTeachingPlanQueryHandler : IRequestHandler<GetSch
                     TeachingPlanId = item.TeachingPlanId,
                     GroupId = item.GroupId,
                     GroupName = groupName,
-                    LessonId = item.LessonId,
                     Type = item.Type,
                     TypeName = GetTypeName(item.Type),
                     Title = item.Title,
@@ -152,13 +151,20 @@ public class GetScheduleItemByIdQueryHandler : IRequestHandler<GetScheduleItemBy
                 groupName = group?.Name ?? string.Empty;
             }
 
+            // Load group assignments
+            var groupIds = scheduleItem.GroupAssignments.Select(ga => ga.StudentGroupId).ToList();
+            
+            // Load subchapter assignments
+            var subChapterIds = scheduleItem.SubChapterAssignments.Select(sca => sca.SubChapterId).ToList();
+
             var dto = new ScheduleItemDto
             {
                 Id = scheduleItem.Id,
                 TeachingPlanId = scheduleItem.TeachingPlanId,
                 GroupId = scheduleItem.GroupId,
                 GroupName = groupName,
-                LessonId = scheduleItem.LessonId,
+                GroupIds = groupIds,
+                SubChapterIds = subChapterIds,
                 Type = scheduleItem.Type,
                 TypeName = GetTypeName(scheduleItem.Type),
                 Title = scheduleItem.Title,

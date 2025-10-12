@@ -28,10 +28,14 @@ public class ScheduleItem
 
     // Navigation properties
     public TeachingPlan TeachingPlan { get; private set; } = null!;
-    public StudentGroup? Group { get; private set; }
+    public StudentGroup? Group { get; private set; } // Legacy single group assignment
     public Lesson? Lesson { get; private set; }
     public TeachingSessionReport? SessionReport { get; set; }
     public ICollection<ScheduleItemAssignment> Assignments { get; set; } = new List<ScheduleItemAssignment>();
+    
+    // New navigation properties for multiple assignments
+    public ICollection<ScheduleItemGroupAssignment> GroupAssignments { get; set; } = new List<ScheduleItemGroupAssignment>();
+    public ICollection<ScheduleItemSubChapterAssignment> SubChapterAssignments { get; set; } = new List<ScheduleItemSubChapterAssignment>();
 
     // Private constructor for EF Core
     private ScheduleItem() { }
@@ -166,5 +170,64 @@ public class ScheduleItem
     {
         if (!DueDate.HasValue) return null;
         return DueDate.Value - DateTimeOffset.UtcNow;
+    }
+
+    public void AddGroupAssignment(ScheduleItemGroupAssignment groupAssignment)
+    {
+        if (groupAssignment == null)
+            throw new ArgumentNullException(nameof(groupAssignment));
+
+        if (GroupAssignments.Any(ga => ga.StudentGroupId == groupAssignment.StudentGroupId))
+            throw new InvalidOperationException("Group already assigned to this schedule item");
+
+        GroupAssignments.Add(groupAssignment);
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
+    public void RemoveGroupAssignment(int studentGroupId)
+    {
+        var assignment = GroupAssignments.FirstOrDefault(ga => ga.StudentGroupId == studentGroupId);
+        if (assignment != null)
+        {
+            GroupAssignments.Remove(assignment);
+            UpdatedAt = DateTimeOffset.UtcNow;
+        }
+    }
+
+    public void AddSubChapterAssignment(ScheduleItemSubChapterAssignment subChapterAssignment)
+    {
+        if (subChapterAssignment == null)
+            throw new ArgumentNullException(nameof(subChapterAssignment));
+
+        if (SubChapterAssignments.Any(sca => sca.SubChapterId == subChapterAssignment.SubChapterId))
+            throw new InvalidOperationException("SubChapter already assigned to this schedule item");
+
+        SubChapterAssignments.Add(subChapterAssignment);
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
+    public void RemoveSubChapterAssignment(int subChapterId)
+    {
+        var assignment = SubChapterAssignments.FirstOrDefault(sca => sca.SubChapterId == subChapterId);
+        if (assignment != null)
+        {
+            SubChapterAssignments.Remove(assignment);
+            UpdatedAt = DateTimeOffset.UtcNow;
+        }
+    }
+
+    public bool IsAssignedToGroup(int studentGroupId)
+    {
+        return GroupAssignments.Any(ga => ga.StudentGroupId == studentGroupId);
+    }
+
+    public bool IsAssignedToSubChapter(int subChapterId)
+    {
+        return SubChapterAssignments.Any(sca => sca.SubChapterId == subChapterId);
+    }
+
+    public bool IsAssignedToAllGroups()
+    {
+        return !GroupAssignments.Any();
     }
 }

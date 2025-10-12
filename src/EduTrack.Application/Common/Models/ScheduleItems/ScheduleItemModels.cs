@@ -9,8 +9,8 @@ public class ScheduleItemDto
     public int TeachingPlanId { get; set; }
     public int? GroupId { get; set; }
     public string? GroupName { get; set; }
-    public int? LessonId { get; set; }
-    public string? LessonTitle { get; set; }
+    public List<int> GroupIds { get; set; } = new List<int>();
+    public List<int> SubChapterIds { get; set; } = new List<int>();
     public ScheduleItemType Type { get; set; }
     public string TypeName { get; set; } = string.Empty;
     public string Title { get; set; } = string.Empty;
@@ -52,8 +52,7 @@ public class ScheduleItemListDto
 public class CreateScheduleItemRequest
 {
     public int TeachingPlanId { get; set; }
-    public int? GroupId { get; set; }
-    public int? LessonId { get; set; }
+    public int? GroupId { get; set; } // Legacy single group assignment
     public ScheduleItemType Type { get; set; }
     public string Title { get; set; } = string.Empty;
     public string? Description { get; set; }
@@ -63,14 +62,17 @@ public class CreateScheduleItemRequest
     public DisciplineType? DisciplineHint { get; set; }
     public string ContentJson { get; set; } = string.Empty;
     public decimal? MaxScore { get; set; }
+    
+    // New properties for multiple assignments
+    public List<int>? GroupIds { get; set; }
+    public List<int>? SubChapterIds { get; set; }
 }
 
 public class UpdateScheduleItemRequest
 {
     public int Id { get; set; }
     public int TeachingPlanId { get; set; }
-    public int? GroupId { get; set; }
-    public int? LessonId { get; set; }
+    public int? GroupId { get; set; } // Legacy single group assignment
     public ScheduleItemType Type { get; set; }
     public string Title { get; set; } = string.Empty;
     public string? Description { get; set; }
@@ -80,6 +82,10 @@ public class UpdateScheduleItemRequest
     public DisciplineType? DisciplineHint { get; set; }
     public string ContentJson { get; set; } = string.Empty;
     public decimal? MaxScore { get; set; }
+    
+    // New properties for multiple assignments
+    public List<int>? GroupIds { get; set; }
+    public List<int>? SubChapterIds { get; set; }
 }
 
 // Content Models for different item types
@@ -246,11 +252,12 @@ public record SaveScheduleItemStepRequest
     public string? ContentJson { get; init; }
     public decimal? MaxScore { get; init; }
     public int? GroupId { get; init; }
-    public int? LessonId { get; init; }
     public string? PersianStartDate { get; init; }
     public string? PersianDueDate { get; init; }
     public string? StartTime { get; init; }
     public string? DueTime { get; init; }
+    public List<int>? GroupIds { get; init; }
+    public List<int>? SubChapterIds { get; init; }
 }
 
 public record CompleteScheduleItemRequest
