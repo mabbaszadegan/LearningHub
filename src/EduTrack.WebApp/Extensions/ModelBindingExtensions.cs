@@ -41,7 +41,8 @@ public static class ModelBindingExtensions
                 }
             }
 
-            var dateTimeOffset = PersianDateHelper.FromPersianDateString(persianDateString, time);
+            var timeStringForConversion = time?.ToString(@"hh\:mm");
+            var dateTimeOffset = PersianDateHelper.FromPersianDateString(persianDateString, timeStringForConversion);
             modelState.SetModelValue(key, dateTimeOffset, persianDateString);
             return true;
         }

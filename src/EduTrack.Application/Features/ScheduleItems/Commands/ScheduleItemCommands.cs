@@ -50,7 +50,11 @@ public record SaveScheduleItemStepCommand(
     string? ContentJson,
     decimal? MaxScore,
     int? GroupId,
-    int? LessonId
+    int? LessonId,
+    string? PersianStartDate,
+    string? PersianDueDate,
+    string? StartTime,
+    string? DueTime
 ) : IRequest<Result<int>>;
 
 public record CompleteScheduleItemCommand(int Id) : IRequest<Result>;

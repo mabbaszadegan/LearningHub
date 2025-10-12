@@ -17,7 +17,7 @@ class ModernScheduleItemFormManager {
         this.init();
     }
 
-    init() {
+    async init() {
         this.setupEventListeners();
         this.setupRichEditor();
         this.setupStepNavigation();
@@ -26,28 +26,28 @@ class ModernScheduleItemFormManager {
         this.updateProgress();
         this.setupAutoSave();
         this.setupPersianDatePicker();
-        this.checkForExistingItem();
+        await this.checkForExistingItem();
     }
 
     setupEventListeners() {
         // Step navigation
         this.setupStepNavigationListeners();
-        
+
         // Form inputs
         this.setupFormInputListeners();
-        
+
         // Rich editor
         this.setupRichEditorListeners();
-        
+
         // Preview functionality
         this.setupPreviewListeners();
-        
+
         // Content type selection
         this.setupContentTypeListeners();
-        
+
         // Datetime helpers
         this.setupDatetimeHelpers();
-        
+
         // Score presets
         this.setupScorePresets();
     }
@@ -102,7 +102,7 @@ class ModernScheduleItemFormManager {
         // Datetime inputs
         const startDateInput = document.getElementById('startDate');
         const dueDateInput = document.getElementById('dueDate');
-        
+
         if (startDateInput) {
             startDateInput.addEventListener('change', () => {
                 this.updateDurationCalculator();
@@ -265,7 +265,7 @@ class ModernScheduleItemFormManager {
     // Step Navigation Methods
     goToStep(step) {
         if (step < 1 || step > this.totalSteps) return;
-        
+
         // Validate current step before moving
         if (step > this.currentStep && !this.validateCurrentStep()) {
             return;
@@ -278,15 +278,16 @@ class ModernScheduleItemFormManager {
         this.updateNavigationButtons();
     }
 
-    goToNextStep() {
+    async goToNextStep() {
         if (this.currentStep < this.totalSteps) {
-            // Save current step before moving to next
-            this.saveCurrentStep().then(() => {
+            try {
+                // Save current step before moving to next
+                await this.saveCurrentStep();
                 this.goToStep(this.currentStep + 1);
-            }).catch(error => {
+            } catch (error) {
                 console.error('Error saving step:', error);
                 this.showErrorMessage('خطا در ذخیره مرحله');
-            });
+            }
         }
     }
 
@@ -304,7 +305,7 @@ class ModernScheduleItemFormManager {
         document.querySelectorAll('.step-item').forEach((item, index) => {
             const stepNumber = index + 1;
             item.classList.remove('active', 'completed');
-            
+
             if (stepNumber === this.currentStep) {
                 item.classList.add('active');
             } else if (stepNumber < this.currentStep) {
@@ -318,7 +319,7 @@ class ModernScheduleItemFormManager {
         document.querySelectorAll('.step-item').forEach((item, index) => {
             const stepNumber = index + 1;
             const stepNumberEl = item.querySelector('.step-number');
-            
+
             if (stepNumberEl) {
                 if (stepNumber < this.currentStep) {
                     stepNumberEl.innerHTML = '<i class="fas fa-check"></i>';
@@ -332,12 +333,12 @@ class ModernScheduleItemFormManager {
     updateProgress() {
         const progressFill = document.getElementById('progressFill');
         const progressText = document.getElementById('progressText');
-        
+
         if (progressFill) {
             const percentage = (this.currentStep / this.totalSteps) * 100;
             progressFill.style.width = `${percentage}%`;
         }
-        
+
         if (progressText) {
             progressText.textContent = `مرحله ${this.currentStep} از ${this.totalSteps}`;
         }
@@ -368,7 +369,7 @@ class ModernScheduleItemFormManager {
 
         let isValid = true;
         const requiredFields = stepElement.querySelectorAll('[required]');
-        
+
         requiredFields.forEach(field => {
             if (!this.validateField(field.name, field.value)) {
                 isValid = false;
@@ -414,7 +415,7 @@ class ModernScheduleItemFormManager {
         if (!field) return;
 
         const errorElement = field.parentElement.querySelector('.validation-error-modern');
-        
+
         if (errorElement) {
             errorElement.textContent = errorMessage || '';
             errorElement.style.display = errorMessage ? 'block' : 'none';
@@ -453,7 +454,7 @@ class ModernScheduleItemFormManager {
     updateHiddenDescription() {
         const editor = document.getElementById('descriptionEditor');
         const hiddenField = document.getElementById('descriptionHidden');
-        
+
         if (editor && hiddenField) {
             hiddenField.value = editor.innerHTML;
         }
@@ -488,13 +489,13 @@ class ModernScheduleItemFormManager {
     changeItemType(typeId) {
         this.currentType = typeId;
         this.selectedContentType = null;
-        
+
         // Show type preview
         this.showTypePreview(typeId);
-        
+
         // Load content types for this item type
         this.loadContentTypes();
-        
+
         // Update sidebar
         this.updateStepIndicators();
     }
@@ -502,7 +503,7 @@ class ModernScheduleItemFormManager {
     showTypePreview(typeId) {
         const preview = document.getElementById('typePreview');
         const previewContent = document.getElementById('typePreviewContent');
-        
+
         if (!preview || !previewContent) return;
 
         const typeInfo = this.contentTypes[typeId];
@@ -527,7 +528,7 @@ class ModernScheduleItemFormManager {
     showContentTypeSelector() {
         const selector = document.getElementById('contentTypeSelector');
         const grid = document.getElementById('contentTypesGrid');
-        
+
         if (!selector || !grid) return;
 
         // Clear existing content
@@ -549,11 +550,11 @@ class ModernScheduleItemFormManager {
                     <i class="fas fa-arrow-left"></i>
                 </button>
             `;
-            
+
             typeCard.addEventListener('click', () => {
                 this.selectContentType(parseInt(id));
             });
-            
+
             grid.appendChild(typeCard);
         });
 
@@ -562,11 +563,11 @@ class ModernScheduleItemFormManager {
 
     selectContentType(typeId) {
         this.selectedContentType = typeId;
-        
+
         // Hide selector and show designer
         document.getElementById('contentTypeSelector').style.display = 'none';
         document.getElementById('contentDesigner').style.display = 'block';
-        
+
         // Load content designer for this type
         this.loadContentDesigner(typeId);
     }
@@ -780,7 +781,7 @@ class ModernScheduleItemFormManager {
         const day = String(date.getDate()).padStart(2, '0');
         const hours = String(date.getHours()).padStart(2, '0');
         const minutes = String(date.getMinutes()).padStart(2, '0');
-        
+
         return `${year}-${month}-${day}T${hours}:${minutes}`;
     }
 
@@ -789,7 +790,7 @@ class ModernScheduleItemFormManager {
         const dueDateInput = document.getElementById('dueDate');
         const calculator = document.getElementById('durationCalculator');
         const durationValue = document.getElementById('durationValue');
-        
+
         if (!startDateInput || !dueDateInput || !calculator || !durationValue) return;
 
         const startDate = new Date(startDateInput.value);
@@ -799,7 +800,7 @@ class ModernScheduleItemFormManager {
             const diffMs = dueDate - startDate;
             const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
             const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            
+
             durationValue.textContent = `${diffDays} روز و ${diffHours} ساعت`;
             calculator.style.display = 'block';
         } else {
@@ -837,10 +838,10 @@ class ModernScheduleItemFormManager {
 
         // Collect form data
         const formData = this.collectFormData();
-        
+
         // Generate preview HTML
         previewContent.innerHTML = this.generatePreviewHTML(formData);
-        
+
         // Show modal
         const modal = new bootstrap.Modal(document.getElementById('previewModal'));
         modal.show();
@@ -865,7 +866,7 @@ class ModernScheduleItemFormManager {
 
         const formData = new FormData(form);
         const data = {};
-        
+
         for (let [key, value] of formData.entries()) {
             data[key] = value;
         }
@@ -906,7 +907,7 @@ class ModernScheduleItemFormManager {
     // Form Submission
     handleFormSubmit(e) {
         e.preventDefault();
-        
+
         // Validate all steps
         if (!this.validateAllSteps()) {
             this.showValidationErrors();
@@ -915,17 +916,17 @@ class ModernScheduleItemFormManager {
 
         // Collect form data
         const formData = this.collectFormData();
-        
+
         // Add content data
         formData.contentData = this.collectContentData();
-        
+
         // Submit form
         this.submitForm(formData);
     }
 
     validateAllSteps() {
         let isValid = true;
-        
+
         for (let step = 1; step <= this.totalSteps; step++) {
             const stepElement = document.querySelector(`.form-step[data-step="${step}"]`);
             if (stepElement) {
@@ -937,7 +938,7 @@ class ModernScheduleItemFormManager {
                 });
             }
         }
-        
+
         return isValid;
     }
 
@@ -955,7 +956,7 @@ class ModernScheduleItemFormManager {
         if (!container) return "{}";
 
         const contentData = {};
-        
+
         // Collect data from content designer
         container.querySelectorAll('input, textarea, select').forEach(input => {
             contentData[input.name || input.id] = input.value;
@@ -990,15 +991,31 @@ class ModernScheduleItemFormManager {
     }
 
     showSuccessMessage(message = 'عملیات با موفقیت انجام شد') {
-        // Show success message
-        console.log(message);
-        // You can replace this with a proper notification system
-        alert('موفق: ' + message);
+        // Show success message using Toastr
+        if (typeof toastr !== 'undefined') {
+            toastr.success(message, 'موفقیت', {
+                timeOut: 3000,
+                closeButton: true,
+                progressBar: true
+            });
+        } else {
+            // Fallback to alert if toastr is not available
+            alert('موفق: ' + message);
+        }
     }
 
     showErrorMessage(message) {
-        // Show error message
-        alert('خطا: ' + message);
+        // Show error message using Toastr
+        if (typeof toastr !== 'undefined') {
+            toastr.error(message, 'خطا', {
+                timeOut: 5000,
+                closeButton: true,
+                progressBar: true
+            });
+        } else {
+            // Fallback to alert if toastr is not available
+            alert('خطا: ' + message);
+        }
     }
 
     saveFormData() {
@@ -1068,7 +1085,7 @@ class ModernScheduleItemFormManager {
     // Step Saving Methods
     async saveCurrentStep() {
         const stepData = this.collectStepData(this.currentStep);
-        
+
         const requestData = {
             Id: this.currentItemId,
             TeachingPlanId: parseInt(document.querySelector('[name="TeachingPlanId"]').value),
@@ -1078,7 +1095,7 @@ class ModernScheduleItemFormManager {
 
         try {
             console.log('Request data:', requestData);
-            
+
             const response = await fetch('/Teacher/ScheduleItem/SaveStep', {
                 method: 'POST',
                 headers: {
@@ -1096,30 +1113,40 @@ class ModernScheduleItemFormManager {
 
             const responseText = await response.text();
             console.log('Response text:', responseText);
-            
+
             if (!responseText) {
                 throw new Error('Empty response from server');
             }
 
             const result = JSON.parse(responseText);
-            
+
             if (result.success) {
                 this.currentItemId = result.id;
                 this.isEditMode = true;
                 this.showSuccessMessage('مرحله با موفقیت ذخیره شد');
-                
+
                 // Update URL to include ID for edit mode
                 if (!window.location.search.includes('id=')) {
-                    const url = new URL(window.location);
-                    url.searchParams.set('id', result.id);
-                    window.history.replaceState({}, '', url);
+                    try {
+                        const url = new URL(window.location);
+                        url.searchParams.set('id', result.id);
+                        window.history.replaceState({}, '', url);
+                    } catch (error) {
+                        console.error('Error updating URL:', error);
+                        // Don't throw error here, just log it
+                    }
                 }
-                
+
                 // Load existing data after first save
                 if (this.currentStep === 1) {
-                    await this.loadExistingItem();
+                    try {
+                        await this.loadExistingItem();
+                    } catch (error) {
+                        console.error('Error loading existing item after save:', error);
+                        // Don't throw error here, just log it
+                    }
                 }
-                
+
                 return result;
             } else {
                 throw new Error(result.message || 'خطا در ذخیره مرحله');
@@ -1140,8 +1167,10 @@ class ModernScheduleItemFormManager {
                 stepData.Description = document.getElementById('descriptionHidden')?.value;
                 break;
             case 2:
-                stepData.StartDate = document.getElementById('StartDate')?.value;
-                stepData.DueDate = document.getElementById('DueDate')?.value;
+                stepData.PersianStartDate = document.getElementById('PersianStartDate')?.value;
+                stepData.PersianDueDate = document.getElementById('PersianDueDate')?.value;
+                stepData.StartTime = document.getElementById('StartTime')?.value;
+                stepData.DueTime = document.getElementById('DueTime')?.value;
                 stepData.MaxScore = parseFloat(document.getElementById('maxScore')?.value) || null;
                 stepData.IsMandatory = document.getElementById('isMandatory')?.checked || false;
                 break;
@@ -1158,14 +1187,19 @@ class ModernScheduleItemFormManager {
     }
 
     // Check for existing item
-    checkForExistingItem() {
+    async checkForExistingItem() {
         const urlParams = new URLSearchParams(window.location.search);
         const itemId = urlParams.get('id');
-        
+
         if (itemId) {
             this.currentItemId = parseInt(itemId);
             this.isEditMode = true;
-            this.loadExistingItem();
+            try {
+                await this.loadExistingItem();
+            } catch (error) {
+                console.error('Error loading existing item:', error);
+                this.showErrorMessage('خطا در بارگذاری آیتم موجود');
+            }
         }
     }
 
@@ -1175,7 +1209,7 @@ class ModernScheduleItemFormManager {
         try {
             const response = await fetch(`/Teacher/ScheduleItem/GetById/${this.currentItemId}`);
             const result = await response.json();
-            
+
             if (result.success) {
                 this.populateFormWithExistingData(result.data);
             }
@@ -1187,19 +1221,17 @@ class ModernScheduleItemFormManager {
     populateFormWithExistingData(data) {
         // Populate form fields with existing data
         if (data.title) document.getElementById('itemTitle').value = data.title;
-        if (data.type) document.getElementById('itemType').value = data.type;
+        if (data.type >= 0) document.getElementById('itemType').value = data.type;
         if (data.description) {
             document.getElementById('descriptionEditor').innerHTML = data.description;
             document.getElementById('descriptionHidden').value = data.description;
         }
-        if (data.startDate) {
-            document.getElementById('StartDate').value = data.startDate;
-            this.updatePersianDateDisplay('PersianStartDate', data.startDate);
+        if (data.persianStartDate) {
+            document.getElementById('PersianStartDate').value = data.persianStartDate;
             this.updateTimeInput('StartTime', data.startDate);
         }
-        if (data.dueDate) {
-            document.getElementById('DueDate').value = data.dueDate;
-            this.updatePersianDateDisplay('PersianDueDate', data.dueDate);
+        if (data.persianDueDate) {
+            document.getElementById('PersianDueDate').value = data.persianDueDate;
             this.updateTimeInput('DueTime', data.dueDate);
         }
         if (data.maxScore) document.getElementById('maxScore').value = data.maxScore;
@@ -1274,7 +1306,7 @@ class ModernScheduleItemFormManager {
         try {
             // Save final step first
             await this.saveCurrentStep();
-            
+
             // Complete the item
             const response = await fetch('/Teacher/ScheduleItem/Complete', {
                 method: 'POST',

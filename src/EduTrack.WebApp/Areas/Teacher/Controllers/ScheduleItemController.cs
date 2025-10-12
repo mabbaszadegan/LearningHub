@@ -366,7 +366,11 @@ public class ScheduleItemController : Controller
             request.ContentJson,
             request.MaxScore,
             request.GroupId,
-            request.LessonId
+            request.LessonId,
+            request.PersianStartDate,
+            request.PersianDueDate,
+            request.StartTime,
+            request.DueTime
         );
 
             var result = await _mediator.Send(command);

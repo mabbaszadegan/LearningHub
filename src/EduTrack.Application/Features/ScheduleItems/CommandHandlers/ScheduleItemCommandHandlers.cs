@@ -1,4 +1,5 @@
 using EduTrack.Application.Common.Models;
+using EduTrack.Application.Common.Helpers;
 using EduTrack.Application.Features.ScheduleItems.Commands;
 using EduTrack.Domain.Entities;
 using EduTrack.Domain.Repositories;
@@ -271,14 +272,19 @@ public class SaveScheduleItemStepCommandHandler : IRequestHandler<SaveScheduleIt
                     return Result<int>.Failure("برنامه آموزشی یافت نشد.");
                 }
 
+                // Convert Persian dates to DateTimeOffset
+                var startDate = ConvertPersianDateToDateTimeOffset(request.PersianStartDate, request.StartTime) 
+                    ?? DateTimeOffset.UtcNow;
+                var dueDate = ConvertPersianDateToDateTimeOffset(request.PersianDueDate, request.DueTime);
+
                 // Create with minimal required data
                 scheduleItem = ScheduleItem.Create(
                     request.TeachingPlanId,
                     request.Type.Value,
                     request.Title,
                     request.Description,
-                    request.StartDate ?? DateTimeOffset.UtcNow,
-                    request.DueDate,
+                    startDate,
+                    dueDate,
                     request.IsMandatory ?? false,
                     request.ContentJson ?? "{}",
                     request.MaxScore,
@@ -319,8 +325,12 @@ public class SaveScheduleItemStepCommandHandler : IRequestHandler<SaveScheduleIt
                 if (!string.IsNullOrEmpty(request.Description)) scheduleItem.UpdateDescription(request.Description);
                 break;
             case 2:
-                if (request.StartDate.HasValue || request.DueDate.HasValue)
-                    scheduleItem.UpdateDates(request.StartDate ?? scheduleItem.StartDate, request.DueDate);
+                // Convert Persian dates to DateTimeOffset
+                var startDate = ConvertPersianDateToDateTimeOffset(request.PersianStartDate, request.StartTime) 
+                    ?? scheduleItem.StartDate;
+                var dueDate = ConvertPersianDateToDateTimeOffset(request.PersianDueDate, request.DueTime);
+                
+                scheduleItem.UpdateDates(startDate, dueDate);
                 if (request.MaxScore.HasValue) scheduleItem.UpdateMaxScore(request.MaxScore);
                 if (request.IsMandatory.HasValue) scheduleItem.UpdateMandatory(request.IsMandatory.Value);
                 break;
@@ -331,6 +341,21 @@ public class SaveScheduleItemStepCommandHandler : IRequestHandler<SaveScheduleIt
             case 4:
                 if (!string.IsNullOrEmpty(request.ContentJson)) scheduleItem.UpdateContent(request.ContentJson);
                 break;
+        }
+    }
+
+    private DateTimeOffset? ConvertPersianDateToDateTimeOffset(string? persianDate, string? timeString)
+    {
+        if (string.IsNullOrWhiteSpace(persianDate))
+            return null;
+
+        try
+        {
+            return PersianDateHelper.PersianToDateTimeOffset(persianDate, timeString);
+        }
+        catch
+        {
+            return null;
         }
     }
 }

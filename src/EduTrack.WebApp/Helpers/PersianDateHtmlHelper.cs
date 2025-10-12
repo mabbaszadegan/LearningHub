@@ -41,7 +41,7 @@ public static class PersianDateHtmlHelper
         if (!dateTime.HasValue)
             return new HtmlString("<span class='text-muted'>-</span>");
             
-        var persianDateWithDay = dateTime.Value.ToPersianDateWithDayName(format);
+        var persianDateWithDay = dateTime.Value.ToPersianDateWithDayName();
         return new HtmlString($"<span class='persian-date-with-day'>{persianDateWithDay}</span>");
     }
     

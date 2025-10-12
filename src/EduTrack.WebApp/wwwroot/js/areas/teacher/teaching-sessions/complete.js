@@ -1378,13 +1378,31 @@ class StepCompletionManager {
     }
 
     showSuccessMessage(message) {
-        // Show success message (you can implement a toast notification here)
-        alert(message);
+        // Show success message using Toastr
+        if (typeof toastr !== 'undefined') {
+            toastr.success(message, 'موفقیت', {
+                timeOut: 3000,
+                closeButton: true,
+                progressBar: true
+            });
+        } else {
+            // Fallback to alert if toastr is not available
+            alert(message);
+        }
     }
 
     showErrorMessage(message) {
-        // Show error message (you can implement a toast notification here)
-        alert('خطا: ' + message);
+        // Show error message using Toastr
+        if (typeof toastr !== 'undefined') {
+            toastr.error(message, 'خطا', {
+                timeOut: 5000,
+                closeButton: true,
+                progressBar: true
+            });
+        } else {
+            // Fallback to alert if toastr is not available
+            alert('خطا: ' + message);
+        }
     }
 
     // SubChapter Coverage helper methods

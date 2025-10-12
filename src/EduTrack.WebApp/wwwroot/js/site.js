@@ -18,7 +18,8 @@ $(document).ready(function() {
             "hideEasing": "linear",
             "showMethod": "fadeIn",
             "hideMethod": "fadeOut",
-            "rtl": true
+            "rtl": true,
+            "escapeHtml": false
         };
     }
 

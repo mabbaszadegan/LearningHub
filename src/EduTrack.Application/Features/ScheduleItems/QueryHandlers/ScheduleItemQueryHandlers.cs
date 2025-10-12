@@ -1,5 +1,6 @@
 using EduTrack.Application.Common.Models;
 using EduTrack.Application.Common.Models.ScheduleItems;
+using EduTrack.Application.Common.Helpers;
 using EduTrack.Application.Features.ScheduleItems.Queries;
 using EduTrack.Domain.Entities;
 using EduTrack.Domain.Enums;
@@ -174,7 +175,11 @@ public class GetScheduleItemByIdQueryHandler : IRequestHandler<GetScheduleItemBy
                 Status = GetItemStatus(scheduleItem),
                 StatusText = GetStatusText(GetItemStatus(scheduleItem)),
                 CurrentStep = scheduleItem.CurrentStep,
-                IsCompleted = scheduleItem.IsCompleted
+                IsCompleted = scheduleItem.IsCompleted,
+                PersianStartDate = PersianDateHelper.DateTimeOffsetToPersian(scheduleItem.StartDate),
+                PersianDueDate = scheduleItem.DueDate.HasValue 
+                    ? PersianDateHelper.DateTimeOffsetToPersian(scheduleItem.DueDate.Value) 
+                    : string.Empty
             };
 
             return Result<ScheduleItemDto>.Success(dto);

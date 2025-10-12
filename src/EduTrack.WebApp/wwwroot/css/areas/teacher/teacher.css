@@ -1,5 +1,46 @@
 /* Modern Minimal Teacher Dashboard Styles */
 
+/* Toastr Customization */
+#toast-container > .toast {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+#toast-container > .toast-success {
+    background-color: #d4edda;
+    border-left: 4px solid #28a745;
+    color: #155724;
+}
+
+#toast-container > .toast-error {
+    background-color: #f8d7da;
+    border-left: 4px solid #dc3545;
+    color: #721c24;
+}
+
+#toast-container > .toast-info {
+    background-color: #d1ecf1;
+    border-left: 4px solid #17a2b8;
+    color: #0c5460;
+}
+
+#toast-container > .toast-warning {
+    background-color: #fff3cd;
+    border-left: 4px solid #ffc107;
+    color: #856404;
+}
+
+#toast-container > .toast .toast-title {
+    font-weight: 600;
+    font-size: 14px;
+}
+
+#toast-container > .toast .toast-message {
+    font-size: 13px;
+    line-height: 1.4;
+}
+
 /* Body & Wrapper */
 .teacher-body.modern-minimal {
     background: #f5f6fa;

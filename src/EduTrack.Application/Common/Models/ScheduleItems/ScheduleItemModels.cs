@@ -17,6 +17,8 @@ public class ScheduleItemDto
     public string? Description { get; set; }
     public DateTimeOffset StartDate { get; set; }
     public DateTimeOffset? DueDate { get; set; }
+    public string PersianStartDate { get; set; } = string.Empty;
+    public string PersianDueDate { get; set; } = string.Empty;
     public bool IsMandatory { get; set; }
     public DisciplineType? DisciplineHint { get; set; }
     public string ContentJson { get; set; } = string.Empty;
@@ -240,6 +242,10 @@ public record SaveScheduleItemStepRequest
     public decimal? MaxScore { get; init; }
     public int? GroupId { get; init; }
     public int? LessonId { get; init; }
+    public string? PersianStartDate { get; init; }
+    public string? PersianDueDate { get; init; }
+    public string? StartTime { get; init; }
+    public string? DueTime { get; init; }
 }
 
 public record CompleteScheduleItemRequest

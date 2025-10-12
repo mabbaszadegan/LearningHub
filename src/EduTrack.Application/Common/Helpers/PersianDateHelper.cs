@@ -2,122 +2,36 @@ using System.Globalization;
 
 namespace EduTrack.Application.Common.Helpers;
 
-/// <summary>
-/// Helper class for Persian date operations
-/// </summary>
-public static class PersianDateHelper
+public static class DateTimeOffsetExtensions
 {
-    private static readonly PersianCalendar _persianCalendar = new();
-    
     /// <summary>
     /// Converts DateTimeOffset to Persian date string
     /// </summary>
-    /// <param name="dateTime">The DateTimeOffset to convert</param>
-    /// <param name="format">The format string (default: "yyyy/MM/dd")</param>
-    /// <returns>Persian date string</returns>
     public static string ToPersianDateString(this DateTimeOffset dateTime, string format = "yyyy/MM/dd")
     {
-        var persianYear = _persianCalendar.GetYear(dateTime.DateTime);
-        var persianMonth = _persianCalendar.GetMonth(dateTime.DateTime);
-        var persianDay = _persianCalendar.GetDayOfMonth(dateTime.DateTime);
-        
-        var persianDate = new DateTime(persianYear, persianMonth, persianDay);
-        
-        return persianDate.ToString(format, CultureInfo.InvariantCulture);
+        return PersianDateHelper.DateTimeOffsetToPersian(dateTime, false);
     }
-    
+
     /// <summary>
     /// Converts DateTimeOffset to Persian date and time string
     /// </summary>
-    /// <param name="dateTime">The DateTimeOffset to convert</param>
-    /// <param name="dateFormat">The date format string (default: "yyyy/MM/dd")</param>
-    /// <param name="timeFormat">The time format string (default: "HH:mm")</param>
-    /// <returns>Persian date and time string</returns>
     public static string ToPersianDateTimeString(this DateTimeOffset dateTime, string dateFormat = "yyyy/MM/dd", string timeFormat = "HH:mm")
     {
-        var persianDate = dateTime.ToPersianDateString(dateFormat);
-        var time = dateTime.ToString(timeFormat);
-        
-        return $"{persianDate} {time}";
+        return PersianDateHelper.DateTimeOffsetToPersian(dateTime, true);
     }
-    
+
     /// <summary>
-    /// Converts Persian date string to DateTimeOffset
+    /// Converts DateTimeOffset to Persian date with day name
     /// </summary>
-    /// <param name="persianDateString">Persian date string (format: yyyy/MM/dd)</param>
-    /// <param name="time">Optional time (default: current time)</param>
-    /// <returns>DateTimeOffset</returns>
-    public static DateTimeOffset FromPersianDateString(string persianDateString, TimeSpan? time = null)
+    public static string ToPersianDateWithDayName(this DateTimeOffset dateTime)
     {
-        var parts = persianDateString.Split('/');
-        if (parts.Length != 3)
-            throw new ArgumentException("Invalid Persian date format. Expected: yyyy/MM/dd");
-        
-        var year = int.Parse(parts[0]);
-        var month = int.Parse(parts[1]);
-        var day = int.Parse(parts[2]);
-        
-        var persianDate = new DateTime(year, month, day, _persianCalendar);
-        var targetTime = time ?? DateTime.Now.TimeOfDay;
-        
-        return new DateTimeOffset(persianDate.Date.Add(targetTime), TimeZoneInfo.Local.GetUtcOffset(DateTime.Now));
+        var persianDate = PersianDateHelper.DateTimeOffsetToPersian(dateTime, false);
+        var dayOfWeek = GetPersianDayName(dateTime.DayOfWeek);
+        return $"{dayOfWeek}، {persianDate}";
     }
-    
-    /// <summary>
-    /// Gets current Persian date string
-    /// </summary>
-    /// <param name="format">The format string (default: "yyyy/MM/dd")</param>
-    /// <returns>Current Persian date string</returns>
-    public static string GetCurrentPersianDate(string format = "yyyy/MM/dd")
+
+    private static string GetPersianDayName(DayOfWeek dayOfWeek)
     {
-        return DateTimeOffset.Now.ToPersianDateString(format);
-    }
-    
-    /// <summary>
-    /// Gets current Persian date and time string
-    /// </summary>
-    /// <param name="dateFormat">The date format string (default: "yyyy/MM/dd")</param>
-    /// <param name="timeFormat">The time format string (default: "HH:mm")</param>
-    /// <returns>Current Persian date and time string</returns>
-    public static string GetCurrentPersianDateTime(string dateFormat = "yyyy/MM/dd", string timeFormat = "HH:mm")
-    {
-        return DateTimeOffset.Now.ToPersianDateTimeString(dateFormat, timeFormat);
-    }
-    
-    /// <summary>
-    /// Converts Persian month number to Persian month name
-    /// </summary>
-    /// <param name="monthNumber">Month number (1-12)</param>
-    /// <returns>Persian month name</returns>
-    public static string GetPersianMonthName(int monthNumber)
-    {
-        return monthNumber switch
-        {
-            1 => "فروردین",
-            2 => "اردیبهشت",
-            3 => "خرداد",
-            4 => "تیر",
-            5 => "مرداد",
-            6 => "شهریور",
-            7 => "مهر",
-            8 => "آبان",
-            9 => "آذر",
-            10 => "دی",
-            11 => "بهمن",
-            12 => "اسفند",
-            _ => "نامشخص"
-        };
-    }
-    
-    /// <summary>
-    /// Converts Persian day of week to Persian day name
-    /// </summary>
-    /// <param name="dateTime">The DateTimeOffset</param>
-    /// <returns>Persian day name</returns>
-    public static string GetPersianDayName(this DateTimeOffset dateTime)
-    {
-        var dayOfWeek = _persianCalendar.GetDayOfWeek(dateTime.DateTime);
-        
         return dayOfWeek switch
         {
             DayOfWeek.Saturday => "شنبه",
@@ -127,21 +41,118 @@ public static class PersianDateHelper
             DayOfWeek.Wednesday => "چهارشنبه",
             DayOfWeek.Thursday => "پنج‌شنبه",
             DayOfWeek.Friday => "جمعه",
-            _ => "نامشخص"
+            _ => ""
         };
     }
-    
+}
+
+public static class PersianDateHelper
+{
+    private static readonly PersianCalendar _persianCalendar = new();
+
     /// <summary>
-    /// Gets Persian date with day name
+    /// Converts Persian date string to DateTimeOffset
     /// </summary>
-    /// <param name="dateTime">The DateTimeOffset</param>
-    /// <param name="format">The format string (default: "yyyy/MM/dd")</param>
-    /// <returns>Persian date with day name</returns>
-    public static string ToPersianDateWithDayName(this DateTimeOffset dateTime, string format = "yyyy/MM/dd")
+    /// <param name="persianDate">Persian date string in format "yyyy/MM/dd"</param>
+    /// <param name="timeString">Time string in format "HH:mm" (optional)</param>
+    /// <returns>DateTimeOffset in UTC</returns>
+    public static DateTimeOffset PersianToDateTimeOffset(string persianDate, string? timeString = null)
     {
-        var persianDate = dateTime.ToPersianDateString(format);
-        var dayName = dateTime.GetPersianDayName();
+        if (string.IsNullOrWhiteSpace(persianDate))
+            throw new ArgumentException("Persian date cannot be null or empty", nameof(persianDate));
+
+        var parts = persianDate.Split('/');
+        if (parts.Length != 3)
+            throw new ArgumentException("Persian date must be in format 'yyyy/MM/dd'", nameof(persianDate));
+
+        if (!int.TryParse(parts[0], out int year) ||
+            !int.TryParse(parts[1], out int month) ||
+            !int.TryParse(parts[2], out int day))
+        {
+            throw new ArgumentException("Invalid Persian date format", nameof(persianDate));
+        }
+
+        // Convert Persian date to Gregorian
+        var gregorianDate = _persianCalendar.ToDateTime(year, month, day, 0, 0, 0, 0);
+
+        // Parse time if provided
+        if (!string.IsNullOrWhiteSpace(timeString))
+        {
+            if (TimeSpan.TryParse(timeString, out var time))
+            {
+                gregorianDate = gregorianDate.Date.Add(time);
+            }
+        }
+
+        return new DateTimeOffset(gregorianDate, TimeSpan.Zero);
+    }
+
+    /// <summary>
+    /// Converts DateTimeOffset to Persian date string
+    /// </summary>
+    /// <param name="dateTimeOffset">DateTimeOffset to convert</param>
+    /// <param name="includeTime">Whether to include time in the result</param>
+    /// <returns>Persian date string in format "yyyy/MM/dd" or "yyyy/MM/dd HH:mm"</returns>
+    public static string DateTimeOffsetToPersian(DateTimeOffset dateTimeOffset, bool includeTime = false)
+    {
+        var localDateTime = dateTimeOffset.DateTime;
         
-        return $"{dayName} {persianDate}";
+        var year = _persianCalendar.GetYear(localDateTime);
+        var month = _persianCalendar.GetMonth(localDateTime);
+        var day = _persianCalendar.GetDayOfMonth(localDateTime);
+
+        var result = $"{year:D4}/{month:D2}/{day:D2}";
+
+        if (includeTime)
+        {
+            var hour = localDateTime.Hour;
+            var minute = localDateTime.Minute;
+            result += $" {hour:D2}:{minute:D2}";
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Validates Persian date string
+    /// </summary>
+    /// <param name="persianDate">Persian date string to validate</param>
+    /// <returns>True if valid, false otherwise</returns>
+    public static bool IsValidPersianDate(string persianDate)
+    {
+        if (string.IsNullOrWhiteSpace(persianDate))
+            return false;
+
+        var parts = persianDate.Split('/');
+        if (parts.Length != 3)
+            return false;
+
+        if (!int.TryParse(parts[0], out int year) ||
+            !int.TryParse(parts[1], out int month) ||
+            !int.TryParse(parts[2], out int day))
+        {
+            return false;
+        }
+
+        try
+        {
+            _persianCalendar.ToDateTime(year, month, day, 0, 0, 0, 0);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Converts Persian date string to DateTimeOffset (alias for PersianToDateTimeOffset)
+    /// </summary>
+    /// <param name="persianDate">Persian date string in format "yyyy/MM/dd"</param>
+    /// <param name="timeString">Time string in format "HH:mm" (optional)</param>
+    /// <returns>DateTimeOffset in UTC</returns>
+    public static DateTimeOffset FromPersianDateString(string persianDate, string? timeString = null)
+    {
+        return PersianToDateTimeOffset(persianDate, timeString);
     }
 }
