@@ -100,20 +100,20 @@ class ModernScheduleItemFormManager {
         }
 
         // Datetime inputs
-        const startDateInput = document.getElementById('startDate');
-        const dueDateInput = document.getElementById('dueDate');
+        const startDateInput = document.getElementById('StartDate');
+        const dueDateInput = document.getElementById('DueDate');
 
         if (startDateInput) {
             startDateInput.addEventListener('change', () => {
                 this.updateDurationCalculator();
-                this.validateField('startDate', startDateInput.value);
+                this.validateField('StartDate', startDateInput.value);
             });
         }
 
         if (dueDateInput) {
             dueDateInput.addEventListener('change', () => {
                 this.updateDurationCalculator();
-                this.validateField('dueDate', dueDateInput.value);
+                this.validateField('DueDate', dueDateInput.value);
             });
         }
 
@@ -199,22 +199,73 @@ class ModernScheduleItemFormManager {
         if (setNowBtn) {
             setNowBtn.addEventListener('click', () => {
                 const now = new Date();
-                const startDateInput = document.getElementById('startDate');
-                if (startDateInput) {
-                    startDateInput.value = this.formatDateTimeLocal(now);
+                const persianStartDateInput = document.getElementById('PersianStartDate');
+                const startDateInput = document.getElementById('StartDate');
+                const startTimeInput = document.getElementById('StartTime');
+                
+                if (persianStartDateInput && startDateInput) {
+                    // Convert to Persian date
+                    const persianDate = this.convertToPersianDate(now);
+                    persianStartDateInput.value = persianDate;
+                    
+                    // Set hidden field with current date and time
+                    startDateInput.value = now.toISOString();
+                    
+                    // Set time to current time
+                    if (startTimeInput) {
+                        const timeString = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+                        startTimeInput.value = timeString;
+                    }
+                    
+                    // Trigger datepicker update
+                    this.updateDatePicker(persianStartDateInput, persianDate);
+                    
+                    // Update duration calculator
                     this.updateDurationCalculator();
+                    
+                    console.log('Set to current time:', {
+                        persianDate: persianDate,
+                        isoDate: now.toISOString(),
+                        time: startTimeInput ? startTimeInput.value : 'N/A'
+                    });
                 }
             });
         }
 
         if (setWeekBtn) {
             setWeekBtn.addEventListener('click', () => {
-                const weekFromNow = new Date();
-                weekFromNow.setDate(weekFromNow.getDate() + 7);
-                const dueDateInput = document.getElementById('dueDate');
-                if (dueDateInput) {
-                    dueDateInput.value = this.formatDateTimeLocal(weekFromNow);
+                const now = new Date();
+                const weekFromNow = new Date(now.getTime() + (7 * 24 * 60 * 60 * 1000)); // Add 7 days
+                
+                const persianDueDateInput = document.getElementById('PersianDueDate');
+                const dueDateInput = document.getElementById('DueDate');
+                const dueTimeInput = document.getElementById('DueTime');
+                
+                if (persianDueDateInput && dueDateInput) {
+                    // Convert to Persian date
+                    const persianDate = this.convertToPersianDate(weekFromNow);
+                    persianDueDateInput.value = persianDate;
+                    
+                    // Set hidden field with date one week from now
+                    dueDateInput.value = weekFromNow.toISOString();
+                    
+                    // Set time to current time (or you can set to end of day)
+                    if (dueTimeInput) {
+                        const timeString = `${weekFromNow.getHours().toString().padStart(2, '0')}:${weekFromNow.getMinutes().toString().padStart(2, '0')}`;
+                        dueTimeInput.value = timeString;
+                    }
+                    
+                    // Trigger datepicker update
+                    this.updateDatePicker(persianDueDateInput, persianDate);
+                    
+                    // Update duration calculator
                     this.updateDurationCalculator();
+                    
+                    console.log('Set to one week from now:', {
+                        persianDate: persianDate,
+                        isoDate: weekFromNow.toISOString(),
+                        time: dueTimeInput ? dueTimeInput.value : 'N/A'
+                    });
                 }
             });
         }
@@ -786,8 +837,8 @@ class ModernScheduleItemFormManager {
     }
 
     updateDurationCalculator() {
-        const startDateInput = document.getElementById('startDate');
-        const dueDateInput = document.getElementById('dueDate');
+        const startDateInput = document.getElementById('StartDate');
+        const dueDateInput = document.getElementById('DueDate');
         const calculator = document.getElementById('durationCalculator');
         const durationValue = document.getElementById('durationValue');
 
@@ -1045,13 +1096,37 @@ class ModernScheduleItemFormManager {
 
     // Persian Date Picker Setup
     setupPersianDatePicker() {
-        // Initialize Persian date pickers
-        if (typeof initializeAllDatePickers === 'function') {
-            initializeAllDatePickers();
-        }
+        // Wait for DOM to be ready
+        setTimeout(() => {
+            // Initialize Persian date pickers
+            if (typeof initializeAllDatePickers === 'function') {
+                initializeAllDatePickers();
+            }
 
-        // Setup time inputs
-        this.setupTimeInputs();
+            // Setup custom datepicker events
+            this.setupDatePickerEvents();
+
+            // Setup time inputs
+            this.setupTimeInputs();
+        }, 100);
+    }
+
+    setupDatePickerEvents() {
+        // Setup events for Persian date pickers
+        const persianDateInputs = document.querySelectorAll('.persian-datepicker');
+        
+        persianDateInputs.forEach(input => {
+            input.addEventListener('click', () => {
+                // Ensure datepicker is properly initialized
+                if (!input._persianDatePicker) {
+                    setTimeout(() => {
+                        if (typeof initializeAllDatePickers === 'function') {
+                            initializeAllDatePickers();
+                        }
+                    }, 50);
+                }
+            });
+        });
     }
 
     setupTimeInputs() {
@@ -1080,6 +1155,164 @@ class ModernScheduleItemFormManager {
             date.setHours(parseInt(hours), parseInt(minutes));
             dateInput.value = date.toISOString();
         }
+    }
+
+    convertToPersianDate(date) {
+        try {
+            // Validate input
+            if (!date || !(date instanceof Date) || isNaN(date.getTime())) {
+                console.warn('Invalid date provided to convertToPersianDate');
+                return '0000/00/00';
+            }
+
+            // Use official jalaali-js library if available
+            if (typeof window.jalaali !== 'undefined' && window.jalaali.toJalaali) {
+                try {
+                    const jalaali = window.jalaali.toJalaali(date);
+                    return `${jalaali.jy}/${jalaali.jm.toString().padStart(2, '0')}/${jalaali.jd.toString().padStart(2, '0')}`;
+                } catch (jalaaliError) {
+                    console.warn('jalaali-js library error:', jalaaliError);
+                    // Fall through to next method
+                }
+            }
+            
+            // Fallback to old PersianDate library if available
+            if (typeof PersianDate !== 'undefined') {
+                try {
+                    const persianDate = PersianDate.fromDate(date);
+                    return persianDate.format('YYYY/MM/DD');
+                } catch (persianError) {
+                    console.warn('PersianDate library error:', persianError);
+                    // Fall through to next method
+                }
+            }
+            
+            // Fallback to persianDateUtils if available
+            if (typeof window.persianDateUtils !== 'undefined' && window.persianDateUtils.gregorianToPersian) {
+                try {
+                    return window.persianDateUtils.gregorianToPersian(date);
+                } catch (utilsError) {
+                    console.warn('persianDateUtils error:', utilsError);
+                    // Fall through to next method
+                }
+            }
+            
+            // Final fallback: simple approximation
+            console.warn('Using simple Persian date approximation');
+            const year = date.getFullYear() - 621;
+            const month = date.getMonth() + 1;
+            const day = date.getDate();
+            return `${year}/${month.toString().padStart(2, '0')}/${day.toString().padStart(2, '0')}`;
+            
+        } catch (error) {
+            console.error('Error converting to Persian date:', error);
+            
+            // Return current date as fallback
+            const now = new Date();
+            const year = now.getFullYear() - 621;
+            const month = now.getMonth() + 1;
+            const day = now.getDate();
+            return `${year}/${month.toString().padStart(2, '0')}/${day.toString().padStart(2, '0')}`;
+        }
+    }
+
+    updateDatePicker(inputElement, persianDate) {
+        try {
+            // Try to update the datepicker if it exists
+            if (inputElement._persianDatePicker && typeof inputElement._persianDatePicker.setDate === 'function') {
+                inputElement._persianDatePicker.setDate(persianDate);
+            } else {
+                // Trigger change event to update the calendar
+                const changeEvent = new Event('change', { bubbles: true });
+                inputElement.dispatchEvent(changeEvent);
+                
+                // Also trigger input event
+                const inputEvent = new Event('input', { bubbles: true });
+                inputElement.dispatchEvent(inputEvent);
+            }
+        } catch (error) {
+            console.error('Error updating datepicker:', error);
+        }
+    }
+
+    updateDatePickers() {
+        console.log('schedule-item-form: Updating datepickers');
+        
+        // Update PersianStartDate datepicker
+        const persianStartDateInput = document.getElementById('PersianStartDate');
+        if (persianStartDateInput && persianStartDateInput.value) {
+            console.log('schedule-item-form: Updating PersianStartDate datepicker', persianStartDateInput.value);
+            if (persianStartDateInput.datePicker) {
+                persianStartDateInput.datePicker.setDate(persianStartDateInput.value);
+            } else {
+                console.warn('schedule-item-form: PersianStartDate datepicker not found');
+            }
+        }
+        
+        // Update PersianDueDate datepicker
+        const persianDueDateInput = document.getElementById('PersianDueDate');
+        if (persianDueDateInput && persianDueDateInput.value) {
+            console.log('schedule-item-form: Updating PersianDueDate datepicker', persianDueDateInput.value);
+            if (persianDueDateInput.datePicker) {
+                persianDueDateInput.datePicker.setDate(persianDueDateInput.value);
+            } else {
+                console.warn('schedule-item-form: PersianDueDate datepicker not found');
+            }
+        }
+    }
+
+    // Test method to verify Persian date conversion
+    testPersianDateConversion() {
+        const testDate = new Date();
+        const persianDate = this.convertToPersianDate(testDate);
+        
+        console.log('Official Persian Date Conversion Test:', {
+            gregorian: testDate.toISOString(),
+            persian: persianDate,
+            jalaaliJs: typeof window.jalaali,
+            PersianDateClass: typeof PersianDate,
+            persianDateUtils: typeof window.persianDateUtils,
+            oldPersianDate: typeof window.persianDate,
+            jalaaliLoaded: typeof window.jalaali !== 'undefined'
+        });
+        
+        // Test jalaali-js conversion accuracy
+        if (typeof window.jalaali !== 'undefined') {
+            try {
+                const jalaali = window.jalaali.toJalaali(testDate);
+                const backToGregorian = window.jalaali.toGregorian(jalaali.jy, jalaali.jm, jalaali.jd);
+                const accuracy = Math.abs(testDate.getTime() - new Date(backToGregorian.gy, backToGregorian.gm - 1, backToGregorian.gd).getTime()) < 24 * 60 * 60 * 1000; // Within 1 day
+                
+                console.log('Jalaali-js Conversion Accuracy Test:', {
+                    original: testDate.toISOString(),
+                    converted: `${jalaali.jy}/${jalaali.jm.toString().padStart(2, '0')}/${jalaali.jd.toString().padStart(2, '0')}`,
+                    backToGregorian: `${backToGregorian.gy}/${backToGregorian.gm.toString().padStart(2, '0')}/${backToGregorian.gd.toString().padStart(2, '0')}`,
+                    accurate: accuracy
+                });
+            } catch (error) {
+                console.error('Jalaali-js accuracy test failed:', error);
+            }
+        }
+        
+        // Test conversion accuracy with old PersianDate library
+        if (typeof PersianDate !== 'undefined') {
+            try {
+                const officialPersian = PersianDate.fromDate(testDate);
+                const backToGregorian = officialPersian.toDate();
+                const accuracy = Math.abs(testDate.getTime() - backToGregorian.getTime()) < 24 * 60 * 60 * 1000; // Within 1 day
+                
+                console.log('Old PersianDate Conversion Accuracy Test:', {
+                    original: testDate.toISOString(),
+                    converted: officialPersian.format('YYYY/MM/DD'),
+                    backToGregorian: backToGregorian.toISOString(),
+                    accurate: accuracy
+                });
+            } catch (error) {
+                console.error('Old PersianDate accuracy test failed:', error);
+            }
+        }
+        
+        return persianDate;
     }
 
     // Step Saving Methods
@@ -1227,10 +1460,12 @@ class ModernScheduleItemFormManager {
             document.getElementById('descriptionHidden').value = data.description;
         }
         if (data.persianStartDate) {
+            console.log('schedule-item-form: Setting PersianStartDate', data.persianStartDate);
             document.getElementById('PersianStartDate').value = data.persianStartDate;
             this.updateTimeInput('StartTime', data.startDate);
         }
         if (data.persianDueDate) {
+            console.log('schedule-item-form: Setting PersianDueDate', data.persianDueDate);
             document.getElementById('PersianDueDate').value = data.persianDueDate;
             this.updateTimeInput('DueTime', data.dueDate);
         }
@@ -1250,14 +1485,23 @@ class ModernScheduleItemFormManager {
 
         // Update form state indicators
         this.updateFormStateIndicators();
+        
+        // Update datepickers after form is populated
+        setTimeout(() => {
+            this.updateDatePickers();
+        }, 200);
     }
 
     updatePersianDateDisplay(inputId, isoDate) {
-        if (isoDate && typeof window.persianDate !== 'undefined') {
+        if (isoDate) {
             const date = new Date(isoDate);
-            const persianDate = window.persianDate.gregorianToPersian(date);
-            const formattedDate = `${persianDate.year}/${persianDate.month.toString().padStart(2, '0')}/${persianDate.day.toString().padStart(2, '0')}`;
-            document.getElementById(inputId).value = formattedDate;
+            const persianDateString = this.convertToPersianDate(date);
+            const inputElement = document.getElementById(inputId);
+            if (inputElement && persianDateString !== '0000/00/00') {
+                inputElement.value = persianDateString;
+                // Update the datepicker if it exists
+                this.updateDatePicker(inputElement, persianDateString);
+            }
         }
     }
 

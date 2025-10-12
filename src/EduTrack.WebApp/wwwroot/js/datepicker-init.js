@@ -28,7 +28,23 @@ function initializeAllDatePickers() {
         if (hiddenField) {
             options.onSelect = function(date, dateString) {
                 // Convert Persian date to Gregorian and update hidden field
-                const gregorianDate = window.persianDate.persianStringToGregorianDate(dateString);
+                let gregorianDate;
+                
+                // Use jalaali-js for accurate conversion
+                if (typeof window.jalaali !== 'undefined') {
+                    const parts = dateString.split('/');
+                    if (parts.length === 3) {
+                        const jy = parseInt(parts[0]);
+                        const jm = parseInt(parts[1]);
+                        const jd = parseInt(parts[2]);
+                        const gregorian = window.jalaali.toGregorian(jy, jm, jd);
+                        gregorianDate = new Date(gregorian.gy, gregorian.gm - 1, gregorian.gd);
+                    }
+                } else {
+                    // Fallback to old method
+                    gregorianDate = window.persianDate.persianStringToGregorianDate(dateString);
+                }
+                
                 if (gregorianDate) {
                     hiddenField.value = gregorianDate.toISOString();
                 }
@@ -49,11 +65,43 @@ function initializeAllDatePickers() {
         if (hiddenField && hiddenField.value) {
             try {
                 const existingDate = new Date(hiddenField.value);
-                const persianDate = window.persianDate.gregorianDateToPersianString(existingDate);
+                let persianDate;
+                
+                console.log('datepicker-init: Found existing date', {
+                    hiddenFieldValue: hiddenField.value,
+                    existingDate: existingDate,
+                    inputId: input.id
+                });
+                
+                // Use jalaali-js for accurate conversion
+                if (typeof window.jalaali !== 'undefined') {
+                    const jalaali = window.jalaali.toJalaali(existingDate);
+                    persianDate = `${jalaali.jy}/${jalaali.jm.toString().padStart(2, '0')}/${jalaali.jd.toString().padStart(2, '0')}`;
+                } else {
+                    // Fallback to old method
+                    persianDate = window.persianDate.gregorianDateToPersianString(existingDate);
+                }
+                
+                console.log('datepicker-init: Converted to Persian date', persianDate);
+                
                 input.value = persianDate;
+                
+                // Update the datepicker's selected date
+                if (input.datePicker) {
+                    console.log('datepicker-init: Updating datepicker with Persian date', persianDate);
+                    input.datePicker.setDate(persianDate);
+                } else {
+                    console.warn('datepicker-init: DatePicker not found on input');
+                }
             } catch (e) {
-                console.warn('Could not parse existing date:', hiddenField.value);
+                console.warn('Could not parse existing date:', hiddenField.value, e);
             }
+        } else {
+            console.log('datepicker-init: No existing date found', {
+                hasHiddenField: !!hiddenField,
+                hiddenFieldValue: hiddenField ? hiddenField.value : 'N/A',
+                inputId: input.id
+            });
         }
     });
 }

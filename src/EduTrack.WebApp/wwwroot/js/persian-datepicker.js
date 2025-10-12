@@ -17,17 +17,30 @@ class PersianDatePicker {
             'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'
         ];
         
-        this.persianDays = ['ش', 'ی', 'د', 'س', 'چ', 'پ', 'ج'];
+        this.persianDays = ['شنبه', 'یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنج‌شنبه', 'جمعه'];
         
         this.currentDate = new Date();
         this.selectedDate = null;
         
-        // Set viewDate with proper fallback
+        // Set viewDate and selectedDate with proper fallback
         if (this.options.initialDate) {
             const parsedDate = this.parseDate(this.options.initialDate);
-            this.viewDate = parsedDate || this.getTodayPersian();
+            if (parsedDate) {
+                this.selectedDate = { ...parsedDate };
+                this.viewDate = { ...parsedDate };
+                console.log('PersianDatePicker constructor: Initial date set', {
+                    initialDate: this.options.initialDate,
+                    parsedDate: parsedDate,
+                    selectedDate: this.selectedDate,
+                    viewDate: this.viewDate
+                });
+            } else {
+                this.viewDate = this.getTodayPersian();
+                console.log('PersianDatePicker constructor: Failed to parse initial date', this.options.initialDate);
+            }
         } else {
             this.viewDate = this.getTodayPersian();
+            console.log('PersianDatePicker constructor: No initial date, using today', this.viewDate);
         }
         
         this.init();
@@ -38,8 +51,15 @@ class PersianDatePicker {
         this.createCalendar();
         this.bindEvents();
         
+        // Check if input has a value and no initialDate is provided
         if (this.options.initialDate) {
+            console.log('PersianDatePicker init: Setting initial date from options', this.options.initialDate);
             this.setDate(this.options.initialDate);
+        } else if (this.input.value && this.input.value.trim() !== '') {
+            console.log('PersianDatePicker init: Setting date from input value', this.input.value);
+            this.setDate(this.input.value);
+        } else {
+            console.log('PersianDatePicker init: No initial date or input value');
         }
     }
     
@@ -464,6 +484,11 @@ class PersianDatePicker {
             // Check if it's selected
             if (this.selectedDate && this.isSameDate(currentDate, this.selectedDate)) {
                 dayElement.classList.add('selected');
+                console.log('PersianDatePicker: Day selected', {
+                    currentDate: currentDate,
+                    selectedDate: this.selectedDate,
+                    isSame: this.isSameDate(currentDate, this.selectedDate)
+                });
             }
             
             // Check if it's disabled
@@ -525,11 +550,21 @@ class PersianDatePicker {
         const today = new Date();
         const targetDate = new Date(today.getTime() + (daysFromToday * 24 * 60 * 60 * 1000));
         
-        const [jYear, jMonth, jDay] = window.persianDate.gregorianToPersian(
-            targetDate.getFullYear(),
-            targetDate.getMonth() + 1,
-            targetDate.getDate()
-        );
+        // Use jalaali-js for accurate conversion
+        let jYear, jMonth, jDay;
+        if (typeof window.jalaali !== 'undefined') {
+            const jalaali = window.jalaali.toJalaali(targetDate);
+            jYear = jalaali.jy;
+            jMonth = jalaali.jm;
+            jDay = jalaali.jd;
+        } else {
+            // Fallback to old method
+            [jYear, jMonth, jDay] = window.persianDate.gregorianToPersian(
+                targetDate.getFullYear(),
+                targetDate.getMonth() + 1,
+                targetDate.getDate()
+            );
+        }
         
         const persianDate = { year: jYear, month: jMonth, day: jDay };
         this.viewDate = { ...persianDate };
@@ -543,17 +578,34 @@ class PersianDatePicker {
         }
         
         // Convert to Gregorian, add days, convert back
-        const gregorianDate = window.persianDate.persianStringToGregorianDate(
-            this.formatDate(this.selectedDate)
-        );
+        let gregorianDate;
+        if (typeof window.jalaali !== 'undefined') {
+            // Use jalaali-js for accurate conversion
+            const gregorian = window.jalaali.toGregorian(this.selectedDate.year, this.selectedDate.month, this.selectedDate.day);
+            gregorianDate = new Date(gregorian.gy, gregorian.gm - 1, gregorian.gd);
+        } else {
+            // Fallback to old method
+            gregorianDate = window.persianDate.persianStringToGregorianDate(
+                this.formatDate(this.selectedDate)
+            );
+        }
         
         if (gregorianDate) {
             const newDate = new Date(gregorianDate.getTime() + (daysDelta * 24 * 60 * 60 * 1000));
-            const [jYear, jMonth, jDay] = window.persianDate.gregorianToPersian(
-                newDate.getFullYear(),
-                newDate.getMonth() + 1,
-                newDate.getDate()
-            );
+            
+            let jYear, jMonth, jDay;
+            if (typeof window.jalaali !== 'undefined') {
+                const jalaali = window.jalaali.toJalaali(newDate);
+                jYear = jalaali.jy;
+                jMonth = jalaali.jm;
+                jDay = jalaali.jd;
+            } else {
+                [jYear, jMonth, jDay] = window.persianDate.gregorianToPersian(
+                    newDate.getFullYear(),
+                    newDate.getMonth() + 1,
+                    newDate.getDate()
+                );
+            }
             
             const newPersianDate = { year: jYear, month: jMonth, day: jDay };
             
@@ -585,7 +637,15 @@ class PersianDatePicker {
             this.selectedDate = date;
             this.viewDate = { ...date };
             this.input.value = dateString;
+            console.log('PersianDatePicker setDate:', {
+                dateString: dateString,
+                parsedDate: date,
+                selectedDate: this.selectedDate,
+                viewDate: this.viewDate
+            });
             this.updateCalendar();
+        } else {
+            console.warn('PersianDatePicker setDate failed to parse:', dateString);
         }
     }
     
@@ -622,6 +682,14 @@ class PersianDatePicker {
     
     getTodayPersian() {
         const today = new Date();
+        
+        // Use jalaali-js for accurate conversion
+        if (typeof window.jalaali !== 'undefined') {
+            const jalaali = window.jalaali.toJalaali(today);
+            return { year: jalaali.jy, month: jalaali.jm, day: jalaali.jd };
+        }
+        
+        // Fallback to old method
         const gYear = today.getFullYear();
         const gMonth = today.getMonth() + 1;
         const gDay = today.getDate();
@@ -798,6 +866,15 @@ class PersianDatePicker {
     }
     
     getFirstDayOfMonth(year, month) {
+        // Use jalaali-js for accurate conversion
+        if (typeof window.jalaali !== 'undefined') {
+            const gregorian = window.jalaali.toGregorian(year, month, 1);
+            const firstDay = new Date(gregorian.gy, gregorian.gm - 1, gregorian.gd);
+            // Convert to Persian week (Saturday = 0, Sunday = 1, ..., Friday = 6)
+            return (firstDay.getDay() + 1) % 7;
+        }
+        
+        // Fallback to old method
         const [gYear, gMonth, gDay] = window.persianDate.persianToGregorian(year, month, 1);
         const firstDay = new Date(gYear, gMonth - 1, gDay);
         return (firstDay.getDay() + 1) % 7; // Convert to Persian week (Saturday = 0)
@@ -810,6 +887,12 @@ class PersianDatePicker {
     }
     
     isLeapYear(year) {
+        // Use jalaali-js for accurate leap year calculation
+        if (typeof window.jalaali !== 'undefined') {
+            return window.jalaali.isLeapJalaaliYear(year);
+        }
+        
+        // Fallback to old method
         const breaks = [
             -61, 9, 38, 199, 426, 686, 756, 818, 1111, 1181, 1210,
             1635, 2060, 2097, 2192, 2262, 2324, 2394, 2456, 3178
