@@ -68,11 +68,16 @@ public class CreateScheduleItemRequest
 public class UpdateScheduleItemRequest
 {
     public int Id { get; set; }
+    public int TeachingPlanId { get; set; }
+    public int? GroupId { get; set; }
+    public int? LessonId { get; set; }
+    public ScheduleItemType Type { get; set; }
     public string Title { get; set; } = string.Empty;
     public string? Description { get; set; }
     public DateTimeOffset StartDate { get; set; }
     public DateTimeOffset? DueDate { get; set; }
     public bool IsMandatory { get; set; }
+    public DisciplineType? DisciplineHint { get; set; }
     public string ContentJson { get; set; } = string.Empty;
     public decimal? MaxScore { get; set; }
 }

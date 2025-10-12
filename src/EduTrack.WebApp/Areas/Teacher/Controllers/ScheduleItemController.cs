@@ -8,8 +8,6 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
 
 namespace EduTrack.WebApp.Areas.Teacher.Controllers;
 
@@ -67,7 +65,7 @@ public class ScheduleItemController : Controller
     }
 
     // GET: ScheduleItem/Create
-    public async Task<IActionResult> Create(int teachingPlanId)
+    public async Task<IActionResult> Create(int teachingPlanId, int id = 0)
     {
         // Get teaching plan details for navigation
         var teachingPlan = await _mediator.Send(new GetTeachingPlanByIdQuery(teachingPlanId));
@@ -87,40 +85,81 @@ public class ScheduleItemController : Controller
     // POST: ScheduleItem/Create
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(CreateScheduleItemRequest request)
+    public async Task<IActionResult> Create(CreateScheduleItemRequest request, int id = 0)
     {
         if (!ModelState.IsValid)
         {
             ViewBag.TeachingPlanId = request.TeachingPlanId;
             ViewBag.ScheduleItemTypes = GetScheduleItemTypes();
-            return View(request);
+            return View(id > 0 ? "Edit" : "Create", request);
         }
 
-        var command = new CreateScheduleItemCommand(
-            request.TeachingPlanId,
-            request.GroupId,
-            request.LessonId,
-            request.Type,
-            request.Title,
-            request.Description,
-            request.StartDate,
-            request.DueDate,
-            request.IsMandatory,
-            request.DisciplineHint,
-            request.ContentJson,
-            request.MaxScore
-        );
-
-        var result = await _mediator.Send(command);
-        if (!result.IsSuccess)
+        if (id > 0)
         {
-            ModelState.AddModelError("", result.Error ?? "خطا در ایجاد آیتم آموزشی");
-            ViewBag.TeachingPlanId = request.TeachingPlanId;
-            ViewBag.ScheduleItemTypes = GetScheduleItemTypes();
-            return View(request);
-        }
+            // Update existing item
+            var updateRequest = new UpdateScheduleItemRequest
+            {
+                Id = id,
+                Title = request.Title,
+                Description = request.Description,
+                StartDate = request.StartDate,
+                DueDate = request.DueDate,
+                IsMandatory = request.IsMandatory,
+                ContentJson = request.ContentJson,
+                MaxScore = request.MaxScore
+            };
 
-        return RedirectToAction(nameof(Index), new { teachingPlanId = request.TeachingPlanId });
+            var updateCommand = new UpdateScheduleItemCommand(
+                updateRequest.Id,
+                updateRequest.Title,
+                updateRequest.Description,
+                updateRequest.StartDate,
+                updateRequest.DueDate,
+                updateRequest.IsMandatory,
+                updateRequest.ContentJson,
+                updateRequest.MaxScore
+            );
+
+            var result = await _mediator.Send(updateCommand);
+            if (!result.IsSuccess)
+            {
+                ModelState.AddModelError("", result.Error ?? "خطا در به‌روزرسانی آیتم آموزشی");
+                ViewBag.TeachingPlanId = request.TeachingPlanId;
+                ViewBag.ScheduleItemTypes = GetScheduleItemTypes();
+                return View("Edit", updateRequest);
+            }
+
+            return RedirectToAction(nameof(Index), new { teachingPlanId = request.TeachingPlanId });
+        }
+        else
+        {
+            // Create new item
+            var command = new CreateScheduleItemCommand(
+                request.TeachingPlanId,
+                request.GroupId,
+                request.LessonId,
+                request.Type,
+                request.Title,
+                request.Description,
+                request.StartDate,
+                request.DueDate,
+                request.IsMandatory,
+                request.DisciplineHint,
+                request.ContentJson,
+                request.MaxScore
+            );
+
+            var result = await _mediator.Send(command);
+            if (!result.IsSuccess)
+            {
+                ModelState.AddModelError("", result.Error ?? "خطا در ایجاد آیتم آموزشی");
+                ViewBag.TeachingPlanId = request.TeachingPlanId;
+                ViewBag.ScheduleItemTypes = GetScheduleItemTypes();
+                return View(request);
+            }
+
+            return RedirectToAction(nameof(Index), new { teachingPlanId = request.TeachingPlanId });
+        }
     }
 
     // GET: ScheduleItem/Edit
@@ -208,36 +247,26 @@ public class ScheduleItemController : Controller
     public async Task<IActionResult> GetScheduleItems(int teachingPlanId)
     {
         var result = await _mediator.Send(new EduTrack.Application.Features.ScheduleItems.Queries.GetScheduleItemsByTeachingPlanQuery(teachingPlanId));
-        
-        var jsonSettings = new JsonSerializerSettings
-        {
-            ContractResolver = new CamelCasePropertyNamesContractResolver()
-        };
 
         if (result.IsSuccess)
         {
-            return Json(new { success = true, data = result.Value }, jsonSettings);
+            return Json(new { success = true, data = result.Value });
         }
 
-        return Json(new { success = false, message = result.Error }, jsonSettings);
+        return Json(new { success = false, message = result.Error });
     }
 
     [HttpGet]
     public async Task<IActionResult> GetScheduleItem(int id)
     {
         var result = await _mediator.Send(new EduTrack.Application.Features.ScheduleItems.Queries.GetScheduleItemByIdQuery(id));
-        
-        var jsonSettings = new JsonSerializerSettings
-        {
-            ContractResolver = new CamelCasePropertyNamesContractResolver()
-        };
 
         if (result.IsSuccess)
         {
-            return Json(new { success = true, data = result.Value }, jsonSettings);
+            return Json(new { success = true, data = result.Value });
         }
 
-        return Json(new { success = false, message = result.Error }, jsonSettings);
+        return Json(new { success = false, message = result.Error });
     }
 
     [HttpPost]
@@ -259,18 +288,13 @@ public class ScheduleItemController : Controller
         );
 
         var result = await _mediator.Send(command);
-        
-        var jsonSettings = new JsonSerializerSettings
-        {
-            ContractResolver = new CamelCasePropertyNamesContractResolver()
-        };
 
         if (result.IsSuccess)
         {
-            return Json(new { success = true, id = result.Value }, jsonSettings);
+            return Json(new { success = true, id = result.Value });
         }
 
-        return Json(new { success = false, message = result.Error }, jsonSettings);
+        return Json(new { success = false, message = result.Error });
     }
 
     [HttpPost]
@@ -288,54 +312,39 @@ public class ScheduleItemController : Controller
         );
 
         var result = await _mediator.Send(command);
-        
-        var jsonSettings = new JsonSerializerSettings
-        {
-            ContractResolver = new CamelCasePropertyNamesContractResolver()
-        };
 
         if (result.IsSuccess)
         {
-            return Json(new { success = true }, jsonSettings);
+            return Json(new { success = true });
         }
 
-        return Json(new { success = false, message = result.Error }, jsonSettings);
+        return Json(new { success = false, message = result.Error });
     }
 
     [HttpPost]
     public async Task<IActionResult> DeleteScheduleItem(int id)
     {
         var result = await _mediator.Send(new DeleteScheduleItemCommand(id));
-        
-        var jsonSettings = new JsonSerializerSettings
-        {
-            ContractResolver = new CamelCasePropertyNamesContractResolver()
-        };
 
         if (result.IsSuccess)
         {
-            return Json(new { success = true }, jsonSettings);
+            return Json(new { success = true });
         }
 
-        return Json(new { success = false, message = result.Error }, jsonSettings);
+        return Json(new { success = false, message = result.Error });
     }
 
     [HttpGet]
     public async Task<IActionResult> GetStats(int teachingPlanId)
     {
         var result = await _mediator.Send(new GetScheduleItemStatsQuery(teachingPlanId));
-        
-        var jsonSettings = new JsonSerializerSettings
-        {
-            ContractResolver = new CamelCasePropertyNamesContractResolver()
-        };
 
         if (result.IsSuccess)
         {
-            return Json(new { success = true, data = result.Value }, jsonSettings);
+            return Json(new { success = true, data = result.Value });
         }
 
-        return Json(new { success = false, message = result.Error }, jsonSettings);
+        return Json(new { success = false, message = result.Error });
     }
 
     // POST: ScheduleItem/SaveStep

@@ -128,6 +128,7 @@
                     <form asp-action="Create" method="post" id="createItemForm" class="modern-form">
                         @Html.AntiForgeryToken()
                         @Html.HiddenFor(m => m.TeachingPlanId)
+                        <input name="id" value="0" type="hidden" />
                         <!-- Step 1: Basic Information -->
                         <div class="form-step active" data-step="basic">
                             <div class="step-header">

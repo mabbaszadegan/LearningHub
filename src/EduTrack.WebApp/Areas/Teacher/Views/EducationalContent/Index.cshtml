@@ -25,7 +25,7 @@
                 <span>@ViewBag.SubChapterTitle</span>
             </p>
         </div>
-        <a asp-action="Create" asp-route-subChapterId="@ViewBag.SubChapterId" class="btn-action-primary">
+        <a asp-action="Create" asp-route-subChapterId="@ViewBag.SubChapterId" asp-route-id="0" class="btn-action-primary">
             <i class="fas fa-plus"></i>
             <span>محتوا جدید</span>
         </a>
@@ -103,7 +103,7 @@
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-end">
                                     <li>
-                                        <a class="dropdown-item" asp-action="Edit" asp-route-id="@content.Id">
+                                        <a class="dropdown-item" asp-action="Create" asp-route-subChapterId="@ViewBag.SubChapterId" asp-route-id="@content.Id">
                                             <i class="fas fa-edit"></i>ویرایش محتوا
                                         </a>
                                     </li>
@@ -215,7 +215,7 @@
                     
                     <!-- Action Buttons -->
                     <div class="content-actions-footer">
-                        <a asp-action="Edit" asp-route-id="@content.Id" class="action-btn-footer info">
+                        <a asp-action="Create" asp-route-subChapterId="@ViewBag.SubChapterId" asp-route-id="@content.Id" class="action-btn-footer info">
                             <i class="fas fa-edit"></i>
                             <span>ویرایش</span>
                         </a>
@@ -248,7 +248,7 @@ else
         </div>
         <h3>هنوز محتوایی ایجاد نشده</h3>
         <p>اولین محتوای آموزشی خود را ایجاد کنید</p>
-        <a asp-action="Create" asp-route-subChapterId="@ViewBag.SubChapterId" class="btn-action-primary">
+        <a asp-action="Create" asp-route-subChapterId="@ViewBag.SubChapterId" asp-route-id="0" class="btn-action-primary">
             <i class="fas fa-plus"></i>
             <span>ایجاد محتوای جدید</span>
         </a>

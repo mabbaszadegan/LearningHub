@@ -19,6 +19,7 @@ public record CreateEducationalContentCommand(
     string? TextContent,
     IFormFile? File,
     string? ExternalUrl,
+    bool IsActive = true,
     int Order = 0
 ) : IRequest<Result<EducationalContentDto>>;
 

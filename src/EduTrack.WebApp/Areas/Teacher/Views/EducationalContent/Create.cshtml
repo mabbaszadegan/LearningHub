@@ -27,6 +27,8 @@
                     <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
                     
                     <input asp-for="SubChapterId" type="hidden" />
+                    <input name="subChapterId" value="@ViewBag.SubChapterId" type="hidden" />
+                    <input name="id" value="0" type="hidden" />
                     
                     <div class="form-group-minimal">
                         <label class="form-label-minimal">عنوان محتوا</label>

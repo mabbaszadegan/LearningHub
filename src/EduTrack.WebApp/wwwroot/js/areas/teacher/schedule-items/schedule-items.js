@@ -245,8 +245,12 @@ class ScheduleItemsManager {
 
 
     async editItem(itemId) {
-        // Redirect to edit page
-        window.location.href = `/Teacher/ScheduleItem/Edit/${itemId}`;
+        // Get teaching plan ID from current page URL or from a global variable
+        const urlParams = new URLSearchParams(window.location.search);
+        const teachingPlanId = urlParams.get('teachingPlanId') || window.teachingPlanId || 1;
+        
+        // Redirect to create page with edit parameters
+        window.location.href = `/Teacher/ScheduleItem/Create?teachingPlanId=${teachingPlanId}&id=${itemId}`;
     }
 
     async duplicateItem(itemId) {

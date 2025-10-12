@@ -1,4 +1,4 @@
-@model EduTrack.Application.Features.EducationalContent.Commands.UpdateEducationalContentCommand
+@model EduTrack.Application.Features.EducationalContent.Commands.CreateEducationalContentCommand
 @{
     ViewData["Title"] = "ویرایش محتوای آموزشی";
 }
@@ -23,11 +23,13 @@
     <div class="col-lg-8">
         <div class="card-minimal">
             <div class="card-body-minimal">
-                <form asp-action="Edit" method="post" enctype="multipart/form-data">
+                <form asp-action="Create" method="post" enctype="multipart/form-data">
                     <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
                     
-                    <input asp-for="Id" type="hidden" />
+                    <input asp-for="SubChapterId" type="hidden" />
                     <input asp-for="Order" type="hidden" />
+                    <input name="subChapterId" value="@ViewBag.SubChapterId" type="hidden" />
+                    <input name="id" value="@(ViewBag.ContentId ?? 0)" type="hidden" />
                     
                     <div class="form-group-minimal">
                         <label class="form-label-minimal">عنوان محتوا</label>

@@ -67,13 +67,15 @@ public class EducationalContentController : Controller
         ViewBag.SubChapterId = subChapterId;
         ViewBag.SubChapterTitle = subChapterResult.Value.Title;
         ViewBag.ChapterTitle = chapterResult.Value.Title;
+        ViewBag.ChapterId = subChapterResult.Value.ChapterId;
         ViewBag.CourseTitle = courseResult.Value?.Title;
         ViewBag.CourseId = chapterResult.Value.CourseId;
 
         return View(contentsResult.Value);
     }
 
-    public async Task<IActionResult> Create(int subChapterId)
+
+    public async Task<IActionResult> Create(int subChapterId, int id)
     {
         var currentUser = await _userManager.GetUserAsync(User);
         if (currentUser == null)
@@ -102,17 +104,63 @@ public class EducationalContentController : Controller
             return NotFound();
         }
 
-        ViewBag.SubChapterId = subChapterId;
-        ViewBag.SubChapterTitle = subChapterResult.Value.Title;
-        ViewBag.ChapterTitle = chapterResult.Value.Title;
-        ViewBag.CourseTitle = courseResult.Value?.Title;
+        // If id is provided, load existing content for editing
+        if (id > 0)
+        {
+            var contentResult = await _mediator.Send(new GetEducationalContentByIdQuery(id));
+            if (!contentResult.IsSuccess || contentResult.Value == null)
+            {
+                return NotFound();
+            }
 
-        return View(new CreateEducationalContentCommand(subChapterId, string.Empty, string.Empty, EduTrack.Domain.Enums.EducationalContentType.Text, string.Empty, null, string.Empty, 0));
+            var content = contentResult.Value;
+
+            // Verify content belongs to the subchapter
+            if (content.SubChapterId != subChapterId)
+            {
+                return NotFound();
+            }
+
+            ViewBag.SubChapterId = subChapterId;
+            ViewBag.SubChapterTitle = subChapterResult.Value.Title;
+            ViewBag.ChapterTitle = chapterResult.Value.Title;
+            ViewBag.ChapterId = subChapterResult.Value.ChapterId;
+            ViewBag.CourseTitle = courseResult.Value?.Title;
+
+            var command = new CreateEducationalContentCommand(
+                content.SubChapterId,
+                content.Title,
+                content.Description,
+                content.Type,
+                content.TextContent,
+                null, // File will be handled separately
+                content.ExternalUrl,
+                content.IsActive,
+                content.Order);
+
+            // Pass existing file information to view
+            ViewBag.ExistingFile = content.File;
+            ViewBag.IsEdit = true;
+            ViewBag.ContentId = content.Id;
+
+            return View("Edit", command);
+        }
+        else
+        {
+            // Create new content
+            ViewBag.SubChapterId = subChapterId;
+            ViewBag.SubChapterTitle = subChapterResult.Value.Title;
+            ViewBag.ChapterTitle = chapterResult.Value.Title;
+            ViewBag.ChapterId = subChapterResult.Value.ChapterId;
+            ViewBag.CourseTitle = courseResult.Value?.Title;
+
+            return View(new CreateEducationalContentCommand(subChapterId, string.Empty, string.Empty, EduTrack.Domain.Enums.EducationalContentType.Text, string.Empty, null, string.Empty, true, 0));
+        }
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(CreateEducationalContentCommand command)
+    public async Task<IActionResult> Create(CreateEducationalContentCommand command, int subChapterId, int id)
     {
         var currentUser = await _userManager.GetUserAsync(User);
         if (currentUser == null)
@@ -121,7 +169,7 @@ public class EducationalContentController : Controller
         }
 
         // Verify subchapter and ownership
-        var subChapterResult = await _mediator.Send(new GetSubChapterByIdQuery(command.SubChapterId));
+        var subChapterResult = await _mediator.Send(new GetSubChapterByIdQuery(subChapterId));
         if (!subChapterResult.IsSuccess || subChapterResult.Value == null)
         {
             return NotFound();
@@ -143,24 +191,54 @@ public class EducationalContentController : Controller
 
         if (ModelState.IsValid)
         {
-            var result = await _mediator.Send(command);
-            if (result.IsSuccess)
+            if (id > 0)
             {
-                TempData["SuccessMessage"] = "محتوا با موفقیت ایجاد شد.";
-                return RedirectToAction("Index", new { subChapterId = command.SubChapterId });
+                // Update existing content
+                var updateCommand = new UpdateEducationalContentCommand(
+                    id,
+                    command.Title,
+                    command.Description,
+                    command.Type,
+                    command.TextContent,
+                    command.File,
+                    command.ExternalUrl,
+                    command.IsActive,
+                    command.Order);
+
+                var result = await _mediator.Send(updateCommand);
+                if (result.IsSuccess)
+                {
+                    TempData["SuccessMessage"] = "محتوا با موفقیت ویرایش شد.";
+                    return RedirectToAction("Index", new { subChapterId = subChapterId });
+                }
+                else
+                {
+                    ModelState.AddModelError("", result.Error ?? "خطایی در ویرایش محتوا رخ داد.");
+                }
             }
             else
             {
-                ModelState.AddModelError("", result.Error ?? "خطایی در ایجاد محتوا رخ داد.");
+                // Create new content
+                var result = await _mediator.Send(command);
+                if (result.IsSuccess)
+                {
+                    TempData["SuccessMessage"] = "محتوا با موفقیت ایجاد شد.";
+                    return RedirectToAction("Index", new { subChapterId = subChapterId });
+                }
+                else
+                {
+                    ModelState.AddModelError("", result.Error ?? "خطایی در ایجاد محتوا رخ داد.");
+                }
             }
         }
 
-        ViewBag.SubChapterId = command.SubChapterId;
+        ViewBag.SubChapterId = subChapterId;
         ViewBag.SubChapterTitle = subChapterResult.Value.Title;
         ViewBag.ChapterTitle = chapterResult.Value.Title;
+        ViewBag.ChapterId = subChapterResult.Value.ChapterId;
         ViewBag.CourseTitle = courseResult.Value?.Title;
 
-        return View(command);
+        return View(id > 0 ? "Edit" : "Create", command);
     }
 
     public async Task<IActionResult> Edit(int id)
@@ -203,6 +281,7 @@ public class EducationalContentController : Controller
         ViewBag.SubChapterId = content.SubChapterId;
         ViewBag.SubChapterTitle = subChapterResult.Value.Title;
         ViewBag.ChapterTitle = chapterResult.Value.Title;
+        ViewBag.ChapterId = subChapterResult.Value.ChapterId;
         ViewBag.CourseTitle = courseResult.Value?.Title;
 
         var command = new UpdateEducationalContentCommand(
@@ -279,6 +358,7 @@ public class EducationalContentController : Controller
         ViewBag.SubChapterId = content.SubChapterId;
         ViewBag.SubChapterTitle = subChapterResult.Value.Title;
         ViewBag.ChapterTitle = chapterResult.Value.Title;
+        ViewBag.ChapterId = subChapterResult.Value.ChapterId;
         ViewBag.CourseTitle = courseResult.Value?.Title;
 
         return View(command);

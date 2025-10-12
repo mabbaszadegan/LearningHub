@@ -144,14 +144,14 @@
                                     <i class="fas fa-ellipsis-v"></i>
                                 </button>
                                 <ul class="dropdown-menu">
-                                    <li><a class="dropdown-item" href="#" onclick="editItem(@item.Id)">
+                                    <li><a class="dropdown-item" href="#" onclick="scheduleItemsManager.editItem(@item.Id)">
                                         <i class="fas fa-edit"></i> ویرایش
                                     </a></li>
-                                    <li><a class="dropdown-item" href="#" onclick="duplicateItem(@item.Id)">
+                                    <li><a class="dropdown-item" href="#" onclick="scheduleItemsManager.duplicateItem(@item.Id)">
                                         <i class="fas fa-copy"></i> کپی
                                     </a></li>
                                     <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item text-danger" href="#" onclick="deleteItem(@item.Id)">
+                                    <li><a class="dropdown-item text-danger" href="#" onclick="scheduleItemsManager.deleteItem(@item.Id)">
                                         <i class="fas fa-trash"></i> حذف
                                     </a></li>
                                 </ul>
@@ -221,6 +221,10 @@
 </div>
 
 @section Scripts {
+    <script>
+        // Set global teaching plan ID for JavaScript functions
+        window.teachingPlanId = @teachingPlanId;
+    </script>
     <script src="~/js/areas/teacher/schedule-items/schedule-items.js"></script>
 }
 
