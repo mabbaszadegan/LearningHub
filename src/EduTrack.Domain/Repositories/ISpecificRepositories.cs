@@ -147,3 +147,13 @@ public interface ISubmissionRepository : IRepository<Submission>
     Task<IEnumerable<Submission>> GetSubmissionsNeedingReviewAsync(CancellationToken cancellationToken = default);
     Task<IEnumerable<Submission>> GetSubmissionsByTeacherAsync(string teacherId, CancellationToken cancellationToken = default);
 }
+
+/// <summary>
+/// Specific repository for File entity with domain-specific queries
+/// </summary>
+public interface IFileRepository : IRepository<Domain.Entities.File>
+{
+    Task<Domain.Entities.File?> GetByMD5HashAsync(string md5Hash, CancellationToken cancellationToken = default);
+    Task<IEnumerable<Domain.Entities.File>> GetFilesByCreatorAsync(string createdBy, CancellationToken cancellationToken = default);
+    Task<IEnumerable<Domain.Entities.File>> GetUnreferencedFilesAsync(CancellationToken cancellationToken = default);
+}

@@ -4,6 +4,7 @@ using EduTrack.Application.Features.TeachingPlan.Queries;
 using EduTrack.Application.Common.Models.ScheduleItems;
 using EduTrack.Domain.Entities;
 using EduTrack.Domain.Enums;
+using EduTrack.Domain.Extensions;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -78,8 +79,18 @@ public class ScheduleItemController : Controller
         ViewBag.TeachingPlanTitle = teachingPlan.Value.Title;
         ViewBag.CourseTitle = teachingPlan.Value.CourseTitle ?? "دوره";
         ViewBag.CourseId = teachingPlan.Value.CourseId;
-        ViewBag.ScheduleItemTypes = GetScheduleItemTypes();
-        return View();
+        ViewBag.ScheduleItemTypes = Enum.GetValues<ScheduleItemType>()
+            .Select(type => new { Value = (int)type, Text = type.GetDisplayName(), Description = type.GetDescription() })
+            .ToList();
+        
+        // Create a new model instance for the view
+        var model = new CreateScheduleItemRequest
+        {
+            TeachingPlanId = teachingPlanId,
+            ContentJson = string.Empty
+        };
+        
+        return View(model);
     }
 
     // POST: ScheduleItem/Create
@@ -90,7 +101,9 @@ public class ScheduleItemController : Controller
         if (!ModelState.IsValid)
         {
             ViewBag.TeachingPlanId = request.TeachingPlanId;
-            ViewBag.ScheduleItemTypes = GetScheduleItemTypes();
+            ViewBag.ScheduleItemTypes = Enum.GetValues<ScheduleItemType>()
+                .Select(type => new { Value = (int)type, Text = type.GetDisplayName(), Description = type.GetDescription() })
+                .ToList();
             return View(id > 0 ? "Edit" : "Create", request);
         }
 
@@ -125,7 +138,9 @@ public class ScheduleItemController : Controller
             {
                 ModelState.AddModelError("", result.Error ?? "خطا در به‌روزرسانی آیتم آموزشی");
                 ViewBag.TeachingPlanId = request.TeachingPlanId;
-                ViewBag.ScheduleItemTypes = GetScheduleItemTypes();
+                ViewBag.ScheduleItemTypes = Enum.GetValues<ScheduleItemType>()
+                .Select(type => new { Value = (int)type, Text = type.GetDisplayName(), Description = type.GetDescription() })
+                .ToList();
                 return View("Edit", updateRequest);
             }
 
@@ -156,7 +171,9 @@ public class ScheduleItemController : Controller
             {
                 ModelState.AddModelError("", result.Error ?? "خطا در ایجاد آیتم آموزشی");
                 ViewBag.TeachingPlanId = request.TeachingPlanId;
-                ViewBag.ScheduleItemTypes = GetScheduleItemTypes();
+                ViewBag.ScheduleItemTypes = Enum.GetValues<ScheduleItemType>()
+                .Select(type => new { Value = (int)type, Text = type.GetDisplayName(), Description = type.GetDescription() })
+                .ToList();
                 return View(request);
             }
 
@@ -185,7 +202,9 @@ public class ScheduleItemController : Controller
             MaxScore = scheduleItem.Value.MaxScore
         };
 
-        ViewBag.ScheduleItemTypes = GetScheduleItemTypes();
+        ViewBag.ScheduleItemTypes = Enum.GetValues<ScheduleItemType>()
+            .Select(type => new { Value = (int)type, Text = type.GetDisplayName(), Description = type.GetDescription() })
+            .ToList();
         return View(request);
     }
 
@@ -196,7 +215,9 @@ public class ScheduleItemController : Controller
     {
         if (!ModelState.IsValid)
         {
-            ViewBag.ScheduleItemTypes = GetScheduleItemTypes();
+            ViewBag.ScheduleItemTypes = Enum.GetValues<ScheduleItemType>()
+                .Select(type => new { Value = (int)type, Text = type.GetDisplayName(), Description = type.GetDescription() })
+                .ToList();
             return View(request);
         }
 
@@ -215,7 +236,9 @@ public class ScheduleItemController : Controller
         if (!result.IsSuccess)
         {
             ModelState.AddModelError("", result.Error ?? "خطا در به‌روزرسانی آیتم آموزشی");
-            ViewBag.ScheduleItemTypes = GetScheduleItemTypes();
+            ViewBag.ScheduleItemTypes = Enum.GetValues<ScheduleItemType>()
+                .Select(type => new { Value = (int)type, Text = type.GetDisplayName(), Description = type.GetDescription() })
+                .ToList();
             return View(request);
         }
 
@@ -471,21 +494,6 @@ public class ScheduleItemController : Controller
         }
     }
 
-    private static List<object> GetScheduleItemTypes()
-    {
-        return new List<object>
-        {
-            new { Value = (int)ScheduleItemType.Reminder, Text = "یادآوری" },
-            new { Value = (int)ScheduleItemType.Writing, Text = "نوشتاری" },
-            new { Value = (int)ScheduleItemType.Audio, Text = "صوتی" },
-            new { Value = (int)ScheduleItemType.GapFill, Text = "پر کردن جای خالی" },
-            new { Value = (int)ScheduleItemType.MultipleChoice, Text = "چند گزینه‌ای" },
-            new { Value = (int)ScheduleItemType.Match, Text = "تطبیق" },
-            new { Value = (int)ScheduleItemType.ErrorFinding, Text = "پیدا کردن خطا" },
-            new { Value = (int)ScheduleItemType.CodeExercise, Text = "تمرین کد" },
-            new { Value = (int)ScheduleItemType.Quiz, Text = "کویز" }
-        };
-    }
 
     private static List<int> ParseCommaSeparatedIds(string? commaSeparatedIds)
     {

@@ -1,0 +1,114 @@
+@model EduTrack.Application.Common.Models.ScheduleItems.CreateScheduleItemRequest
+@using EduTrack.Domain.Enums
+@using EduTrack.Domain.Extensions
+@{
+    var scheduleItemTypes = ViewBag.ScheduleItemTypes as List<object> ?? 
+        Enum.GetValues<ScheduleItemType>()
+            .Select(type => new { Value = (int)type, Text = type.GetDisplayName(), Description = type.GetDescription() })
+            .Cast<object>()
+            .ToList();
+}
+
+<div class="form-step active" data-step="basic">
+    <div class="step-header">
+        <div class="step-icon">
+            <i class="fas fa-info-circle"></i>
+        </div>
+        <div class="step-info">
+            <h3 class="step-title">اطلاعات کلی</h3>
+            <p class="step-description">عنوان، نوع و توضیحات آیتم آموزشی را تعیین کنید</p>
+        </div>
+    </div>
+    
+    <div class="step-content">
+        <div class="row">
+            <div class="col-md-8">
+                <div class="form-group-modern">
+                    <label asp-for="Title" class="form-label-modern">
+                        <i class="fas fa-heading"></i>
+                        <span>عنوان آیتم آموزشی</span>
+                        <span class="required-indicator">*</span>
+                    </label>
+                    <div class="input-group-modern">
+                        <input asp-for="Title" 
+                               class="form-input-modern" 
+                               placeholder="مثال: تمرین ریاضی فصل اول - حل معادلات درجه دوم" 
+                               autocomplete="off"
+                               id="itemTitle" />
+                        <div class="input-feedback">
+                            <span class="char-count">0/100</span>
+                        </div>
+                    </div>
+                    <span asp-validation-for="Title" class="validation-error-modern"></span>
+                    <div class="input-hint">عنوان جذاب و واضح انتخاب کنید که دانش‌آموزان را ترغیب کند</div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="form-group-modern">
+                    <label asp-for="Type" class="form-label-modern">
+                        <i class="fas fa-tasks"></i>
+                        <span>نوع آیتم</span>
+                        <span class="required-indicator">*</span>
+                    </label>
+                    <select asp-for="Type" class="form-select-modern" id="itemType" required>
+                        <option value="">انتخاب نوع آیتم...</option>
+                        @foreach (dynamic type in scheduleItemTypes)
+                        {
+                            <option value="@type.Value" data-description="@type.Description">
+                                @type.Text
+                            </option>
+                        }
+                    </select>
+                    <span asp-validation-for="Type" class="validation-error-modern"></span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="form-group-modern">
+            <label asp-for="Description" class="form-label-modern">
+                <i class="fas fa-align-right"></i>
+                <span>توضیحات آیتم</span>
+            </label>
+            <div class="rich-editor-container">
+                <div class="editor-toolbar">
+                    <button type="button" class="toolbar-btn" data-command="bold">
+                        <i class="fas fa-bold"></i>
+                    </button>
+                    <button type="button" class="toolbar-btn" data-command="italic">
+                        <i class="fas fa-italic"></i>
+                    </button>
+                    <button type="button" class="toolbar-btn" data-command="underline">
+                        <i class="fas fa-underline"></i>
+                    </button>
+                    <div class="toolbar-separator"></div>
+                    <button type="button" class="toolbar-btn" data-command="insertUnorderedList">
+                        <i class="fas fa-list-ul"></i>
+                    </button>
+                    <button type="button" class="toolbar-btn" data-command="insertOrderedList">
+                        <i class="fas fa-list-ol"></i>
+                    </button>
+                    <div class="toolbar-separator"></div>
+                    <button type="button" class="toolbar-btn" data-command="createLink">
+                        <i class="fas fa-link"></i>
+                    </button>
+                </div>
+                <div class="editor-content" contenteditable="true" id="descriptionEditor" 
+                     placeholder="توضیحات کامل و مفید در مورد آیتم آموزشی، اهداف یادگیری و نحوه انجام آن..."></div>
+            </div>
+            <textarea asp-for="Description" class="d-none" id="descriptionHidden"></textarea>
+            <span asp-validation-for="Description" class="validation-error-modern"></span>
+            <div class="input-hint">توضیحات کامل و جذاب بنویسید که دانش‌آموزان را راهنمایی کند</div>
+        </div>
+        
+        <div class="type-preview" id="typePreview" style="display: none;">
+            <div class="preview-header">
+                <i class="fas fa-eye"></i>
+                <span>پیش‌نمایش نوع آیتم</span>
+            </div>
+            <div class="preview-content" id="typePreviewContent">
+                <!-- Dynamic content based on selected type -->
+            </div>
+        </div>
+    </div>
+</div>

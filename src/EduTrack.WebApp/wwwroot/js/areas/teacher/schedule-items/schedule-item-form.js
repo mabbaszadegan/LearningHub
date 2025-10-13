@@ -30,7 +30,11 @@ class ModernScheduleItemFormManager {
         this.updateProgress();
         this.setupAutoSave();
         this.setupPersianDatePicker();
+        this.setupContentBuilder();
         await this.checkForExistingItem();
+        
+        // Initialize step 4 content based on current selection
+        this.updateStep4Content();
     }
 
     setupEventListeners() {
@@ -202,7 +206,220 @@ class ModernScheduleItemFormManager {
     }
 
     setupContentTypeListeners() {
-        // Content type selection will be set up dynamically
+        const typeSelect = document.getElementById('itemType');
+        if (typeSelect) {
+            typeSelect.addEventListener('change', (e) => {
+                this.selectedContentType = e.target.value;
+                this.updateContentTypePreview();
+                this.updateStep4Content();
+            });
+        }
+    }
+
+    setupContentBuilder() {
+        // Initialize content builder integration
+        this.contentBuilder = null;
+        
+        // Wait for content builder to be available
+        const checkContentBuilder = () => {
+            if (window.contentBuilder) {
+                this.contentBuilder = window.contentBuilder;
+                this.setupContentBuilderEvents();
+            } else {
+                setTimeout(checkContentBuilder, 100);
+            }
+        };
+        
+        checkContentBuilder();
+    }
+
+    setupContentBuilderEvents() {
+        if (!this.contentBuilder) return;
+
+        // Save content when save button is clicked
+        const saveBtn = document.getElementById('saveContentBtn');
+        if (saveBtn) {
+            saveBtn.addEventListener('click', () => {
+                this.saveContentBuilderData();
+            });
+        }
+
+        // Preview content when preview button is clicked
+        const previewBtn = document.getElementById('previewContentBtn');
+        if (previewBtn) {
+            previewBtn.addEventListener('click', () => {
+                this.previewContentBuilderData();
+            });
+        }
+    }
+
+    updateStep4Content() {
+        console.log('updateStep4Content called');
+        
+        const contentTypeSelector = document.getElementById('contentTypeSelector');
+        const contentDesigner = document.getElementById('contentDesigner');
+        const contentBuilder = document.getElementById('contentBuilder');
+        const contentTemplates = document.getElementById('contentTemplates');
+
+        console.log('Elements found:', {
+            contentTypeSelector: !!contentTypeSelector,
+            contentDesigner: !!contentDesigner,
+            contentBuilder: !!contentBuilder,
+            contentTemplates: !!contentTemplates
+        });
+
+        // Hide all content sections first
+        if (contentTypeSelector) contentTypeSelector.style.display = 'none';
+        if (contentDesigner) contentDesigner.style.display = 'none';
+        if (contentBuilder) contentBuilder.style.display = 'none';
+        if (contentTemplates) contentTemplates.style.display = 'none';
+
+        // Get the selected schedule item type from step 1
+        const itemTypeSelect = document.getElementById('itemType');
+        const selectedType = itemTypeSelect ? itemTypeSelect.value : '0';
+        
+        console.log('Selected type:', selectedType);
+        console.log('ItemTypeSelect element:', itemTypeSelect);
+
+        // Show appropriate content section based on selected type
+        if (selectedType === '0') { // Reminder type
+            console.log('Showing contentBuilder for Reminder type');
+            if (contentBuilder) {
+                contentBuilder.style.display = 'block';
+                console.log('ContentBuilder display set to block');
+                
+                // Initialize content builder if not already done
+                if (!this.contentBuilder) {
+                    this.setupContentBuilder();
+                }
+            } else {
+                console.log('ContentBuilder element not found!');
+            }
+        } else {
+            console.log('Showing contentTypeSelector for other types');
+            // For other types, show content type selector
+            if (contentTypeSelector) {
+                contentTypeSelector.style.display = 'block';
+                console.log('ContentTypeSelector display set to block');
+            } else {
+                console.log('ContentTypeSelector element not found!');
+            }
+        }
+    }
+
+    saveContentBuilderData() {
+        if (!this.contentBuilder) return;
+
+        const contentData = this.contentBuilder.getContentData();
+        const contentJson = JSON.stringify(contentData);
+        
+        // Update the hidden content field
+        const contentField = document.getElementById('contentJson');
+        if (contentField) {
+            contentField.value = contentJson;
+        }
+
+        // Show success message
+        this.showSuccess('محتوای آموزشی با موفقیت ذخیره شد.');
+    }
+
+    previewContentBuilderData() {
+        if (!this.contentBuilder) return;
+
+        const contentData = this.contentBuilder.getContentData();
+        this.showContentPreview(contentData);
+    }
+
+    showContentPreview(contentData) {
+        const modal = document.getElementById('previewModal');
+        const previewContent = document.getElementById('previewContent');
+        
+        if (!modal || !previewContent) return;
+
+        // Generate preview HTML
+        let previewHTML = '<div class="content-preview">';
+        
+        if (contentData.boxes && contentData.boxes.length > 0) {
+            contentData.boxes.forEach(box => {
+                previewHTML += this.generateBoxPreview(box);
+            });
+        } else {
+            previewHTML += '<div class="empty-content">هیچ محتوایی اضافه نشده است.</div>';
+        }
+        
+        previewHTML += '</div>';
+        
+        previewContent.innerHTML = previewHTML;
+        
+        // Show modal
+        const bsModal = new bootstrap.Modal(modal);
+        bsModal.show();
+    }
+
+    generateBoxPreview(box) {
+        let html = `<div class="preview-box preview-box-${box.type}">`;
+        
+        switch (box.type) {
+            case 'text':
+                html += `<div class="text-content">${box.data.content || ''}</div>`;
+                break;
+            case 'image':
+                if (box.data.fileId) {
+                    html += `<div class="image-content" style="text-align: ${box.data.align || 'center'};">
+                        <img src="/uploads/${box.data.fileId}" alt="تصویر" style="max-width: ${this.getImageSize(box.data.size)};" />
+                        ${box.data.caption ? `<div class="image-caption">${box.data.caption}</div>` : ''}
+                    </div>`;
+                }
+                break;
+            case 'video':
+                if (box.data.fileId) {
+                    html += `<div class="video-content" style="text-align: ${box.data.align || 'center'};">
+                        <video controls style="max-width: ${this.getVideoSize(box.data.size)};">
+                            <source src="/uploads/${box.data.fileId}" type="video/mp4">
+                        </video>
+                        ${box.data.caption ? `<div class="video-caption">${box.data.caption}</div>` : ''}
+                    </div>`;
+                }
+                break;
+            case 'audio':
+                if (box.data.fileId) {
+                    html += `<div class="audio-content">
+                        <audio controls>
+                            <source src="/uploads/${box.data.fileId}" type="audio/mpeg">
+                        </audio>
+                        ${box.data.caption ? `<div class="audio-caption">${box.data.caption}</div>` : ''}
+                    </div>`;
+                }
+                break;
+        }
+        
+        html += '</div>';
+        return html;
+    }
+
+    getImageSize(size) {
+        switch (size) {
+            case 'small': return '200px';
+            case 'medium': return '400px';
+            case 'large': return '600px';
+            case 'full': return '100%';
+            default: return '400px';
+        }
+    }
+
+    getVideoSize(size) {
+        switch (size) {
+            case 'small': return '400px';
+            case 'medium': return '600px';
+            case 'large': return '800px';
+            case 'full': return '100%';
+            default: return '600px';
+        }
+    }
+
+    showSuccess(message) {
+        // You can implement a toast notification system here
+        console.log('Success:', message);
     }
 
     setupDatetimeHelpers() {
@@ -340,6 +557,11 @@ class ModernScheduleItemFormManager {
         this.updateStepIndicators();
         this.updateProgress();
         this.updateNavigationButtons();
+        
+        // Update step 4 content when entering step 4
+        if (step === 4) {
+            this.updateStep4Content();
+        }
     }
 
     async goToNextStep() {
@@ -1474,26 +1696,74 @@ class ModernScheduleItemFormManager {
 
     populateFormWithExistingData(data) {
         // Populate form fields with existing data
-        if (data.title) document.getElementById('itemTitle').value = data.title;
-        if (data.type >= 0) document.getElementById('itemType').value = data.type;
+        if (data.title) {
+            const itemTitle = document.getElementById('itemTitle');
+            if (itemTitle) {
+                itemTitle.value = data.title;
+            }
+        }
+        if (data.type >= 0) {
+            const itemType = document.getElementById('itemType');
+            if (itemType) {
+                itemType.value = data.type;
+            }
+        }
         if (data.description) {
-            document.getElementById('descriptionEditor').innerHTML = data.description;
-            document.getElementById('descriptionHidden').value = data.description;
+            const descriptionEditor = document.getElementById('descriptionEditor');
+            const descriptionHidden = document.getElementById('descriptionHidden');
+            if (descriptionEditor) {
+                descriptionEditor.innerHTML = data.description;
+            }
+            if (descriptionHidden) {
+                descriptionHidden.value = data.description;
+            }
         }
         if (data.persianStartDate) {
             console.log('schedule-item-form: Setting PersianStartDate', data.persianStartDate);
-            document.getElementById('PersianStartDate').value = data.persianStartDate;
-            this.updateTimeInput('StartTime', data.startDate);
+            const persianStartDate = document.getElementById('PersianStartDate');
+            if (persianStartDate) {
+                persianStartDate.value = data.persianStartDate;
+            }
+            const startTime = document.getElementById('StartTime');
+            if (startTime) {
+                this.updateTimeInput('StartTime', data.startDate);
+            }
         }
         if (data.persianDueDate) {
             console.log('schedule-item-form: Setting PersianDueDate', data.persianDueDate);
-            document.getElementById('PersianDueDate').value = data.persianDueDate;
-            this.updateTimeInput('DueTime', data.dueDate);
+            const persianDueDate = document.getElementById('PersianDueDate');
+            if (persianDueDate) {
+                persianDueDate.value = data.persianDueDate;
+            }
+            const dueTime = document.getElementById('DueTime');
+            if (dueTime) {
+                this.updateTimeInput('DueTime', data.dueDate);
+            }
         }
-        if (data.maxScore) document.getElementById('maxScore').value = data.maxScore;
-        if (data.isMandatory) document.getElementById('isMandatory').checked = data.isMandatory;
-        if (data.groupId) document.getElementById('groupId').value = data.groupId;
-        if (data.lessonId) document.getElementById('lessonId').value = data.lessonId;
+        if (data.maxScore) {
+            const maxScore = document.getElementById('maxScore');
+            if (maxScore) {
+                maxScore.value = data.maxScore;
+            }
+        }
+        if (data.isMandatory) {
+            const isMandatory = document.getElementById('isMandatory');
+            if (isMandatory) {
+                isMandatory.checked = data.isMandatory;
+            }
+        }
+        if (data.groupId) {
+            const groupId = document.getElementById('groupId');
+            if (groupId) {
+                groupId.value = data.groupId;
+            }
+        }
+        if (data.lessonId) {
+            const lessonId = document.getElementById('lessonId');
+            if (lessonId) {
+                lessonId.value = data.lessonId;
+            }
+        }
 
         // Load selected groups and subchapters for badge-based selection
         if (data.groupIds && data.groupIds.length > 0) {
@@ -1993,18 +2263,20 @@ class ModernScheduleItemFormManager {
         const studentSelectionContainer = document.getElementById('studentSelectionContainer');
         const studentListContainer = document.getElementById('studentListContainer');
 
-        if (this.selectedGroups.length > 0) {
-            // Show student selection for selected groups
-            studentSelectionContainer.style.display = 'block';
-            studentListContainer.style.display = 'block';
-            
-            // Load students for all selected groups
-            this.loadStudentsForSelectedGroups();
-        } else {
-            // Hide student selection for no groups
-            studentSelectionContainer.style.display = 'none';
-            this.allStudents = [];
-            this.renderStudents();
+        if (studentSelectionContainer && studentListContainer) {
+            if (this.selectedGroups.length > 0) {
+                // Show student selection for selected groups
+                studentSelectionContainer.style.display = 'block';
+                studentListContainer.style.display = 'block';
+                
+                // Load students for all selected groups
+                this.loadStudentsForSelectedGroups();
+            } else {
+                // Hide student selection for no groups
+                studentSelectionContainer.style.display = 'none';
+                this.allStudents = [];
+                this.renderStudents();
+            }
         }
     }
 

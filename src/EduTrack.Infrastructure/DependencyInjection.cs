@@ -70,6 +70,7 @@ public static class DependencyInjection
         services.AddScoped<ITeachingPlanProgressRepository, TeachingPlanProgressRepository>();
         services.AddScoped<ISubChapterRepository, SubChapterRepository>();
         services.AddScoped<ILessonRepository, LessonRepository>();
+        services.AddScoped<IFileRepository, FileRepository>();
 
         // Register infrastructure services
         services.AddScoped<IFileStorageService, FileStorageService>();
