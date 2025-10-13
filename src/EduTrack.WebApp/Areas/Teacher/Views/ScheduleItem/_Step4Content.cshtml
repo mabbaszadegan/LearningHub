@@ -22,11 +22,15 @@
                 <div class="builder-actions">
                     <button type="button" class="btn-action-modern" id="addContentBoxBtn">
                         <i class="fas fa-plus"></i>
-                        افزودن باکس
+                        افزودن محتوا
                     </button>
                     <button type="button" class="btn-action-modern" id="previewContentBtn">
                         <i class="fas fa-eye"></i>
                         پیش‌نمایش
+                    </button>
+                    <button type="button" class="btn-action-modern" id="saveContentBtn">
+                        <i class="fas fa-save"></i>
+                        ذخیره
                     </button>
                 </div>
             </div>
@@ -34,10 +38,29 @@
             <div class="builder-content">
                 <div class="content-boxes-container" id="contentBoxesContainer">
                     <!-- Content boxes will be added here dynamically -->
-                    <div class="empty-state">
-                        <i class="fas fa-plus-circle"></i>
+                    <div class="empty-state" id="emptyState">
+                        <div class="empty-state-icon">
+                            <i class="fas fa-plus-circle"></i>
+                        </div>
                         <h4>هنوز محتوایی اضافه نشده</h4>
-                        <p>برای شروع، روی دکمه "افزودن باکس" کلیک کنید</p>
+                        <p>برای شروع، روی دکمه "افزودن محتوا" کلیک کنید</p>
+                        <div class="quick-templates">
+                            <h5>قالب‌های سریع:</h5>
+                            <div class="template-buttons">
+                                <button type="button" class="template-btn" data-template="text">
+                                    <i class="fas fa-font"></i>
+                                    متن ساده
+                                </button>
+                                <button type="button" class="template-btn" data-template="image-text">
+                                    <i class="fas fa-image"></i>
+                                    تصویر + متن
+                                </button>
+                                <button type="button" class="template-btn" data-template="video-text">
+                                    <i class="fas fa-video"></i>
+                                    ویدیو + متن
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -129,18 +152,43 @@
                 <span>باکس متن</span>
             </div>
             <div class="box-actions">
-                <button type="button" class="btn-icon" onclick="moveBoxUp(this)">
+                <button type="button" class="btn-icon" data-action="move-up" title="انتقال به بالا">
                     <i class="fas fa-arrow-up"></i>
                 </button>
-                <button type="button" class="btn-icon" onclick="moveBoxDown(this)">
+                <button type="button" class="btn-icon" data-action="move-down" title="انتقال به پایین">
                     <i class="fas fa-arrow-down"></i>
                 </button>
-                <button type="button" class="btn-icon" onclick="removeContentBox(this)">
+                <button type="button" class="btn-icon" data-action="settings" title="تنظیمات">
+                    <i class="fas fa-cog"></i>
+                </button>
+                <button type="button" class="btn-icon" data-action="delete" title="حذف">
                     <i class="fas fa-trash"></i>
                 </button>
             </div>
         </div>
         <div class="box-content">
+            <div class="text-editor-toolbar">
+                <button type="button" class="toolbar-btn" data-command="bold" title="ضخیم">
+                    <i class="fas fa-bold"></i>
+                </button>
+                <button type="button" class="toolbar-btn" data-command="italic" title="مورب">
+                    <i class="fas fa-italic"></i>
+                </button>
+                <button type="button" class="toolbar-btn" data-command="underline" title="زیرخط">
+                    <i class="fas fa-underline"></i>
+                </button>
+                <div class="toolbar-separator"></div>
+                <button type="button" class="toolbar-btn" data-command="insertUnorderedList" title="لیست نقطه‌ای">
+                    <i class="fas fa-list-ul"></i>
+                </button>
+                <button type="button" class="toolbar-btn" data-command="insertOrderedList" title="لیست شماره‌ای">
+                    <i class="fas fa-list-ol"></i>
+                </button>
+                <div class="toolbar-separator"></div>
+                <button type="button" class="toolbar-btn" data-command="createLink" title="لینک">
+                    <i class="fas fa-link"></i>
+                </button>
+            </div>
             <div class="rich-text-editor" contenteditable="true" data-placeholder="متن خود را اینجا تایپ کنید...">
                 <!-- Rich text content will be here -->
             </div>
@@ -155,46 +203,65 @@
                 <span>باکس تصویر</span>
             </div>
             <div class="box-actions">
-                <button type="button" class="btn-icon" onclick="moveBoxUp(this)">
+                <button type="button" class="btn-icon" data-action="move-up" title="انتقال به بالا">
                     <i class="fas fa-arrow-up"></i>
                 </button>
-                <button type="button" class="btn-icon" onclick="moveBoxDown(this)">
+                <button type="button" class="btn-icon" data-action="move-down" title="انتقال به پایین">
                     <i class="fas fa-arrow-down"></i>
                 </button>
-                <button type="button" class="btn-icon" onclick="removeContentBox(this)">
+                <button type="button" class="btn-icon" data-action="settings" title="تنظیمات">
+                    <i class="fas fa-cog"></i>
+                </button>
+                <button type="button" class="btn-icon" data-action="delete" title="حذف">
                     <i class="fas fa-trash"></i>
                 </button>
             </div>
         </div>
         <div class="box-content">
             <div class="image-upload-area">
-                <input type="file" accept="image/*" class="file-input" onchange="handleImageUpload(this)">
+                <input type="file" accept="image/*" class="file-input" data-action="image-upload">
                 <div class="upload-placeholder">
                     <i class="fas fa-cloud-upload-alt"></i>
                     <span>تصویر را اینجا بکشید یا کلیک کنید</span>
+                    <small>فرمت‌های پشتیبانی شده: JPG, PNG, GIF (حداکثر 5MB)</small>
+                </div>
+                <div class="upload-progress" style="display: none;">
+                    <div class="progress-bar">
+                        <div class="progress-fill"></div>
+                    </div>
+                    <span class="progress-text">در حال آپلود...</span>
                 </div>
             </div>
-            <div class="image-settings" style="display: none;">
-                <div class="setting-row">
-                    <label>اندازه:</label>
-                    <select class="form-select-sm" onchange="updateImageSize(this)">
-                        <option value="small">کوچک</option>
-                        <option value="medium" selected>متوسط</option>
-                        <option value="large">بزرگ</option>
-                        <option value="full">تمام عرض</option>
-                    </select>
-                </div>
-                <div class="setting-row">
-                    <label>موقعیت:</label>
-                    <select class="form-select-sm" onchange="updateImagePosition(this)">
-                        <option value="left">چپ</option>
-                        <option value="center" selected>وسط</option>
-                        <option value="right">راست</option>
-                    </select>
+            <div class="image-preview" style="display: none;">
+                <img src="" alt="پیش‌نمایش تصویر" class="preview-image">
+                <button type="button" class="btn-change-image" data-action="change-image">
+                    <i class="fas fa-edit"></i>
+                    تغییر تصویر
+                </button>
+            </div>
+            <div class="image-settings">
+                <div class="settings-grid">
+                    <div class="setting-item">
+                        <label>اندازه:</label>
+                        <select class="form-select-sm" data-setting="size">
+                            <option value="small">کوچک (300px)</option>
+                            <option value="medium" selected>متوسط (500px)</option>
+                            <option value="large">بزرگ (700px)</option>
+                            <option value="full">تمام عرض</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <label>موقعیت:</label>
+                        <select class="form-select-sm" data-setting="position">
+                            <option value="left">چپ</option>
+                            <option value="center" selected>وسط</option>
+                            <option value="right">راست</option>
+                        </select>
+                    </div>
                 </div>
             </div>
             <div class="image-caption">
-                <textarea placeholder="توضیحات تصویر (اختیاری)" rows="2"></textarea>
+                <textarea placeholder="توضیحات تصویر (اختیاری)" rows="2" data-caption="true"></textarea>
             </div>
         </div>
     </div>
@@ -301,15 +368,15 @@
 </div>
 
 <!-- Content Box Type Selection Modal -->
-<div class="modal fade" id="contentBoxTypeModal" tabindex="-1">
+<div class="modal fade" id="contentBoxTypeModal" tabindex="-1" aria-labelledby="contentBoxTypeModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">
+                <h5 class="modal-title" id="contentBoxTypeModalLabel">
                     <i class="fas fa-plus"></i>
-                    انتخاب نوع باکس محتوا
+                    انتخاب نوع محتوا
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div class="box-type-grid">

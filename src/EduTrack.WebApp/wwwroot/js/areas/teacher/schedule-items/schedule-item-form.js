@@ -14,10 +14,12 @@ class ModernScheduleItemFormManager {
         this.validationErrors = {};
         this.currentItemId = null;
         this.isEditMode = false;
-        this.selectedGroups = [];
-        this.selectedSubChapters = [];
-        this.selectedStudents = [];
-        this.allStudents = []; // All students from all selected groups
+        this.handleBadgeClick = null; // Initialize badge click handler
+        
+        // Step 3 manager
+        this.step3Manager = null;
+        this.step3Initialized = false;
+        
         this.init();
     }
 
@@ -26,12 +28,22 @@ class ModernScheduleItemFormManager {
         this.setupRichEditor();
         this.setupStepNavigation();
         this.setupFormValidation();
-        this.loadContentTypes();
         this.updateProgress();
         this.setupAutoSave();
         this.setupPersianDatePicker();
         this.setupContentBuilder();
+        // Initialize step 3 manager early
+        this.initializeStep3Manager();
+        
         await this.checkForExistingItem();
+        
+        // If we're already on step 3, initialize step 3 content
+        if (this.currentStep === 3) {
+            // Delay to ensure DOM is ready
+            setTimeout(async () => {
+                await this.initializeStep3();
+            }, 100);
+        }
         
         // Initialize step 4 content based on current selection
         this.updateStep4Content();
@@ -56,8 +68,7 @@ class ModernScheduleItemFormManager {
         // Datetime helpers
         this.setupDatetimeHelpers();
 
-        // Badge-based selection components
-        this.setupBadgeSelectionListeners();
+        // Step 3 components will be handled by Step3AssignmentManager
 
         // Score presets
         this.setupScorePresets();
@@ -156,6 +167,37 @@ class ModernScheduleItemFormManager {
             mandatoryCheckbox.addEventListener('change', () => {
                 this.updateAssignmentPreview();
             });
+        }
+
+        // Update assignment preview when step 3 manager changes
+        if (this.step3Manager) {
+            // The step3Manager will call updateAssignmentPreview when needed
+        }
+    }
+
+    updateAssignmentPreview() {
+        if (!this.step3Manager) return;
+        
+        const targetGroupsElement = document.getElementById('targetGroups');
+        const relatedSubChaptersElement = document.getElementById('relatedSubChapters');
+        
+        const selectedGroups = this.step3Manager.getSelectedGroups();
+        const selectedSubChapters = this.step3Manager.getSelectedSubChapters();
+
+        if (targetGroupsElement) {
+            if (selectedGroups.length === 0) {
+                targetGroupsElement.textContent = 'همه گروه‌ها';
+            } else {
+                targetGroupsElement.textContent = selectedGroups.map(g => g.name).join(', ');
+            }
+        }
+
+        if (relatedSubChaptersElement) {
+            if (selectedSubChapters.length === 0) {
+                relatedSubChaptersElement.textContent = 'انتخاب نشده';
+            } else {
+                relatedSubChaptersElement.textContent = selectedSubChapters.map(sc => sc.title).join(', ');
+            }
         }
     }
 
@@ -654,6 +696,7 @@ class ModernScheduleItemFormManager {
 
     // Step Navigation Methods
     goToStep(step) {
+        debugger
         if (step < 1 || step > this.totalSteps) return;
 
         // Validate current step before moving
@@ -667,10 +710,59 @@ class ModernScheduleItemFormManager {
         this.updateProgress();
         this.updateNavigationButtons();
         
-        // Update step 4 content when entering step 4
-        if (step === 4) {
+        // Initialize step-specific content
+        if (step === 3) {
+            this.initializeStep3();
+        } else if (step === 4) {
             this.updateStep4Content();
         }
+    }
+
+    initializeStep3Manager() {
+        // Initialize step 3 manager if not already done
+        if (!this.step3Manager) {
+            // Check if Step3AssignmentManager is available
+            if (typeof window.Step3AssignmentManager === 'undefined') {
+                console.error('Step3AssignmentManager is not available. Make sure step3-assignment.js is loaded before schedule-item-form.js');
+                return;
+            }
+            console.log('Initializing Step3AssignmentManager...');
+            this.step3Manager = new window.Step3AssignmentManager(this);
+            console.log('Step3AssignmentManager initialized:', this.step3Manager);
+        }
+    }
+
+    async initializeStep3() {
+        // Prevent double initialization
+        if (this.step3Initialized) {
+            console.log('Step 3 already initialized, skipping...');
+            return;
+        }
+        
+        // Initialize step 3 manager if not already done
+        if (!this.step3Manager) {
+            this.initializeStep3Manager();
+        }
+        
+        // Initialize step 3 content
+        if (this.step3Manager) {
+            await this.step3Manager.initializeStep3Content();
+            this.step3Initialized = true;
+            console.log('Step 3 initialization completed');
+        }
+    }
+
+
+    // Cleanup method for memory management
+    cleanup() {
+        console.log('Cleaning up event listeners...');
+        
+        // Cleanup step 3 manager
+        if (this.step3Manager && typeof this.step3Manager.cleanup === 'function') {
+            this.step3Manager.cleanup();
+        }
+        
+        console.log('Cleanup completed');
     }
 
     async goToNextStep() {
@@ -844,41 +936,12 @@ class ModernScheduleItemFormManager {
         }
     }
 
-    // Content Type Methods
-    async loadContentTypes() {
-        try {
-            // Load content types based on selected item type
-            const itemType = document.getElementById('itemType')?.value;
-            if (!itemType) return;
-
-            // This would typically fetch from an API
-            this.contentTypes = {
-                0: { name: 'یادآوری', description: 'یادآوری ساده برای دانش‌آموزان' },
-                1: { name: 'نوشتاری', description: 'تمرین نوشتاری و انشا' },
-                2: { name: 'صوتی', description: 'فایل صوتی و پادکست' },
-                3: { name: 'پر کردن جای خالی', description: 'سوالات جای خالی' },
-                4: { name: 'چند گزینه‌ای', description: 'سوالات تستی' },
-                5: { name: 'تطبیق', description: 'تطبیق آیتم‌ها' },
-                6: { name: 'پیدا کردن خطا', description: 'شناسایی و تصحیح خطا' },
-                7: { name: 'تمرین کد', description: 'برنامه‌نویسی و کدنویسی' },
-                8: { name: 'کویز', description: 'آزمون کوتاه' }
-            };
-
-            this.showContentTypeSelector();
-        } catch (error) {
-            console.error('Error loading content types:', error);
-        }
-    }
-
     changeItemType(typeId) {
         this.currentType = typeId;
         this.selectedContentType = null;
 
         // Show type preview
         this.showTypePreview(typeId);
-
-        // Load content types for this item type
-        this.loadContentTypes();
 
         // Update sidebar
         this.updateStepIndicators();
@@ -1240,14 +1303,22 @@ class ModernScheduleItemFormManager {
         }
 
         // Add selected groups and subchapters for badge-based selection
-        if (this.selectedGroups.length > 0) {
-            data.GroupIds = this.selectedGroups.map(g => g.id);
+        if (this.step3Manager) {
+            const selectedGroups = this.step3Manager.getSelectedGroups();
+            const selectedSubChapters = this.step3Manager.getSelectedSubChapters();
+            
+            if (selectedGroups.length > 0) {
+                data.GroupIds = selectedGroups.map(g => g.id);
+            }
+            if (selectedSubChapters.length > 0) {
+                data.SubChapterIds = selectedSubChapters.map(sc => sc.id);
+            }
         }
-        if (this.selectedSubChapters.length > 0) {
-            data.SubChapterIds = this.selectedSubChapters.map(sc => sc.id);
-        }
-        if (this.selectedStudents.length > 0) {
-            data.StudentIds = this.selectedStudents.map(s => s.id);
+        if (this.step3Manager) {
+            const selectedStudents = this.step3Manager.getSelectedStudents();
+            if (selectedStudents.length > 0) {
+                data.StudentIds = selectedStudents.map(s => s.id);
+            }
         }
 
         return data;
@@ -1346,18 +1417,22 @@ class ModernScheduleItemFormManager {
 
     async submitForm(formData) {
         // Validate subchapter selection before submission
-        if (this.selectedSubChapters.length === 0) {
+        const selectedSubChapters = this.step3Manager ? this.step3Manager.getSelectedSubChapters() : [];
+        if (selectedSubChapters.length === 0) {
             this.showErrorMessage('انتخاب حداقل یک زیرمبحث اجباری است');
             this.goToStep(3); // Go to assignment step
             return;
         }
 
         // Add selected groups and subchapters to form data
-        if (this.selectedGroups.length > 0) {
-            formData.GroupIds = this.selectedGroups.map(g => g.id);
-        }
-        if (this.selectedSubChapters.length > 0) {
-            formData.SubChapterIds = this.selectedSubChapters.map(sc => sc.id);
+        if (this.step3Manager) {
+            const selectedGroups = this.step3Manager.getSelectedGroups();
+            if (selectedGroups.length > 0) {
+                formData.GroupIds = selectedGroups.map(g => g.id);
+            }
+            if (selectedSubChapters.length > 0) {
+                formData.SubChapterIds = selectedSubChapters.map(sc => sc.id);
+            }
         }
 
         try {
@@ -1753,14 +1828,22 @@ class ModernScheduleItemFormManager {
         case 3:
             stepData.GroupId = parseInt(document.getElementById('groupId')?.value) || null;
             // Add selected groups and subchapters for badge-based selection
-            if (this.selectedGroups.length > 0) {
-                stepData.GroupIds = this.selectedGroups.map(g => g.id);
+            if (this.step3Manager) {
+                const selectedGroups = this.step3Manager.getSelectedGroups();
+                const selectedSubChapters = this.step3Manager.getSelectedSubChapters();
+                
+                if (selectedGroups.length > 0) {
+                    stepData.GroupIds = selectedGroups.map(g => g.id);
+                }
+                if (selectedSubChapters.length > 0) {
+                    stepData.SubChapterIds = selectedSubChapters.map(sc => sc.id);
+                }
             }
-            if (this.selectedSubChapters.length > 0) {
-                stepData.SubChapterIds = this.selectedSubChapters.map(sc => sc.id);
-            }
-            if (this.selectedStudents.length > 0) {
-                stepData.StudentIds = this.selectedStudents.map(s => s.id);
+            if (this.step3Manager) {
+                const selectedStudents = this.step3Manager.getSelectedStudents();
+                if (selectedStudents.length > 0) {
+                    stepData.StudentIds = selectedStudents.map(s => s.id);
+                }
             }
             break;
             case 4:
@@ -1876,13 +1959,22 @@ class ModernScheduleItemFormManager {
 
         // Load selected groups and subchapters for badge-based selection
         if (data.groupIds && data.groupIds.length > 0) {
-            this.selectedGroups = data.groupIds.map(id => ({ id: id, name: '' })); // Name will be loaded later
+            if (this.step3Manager) {
+                const groups = data.groupIds.map(id => ({ id: id, name: '' })); // Name will be loaded later
+                this.step3Manager.setSelectedGroups(groups);
+            }
         }
         if (data.subChapterIds && data.subChapterIds.length > 0) {
-            this.selectedSubChapters = data.subChapterIds.map(id => ({ id: id, title: '' })); // Title will be loaded later
+            if (this.step3Manager) {
+                const subChapters = data.subChapterIds.map(id => ({ id: id, title: '' })); // Title will be loaded later
+                this.step3Manager.setSelectedSubChapters(subChapters);
+            }
         }
         if (data.studentIds && data.studentIds.length > 0) {
-            this.selectedStudents = data.studentIds.map(id => ({ id: id, firstName: '', lastName: '' })); // Details will be loaded later
+            if (this.step3Manager) {
+                const students = data.studentIds.map(id => ({ id: id, firstName: '', lastName: '' })); // Details will be loaded later
+                this.step3Manager.setSelectedStudents(students);
+            }
         }
 
         // Update current step
@@ -1892,6 +1984,14 @@ class ModernScheduleItemFormManager {
             this.updateStepIndicators();
             this.updateProgress();
             this.updateNavigationButtons();
+            
+            // If we're on step 3, initialize step 3 content after loading existing data
+            if (this.currentStep === 3) {
+                // Delay to ensure DOM is ready
+                setTimeout(async () => {
+                    await this.initializeStep3();
+                }, 100);
+            }
         }
 
         // Update form state indicators
@@ -1901,7 +2001,6 @@ class ModernScheduleItemFormManager {
         setTimeout(() => {
             this.updateDatePickers();
             // Load and select groups and subchapters after UI is ready
-            this.loadAndSelectExistingAssignments();
         }, 200);
     }
 
@@ -1929,63 +2028,7 @@ class ModernScheduleItemFormManager {
         }
     }
 
-    async loadAndSelectExistingAssignments() {
-        // Load groups and subchapters, then select the existing ones
-        try {
-            // Load groups first
-            await this.loadGroupsAsBadges();
-            
-            // Select existing groups
-            this.selectedGroups.forEach(group => {
-                const badge = document.querySelector(`[data-group-id="${group.id}"]`);
-                if (badge) {
-                    badge.classList.add('selected');
-                    // Update the group name if we have it
-                    const nameElement = badge.querySelector('.group-badge-name');
-                    if (nameElement) {
-                        group.name = nameElement.textContent;
-                    }
-                }
-            });
-
-            // Load subchapters
-            await this.loadChaptersWithSubChapters();
-            
-            // Select existing subchapters and expand parent chapters
-            this.selectedSubChapters.forEach(subChapter => {
-                const badge = document.querySelector(`[data-sub-chapter-id="${subChapter.id}"]`);
-                if (badge) {
-                    badge.classList.add('selected');
-                    // Update the subchapter title if we have it
-                    const titleElement = badge.querySelector('.subchapter-title');
-                    if (titleElement) {
-                        subChapter.title = titleElement.textContent;
-                    }
-                    
-                    // Expand the parent chapter if it contains selected subchapters
-                    const chapterItem = badge.closest('.chapter-item');
-                    if (chapterItem && !chapterItem.classList.contains('expanded')) {
-                        chapterItem.classList.add('expanded');
-                    }
-                }
-            });
-
-            // Update summaries and preview
-            this.updateGroupSelectionSummary();
-            this.updateSubChapterSelectionSummary();
-            this.updateAssignmentPreview();
-            this.updateHiddenInputs();
-            
-            // Load students for selected groups
-            if (this.selectedGroups.length > 0) {
-                this.updateStudentSelectionVisibility();
-            }
-
-        } catch (error) {
-            console.error('Error loading existing assignments:', error);
-        }
-    }
-
+   
     updateFormStateIndicators() {
         // Update page title to show edit mode
         if (this.isEditMode && this.currentItemId) {
@@ -2047,234 +2090,13 @@ class ModernScheduleItemFormManager {
         }
     }
 
-    setupBadgeSelectionListeners() {
-        // Badge-based Group selection
-        this.setupGroupBadgeSelection();
-        
-        // Badge-based SubChapter selection
-        this.setupSubChapterBadgeSelection();
-    }
 
-    setupGroupBadgeSelection() {
-        // Load groups and render as badges
-        this.loadGroupsAsBadges();
-        
-        // Add click listeners for group badges
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('.group-badge')) {
-                const badge = e.target.closest('.group-badge');
-                const groupId = parseInt(badge.dataset.groupId);
-                this.toggleGroupSelection(groupId);
-            }
-        });
-    }
 
-    setupSubChapterBadgeSelection() {
-        // Load chapters and subchapters
-        this.loadChaptersWithSubChapters();
-        
-        // Add click listeners for chapter headers
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('.chapter-header')) {
-                const chapterItem = e.target.closest('.chapter-item');
-                this.toggleChapterExpansion(chapterItem);
-            }
-            
-            if (e.target.closest('.subchapter-badge')) {
-                const badge = e.target.closest('.subchapter-badge');
-                const subChapterId = parseInt(badge.dataset.subChapterId);
-                this.toggleSubChapterSelection(subChapterId);
-            }
-        });
-    }
 
-    async loadGroupsAsBadges() {
-        try {
-            const teachingPlanId = this.getTeachingPlanId();
-            const response = await fetch(`/Teacher/Schedule/GetGroups?teachingPlanId=${teachingPlanId}`);
-            const groups = await response.json();
 
-            if (groups.success) {
-                this.renderGroupBadges(groups.data);
-            }
-        } catch (error) {
-            console.error('Error loading groups:', error);
-        }
-    }
 
-    renderGroupBadges(groups) {
-        const container = document.getElementById('groupBadgeGrid');
-        if (!container) return;
 
-        container.innerHTML = groups.map(group => `
-            <div class="group-badge" data-group-id="${group.id}">
-                <div class="group-badge-content">
-                    <div class="group-badge-icon">
-                        <i class="fas fa-users"></i>
-                    </div>
-                    <div class="group-badge-info">
-                        <div class="group-badge-name">${group.name}</div>
-                        <div class="group-badge-count">گروه دانشجویی</div>
-                    </div>
-                </div>
-                <div class="group-badge-check"></div>
-            </div>
-        `).join('');
-    }
 
-    toggleGroupSelection(groupId) {
-        const badge = document.querySelector(`[data-group-id="${groupId}"]`);
-        if (!badge) return;
-
-        const isSelected = badge.classList.contains('selected');
-        
-        if (isSelected) {
-            badge.classList.remove('selected');
-            this.selectedGroups = this.selectedGroups.filter(g => g.id !== groupId);
-        } else {
-            badge.classList.add('selected');
-            const group = { id: groupId, name: badge.querySelector('.group-badge-name').textContent };
-            this.selectedGroups.push(group);
-        }
-
-        this.updateGroupSelectionSummary();
-        this.updateAssignmentPreview();
-        this.updateHiddenInputs();
-        this.updateStudentSelectionVisibility(); // Update student list when groups change
-    }
-
-    toggleGroupSelectionLegacy(groupId, groupName, optionElement) {
-        const index = this.selectedGroups.findIndex(g => g.id === groupId);
-        
-        if (index > -1) {
-            // Remove selection
-            this.selectedGroups.splice(index, 1);
-            optionElement.classList.remove('selected');
-        } else {
-            // Add selection
-            this.selectedGroups.push({ id: groupId, name: groupName });
-            optionElement.classList.add('selected');
-        }
-
-        this.updateGroupSelection();
-        this.updateAssignmentPreview();
-    }
-
-    updateGroupSelectionSummary() {
-        const summary = document.getElementById('groupSelectionSummary');
-        if (!summary) return;
-
-        const summaryText = summary.querySelector('.summary-text');
-        if (this.selectedGroups.length === 0) {
-            summaryText.textContent = 'هیچ گروهی انتخاب نشده - برای همه گروه‌ها';
-        } else {
-            const groupNames = this.selectedGroups.map(g => g.name).join('، ');
-            summaryText.textContent = `گروه‌های انتخاب شده: ${groupNames}`;
-        }
-    }
-
-    async loadChaptersWithSubChapters() {
-        try {
-            const teachingPlanId = this.getTeachingPlanId();
-            const response = await fetch(`/Teacher/Schedule/GetSubChapters?teachingPlanId=${teachingPlanId}`);
-            const subChapters = await response.json();
-
-            if (subChapters.success) {
-                this.renderChapterHierarchy(subChapters.data);
-            }
-        } catch (error) {
-            console.error('Error loading chapters:', error);
-        }
-    }
-
-    renderChapterHierarchy(subChapters) {
-        const container = document.getElementById('chapterList');
-        if (!container) return;
-
-        // Group subchapters by chapter
-        const chaptersMap = new Map();
-        subChapters.forEach(subChapter => {
-            const chapterTitle = subChapter.chapterTitle;
-            if (!chaptersMap.has(chapterTitle)) {
-                chaptersMap.set(chapterTitle, []);
-            }
-            chaptersMap.get(chapterTitle).push(subChapter);
-        });
-
-        container.innerHTML = Array.from(chaptersMap.entries()).map(([chapterTitle, chapterSubChapters]) => `
-            <div class="chapter-item">
-                <div class="chapter-header">
-                    <div class="chapter-icon">
-                        <i class="fas fa-book"></i>
-                    </div>
-                    <div class="chapter-info">
-                        <div class="chapter-title">${chapterTitle}</div>
-                        <div class="chapter-description">${chapterSubChapters.length} زیرمبحث</div>
-                    </div>
-                    <div class="chapter-toggle">
-                        <i class="fas fa-chevron-down"></i>
-                    </div>
-                </div>
-                <div class="subchapter-grid">
-                    ${chapterSubChapters.map(subChapter => `
-                        <div class="subchapter-badge" data-sub-chapter-id="${subChapter.id}">
-                            <div class="subchapter-content">
-                                <div class="subchapter-icon">
-                                    <i class="fas fa-list"></i>
-                                </div>
-                                <div class="subchapter-info">
-                                    <div class="subchapter-title">${subChapter.title}</div>
-                                    <div class="subchapter-meta">زیرمبحث</div>
-                                </div>
-                            </div>
-                            <div class="subchapter-check"></div>
-                        </div>
-                    `).join('')}
-                </div>
-            </div>
-        `).join('');
-    }
-
-    toggleChapterExpansion(chapterItem) {
-        chapterItem.classList.toggle('expanded');
-    }
-
-    toggleSubChapterSelection(subChapterId) {
-        const badge = document.querySelector(`[data-sub-chapter-id="${subChapterId}"]`);
-        if (!badge) return;
-
-        const isSelected = badge.classList.contains('selected');
-        
-        if (isSelected) {
-            badge.classList.remove('selected');
-            this.selectedSubChapters = this.selectedSubChapters.filter(sc => sc.id !== subChapterId);
-        } else {
-            badge.classList.add('selected');
-            const subChapter = { 
-                id: subChapterId, 
-                title: badge.querySelector('.subchapter-title').textContent 
-            };
-            this.selectedSubChapters.push(subChapter);
-        }
-
-        this.updateSubChapterSelectionSummary();
-        this.updateAssignmentPreview();
-        this.updateHiddenInputs();
-        this.validateSubChapterSelection();
-    }
-
-    updateSubChapterSelectionSummary() {
-        const summary = document.getElementById('subChapterSelectionSummary');
-        if (!summary) return;
-
-        const summaryText = summary.querySelector('.summary-text');
-        if (this.selectedSubChapters.length === 0) {
-            summaryText.textContent = 'هیچ زیرمبحثی انتخاب نشده';
-        } else {
-            const subChapterNames = this.selectedSubChapters.map(sc => sc.title).join('، ');
-            summaryText.textContent = `زیرمباحث انتخاب شده: ${subChapterNames}`;
-        }
-    }
 
     getTeachingPlanId() {
         const teachingPlanIdInput = document.querySelector('input[name="TeachingPlanId"]');
@@ -2318,241 +2140,24 @@ class ModernScheduleItemFormManager {
     }
 
     updateHiddenInputs() {
-        // Update hidden inputs for server submission
-        const groupIdsInput = document.getElementById('selectedGroupIds');
-        const subChapterIdsInput = document.getElementById('selectedSubChapterIds');
-        const studentIdsInput = document.getElementById('selectedStudentIds');
-        
-        if (groupIdsInput) {
-            groupIdsInput.value = this.selectedGroups.map(g => g.id).join(',');
-        }
-        
-        if (subChapterIdsInput) {
-            subChapterIdsInput.value = this.selectedSubChapters.map(sc => sc.id).join(',');
-        }
-        
-        if (studentIdsInput) {
-            studentIdsInput.value = this.selectedStudents.map(s => s.id).join(',');
+        // Update hidden inputs for server submission using step 3 manager
+        if (this.step3Manager) {
+            this.step3Manager.updateHiddenInputs();
         }
     }
 
     setupStudentSelection() {
-        // Setup student selection functionality
-        this.setupStudentSelectionListeners();
+        // Student selection is now handled by Step3AssignmentManager
+        console.log('Student selection handled by Step3AssignmentManager');
     }
 
-    setupStudentSelectionListeners() {
-        // Listen for group selection changes to show/hide student selection
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('.group-badge')) {
-                setTimeout(() => {
-                    this.updateStudentSelectionVisibility();
-                }, 100);
-            }
-        });
 
-        // Setup select all and clear all buttons
-        const selectAllBtn = document.getElementById('selectAllStudents');
-        const clearAllBtn = document.getElementById('clearAllStudents');
 
-        if (selectAllBtn) {
-            selectAllBtn.addEventListener('click', () => {
-                this.selectAllStudents();
-            });
-        }
 
-        if (clearAllBtn) {
-            clearAllBtn.addEventListener('click', () => {
-                this.clearAllStudents();
-            });
-        }
-    }
 
-    updateStudentSelectionVisibility() {
-        const studentSelectionContainer = document.getElementById('studentSelectionContainer');
-        const studentListContainer = document.getElementById('studentListContainer');
 
-        if (studentSelectionContainer && studentListContainer) {
-            if (this.selectedGroups.length > 0) {
-                // Show student selection for selected groups
-                studentSelectionContainer.style.display = 'block';
-                studentListContainer.style.display = 'block';
-                
-                // Load students for all selected groups
-                this.loadStudentsForSelectedGroups();
-            } else {
-                // Hide student selection for no groups
-                studentSelectionContainer.style.display = 'none';
-                this.allStudents = [];
-                this.renderStudents();
-            }
-        }
-    }
 
-    async loadStudentsForSelectedGroups() {
-        try {
-            this.allStudents = [];
-            
-            // Load students for each selected group
-            for (const group of this.selectedGroups) {
-                const response = await fetch(`/Teacher/StudentGroup/GetStudents?groupId=${group.id}`);
-                if (response.ok) {
-                    const students = await response.json();
-                    // Add group info to each student
-                    const studentsWithGroup = students.map(student => ({
-                        ...student,
-                        groupId: group.id,
-                        groupName: group.name
-                    }));
-                    this.allStudents.push(...studentsWithGroup);
-                }
-            }
-            
-            // Remove duplicates based on student ID
-            this.allStudents = this.allStudents.filter((student, index, self) => 
-                index === self.findIndex(s => s.id === student.id)
-            );
-            
-            // Update selected students with full details from loaded students
-            this.updateSelectedStudentsWithDetails();
-            
-            this.renderStudents();
-            this.updateStudentCount();
-        } catch (error) {
-            console.error('Error loading students:', error);
-        }
-    }
 
-    updateSelectedStudentsWithDetails() {
-        // Update selected students with full details from loaded students
-        this.selectedStudents = this.selectedStudents.map(selectedStudent => {
-            const fullStudentDetails = this.allStudents.find(student => student.id === selectedStudent.id);
-            if (fullStudentDetails) {
-                return {
-                    ...fullStudentDetails,
-                    // Keep the original selected state
-                    isSelected: true
-                };
-            }
-            return selectedStudent;
-        });
-        
-        // Remove any selected students that are no longer in the allStudents list
-        this.selectedStudents = this.selectedStudents.filter(selectedStudent => 
-            this.allStudents.some(student => student.id === selectedStudent.id)
-        );
-        
-        console.log('Updated selected students:', this.selectedStudents);
-        console.log('All students:', this.allStudents);
-    }
-
-    async loadStudentsForGroup(groupId) {
-        try {
-            const response = await fetch(`/Teacher/StudentGroup/GetStudents?groupId=${groupId}`);
-            if (response.ok) {
-                const students = await response.json();
-                this.allStudents = students;
-                this.updateSelectedStudentsWithDetails();
-                this.renderStudents();
-                this.updateStudentCount();
-            }
-        } catch (error) {
-            console.error('Error loading students:', error);
-        }
-    }
-
-    renderStudents() {
-        const studentGrid = document.getElementById('studentGrid');
-        if (!studentGrid) return;
-
-        studentGrid.innerHTML = '';
-
-        console.log('Rendering students. All students:', this.allStudents.length);
-        console.log('Selected students:', this.selectedStudents.length);
-
-        this.allStudents.forEach(student => {
-            const studentBadge = document.createElement('div');
-            studentBadge.className = 'student-badge';
-            studentBadge.dataset.studentId = student.id;
-            
-            const isSelected = this.selectedStudents.some(s => s.id === student.id);
-            console.log(`Student ${student.id} (${student.firstName} ${student.lastName}) isSelected:`, isSelected);
-            
-            if (isSelected) {
-                studentBadge.classList.add('selected');
-            }
-
-            studentBadge.innerHTML = `
-                <div class="student-avatar">
-                    ${student.firstName ? student.firstName.charAt(0) : '?'}
-                </div>
-                <div class="student-info">
-                    <div class="student-name">${student.firstName || ''} ${student.lastName || ''}</div>
-                    <div class="student-group">${student.groupName || ''}</div>
-                </div>
-            `;
-
-            studentBadge.addEventListener('click', () => {
-                this.toggleStudentSelection(student);
-            });
-
-            studentGrid.appendChild(studentBadge);
-        });
-    }
-
-    toggleStudentSelection(student) {
-        const existingIndex = this.selectedStudents.findIndex(s => s.id === student.id);
-        
-        if (existingIndex >= 0) {
-            // Remove student
-            this.selectedStudents.splice(existingIndex, 1);
-        } else {
-            // Add student
-            this.selectedStudents.push(student);
-        }
-
-        // Update UI
-        this.renderStudents();
-        this.updateStudentCount();
-        this.updateSelectedStudentsSummary();
-        this.updateHiddenInputs();
-    }
-
-    selectAllStudents() {
-        this.selectedStudents = [...this.currentGroupStudents];
-        this.renderStudents();
-        this.updateStudentCount();
-        this.updateSelectedStudentsSummary();
-        this.updateHiddenInputs();
-    }
-
-    clearAllStudents() {
-        this.selectedStudents = [];
-        this.renderStudents();
-        this.updateStudentCount();
-        this.updateSelectedStudentsSummary();
-        this.updateHiddenInputs();
-    }
-
-    updateStudentCount() {
-        const studentCount = document.getElementById('studentCount');
-        if (studentCount) {
-            studentCount.textContent = `${this.allStudents.length} دانش‌آموز`;
-        }
-    }
-
-    updateSelectedStudentsSummary() {
-        const selectedStudentsText = document.getElementById('selectedStudentsText');
-        if (!selectedStudentsText) return;
-
-        if (this.selectedStudents.length === 0) {
-            selectedStudentsText.textContent = 'هیچ دانش‌آموزی انتخاب نشده - برای همه دانش‌آموزان گروه‌های انتخاب شده';
-        } else if (this.selectedStudents.length === this.allStudents.length) {
-            selectedStudentsText.textContent = 'همه دانش‌آموزان گروه‌های انتخاب شده انتخاب شده‌اند';
-        } else {
-            selectedStudentsText.textContent = `${this.selectedStudents.length} دانش‌آموز انتخاب شده`;
-        }
-    }
 
     setupModernGroupMultiSelect() {
         const toggle = document.getElementById('groupSelectToggle');
@@ -2686,315 +2291,18 @@ class ModernScheduleItemFormManager {
         });
     }
 
-    async loadGroups() {
-        try {
-            const teachingPlanId = document.querySelector('input[name="TeachingPlanId"]').value;
-            const response = await fetch(`/Teacher/Schedule/GetGroups?teachingPlanId=${teachingPlanId}`);
-            const groups = await response.json();
-
-            this.renderGroupOptions(groups.data);
-        } catch (error) {
-            console.error('Error loading groups:', error);
-        }
-    }
-
-    async loadSubChapters() {
-        try {
-            const teachingPlanId = document.querySelector('input[name="TeachingPlanId"]').value;
-            const response = await fetch(`/Teacher/Schedule/GetSubChapters?teachingPlanId=${teachingPlanId}`);
-            const subChapters = await response.json();
-
-            this.renderSubChapterOptions(subChapters.data);
-        } catch (error) {
-            console.error('Error loading subchapters:', error);
-        }
-    }
-
-    renderGroupOptions(groups) {
-        const optionsList = document.getElementById('groupOptionsList');
-        if (!optionsList) return;
-
-        optionsList.innerHTML = '';
-
-        if (groups.length === 0) {
-            optionsList.innerHTML = '<div class="no-items-message">هیچ گروهی یافت نشد</div>';
-            return;
-        }
-
-        groups.forEach(group => {
-            const option = document.createElement('button');
-            option.className = 'option-item';
-            option.dataset.groupId = group.id;
-            option.innerHTML = `
-                <div class="option-checkbox"></div>
-                <div class="option-text">${group.name}</div>
-            `;
-
-            option.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.toggleGroupSelection(group.id, group.name, option);
-            });
-
-            optionsList.appendChild(option);
-        });
-    }
-
-    renderSubChapterOptions(subChapters) {
-        const optionsList = document.getElementById('subChapterOptionsList');
-        if (!optionsList) return;
-
-        optionsList.innerHTML = '';
-
-        if (subChapters.length === 0) {
-            optionsList.innerHTML = '<div class="no-items-message">هیچ زیرمبحثی یافت نشد</div>';
-            return;
-        }
-
-        subChapters.forEach(subChapter => {
-            const option = document.createElement('button');
-            option.className = 'option-item';
-            option.dataset.subChapterId = subChapter.id;
-            option.innerHTML = `
-                <div class="option-checkbox"></div>
-                <div class="option-text">${subChapter.title}</div>
-                <div class="option-subtitle">${subChapter.chapterTitle}</div>
-            `;
-
-            option.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.toggleSubChapterSelectionLegacy(subChapter.id, subChapter.title, option);
-            });
-
-            optionsList.appendChild(option);
-        });
-    }
-
-
-    toggleSubChapterSelectionLegacy(subChapterId, subChapterTitle, optionElement) {
-        const index = this.selectedSubChapters.findIndex(sc => sc.id === subChapterId);
-        
-        if (index > -1) {
-            // Remove selection
-            this.selectedSubChapters.splice(index, 1);
-            optionElement.classList.remove('selected');
-        } else {
-            // Add selection
-            this.selectedSubChapters.push({ id: subChapterId, title: subChapterTitle });
-            optionElement.classList.add('selected');
-        }
-
-        this.updateSubChapterSelection();
-        this.updateAssignmentPreview();
-        this.validateSubChapterSelection();
-    }
-
-    updateGroupSelection() {
-        const selectedGroupsContainer = document.getElementById('selectedGroups');
-        const groupIdsInput = document.getElementById('selectedGroupIds');
-        const toggleText = document.querySelector('#groupSelectToggle .select-text');
-
-        if (!selectedGroupsContainer || !groupIdsInput) return;
-
-        // Update hidden input
-        groupIdsInput.value = this.selectedGroups.map(g => g.id).join(',');
-
-        // Update toggle text
-        if (this.selectedGroups.length === 0) {
-            toggleText.textContent = 'همه گروه‌ها';
-        } else if (this.selectedGroups.length === 1) {
-            toggleText.textContent = this.selectedGroups[0].name;
-        } else {
-            toggleText.textContent = `${this.selectedGroups.length} گروه انتخاب شده`;
-        }
-
-        // Update selected items display
-        selectedGroupsContainer.innerHTML = '';
-        this.selectedGroups.forEach(group => {
-            const item = document.createElement('div');
-            item.className = 'selected-item';
-            item.innerHTML = `
-                <span>${group.name}</span>
-                <button type="button" class="selected-item-remove" data-group-id="${group.id}">
-                    <i class="fas fa-times"></i>
-                </button>
-            `;
-
-            item.querySelector('.selected-item-remove').addEventListener('click', (e) => {
-                e.preventDefault();
-                this.removeGroupSelection(group.id);
-            });
-
-            selectedGroupsContainer.appendChild(item);
-        });
-    }
-
-    updateSubChapterSelection() {
-        const selectedSubChaptersContainer = document.getElementById('selectedSubChapters');
-        const subChapterIdsInput = document.getElementById('selectedSubChapterIds');
-        const toggleText = document.querySelector('#subChapterSelectToggle .select-text');
-
-        if (!selectedSubChaptersContainer || !subChapterIdsInput) return;
-
-        // Update hidden input
-        subChapterIdsInput.value = this.selectedSubChapters.map(sc => sc.id).join(',');
-
-        // Update toggle text
-        if (this.selectedSubChapters.length === 0) {
-            toggleText.textContent = 'انتخاب زیرمباحث...';
-        } else if (this.selectedSubChapters.length === 1) {
-            toggleText.textContent = this.selectedSubChapters[0].title;
-        } else {
-            toggleText.textContent = `${this.selectedSubChapters.length} زیرمبحث انتخاب شده`;
-        }
-
-        // Update selected items display
-        selectedSubChaptersContainer.innerHTML = '';
-        this.selectedSubChapters.forEach(subChapter => {
-            const item = document.createElement('div');
-            item.className = 'selected-item';
-            item.innerHTML = `
-                <span>${subChapter.title}</span>
-                <button type="button" class="selected-item-remove" data-sub-chapter-id="${subChapter.id}">
-                    <i class="fas fa-times"></i>
-                </button>
-            `;
-
-            item.querySelector('.selected-item-remove').addEventListener('click', (e) => {
-                e.preventDefault();
-                this.removeSubChapterSelection(subChapter.id);
-            });
-
-            selectedSubChaptersContainer.appendChild(item);
-        });
-    }
-
-    removeGroupSelection(groupId) {
-        this.selectedGroups = this.selectedGroups.filter(g => g.id !== groupId);
-        
-        // Update option element
-        const option = document.querySelector(`[data-group-id="${groupId}"]`);
-        if (option) {
-            option.classList.remove('selected');
-        }
-
-        this.updateGroupSelection();
-        this.updateAssignmentPreview();
-    }
-
-    removeSubChapterSelection(subChapterId) {
-        this.selectedSubChapters = this.selectedSubChapters.filter(sc => sc.id !== subChapterId);
-        
-        // Update option element
-        const option = document.querySelector(`[data-sub-chapter-id="${subChapterId}"]`);
-        if (option) {
-            option.classList.remove('selected');
-        }
-
-        this.updateSubChapterSelection();
-        this.updateAssignmentPreview();
-        this.validateSubChapterSelection();
-    }
-
-    selectAllGroups() {
-        const options = document.querySelectorAll('#groupOptionsList .option-item');
-        options.forEach(option => {
-            const groupId = parseInt(option.dataset.groupId);
-            const groupName = option.querySelector('.option-text').textContent;
-            
-            if (!this.selectedGroups.find(g => g.id === groupId)) {
-                this.selectedGroups.push({ id: groupId, name: groupName });
-                option.classList.add('selected');
-            }
-        });
-
-        this.updateGroupSelection();
-        this.updateAssignmentPreview();
-    }
-
-    clearAllGroups() {
-        this.selectedGroups = [];
-        
-        // Update option elements
-        const options = document.querySelectorAll('#groupOptionsList .option-item');
-        options.forEach(option => {
-            option.classList.remove('selected');
-        });
-
-        this.updateGroupSelection();
-        this.updateAssignmentPreview();
-    }
-
-    selectAllSubChapters() {
-        const options = document.querySelectorAll('#subChapterOptionsList .option-item');
-        options.forEach(option => {
-            const subChapterId = parseInt(option.dataset.subChapterId);
-            const subChapterTitle = option.querySelector('.option-text').textContent;
-            
-            if (!this.selectedSubChapters.find(sc => sc.id === subChapterId)) {
-                this.selectedSubChapters.push({ id: subChapterId, title: subChapterTitle });
-                option.classList.add('selected');
-            }
-        });
-
-        this.updateSubChapterSelection();
-        this.updateAssignmentPreview();
-        this.validateSubChapterSelection();
-    }
-
-    clearAllSubChapters() {
-        this.selectedSubChapters = [];
-        
-        // Update option elements
-        const options = document.querySelectorAll('#subChapterOptionsList .option-item');
-        options.forEach(option => {
-            option.classList.remove('selected');
-        });
-
-        this.updateSubChapterSelection();
-        this.updateAssignmentPreview();
-        this.validateSubChapterSelection();
-    }
-
-    validateSubChapterSelection() {
-        const errorElement = document.getElementById('subChapterValidationError');
-        const container = document.getElementById('subChapterMultiSelect');
-        
-        if (!errorElement || !container) return;
-
-        if (this.selectedSubChapters.length === 0) {
-            errorElement.style.display = 'block';
-            container.classList.add('error');
-            this.validationErrors.subChapters = 'انتخاب حداقل یک زیرمبحث اجباری است';
-        } else {
-            errorElement.style.display = 'none';
-            container.classList.remove('error');
-            delete this.validationErrors.subChapters;
-        }
-    }
-
-    updateAssignmentPreview() {
-        const targetGroupsElement = document.getElementById('targetGroups');
-        const relatedSubChaptersElement = document.getElementById('relatedSubChapters');
-
-        if (targetGroupsElement) {
-            if (this.selectedGroups.length === 0) {
-                targetGroupsElement.textContent = 'همه گروه‌ها';
-            } else {
-                targetGroupsElement.textContent = this.selectedGroups.map(g => g.name).join(', ');
-            }
-        }
-
-        if (relatedSubChaptersElement) {
-            if (this.selectedSubChapters.length === 0) {
-                relatedSubChaptersElement.textContent = 'انتخاب نشده';
-            } else {
-                relatedSubChaptersElement.textContent = this.selectedSubChapters.map(sc => sc.title).join(', ');
-            }
-        }
-    }
 }
 
 // Initialize when DOM is loaded
+let formManager = null;
+
 document.addEventListener('DOMContentLoaded', () => {
-    new ModernScheduleItemFormManager();
+    formManager = new ModernScheduleItemFormManager();
+});
+
+// Cleanup on page unload to prevent memory leaks
+window.addEventListener('beforeunload', () => {
+    if (formManager && typeof formManager.cleanup === 'function') {
+        formManager.cleanup();
+    }
 });

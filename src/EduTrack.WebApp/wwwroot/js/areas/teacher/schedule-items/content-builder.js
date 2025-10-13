@@ -29,10 +29,30 @@ class ContentBuilder {
             addBtn.addEventListener('click', () => this.showContentBoxTypeModal());
         }
 
+        // Preview content button
+        const previewBtn = document.getElementById('previewContentBtn');
+        if (previewBtn) {
+            previewBtn.addEventListener('click', () => this.previewContent());
+        }
+
+        // Save content button
+        const saveBtn = document.getElementById('saveContentBtn');
+        if (saveBtn) {
+            saveBtn.addEventListener('click', () => this.saveContent());
+        }
+
+        // Quick template buttons
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.template-btn')) {
+                const template = e.target.closest('.template-btn').dataset.template;
+                this.addQuickTemplate(template);
+            }
+        });
+
         // Content box type selection
         document.addEventListener('click', (e) => {
-            if (e.target.closest('.content-box-type-item')) {
-                const type = e.target.closest('.content-box-type-item').dataset.type;
+            if (e.target.closest('.box-type-item')) {
+                const type = e.target.closest('.box-type-item').dataset.type;
                 this.addContentBox(type);
                 this.hideContentBoxTypeModal();
             }
@@ -40,8 +60,8 @@ class ContentBuilder {
 
         // Box actions
         document.addEventListener('click', (e) => {
-            if (e.target.closest('.box-action-btn')) {
-                const btn = e.target.closest('.box-action-btn');
+            if (e.target.closest('.btn-icon')) {
+                const btn = e.target.closest('.btn-icon');
                 const action = btn.dataset.action;
                 const box = btn.closest('.content-box-template');
                 
@@ -49,6 +69,10 @@ class ContentBuilder {
                     this.removeContentBox(box);
                 } else if (action === 'settings') {
                     this.toggleBoxSettings(box);
+                } else if (action === 'move-up') {
+                    this.moveBoxUp(box);
+                } else if (action === 'move-down') {
+                    this.moveBoxDown(box);
                 }
             }
         });
@@ -241,13 +265,19 @@ class ContentBuilder {
     }
 
     addContentBox(type) {
-        const container = document.getElementById('contentBoxesList');
+        const container = document.getElementById('contentBoxesContainer');
         const templates = document.getElementById('contentBoxTemplates');
         
         if (!container || !templates) return;
 
         const template = templates.querySelector(`[data-type="${type}"]`);
         if (!template) return;
+
+        // Hide empty state
+        const emptyState = document.getElementById('emptyState');
+        if (emptyState) {
+            emptyState.style.display = 'none';
+        }
 
         const newBox = template.cloneNode(true);
         newBox.id = `content-box-${++this.currentBoxId}`;
@@ -330,6 +360,14 @@ class ContentBuilder {
 
         // Remove from data structure
         this.contentBoxes = this.contentBoxes.filter(b => b.id !== boxId);
+
+        // Show empty state if no boxes left
+        if (this.contentBoxes.length === 0) {
+            const emptyState = document.getElementById('emptyState');
+            if (emptyState) {
+                emptyState.style.display = 'block';
+            }
+        }
 
         // Update order
         this.updateBoxOrder();
@@ -752,6 +790,120 @@ class ContentBuilder {
         }
     }
 
+    addQuickTemplate(template) {
+        const emptyState = document.getElementById('emptyState');
+        if (emptyState) {
+            emptyState.style.display = 'none';
+        }
+
+        switch (template) {
+            case 'text':
+                this.addContentBox('text');
+                break;
+            case 'image-text':
+                this.addContentBox('image');
+                setTimeout(() => this.addContentBox('text'), 100);
+                break;
+            case 'video-text':
+                this.addContentBox('video');
+                setTimeout(() => this.addContentBox('text'), 100);
+                break;
+            default:
+                this.addContentBox('text');
+        }
+    }
+
+    moveBoxUp(box) {
+        const container = document.getElementById('contentBoxesContainer');
+        const previousSibling = box.previousElementSibling;
+        
+        if (previousSibling && container) {
+            container.insertBefore(box, previousSibling);
+            this.updateBoxOrder();
+        }
+    }
+
+    moveBoxDown(box) {
+        const container = document.getElementById('contentBoxesContainer');
+        const nextSibling = box.nextElementSibling;
+        
+        if (nextSibling && container) {
+            container.insertBefore(nextSibling, box);
+            this.updateBoxOrder();
+        }
+    }
+
+    previewContent() {
+        const contentData = this.getContentData();
+        this.showContentPreview(contentData);
+    }
+
+    saveContent() {
+        const contentData = this.getContentData();
+        const contentJson = JSON.stringify(contentData);
+        
+        // Update the hidden content field
+        const contentField = document.getElementById('contentJson');
+        if (contentField) {
+            contentField.value = contentJson;
+        }
+
+        this.showSuccess('محتوای آموزشی با موفقیت ذخیره شد.');
+    }
+
+    showContentPreview(contentData) {
+        const modal = document.getElementById('previewModal');
+        const previewContent = document.getElementById('previewContent');
+        
+        if (!modal || !previewContent) return;
+
+        // Generate preview HTML
+        let previewHTML = '<div class="content-preview">';
+        
+        contentData.boxes.forEach(box => {
+            switch (box.type) {
+                case 'text':
+                    previewHTML += `<div class="preview-text-box">${box.data.content || ''}</div>`;
+                    break;
+                case 'image':
+                    if (box.data.imageUrl) {
+                        previewHTML += `<div class="preview-image-box">
+                            <img src="${box.data.imageUrl}" alt="${box.data.caption || ''}" style="max-width: 100%; height: auto;">
+                            ${box.data.caption ? `<p class="image-caption">${box.data.caption}</p>` : ''}
+                        </div>`;
+                    }
+                    break;
+                case 'video':
+                    if (box.data.videoUrl) {
+                        previewHTML += `<div class="preview-video-box">
+                            <video controls style="max-width: 100%; height: auto;">
+                                <source src="${box.data.videoUrl}" type="video/mp4">
+                            </video>
+                            ${box.data.caption ? `<p class="video-caption">${box.data.caption}</p>` : ''}
+                        </div>`;
+                    }
+                    break;
+                case 'audio':
+                    if (box.data.audioUrl) {
+                        previewHTML += `<div class="preview-audio-box">
+                            <audio controls style="width: 100%;">
+                                <source src="${box.data.audioUrl}" type="audio/mpeg">
+                            </audio>
+                            ${box.data.caption ? `<p class="audio-caption">${box.data.caption}</p>` : ''}
+                        </div>`;
+                    }
+                    break;
+            }
+        });
+        
+        previewHTML += '</div>';
+        previewContent.innerHTML = previewHTML;
+
+        // Show modal
+        const bsModal = new bootstrap.Modal(modal);
+        bsModal.show();
+    }
+
     showError(message) {
         // You can implement a toast notification system here
         alert(message);
@@ -760,6 +912,25 @@ class ContentBuilder {
     showSuccess(message) {
         // You can implement a toast notification system here
         console.log(message);
+        // Show a simple success message
+        const successDiv = document.createElement('div');
+        successDiv.className = 'alert alert-success alert-dismissible fade show';
+        successDiv.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        
+        const container = document.querySelector('.content-builder');
+        if (container) {
+            container.insertBefore(successDiv, container.firstChild);
+            
+            // Auto remove after 3 seconds
+            setTimeout(() => {
+                if (successDiv.parentNode) {
+                    successDiv.remove();
+                }
+            }, 3000);
+        }
     }
 }
 
