@@ -423,81 +423,190 @@ class ModernScheduleItemFormManager {
     }
 
     setupDatetimeHelpers() {
-        const setNowBtn = document.getElementById('setNowBtn');
-        const setWeekBtn = document.getElementById('setWeekBtn');
+        // Setup start date preset buttons
+        this.setupStartDatePresets();
+        
+        // Setup due date preset buttons
+        this.setupDueDatePresets();
+        
+        // Setup conditional score display
+        this.setupConditionalScoreDisplay();
+    }
 
-        if (setNowBtn) {
-            setNowBtn.addEventListener('click', () => {
-                const now = new Date();
-                const persianStartDateInput = document.getElementById('PersianStartDate');
-                const startDateInput = document.getElementById('StartDate');
-                const startTimeInput = document.getElementById('StartTime');
+    setupStartDatePresets() {
+        const startDatePresets = document.querySelectorAll('.date-preset-btn[data-preset]');
+        
+        startDatePresets.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const preset = btn.dataset.preset;
+                const targetDate = this.calculateStartDate(preset);
                 
-                if (persianStartDateInput && startDateInput) {
-                    // Convert to Persian date
-                    const persianDate = this.convertToPersianDate(now);
-                    persianStartDateInput.value = persianDate;
-                    
-                    // Set hidden field with current date and time
-                    startDateInput.value = now.toISOString();
-                    
-                    // Set time to current time
-                    if (startTimeInput) {
-                        const timeString = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-                        startTimeInput.value = timeString;
-                    }
-                    
-                    // Trigger datepicker update
-                    this.updateDatePicker(persianStartDateInput, persianDate);
-                    
-                    // Update duration calculator
-                    this.updateDurationCalculator();
-                    
-                    console.log('Set to current time:', {
-                        persianDate: persianDate,
-                        isoDate: now.toISOString(),
-                        time: startTimeInput ? startTimeInput.value : 'N/A'
-                    });
+                if (targetDate) {
+                    this.setStartDate(targetDate);
+                    this.updatePresetButtonState(btn, startDatePresets);
                 }
+            });
+        });
+    }
+
+    setupDueDatePresets() {
+        const dueDatePresets = document.querySelectorAll('.date-preset-btn[data-preset]');
+        
+        dueDatePresets.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const preset = btn.dataset.preset;
+                const targetDate = this.calculateDueDate(preset);
+                
+                if (targetDate) {
+                    this.setDueDate(targetDate);
+                    this.updatePresetButtonState(btn, dueDatePresets);
+                }
+            });
+        });
+    }
+
+    calculateStartDate(preset) {
+        const now = new Date();
+        
+        switch (preset) {
+            case 'now':
+                return now;
+            case 'tomorrow':
+                return new Date(now.getTime() + (1 * 24 * 60 * 60 * 1000));
+            case '2days':
+                return new Date(now.getTime() + (2 * 24 * 60 * 60 * 1000));
+            case 'nextweek':
+                return new Date(now.getTime() + (7 * 24 * 60 * 60 * 1000));
+            case '2weeks':
+                return new Date(now.getTime() + (14 * 24 * 60 * 60 * 1000));
+            case 'nextmonth':
+                return new Date(now.getTime() + (30 * 24 * 60 * 60 * 1000));
+            case '2months':
+                return new Date(now.getTime() + (60 * 24 * 60 * 60 * 1000));
+            default:
+                return null;
+        }
+    }
+
+    calculateDueDate(preset) {
+        const startDateInput = document.getElementById('StartDate');
+        const startDate = startDateInput ? new Date(startDateInput.value) : new Date();
+        
+        switch (preset) {
+            case '1day':
+                return new Date(startDate.getTime() + (1 * 24 * 60 * 60 * 1000));
+            case '2days':
+                return new Date(startDate.getTime() + (2 * 24 * 60 * 60 * 1000));
+            case '3days':
+                return new Date(startDate.getTime() + (3 * 24 * 60 * 60 * 1000));
+            case '1week':
+                return new Date(startDate.getTime() + (7 * 24 * 60 * 60 * 1000));
+            case '2weeks':
+                return new Date(startDate.getTime() + (14 * 24 * 60 * 60 * 1000));
+            case '1month':
+                return new Date(startDate.getTime() + (30 * 24 * 60 * 60 * 1000));
+            default:
+                return null;
+        }
+    }
+
+    setStartDate(date) {
+        const persianStartDateInput = document.getElementById('PersianStartDate');
+        const startDateInput = document.getElementById('StartDate');
+        const startTimeInput = document.getElementById('StartTime');
+        
+        if (persianStartDateInput && startDateInput) {
+            // Convert to Persian date
+            const persianDate = this.convertToPersianDate(date);
+            persianStartDateInput.value = persianDate;
+            
+            // Set hidden field with date
+            startDateInput.value = date.toISOString();
+            
+            // Set time to current time
+            if (startTimeInput) {
+                const timeString = `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+                startTimeInput.value = timeString;
+            }
+            
+            // Trigger datepicker update
+            this.updateDatePicker(persianStartDateInput, persianDate);
+            
+            // Update duration calculator
+            this.updateDurationCalculator();
+        }
+    }
+
+    setDueDate(date) {
+        const persianDueDateInput = document.getElementById('PersianDueDate');
+        const dueDateInput = document.getElementById('DueDate');
+        const dueTimeInput = document.getElementById('DueTime');
+        
+        if (persianDueDateInput && dueDateInput) {
+            // Convert to Persian date
+            const persianDate = this.convertToPersianDate(date);
+            persianDueDateInput.value = persianDate;
+            
+            // Set hidden field with date
+            dueDateInput.value = date.toISOString();
+            
+            // Set time to current time
+            if (dueTimeInput) {
+                const timeString = `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+                dueTimeInput.value = timeString;
+            }
+            
+            // Trigger datepicker update
+            this.updateDatePicker(persianDueDateInput, persianDate);
+            
+            // Update duration calculator
+            this.updateDurationCalculator();
+        }
+    }
+
+    updatePresetButtonState(activeBtn, allButtons) {
+        // Remove active class from all buttons in the same group
+        allButtons.forEach(btn => {
+            if (btn.closest('.date-presets') === activeBtn.closest('.date-presets')) {
+                btn.classList.remove('active');
+            }
+        });
+        
+        // Add active class to clicked button
+        activeBtn.classList.add('active');
+    }
+
+    setupConditionalScoreDisplay() {
+        // Check if we're in step 2 and hide score for reminder items
+        const itemTypeSelect = document.getElementById('itemType');
+        const maxScoreSection = document.getElementById('maxScoreSection');
+        
+        if (itemTypeSelect && maxScoreSection) {
+            // Initial check
+            this.toggleScoreDisplay();
+            
+            // Listen for type changes
+            itemTypeSelect.addEventListener('change', () => {
+                this.toggleScoreDisplay();
             });
         }
+    }
 
-        if (setWeekBtn) {
-            setWeekBtn.addEventListener('click', () => {
-                const now = new Date();
-                const weekFromNow = new Date(now.getTime() + (7 * 24 * 60 * 60 * 1000)); // Add 7 days
-                
-                const persianDueDateInput = document.getElementById('PersianDueDate');
-                const dueDateInput = document.getElementById('DueDate');
-                const dueTimeInput = document.getElementById('DueTime');
-                
-                if (persianDueDateInput && dueDateInput) {
-                    // Convert to Persian date
-                    const persianDate = this.convertToPersianDate(weekFromNow);
-                    persianDueDateInput.value = persianDate;
-                    
-                    // Set hidden field with date one week from now
-                    dueDateInput.value = weekFromNow.toISOString();
-                    
-                    // Set time to current time (or you can set to end of day)
-                    if (dueTimeInput) {
-                        const timeString = `${weekFromNow.getHours().toString().padStart(2, '0')}:${weekFromNow.getMinutes().toString().padStart(2, '0')}`;
-                        dueTimeInput.value = timeString;
-                    }
-                    
-                    // Trigger datepicker update
-                    this.updateDatePicker(persianDueDateInput, persianDate);
-                    
-                    // Update duration calculator
-                    this.updateDurationCalculator();
-                    
-                    console.log('Set to one week from now:', {
-                        persianDate: persianDate,
-                        isoDate: weekFromNow.toISOString(),
-                        time: dueTimeInput ? dueTimeInput.value : 'N/A'
-                    });
-                }
-            });
+    toggleScoreDisplay() {
+        const itemTypeSelect = document.getElementById('itemType');
+        const maxScoreSection = document.getElementById('maxScoreSection');
+        
+        if (itemTypeSelect && maxScoreSection) {
+            const selectedType = parseInt(itemTypeSelect.value);
+            
+            // Hide score section for reminder items (Reminder = 0 in ScheduleItemType enum)
+            const isReminderType = selectedType === 0;
+            
+            if (isReminderType) {
+                maxScoreSection.style.display = 'none';
+            } else {
+                maxScoreSection.style.display = 'block';
+            }
         }
     }
 

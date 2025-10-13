@@ -12,14 +12,26 @@
     </div>
     
     <div class="step-content">
-        <div class="row">
-            <div class="col-md-6">
-                <div class="form-group-modern">
-                    <label asp-for="StartDate" class="form-label-modern">
-                        <i class="fas fa-play"></i>
-                        <span>تاریخ و زمان شروع</span>
-                        <span class="required-indicator">*</span>
-                    </label>
+        <!-- Required Items Section -->
+        <div class="required-items-section">
+            <div class="section-header">
+                <h4 class="section-title">
+                    <i class="fas fa-asterisk"></i>
+                    <span>آیتم‌های اجباری</span>
+                </h4>
+            </div>
+            
+            <div class="required-items-grid">
+                <!-- Start Date -->
+                <div class="required-item">
+                    <div class="item-header">
+                        <label asp-for="StartDate" class="form-label-modern">
+                            <i class="fas fa-play"></i>
+                            <span>تاریخ شروع</span>
+                            <span class="required-indicator">*</span>
+                        </label>
+                    </div>
+                    
                     <div class="datetime-input-group">
                         <div class="date-input-wrapper">
                             <input type="text" id="PersianStartDate" class="form-input-modern persian-datepicker" 
@@ -29,22 +41,52 @@
                         <div class="time-input-wrapper">
                             <input type="time" id="StartTime" class="form-input-modern" />
                         </div>
-                        <button type="button" class="datetime-btn" id="setNowBtn">
+                    </div>
+                    
+                    <div class="date-presets">
+                        <button type="button" class="date-preset-btn" data-preset="now">
                             <i class="fas fa-clock"></i>
                             <span>الان</span>
                         </button>
+                        <button type="button" class="date-preset-btn" data-preset="tomorrow">
+                            <i class="fas fa-calendar-day"></i>
+                            <span>فردا</span>
+                        </button>
+                        <button type="button" class="date-preset-btn" data-preset="2days">
+                            <i class="fas fa-calendar-plus"></i>
+                            <span>دو روز بعد</span>
+                        </button>
+                        <button type="button" class="date-preset-btn" data-preset="nextweek">
+                            <i class="fas fa-calendar-week"></i>
+                            <span>هفته آینده</span>
+                        </button>
+                        <button type="button" class="date-preset-btn" data-preset="2weeks">
+                            <i class="fas fa-calendar-alt"></i>
+                            <span>دو هفته آینده</span>
+                        </button>
+                        <button type="button" class="date-preset-btn" data-preset="nextmonth">
+                            <i class="fas fa-calendar"></i>
+                            <span>ماه آینده</span>
+                        </button>
+                        <button type="button" class="date-preset-btn" data-preset="2months">
+                            <i class="fas fa-calendar-check"></i>
+                            <span>دو ماه آینده</span>
+                        </button>
                     </div>
+                    
                     <span asp-validation-for="StartDate" class="validation-error-modern"></span>
                     <div class="input-hint">زمانی که دانش‌آموزان می‌توانند شروع به کار کنند</div>
                 </div>
-            </div>
-            
-            <div class="col-md-6">
-                <div class="form-group-modern">
-                    <label asp-for="DueDate" class="form-label-modern">
-                        <i class="fas fa-clock"></i>
-                        <span>تاریخ و زمان مهلت</span>
-                    </label>
+                
+                <!-- Due Date -->
+                <div class="required-item">
+                    <div class="item-header">
+                        <label asp-for="DueDate" class="form-label-modern">
+                            <i class="fas fa-clock"></i>
+                            <span>تاریخ مهلت</span>
+                        </label>
+                    </div>
+                    
                     <div class="datetime-input-group">
                         <div class="date-input-wrapper">
                             <input type="text" id="PersianDueDate" class="form-input-modern persian-datepicker" 
@@ -54,37 +96,48 @@
                         <div class="time-input-wrapper">
                             <input type="time" id="DueTime" class="form-input-modern" />
                         </div>
-                        <button type="button" class="datetime-btn" id="setWeekBtn">
+                    </div>
+                    
+                    <div class="date-presets">
+                        <button type="button" class="date-preset-btn" data-preset="1day">
+                            <i class="fas fa-calendar-day"></i>
+                            <span>یک روز</span>
+                        </button>
+                        <button type="button" class="date-preset-btn" data-preset="2days">
+                            <i class="fas fa-calendar-plus"></i>
+                            <span>دو روز</span>
+                        </button>
+                        <button type="button" class="date-preset-btn" data-preset="3days">
+                            <i class="fas fa-calendar-check"></i>
+                            <span>سه روز</span>
+                        </button>
+                        <button type="button" class="date-preset-btn" data-preset="1week">
                             <i class="fas fa-calendar-week"></i>
                             <span>یک هفته</span>
                         </button>
+                        <button type="button" class="date-preset-btn" data-preset="2weeks">
+                            <i class="fas fa-calendar-alt"></i>
+                            <span>دو هفته</span>
+                        </button>
+                        <button type="button" class="date-preset-btn" data-preset="1month">
+                            <i class="fas fa-calendar"></i>
+                            <span>یک ماه</span>
+                        </button>
                     </div>
+                    
                     <span asp-validation-for="DueDate" class="validation-error-modern"></span>
                     <div class="input-hint">آخرین مهلت تحویل آیتم (اختیاری)</div>
                 </div>
-            </div>
-        </div>
-        
-        <div class="row">
-            <div class="col-md-6">
-                <div class="form-group-modern">
-                    <div class="checkbox-modern">
-                        <input asp-for="IsMandatory" type="checkbox" class="form-checkbox-modern" id="isMandatory" />
-                        <label asp-for="IsMandatory" class="form-checkbox-label-modern">
-                            <span class="checkbox-indicator"></span>
-                            <span class="checkbox-text">آیتم اجباری</span>
+                
+                <!-- Max Score (Hidden for reminder items) -->
+                <div class="required-item" id="maxScoreSection">
+                    <div class="item-header">
+                        <label asp-for="MaxScore" class="form-label-modern">
+                            <i class="fas fa-star"></i>
+                            <span>حداکثر امتیاز</span>
                         </label>
                     </div>
-                    <div class="input-hint">اگر فعال باشد، دانش‌آموزان باید حتماً این آیتم را انجام دهند</div>
-                </div>
-            </div>
-            
-            <div class="col-md-6">
-                <div class="form-group-modern">
-                    <label asp-for="MaxScore" class="form-label-modern">
-                        <i class="fas fa-star"></i>
-                        <span>حداکثر امتیاز</span>
-                    </label>
+                    
                     <div class="score-input-group">
                         <input asp-for="MaxScore" type="number" class="form-input-modern" min="0" max="100" step="0.1" placeholder="0" id="maxScore" />
                         <div class="score-presets">
@@ -94,31 +147,29 @@
                             <button type="button" class="score-preset" data-score="100">100</button>
                         </div>
                     </div>
+                    
                     <span asp-validation-for="MaxScore" class="validation-error-modern"></span>
                     <div class="input-hint">امتیاز کامل برای این آیتم (0-100)</div>
                 </div>
-            </div>
-            
-            <div class="col-md-6">
-                <div class="form-group-modern">
-                    <label class="form-label-modern">
-                        <i class="fas fa-cog"></i>
-                        <span>تنظیمات آیتم</span>
-                    </label>
-                    <div class="checkbox-group-modern">
-                        <div class="checkbox-item-modern">
-                            <input asp-for="IsMandatory" class="checkbox-input-modern" type="checkbox" id="isMandatory" />
-                            <label for="isMandatory" class="checkbox-label-modern">
-                                <div class="checkbox-custom"></div>
-                                <div class="checkbox-content">
-                                    <div class="checkbox-title">اجباری
-                                        <span class="checkbox-desc">(دانش‌آموزان باید حتماً این آیتم را انجام دهند)</span>
-                                    </div>
-                                </div>
-                            </label>
-                        </div>
+                
+                <!-- Is Mandatory -->
+                <div class="required-item">
+                    <div class="item-header">
+                        <label class="form-label-modern">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <span>اجباری بودن</span>
+                        </label>
                     </div>
+                    
+                    <div class="checkbox-modern">
+                        <input asp-for="IsMandatory" type="checkbox" class="form-checkbox-modern" id="isMandatory" />
+                        <label for="isMandatory" class="form-checkbox-label-modern">
+                            <span class="checkbox-text">آیتم اجباری</span>
+                        </label>
+                    </div>
+                    
                     <span asp-validation-for="IsMandatory" class="validation-error-modern"></span>
+                    <div class="input-hint">اگر فعال باشد، دانش‌آموزان باید حتماً این آیتم را انجام دهند</div>
                 </div>
             </div>
         </div>
