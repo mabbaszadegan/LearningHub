@@ -696,6 +696,22 @@ public class AppDbContext : IdentityDbContext<User>
             entity.HasIndex(e => e.SubChapterId);
         });
 
+        // Configure ScheduleItemStudentAssignment entity
+        builder.Entity<ScheduleItemStudentAssignment>(entity =>
+        {
+            entity.HasOne(e => e.ScheduleItem)
+                .WithMany(e => e.StudentAssignments)
+                .HasForeignKey(e => e.ScheduleItemId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.Student)
+                .WithMany()
+                .HasForeignKey(e => e.StudentId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasIndex(e => new { e.ScheduleItemId, e.StudentId }).IsUnique();
+            entity.HasIndex(e => e.ScheduleItemId);
+            entity.HasIndex(e => e.StudentId);
+        });
+
         // Configure Submission entity
         builder.Entity<Submission>(entity =>
         {

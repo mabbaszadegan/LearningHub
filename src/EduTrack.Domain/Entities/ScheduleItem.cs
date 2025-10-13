@@ -36,6 +36,7 @@ public class ScheduleItem
     // New navigation properties for multiple assignments
     public ICollection<ScheduleItemGroupAssignment> GroupAssignments { get; set; } = new List<ScheduleItemGroupAssignment>();
     public ICollection<ScheduleItemSubChapterAssignment> SubChapterAssignments { get; set; } = new List<ScheduleItemSubChapterAssignment>();
+    public ICollection<ScheduleItemStudentAssignment> StudentAssignments { get; set; } = new List<ScheduleItemStudentAssignment>();
 
     // Private constructor for EF Core
     private ScheduleItem() { }
@@ -229,5 +230,37 @@ public class ScheduleItem
     public bool IsAssignedToAllGroups()
     {
         return !GroupAssignments.Any();
+    }
+
+    public void AddStudentAssignment(ScheduleItemStudentAssignment studentAssignment)
+    {
+        if (studentAssignment == null)
+            throw new ArgumentNullException(nameof(studentAssignment));
+
+        if (StudentAssignments.Any(sa => sa.StudentId == studentAssignment.StudentId))
+            throw new InvalidOperationException("Student already assigned to this schedule item");
+
+        StudentAssignments.Add(studentAssignment);
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
+    public void RemoveStudentAssignment(string studentId)
+    {
+        var assignment = StudentAssignments.FirstOrDefault(sa => sa.StudentId == studentId);
+        if (assignment != null)
+        {
+            StudentAssignments.Remove(assignment);
+            UpdatedAt = DateTimeOffset.UtcNow;
+        }
+    }
+
+    public bool IsAssignedToStudent(string studentId)
+    {
+        return StudentAssignments.Any(sa => sa.StudentId == studentId);
+    }
+
+    public bool IsAssignedToAllStudents()
+    {
+        return !StudentAssignments.Any();
     }
 }

@@ -112,6 +112,7 @@
                         <!-- Hidden fields for multi-select values -->
                         <input type="hidden" id="selectedGroupIds" name="GroupIds" />
                         <input type="hidden" id="selectedSubChapterIds" name="SubChapterIds" />
+                        <input type="hidden" id="selectedStudentIds" name="StudentIds" />
                         <!-- Step 1: Basic Information -->
                         <div class="form-step active" data-step="basic">
                             <div class="step-header">
@@ -379,8 +380,33 @@
                                         <div class="badge-grid" id="groupBadgeGrid">
                                             <!-- Groups will be loaded dynamically as badges -->
                                         </div>
-                                        <div class="selected-summary" id="groupSelectionSummary">
-                                            <span class="summary-text">هیچ گروهی انتخاب نشده - برای همه گروه‌ها</span>
+                                        <!-- Student Selection Container - Hidden by default -->
+                                        <div class="student-selection-container" id="studentSelectionContainer" style="display: none;">
+                                            <div class="student-list-container" id="studentListContainer">
+                                                <div class="student-list-header">
+                                                    <div class="student-count" id="studentCount">0 دانش‌آموز</div>
+                                                    <div class="student-actions">
+                                                        <button type="button" class="btn-select-all" id="selectAllStudents">
+                                                            <i class="fas fa-check-double"></i>
+                                                            انتخاب همه
+                                                        </button>
+                                                        <button type="button" class="btn-clear-all" id="clearAllStudents">
+                                                            <i class="fas fa-times"></i>
+                                                            پاک کردن همه
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="student-grid" id="studentGrid">
+                                                    <!-- Students will be loaded dynamically -->
+                                                </div>
+                                                
+                                                <div class="selected-students-summary" id="selectedStudentsSummary">
+                                                    <div class="summary-text">
+                                                        <span id="selectedStudentsText">هیچ دانش‌آموزی انتخاب نشده - برای همه دانش‌آموزان گروه</span>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -417,6 +443,7 @@
                                         </div>
                                     </div>
                                 </div>
+
 
                                 <!-- Assignment Preview Section -->
                                 <div class="assignment-preview-modern" id="assignmentPreview">

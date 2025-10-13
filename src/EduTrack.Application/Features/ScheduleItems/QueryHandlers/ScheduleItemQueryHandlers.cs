@@ -156,6 +156,9 @@ public class GetScheduleItemByIdQueryHandler : IRequestHandler<GetScheduleItemBy
             
             // Load subchapter assignments
             var subChapterIds = scheduleItem.SubChapterAssignments.Select(sca => sca.SubChapterId).ToList();
+            
+            // Load student assignments
+            var studentIds = scheduleItem.StudentAssignments.Select(sa => sa.StudentId).ToList();
 
             var dto = new ScheduleItemDto
             {
@@ -165,6 +168,7 @@ public class GetScheduleItemByIdQueryHandler : IRequestHandler<GetScheduleItemBy
                 GroupName = groupName,
                 GroupIds = groupIds,
                 SubChapterIds = subChapterIds,
+                StudentIds = studentIds,
                 Type = scheduleItem.Type,
                 TypeName = GetTypeName(scheduleItem.Type),
                 Title = scheduleItem.Title,

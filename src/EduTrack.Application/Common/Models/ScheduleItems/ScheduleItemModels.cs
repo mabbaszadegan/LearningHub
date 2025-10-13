@@ -11,6 +11,7 @@ public class ScheduleItemDto
     public string? GroupName { get; set; }
     public List<int> GroupIds { get; set; } = new List<int>();
     public List<int> SubChapterIds { get; set; } = new List<int>();
+    public List<string> StudentIds { get; set; } = new List<string>();
     public ScheduleItemType Type { get; set; }
     public string TypeName { get; set; } = string.Empty;
     public string Title { get; set; } = string.Empty;
@@ -66,6 +67,7 @@ public class CreateScheduleItemRequest
     // New properties for multiple assignments
     public List<int>? GroupIds { get; set; }
     public List<int>? SubChapterIds { get; set; }
+    public List<string>? StudentIds { get; set; }
 }
 
 public class UpdateScheduleItemRequest
@@ -86,6 +88,7 @@ public class UpdateScheduleItemRequest
     // New properties for multiple assignments
     public List<int>? GroupIds { get; set; }
     public List<int>? SubChapterIds { get; set; }
+    public List<string>? StudentIds { get; set; }
 }
 
 // Content Models for different item types
@@ -258,6 +261,7 @@ public record SaveScheduleItemStepRequest
     public string? DueTime { get; init; }
     public List<int>? GroupIds { get; init; }
     public List<int>? SubChapterIds { get; init; }
+    public List<string>? StudentIds { get; init; }
 }
 
 public record CompleteScheduleItemRequest

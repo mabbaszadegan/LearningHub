@@ -109,9 +109,27 @@ public class ScheduleItemRepository : Repository<ScheduleItem>, IScheduleItemRep
                 .ThenInclude(ga => ga.StudentGroup)
             .Include(si => si.SubChapterAssignments)
                 .ThenInclude(sca => sca.SubChapter)
+            .Include(si => si.StudentAssignments)
+                .ThenInclude(sa => sa.Student)
             .Include(si => si.TeachingPlan)
             .Include(si => si.Group)
             .Include(si => si.Lesson)
             .FirstOrDefaultAsync(si => si.Id == id, cancellationToken);
+    }
+
+    public async Task<IEnumerable<ScheduleItemStudentAssignment>> GetStudentAssignmentsAsync(int scheduleItemId, CancellationToken cancellationToken = default)
+    {
+        return await _context.Set<ScheduleItemStudentAssignment>()
+            .Where(sa => sa.ScheduleItemId == scheduleItemId)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task RemoveStudentAssignmentsAsync(IEnumerable<ScheduleItemStudentAssignment> assignments, CancellationToken cancellationToken = default)
+    {
+        if (assignments.Any())
+        {
+            _context.Set<ScheduleItemStudentAssignment>().RemoveRange(assignments);
+            await _context.SaveChangesAsync(cancellationToken);
+        }
     }
 }

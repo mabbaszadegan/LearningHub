@@ -77,6 +77,16 @@ public class CreateScheduleItemCommandHandler : IRequestHandler<CreateScheduleIt
                 }
             }
 
+            // Add student assignments if specified
+            if (request.StudentIds != null && request.StudentIds.Any())
+            {
+                foreach (var studentId in request.StudentIds)
+                {
+                    var studentAssignment = ScheduleItemStudentAssignment.Create(scheduleItem.Id, studentId);
+                    scheduleItem.AddStudentAssignment(studentAssignment);
+                }
+            }
+
             await _scheduleItemRepository.AddAsync(scheduleItem, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
@@ -367,39 +377,50 @@ public class SaveScheduleItemStepCommandHandler : IRequestHandler<SaveScheduleIt
                 {
                     return Result<int>.Failure("انتخاب حداقل یک زیرمبحث اجباری است.");
                 }
-                // Update group assignments
-                if (request.GroupIds != null)
-                {
-                    // Remove existing group assignments
-                    var existingGroupIds = scheduleItem.GroupAssignments.Select(ga => ga.StudentGroupId).ToList();
-                    foreach (var existingGroupId in existingGroupIds)
-                    {
-                        scheduleItem.RemoveGroupAssignment(existingGroupId);
-                    }
+                // Always clear and update group assignments
+                scheduleItem.GroupAssignments.Clear();
 
-                    // Add new group assignments
+                // Add new group assignments if provided
+                if (request.GroupIds != null && request.GroupIds.Any())
+                {
                     foreach (var groupId in request.GroupIds)
                     {
                         var groupAssignment = ScheduleItemGroupAssignment.Create(scheduleItem.Id, groupId);
-                        scheduleItem.AddGroupAssignment(groupAssignment);
+                        scheduleItem.GroupAssignments.Add(groupAssignment);
                     }
                 }
 
-                // Update subchapter assignments
-                if (request.SubChapterIds != null)
-                {
-                    // Remove existing subchapter assignments
-                    var existingSubChapterIds = scheduleItem.SubChapterAssignments.Select(sca => sca.SubChapterId).ToList();
-                    foreach (var existingSubChapterId in existingSubChapterIds)
-                    {
-                        scheduleItem.RemoveSubChapterAssignment(existingSubChapterId);
-                    }
+                // Always clear and update subchapter assignments
+                scheduleItem.SubChapterAssignments.Clear();
 
-                    // Add new subchapter assignments
+                // Add new subchapter assignments if provided
+                if (request.SubChapterIds != null && request.SubChapterIds.Any())
+                {
                     foreach (var subChapterId in request.SubChapterIds)
                     {
                         var subChapterAssignment = ScheduleItemSubChapterAssignment.Create(scheduleItem.Id, subChapterId);
-                        scheduleItem.AddSubChapterAssignment(subChapterAssignment);
+                        scheduleItem.SubChapterAssignments.Add(subChapterAssignment);
+                    }
+                }
+
+                // Always clear and update student assignments
+                // First, remove existing assignments from database
+                var existingStudentAssignments = await _scheduleItemRepository.GetStudentAssignmentsAsync(scheduleItem.Id, cancellationToken);
+                if (existingStudentAssignments.Any())
+                {
+                    await _scheduleItemRepository.RemoveStudentAssignmentsAsync(existingStudentAssignments, cancellationToken);
+                }
+                
+                // Clear in-memory collection
+                scheduleItem.StudentAssignments.Clear();
+
+                // Add new student assignments if provided
+                if (request.StudentIds != null && request.StudentIds.Any())
+                {
+                    foreach (var studentId in request.StudentIds)
+                    {
+                        var studentAssignment = ScheduleItemStudentAssignment.Create(scheduleItem.Id, studentId);
+                        scheduleItem.StudentAssignments.Add(studentAssignment);
                     }
                 }
             }

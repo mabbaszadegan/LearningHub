@@ -147,7 +147,8 @@ public class ScheduleItemController : Controller
                 request.ContentJson,
                 request.MaxScore,
                 request.GroupIds,
-                request.SubChapterIds
+                request.SubChapterIds,
+                request.StudentIds
             );
 
             var result = await _mediator.Send(command);
@@ -367,6 +368,7 @@ public class ScheduleItemController : Controller
         // Parse comma-separated IDs if they come as strings
         List<int>? groupIds = request.GroupIds;
         List<int>? subChapterIds = request.SubChapterIds;
+        List<string>? studentIds = request.StudentIds;
 
         var command = new SaveScheduleItemStepCommand(
             request.Id,
@@ -386,7 +388,8 @@ public class ScheduleItemController : Controller
             request.StartTime,
             request.DueTime,
             groupIds,
-            subChapterIds
+            subChapterIds,
+            studentIds
         );
 
             var result = await _mediator.Send(command);

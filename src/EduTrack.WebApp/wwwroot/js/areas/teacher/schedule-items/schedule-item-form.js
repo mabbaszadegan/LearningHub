@@ -16,6 +16,8 @@ class ModernScheduleItemFormManager {
         this.isEditMode = false;
         this.selectedGroups = [];
         this.selectedSubChapters = [];
+        this.selectedStudents = [];
+        this.allStudents = []; // All students from all selected groups
         this.init();
     }
 
@@ -58,6 +60,9 @@ class ModernScheduleItemFormManager {
 
         // Step progress indicators
         this.setupStepProgressIndicators();
+
+        // Student selection
+        this.setupStudentSelection();
     }
 
     setupStepNavigationListeners() {
@@ -910,6 +915,9 @@ class ModernScheduleItemFormManager {
         if (this.selectedSubChapters.length > 0) {
             data.SubChapterIds = this.selectedSubChapters.map(sc => sc.id);
         }
+        if (this.selectedStudents.length > 0) {
+            data.StudentIds = this.selectedStudents.map(s => s.id);
+        }
 
         return data;
     }
@@ -1411,16 +1419,19 @@ class ModernScheduleItemFormManager {
                 stepData.MaxScore = parseFloat(document.getElementById('maxScore')?.value) || null;
                 stepData.IsMandatory = document.getElementById('isMandatory')?.checked || false;
                 break;
-            case 3:
-                stepData.GroupId = parseInt(document.getElementById('groupId')?.value) || null;
-                // Add selected groups and subchapters for badge-based selection
-                if (this.selectedGroups.length > 0) {
-                    stepData.GroupIds = this.selectedGroups.map(g => g.id);
-                }
-                if (this.selectedSubChapters.length > 0) {
-                    stepData.SubChapterIds = this.selectedSubChapters.map(sc => sc.id);
-                }
-                break;
+        case 3:
+            stepData.GroupId = parseInt(document.getElementById('groupId')?.value) || null;
+            // Add selected groups and subchapters for badge-based selection
+            if (this.selectedGroups.length > 0) {
+                stepData.GroupIds = this.selectedGroups.map(g => g.id);
+            }
+            if (this.selectedSubChapters.length > 0) {
+                stepData.SubChapterIds = this.selectedSubChapters.map(sc => sc.id);
+            }
+            if (this.selectedStudents.length > 0) {
+                stepData.StudentIds = this.selectedStudents.map(s => s.id);
+            }
+            break;
             case 4:
                 stepData.ContentJson = this.collectContentData();
                 break;
@@ -1490,6 +1501,9 @@ class ModernScheduleItemFormManager {
         }
         if (data.subChapterIds && data.subChapterIds.length > 0) {
             this.selectedSubChapters = data.subChapterIds.map(id => ({ id: id, title: '' })); // Title will be loaded later
+        }
+        if (data.studentIds && data.studentIds.length > 0) {
+            this.selectedStudents = data.studentIds.map(id => ({ id: id, firstName: '', lastName: '' })); // Details will be loaded later
         }
 
         // Update current step
@@ -1582,6 +1596,11 @@ class ModernScheduleItemFormManager {
             this.updateSubChapterSelectionSummary();
             this.updateAssignmentPreview();
             this.updateHiddenInputs();
+            
+            // Load students for selected groups
+            if (this.selectedGroups.length > 0) {
+                this.updateStudentSelectionVisibility();
+            }
 
         } catch (error) {
             console.error('Error loading existing assignments:', error);
@@ -1742,6 +1761,7 @@ class ModernScheduleItemFormManager {
         this.updateGroupSelectionSummary();
         this.updateAssignmentPreview();
         this.updateHiddenInputs();
+        this.updateStudentSelectionVisibility(); // Update student list when groups change
     }
 
     toggleGroupSelectionLegacy(groupId, groupName, optionElement) {
@@ -1922,6 +1942,7 @@ class ModernScheduleItemFormManager {
         // Update hidden inputs for server submission
         const groupIdsInput = document.getElementById('selectedGroupIds');
         const subChapterIdsInput = document.getElementById('selectedSubChapterIds');
+        const studentIdsInput = document.getElementById('selectedStudentIds');
         
         if (groupIdsInput) {
             groupIdsInput.value = this.selectedGroups.map(g => g.id).join(',');
@@ -1929,6 +1950,226 @@ class ModernScheduleItemFormManager {
         
         if (subChapterIdsInput) {
             subChapterIdsInput.value = this.selectedSubChapters.map(sc => sc.id).join(',');
+        }
+        
+        if (studentIdsInput) {
+            studentIdsInput.value = this.selectedStudents.map(s => s.id).join(',');
+        }
+    }
+
+    setupStudentSelection() {
+        // Setup student selection functionality
+        this.setupStudentSelectionListeners();
+    }
+
+    setupStudentSelectionListeners() {
+        // Listen for group selection changes to show/hide student selection
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.group-badge')) {
+                setTimeout(() => {
+                    this.updateStudentSelectionVisibility();
+                }, 100);
+            }
+        });
+
+        // Setup select all and clear all buttons
+        const selectAllBtn = document.getElementById('selectAllStudents');
+        const clearAllBtn = document.getElementById('clearAllStudents');
+
+        if (selectAllBtn) {
+            selectAllBtn.addEventListener('click', () => {
+                this.selectAllStudents();
+            });
+        }
+
+        if (clearAllBtn) {
+            clearAllBtn.addEventListener('click', () => {
+                this.clearAllStudents();
+            });
+        }
+    }
+
+    updateStudentSelectionVisibility() {
+        const studentSelectionContainer = document.getElementById('studentSelectionContainer');
+        const studentListContainer = document.getElementById('studentListContainer');
+
+        if (this.selectedGroups.length > 0) {
+            // Show student selection for selected groups
+            studentSelectionContainer.style.display = 'block';
+            studentListContainer.style.display = 'block';
+            
+            // Load students for all selected groups
+            this.loadStudentsForSelectedGroups();
+        } else {
+            // Hide student selection for no groups
+            studentSelectionContainer.style.display = 'none';
+            this.allStudents = [];
+            this.renderStudents();
+        }
+    }
+
+    async loadStudentsForSelectedGroups() {
+        try {
+            this.allStudents = [];
+            
+            // Load students for each selected group
+            for (const group of this.selectedGroups) {
+                const response = await fetch(`/Teacher/StudentGroup/GetStudents?groupId=${group.id}`);
+                if (response.ok) {
+                    const students = await response.json();
+                    // Add group info to each student
+                    const studentsWithGroup = students.map(student => ({
+                        ...student,
+                        groupId: group.id,
+                        groupName: group.name
+                    }));
+                    this.allStudents.push(...studentsWithGroup);
+                }
+            }
+            
+            // Remove duplicates based on student ID
+            this.allStudents = this.allStudents.filter((student, index, self) => 
+                index === self.findIndex(s => s.id === student.id)
+            );
+            
+            // Update selected students with full details from loaded students
+            this.updateSelectedStudentsWithDetails();
+            
+            this.renderStudents();
+            this.updateStudentCount();
+        } catch (error) {
+            console.error('Error loading students:', error);
+        }
+    }
+
+    updateSelectedStudentsWithDetails() {
+        // Update selected students with full details from loaded students
+        this.selectedStudents = this.selectedStudents.map(selectedStudent => {
+            const fullStudentDetails = this.allStudents.find(student => student.id === selectedStudent.id);
+            if (fullStudentDetails) {
+                return {
+                    ...fullStudentDetails,
+                    // Keep the original selected state
+                    isSelected: true
+                };
+            }
+            return selectedStudent;
+        });
+        
+        // Remove any selected students that are no longer in the allStudents list
+        this.selectedStudents = this.selectedStudents.filter(selectedStudent => 
+            this.allStudents.some(student => student.id === selectedStudent.id)
+        );
+        
+        console.log('Updated selected students:', this.selectedStudents);
+        console.log('All students:', this.allStudents);
+    }
+
+    async loadStudentsForGroup(groupId) {
+        try {
+            const response = await fetch(`/Teacher/StudentGroup/GetStudents?groupId=${groupId}`);
+            if (response.ok) {
+                const students = await response.json();
+                this.allStudents = students;
+                this.updateSelectedStudentsWithDetails();
+                this.renderStudents();
+                this.updateStudentCount();
+            }
+        } catch (error) {
+            console.error('Error loading students:', error);
+        }
+    }
+
+    renderStudents() {
+        const studentGrid = document.getElementById('studentGrid');
+        if (!studentGrid) return;
+
+        studentGrid.innerHTML = '';
+
+        console.log('Rendering students. All students:', this.allStudents.length);
+        console.log('Selected students:', this.selectedStudents.length);
+
+        this.allStudents.forEach(student => {
+            const studentBadge = document.createElement('div');
+            studentBadge.className = 'student-badge';
+            studentBadge.dataset.studentId = student.id;
+            
+            const isSelected = this.selectedStudents.some(s => s.id === student.id);
+            console.log(`Student ${student.id} (${student.firstName} ${student.lastName}) isSelected:`, isSelected);
+            
+            if (isSelected) {
+                studentBadge.classList.add('selected');
+            }
+
+            studentBadge.innerHTML = `
+                <div class="student-avatar">
+                    ${student.firstName ? student.firstName.charAt(0) : '?'}
+                </div>
+                <div class="student-info">
+                    <div class="student-name">${student.firstName || ''} ${student.lastName || ''}</div>
+                    <div class="student-group">${student.groupName || ''}</div>
+                </div>
+            `;
+
+            studentBadge.addEventListener('click', () => {
+                this.toggleStudentSelection(student);
+            });
+
+            studentGrid.appendChild(studentBadge);
+        });
+    }
+
+    toggleStudentSelection(student) {
+        const existingIndex = this.selectedStudents.findIndex(s => s.id === student.id);
+        
+        if (existingIndex >= 0) {
+            // Remove student
+            this.selectedStudents.splice(existingIndex, 1);
+        } else {
+            // Add student
+            this.selectedStudents.push(student);
+        }
+
+        // Update UI
+        this.renderStudents();
+        this.updateStudentCount();
+        this.updateSelectedStudentsSummary();
+        this.updateHiddenInputs();
+    }
+
+    selectAllStudents() {
+        this.selectedStudents = [...this.currentGroupStudents];
+        this.renderStudents();
+        this.updateStudentCount();
+        this.updateSelectedStudentsSummary();
+        this.updateHiddenInputs();
+    }
+
+    clearAllStudents() {
+        this.selectedStudents = [];
+        this.renderStudents();
+        this.updateStudentCount();
+        this.updateSelectedStudentsSummary();
+        this.updateHiddenInputs();
+    }
+
+    updateStudentCount() {
+        const studentCount = document.getElementById('studentCount');
+        if (studentCount) {
+            studentCount.textContent = `${this.allStudents.length} دانش‌آموز`;
+        }
+    }
+
+    updateSelectedStudentsSummary() {
+        const selectedStudentsText = document.getElementById('selectedStudentsText');
+        if (!selectedStudentsText) return;
+
+        if (this.selectedStudents.length === 0) {
+            selectedStudentsText.textContent = 'هیچ دانش‌آموزی انتخاب نشده - برای همه دانش‌آموزان گروه‌های انتخاب شده';
+        } else if (this.selectedStudents.length === this.allStudents.length) {
+            selectedStudentsText.textContent = 'همه دانش‌آموزان گروه‌های انتخاب شده انتخاب شده‌اند';
+        } else {
+            selectedStudentsText.textContent = `${this.selectedStudents.length} دانش‌آموز انتخاب شده`;
         }
     }
 

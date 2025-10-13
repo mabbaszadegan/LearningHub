@@ -383,4 +383,41 @@ public class StudentGroupController : Controller
         
         return Json(new { success = false, message = result.Error ?? "خطا در انتقال دانش‌آموز" });
     }
+
+    [HttpGet]
+    public async Task<IActionResult> GetStudents(int groupId)
+    {
+        try
+        {
+            var currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser == null)
+            {
+                return Json(new { error = "User not found" });
+            }
+
+            // Get group with members
+            var groupWithMembers = await _mediator.Send(new GetStudentGroupWithMembersQuery(groupId));
+            if (!groupWithMembers.IsSuccess)
+            {
+                return Json(new { error = "Failed to load group members" });
+            }
+
+            var students = groupWithMembers.Value?.Members?.Select(member => new
+            {
+                id = member.StudentId, // This is already a string
+                firstName = member.StudentName.Split(' ').FirstOrDefault() ?? "",
+                lastName = member.StudentName.Split(' ').Skip(1).FirstOrDefault() ?? "",
+                studentId = member.StudentId,
+                groupId = groupId,
+                groupName = groupWithMembers.Value?.Name ?? ""
+            }).Cast<object>().ToList() ?? new List<object>();
+
+            return Json(students);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting students for group {GroupId}", groupId);
+            return Json(new { error = "An error occurred while loading students" });
+        }
+    }
 }
