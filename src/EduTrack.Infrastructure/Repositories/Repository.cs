@@ -96,4 +96,9 @@ public class UnitOfWork : IUnitOfWork
             _transaction = null;
         }
     }
+
+    public void ClearChangeTracker()
+    {
+        _context.ChangeTracker.Clear();
+    }
 }

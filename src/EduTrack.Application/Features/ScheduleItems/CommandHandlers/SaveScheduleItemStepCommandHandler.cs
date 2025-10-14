@@ -181,10 +181,13 @@ public class SaveScheduleItemStepCommandHandler : IRequestHandler<SaveScheduleIt
             // Handle concurrency conflicts - try to reload and retry once
             try
             {
-                if (request.Id.HasValue)
-                {
-                    // Reload the entity and try again
-                    var reloadedItem = await _scheduleItemRepository.GetByIdAsync(request.Id.Value, cancellationToken);
+            if (request.Id.HasValue)
+            {
+                // Clear the current context to avoid tracking conflicts
+                _unitOfWork.ClearChangeTracker();
+                
+                // Reload the entity and try again
+                var reloadedItem = await _scheduleItemRepository.GetByIdAsync(request.Id.Value, cancellationToken);
                     if (reloadedItem != null)
                     {
                         // Update the reloaded entity with new data

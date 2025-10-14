@@ -86,9 +86,9 @@ class ModernScheduleItemFormManager {
             nextBtn.addEventListener('click', () => this.goToNextStep());
         }
 
-        if (submitBtn) {
-            submitBtn.addEventListener('click', (e) => this.handleFormSubmit(e));
-        }
+        //if (submitBtn) {
+        //    submitBtn.addEventListener('click', (e) => this.handleFormSubmit(e));
+        //}
 
         // Sidebar step navigation
         document.querySelectorAll('.step-item').forEach(item => {
@@ -282,6 +282,10 @@ class ModernScheduleItemFormManager {
                 await this.initializeStep3();
                 // Wait a bit for UI to be ready, then load data
                 setTimeout(async () => {
+                    // Make sure step3Manager is available globally
+                    if (this.step3Manager && !window.step3Manager) {
+                        window.step3Manager = this.step3Manager;
+                    }
                     if (window.step3Manager && typeof window.step3Manager.loadStepData === 'function') {
                         await window.step3Manager.loadStepData();
                     }
@@ -1014,10 +1018,14 @@ class ModernScheduleItemFormManager {
                 break;
                 
             case 3:
+                // Make sure step3Manager is available
+                if (this.step3Manager && !window.step3Manager) {
+                    window.step3Manager = this.step3Manager;
+                }
                 if (window.step3Manager && typeof window.step3Manager.collectStep3Data === 'function') {
                     return window.step3Manager.collectStep3Data();
-            }
-            break;
+                }
+                break;
                 
             case 4:
                 if (window.step4Manager && typeof window.step4Manager.collectStep4Data === 'function') {
@@ -1199,6 +1207,21 @@ let formManager = null;
 
 document.addEventListener('DOMContentLoaded', () => {
     formManager = new ModernScheduleItemFormManager();
+    
+    // Initialize step managers
+    window.step1Manager = new Step1BasicsManager(formManager);
+    window.step2Manager = new Step2TimingManager(formManager);
+    // Step3Manager is initialized by the main form manager
+    window.step4Manager = new Step4ContentManager(formManager);
+    
+    // Make formManager globally accessible
+    window.formManager = formManager;
+    window.scheduleItemForm = formManager;
+    
+    // Wait a bit for step3Manager to be initialized by the form manager
+    setTimeout(() => {
+        window.step3Manager = formManager.step3Manager;
+    }, 100);
 });
 
 // Cleanup on page unload to prevent memory leaks
