@@ -399,10 +399,15 @@ class Step2TimingManager {
         const persianStartDateInput = document.getElementById('PersianStartDate');
         if (persianStartDateInput && persianStartDateInput.value) {
             console.log('step2-timing: Updating PersianStartDate datepicker', persianStartDateInput.value);
-            if (persianStartDateInput.datePicker) {
-                persianStartDateInput.datePicker.setDate(persianStartDateInput.value);
+            // Try different possible datepicker property names
+            const datePicker = persianStartDateInput.datePicker || persianStartDateInput._persianDatePicker;
+            if (datePicker && typeof datePicker.setDate === 'function') {
+                datePicker.setDate(persianStartDateInput.value);
             } else {
-                console.warn('step2-timing: PersianStartDate datepicker not found');
+                console.warn('step2-timing: PersianStartDate datepicker not found or setDate method not available');
+                // Try to trigger change event
+                const changeEvent = new Event('change', { bubbles: true });
+                persianStartDateInput.dispatchEvent(changeEvent);
             }
         }
         
@@ -410,10 +415,15 @@ class Step2TimingManager {
         const persianDueDateInput = document.getElementById('PersianDueDate');
         if (persianDueDateInput && persianDueDateInput.value) {
             console.log('step2-timing: Updating PersianDueDate datepicker', persianDueDateInput.value);
-            if (persianDueDateInput.datePicker) {
-                persianDueDateInput.datePicker.setDate(persianDueDateInput.value);
+            // Try different possible datepicker property names
+            const datePicker = persianDueDateInput.datePicker || persianDueDateInput._persianDatePicker;
+            if (datePicker && typeof datePicker.setDate === 'function') {
+                datePicker.setDate(persianDueDateInput.value);
             } else {
-                console.warn('step2-timing: PersianDueDate datepicker not found');
+                console.warn('step2-timing: PersianDueDate datepicker not found or setDate method not available');
+                // Try to trigger change event
+                const changeEvent = new Event('change', { bubbles: true });
+                persianDueDateInput.dispatchEvent(changeEvent);
             }
         }
     }
@@ -432,12 +442,24 @@ class Step2TimingManager {
     }
 
     updateTimeInput(inputId, isoDate) {
+        console.log(`step2-timing: updateTimeInput called for ${inputId} with date:`, isoDate);
         if (isoDate) {
-            const date = new Date(isoDate);
-            const timeString = `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
-            const timeInput = document.getElementById(inputId);
-            if (timeInput) {
-                timeInput.value = timeString;
+            try {
+                const date = new Date(isoDate);
+                if (!isNaN(date.getTime())) {
+                    const timeString = `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+                    const timeInput = document.getElementById(inputId);
+                    if (timeInput) {
+                        timeInput.value = timeString;
+                        console.log(`step2-timing: Set ${inputId} to ${timeString}`);
+                    } else {
+                        console.warn(`step2-timing: Time input ${inputId} not found`);
+                    }
+                } else {
+                    console.warn(`step2-timing: Invalid date format: ${isoDate}`);
+                }
+            } catch (error) {
+                console.error(`step2-timing: Error updating time input ${inputId}:`, error);
             }
         }
     }
@@ -472,46 +494,97 @@ class Step2TimingManager {
 
     // Populate step 2 with existing data
     populateStep2Data(data) {
-        if (data.persianStartDate) {
-            console.log('step2-timing: Setting PersianStartDate', data.persianStartDate);
+        console.log('step2-timing: populateStep2Data called with data:', data);
+        
+        // Handle start date and time separately
+        let startDateField = data.persianStartDate || data.PersianStartDate;
+        
+        // If Persian date is not available, convert from Gregorian date
+        if (!startDateField) {
+            const startDateTime = data.startDate || data.StartDate || data.startDateTime;
+            if (startDateTime) {
+                console.log('step2-timing: Converting start date from Gregorian to Persian:', startDateTime);
+                const gregorianDate = new Date(startDateTime);
+                if (!isNaN(gregorianDate.getTime())) {
+                    startDateField = this.convertToPersianDate(gregorianDate);
+                    console.log('step2-timing: Converted Persian start date:', startDateField);
+                }
+            }
+        }
+        
+        if (startDateField) {
+            console.log('step2-timing: Setting PersianStartDate', startDateField);
             const persianStartDate = document.getElementById('PersianStartDate');
             if (persianStartDate) {
-                persianStartDate.value = data.persianStartDate;
-            }
-            const startTime = document.getElementById('StartTime');
-            if (startTime) {
-                this.updateTimeInput('StartTime', data.startDate);
+                persianStartDate.value = startDateField;
             }
         }
-        if (data.persianDueDate) {
-            console.log('step2-timing: Setting PersianDueDate', data.persianDueDate);
+        
+        // Handle start time separately
+        const startDateTime = data.startDate || data.StartDate || data.startDateTime;
+        if (startDateTime) {
+            console.log('step2-timing: Setting StartTime from', startDateTime);
+            this.updateTimeInput('StartTime', startDateTime);
+        }
+        
+        // Handle due date and time separately
+        let dueDateField = data.persianDueDate || data.PersianDueDate;
+        
+        // If Persian date is not available, convert from Gregorian date
+        if (!dueDateField) {
+            const dueDateTime = data.dueDate || data.DueDate || data.dueDateTime;
+            if (dueDateTime) {
+                console.log('step2-timing: Converting due date from Gregorian to Persian:', dueDateTime);
+                const gregorianDate = new Date(dueDateTime);
+                if (!isNaN(gregorianDate.getTime())) {
+                    dueDateField = this.convertToPersianDate(gregorianDate);
+                    console.log('step2-timing: Converted Persian due date:', dueDateField);
+                }
+            }
+        }
+        
+        if (dueDateField) {
+            console.log('step2-timing: Setting PersianDueDate', dueDateField);
             const persianDueDate = document.getElementById('PersianDueDate');
             if (persianDueDate) {
-                persianDueDate.value = data.persianDueDate;
-            }
-            const dueTime = document.getElementById('DueTime');
-            if (dueTime) {
-                this.updateTimeInput('DueTime', data.dueDate);
+                persianDueDate.value = dueDateField;
             }
         }
-        if (data.maxScore) {
+        
+        // Handle due time separately
+        const dueDateTime = data.dueDate || data.DueDate || data.dueDateTime;
+        if (dueDateTime) {
+            console.log('step2-timing: Setting DueTime from', dueDateTime);
+            this.updateTimeInput('DueTime', dueDateTime);
+        }
+        
+        // Try different possible field names for max score
+        const maxScoreField = data.maxScore || data.MaxScore;
+        if (maxScoreField) {
+            console.log('step2-timing: Setting MaxScore', maxScoreField);
             const maxScore = document.getElementById('maxScore');
             if (maxScore) {
-                maxScore.value = data.maxScore;
+                maxScore.value = maxScoreField;
             }
         }
-        if (data.isMandatory) {
+        
+        // Try different possible field names for mandatory
+        const mandatoryField = data.isMandatory || data.IsMandatory;
+        if (mandatoryField !== undefined) {
+            console.log('step2-timing: Setting IsMandatory', mandatoryField);
             const isMandatory = document.getElementById('isMandatory');
             if (isMandatory) {
-                isMandatory.checked = data.isMandatory;
+                isMandatory.checked = mandatoryField;
             }
         }
 
         // Update datepickers and UI after form is populated
         setTimeout(() => {
+            console.log('step2-timing: Updating datepickers and UI...');
             this.updateDatePickers();
             this.updateDurationCalculator();
             this.toggleScoreDisplay(); // Update score display based on item type
+            console.log('step2-timing: UI updates completed');
         }, 200);
     }
 }
