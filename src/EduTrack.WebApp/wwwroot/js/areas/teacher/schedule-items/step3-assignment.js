@@ -215,6 +215,11 @@ class Step3AssignmentManager {
         this.updateHiddenInputs();
         this.updateStudentSelectionVisibility(); // Update student list when groups change
         
+        // Dispatch assignment changed event
+        document.dispatchEvent(new CustomEvent('assignmentChanged', {
+            detail: { type: 'group', groupId: groupId, selected: !isSelected }
+        }));
+        
         // Also update the main form's assignment preview
         if (this.formManager && typeof this.formManager.updateAssignmentPreview === 'function') {
             this.formManager.updateAssignmentPreview();
@@ -404,6 +409,11 @@ class Step3AssignmentManager {
         this.updateHiddenInputs();
         this.validateSubChapterSelection();
         
+        // Dispatch assignment changed event
+        document.dispatchEvent(new CustomEvent('assignmentChanged', {
+            detail: { type: 'subchapter', subChapterId: subChapterId, selected: !isSelected }
+        }));
+        
         // Also update the main form's assignment preview
         if (this.formManager && typeof this.formManager.updateAssignmentPreview === 'function') {
             this.formManager.updateAssignmentPreview();
@@ -591,6 +601,11 @@ class Step3AssignmentManager {
         
         console.log('Selected students after toggle:', this.selectedStudents);
         this.updateSelectedStudentsSummary();
+        
+        // Dispatch assignment changed event
+        document.dispatchEvent(new CustomEvent('assignmentChanged', {
+            detail: { type: 'student', studentId: student.id, selected: !isSelected }
+        }));
     }
 
     selectAllStudents() {

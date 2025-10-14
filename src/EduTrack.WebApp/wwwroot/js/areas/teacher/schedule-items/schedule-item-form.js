@@ -21,6 +21,20 @@ class ModernScheduleItemFormManager {
         this.step3Manager = null;
         this.step3Initialized = false;
         
+        // Track changes for each step
+        this.stepChanges = {
+            1: false,
+            2: false,
+            3: false,
+            4: false
+        };
+        this.originalStepData = {
+            1: null,
+            2: null,
+            3: null,
+            4: null
+        };
+        
         this.init();
     }
 
@@ -71,6 +85,9 @@ class ModernScheduleItemFormManager {
         this.setupStepProgressIndicators();
 
         // Student selection handled by Step3AssignmentManager
+        
+        // Setup change detection
+        this.setupChangeDetection();
     }
 
     setupStepNavigationListeners() {
@@ -243,6 +260,9 @@ class ModernScheduleItemFormManager {
         this.updateProgress();
         this.updateNavigationButtons();
         
+        // Clear cache for the step we're going to
+        this.clearStepCache(step);
+        
         // Initialize step-specific content and load step data
         this.initializeStepContent(step);
 
@@ -356,14 +376,26 @@ class ModernScheduleItemFormManager {
             const nextBtn = document.getElementById('nextStepBtn');
             
             try {
-                
-                // Disable next button and show loading state
-                this.setButtonLoadingState(nextBtn, true, 'در حال ذخیره...');
-                
-                // Save current step before moving to next
-                console.log('About to save current step before moving to next step');
-                await this.saveCurrentStep();
-                console.log('Save current step completed');
+                // Only show confirmation dialog if there are changes
+                if (this.shouldShowConfirmation()) {
+                    const result = await this.showSaveConfirmation();
+                    if (result.action === 'cancel') {
+                        return false;
+                    }
+                    
+                    if (result.action === 'save') {
+                        // Disable next button and show loading state
+                        this.setButtonLoadingState(nextBtn, true, 'در حال ذخیره...');
+                        
+                        // Save current step before moving to next
+                        console.log('About to save current step before moving to next step');
+                        await this.saveCurrentStep();
+                        console.log('Save current step completed');
+                        
+                        // Mark step as saved
+                        this.markStepAsSaved(this.currentStep);
+                    }
+                }
                 
                 // Show loading state for navigation
                 this.setButtonLoadingState(nextBtn, true, 'در حال انتقال...');
@@ -468,16 +500,56 @@ class ModernScheduleItemFormManager {
         const nextBtn = document.getElementById('nextStepBtn');
         const submitBtn = document.getElementById('submitBtn');
 
+        // Show/hide previous button
         if (prevBtn) {
-            prevBtn.disabled = this.currentStep === 1;
+            if (this.currentStep === 1) {
+                prevBtn.style.display = 'none';
+            } else {
+                prevBtn.style.display = 'flex';
+                prevBtn.disabled = false;
+            }
         }
 
+        // Update next button text and visibility
         if (nextBtn) {
-            nextBtn.style.display = this.currentStep < this.totalSteps ? 'flex' : 'none';
+            if (this.currentStep === this.totalSteps) {
+                nextBtn.style.display = 'none';
+            } else {
+                const stepNames = {
+                    1: 'اطلاعات کلی',
+                    2: 'زمان‌بندی',
+                    3: 'تخصیص',
+                    4: 'محتوای آموزشی'
+                };
+                const currentStepName = stepNames[this.currentStep] || 'مرحله';
+                
+                nextBtn.style.display = 'flex';
+                nextBtn.innerHTML = `
+                    <span>ثبت ${currentStepName} و ادامه</span>
+                    <i class="fas fa-chevron-left"></i>
+                `;
+            }
         }
 
+        // Show/hide submit button
         if (submitBtn) {
-            submitBtn.style.display = this.currentStep === this.totalSteps ? 'flex' : 'none';
+            if (this.currentStep === this.totalSteps) {
+                const stepNames = {
+                    1: 'اطلاعات کلی',
+                    2: 'زمان‌بندی',
+                    3: 'تخصیص',
+                    4: 'محتوای آموزشی'
+                };
+                const currentStepName = stepNames[this.currentStep] || 'مرحله';
+                
+                submitBtn.style.display = 'flex';
+                submitBtn.innerHTML = `
+                    <i class="fas fa-check"></i>
+                    <span>ثبت ${currentStepName}</span>
+                `;
+            } else {
+                submitBtn.style.display = 'none';
+            }
         }
     }
 
@@ -485,16 +557,26 @@ class ModernScheduleItemFormManager {
         if (!button) return;
 
         if (isLoading) {
-            // Store original text if not already stored
-            if (!button.dataset.originalText) {
-                button.dataset.originalText = button.textContent.trim();
+            // Store original HTML if not already stored
+            if (!button.dataset.originalHTML) {
+                button.dataset.originalHTML = button.innerHTML;
             }
             
             // Disable button and show loading state
             button.disabled = true;
             button.classList.add('loading');
             
-            // Clear button content and add spinner
+            // For navigation buttons, keep the text and add minimal loading indicator
+            if (button.classList.contains('nav-btn')) {
+                // Add loading indicator to existing content
+                const span = button.querySelector('span');
+                if (span) {
+                    span.innerHTML = loadingText || span.textContent;
+                }
+                return;
+            }
+            
+            // For other buttons, use full loading state
             button.innerHTML = '';
             
             // Add spinner
@@ -505,7 +587,7 @@ class ModernScheduleItemFormManager {
             
             // Add loading text
             const textSpan = document.createElement('span');
-            textSpan.textContent = loadingText || button.dataset.originalText;
+            textSpan.textContent = loadingText || button.dataset.originalHTML;
             button.appendChild(textSpan);
             
         } else {
@@ -513,12 +595,186 @@ class ModernScheduleItemFormManager {
             button.disabled = false;
             button.classList.remove('loading');
             
-            // Restore original text
-            if (button.dataset.originalText) {
-                button.textContent = button.dataset.originalText;
-                delete button.dataset.originalText;
+            // Restore original HTML
+            if (button.dataset.originalHTML) {
+                button.innerHTML = button.dataset.originalHTML;
+                delete button.dataset.originalHTML;
             }
         }
+    }
+
+    // Check if current step has changes
+    hasStepChanges(step) {
+        return this.stepChanges[step] || false;
+    }
+
+    // Mark step as changed
+    markStepAsChanged(step) {
+        this.stepChanges[step] = true;
+        console.log(`Step ${step} marked as changed`);
+    }
+
+    // Mark step as saved (no changes)
+    markStepAsSaved(step) {
+        this.stepChanges[step] = false;
+        // Update original data after save
+        this.originalStepData[step] = this.collectCurrentStepData();
+        console.log(`Step ${step} marked as saved`);
+    }
+
+    // Clear step cache to force reload from server
+    clearStepCache(step) {
+        // Clear any cached data for the step
+        if (this.originalStepData[step]) {
+            this.originalStepData[step] = null;
+        }
+        // Reset change tracking
+        this.stepChanges[step] = false;
+        console.log(`Step ${step} cache cleared`);
+    }
+
+    // Setup change detection for form inputs
+    setupChangeDetection() {
+        // Use event delegation for better performance and coverage
+        document.addEventListener('input', (e) => {
+            const target = e.target;
+            if (target.matches('input, select, textarea')) {
+                console.log('Input change detected:', target.name || target.id);
+                this.markStepAsChanged(this.currentStep);
+            }
+        }, true);
+
+        // Listen for changes on checkboxes and radio buttons
+        document.addEventListener('change', (e) => {
+            const target = e.target;
+            if (target.matches('input[type="checkbox"], input[type="radio"], select')) {
+                console.log('Change detected:', target.name || target.id);
+                this.markStepAsChanged(this.currentStep);
+            }
+        }, true);
+
+        // Listen for changes on rich text editors (contenteditable)
+        document.addEventListener('input', (e) => {
+            const target = e.target;
+            if (target.matches('[contenteditable="true"]')) {
+                console.log('Rich text editor change detected:', target.id);
+                this.markStepAsChanged(this.currentStep);
+            }
+        }, true);
+
+        // Listen for changes on content builder (Step 4)
+        document.addEventListener('contentChanged', (e) => {
+            console.log('Content changed event detected');
+            if (this.currentStep === 4) {
+                this.markStepAsChanged(4);
+            }
+        });
+
+        // Listen for changes on assignment selection (Step 3)
+        document.addEventListener('assignmentChanged', (e) => {
+            console.log('Assignment changed event detected');
+            if (this.currentStep === 3) {
+                this.markStepAsChanged(3);
+            }
+        });
+
+        // Also listen for click events on buttons that might change data
+        document.addEventListener('click', (e) => {
+            const target = e.target;
+            if (target.matches('.date-preset-btn, .score-preset, .subchapter-badge, .student-badge, .group-badge, .toolbar-btn')) {
+                console.log('Button click detected:', target.className);
+                this.markStepAsChanged(this.currentStep);
+            }
+        }, true);
+    }
+
+    // Check if we should show confirmation dialog
+    shouldShowConfirmation() {
+        const hasChanges = this.hasStepChanges(this.currentStep);
+        console.log(`Should show confirmation for step ${this.currentStep}:`, hasChanges);
+        console.log('Step changes status:', this.stepChanges);
+        return hasChanges;
+    }
+
+    // Force mark current step as changed (for testing)
+    forceMarkCurrentStepAsChanged() {
+        this.markStepAsChanged(this.currentStep);
+        console.log(`Forced step ${this.currentStep} as changed`);
+    }
+
+    // Debug method to check current state
+    debugStepChanges() {
+        console.log('=== Step Changes Debug ===');
+        console.log('Current step:', this.currentStep);
+        console.log('Step changes:', this.stepChanges);
+        console.log('Should show confirmation:', this.shouldShowConfirmation());
+        console.log('========================');
+    }
+
+    async showSaveConfirmation() {
+        return new Promise((resolve) => {
+            // Get current step name
+            const stepNames = {
+                1: 'اطلاعات کلی',
+                2: 'زمان‌بندی',
+                3: 'تخصیص',
+                4: 'محتوای آموزشی'
+            };
+            const currentStepName = stepNames[this.currentStep] || 'مرحله';
+            
+            // Create confirmation dialog
+            const dialog = document.createElement('div');
+            dialog.className = 'save-confirmation-dialog';
+            dialog.innerHTML = `
+                <div class="dialog-overlay"></div>
+                <div class="dialog-content">
+                    <div class="dialog-header">
+                        <i class="fas fa-save"></i>
+                        <h4>ذخیره اطلاعات</h4>
+                    </div>
+                    <div class="dialog-body">
+                        <p>آیا می‌خواهید اطلاعات <span class="step-name">${currentStepName}</span> را ذخیره کنید؟</p>
+                    </div>
+                    <div class="dialog-actions">
+                        <button type="button" class="btn-cancel">انصراف</button>
+                        <button type="button" class="btn-skip">ادامه بدون ذخیره</button>
+                        <button type="button" class="btn-save">ذخیره و ادامه</button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(dialog);
+            
+            // Handle button clicks
+            const cancelBtn = dialog.querySelector('.btn-cancel');
+            const skipBtn = dialog.querySelector('.btn-skip');
+            const saveBtn = dialog.querySelector('.btn-save');
+            
+            const cleanup = () => {
+                document.body.removeChild(dialog);
+            };
+            
+            cancelBtn.addEventListener('click', () => {
+                cleanup();
+                resolve({ action: 'cancel' });
+            });
+            
+            skipBtn.addEventListener('click', () => {
+                cleanup();
+                resolve({ action: 'skip' });
+            });
+            
+            saveBtn.addEventListener('click', () => {
+                cleanup();
+                resolve({ action: 'save' });
+            });
+            
+            // Handle overlay click
+            dialog.querySelector('.dialog-overlay').addEventListener('click', () => {
+                cleanup();
+                resolve({ action: 'cancel' });
+            });
+        });
     }
 
     // Form Validation Methods
@@ -1150,8 +1406,36 @@ class ModernScheduleItemFormManager {
         const progressFill = document.getElementById('stepProgressFill');
         
         stepIndicators.forEach((indicator, index) => {
-            indicator.addEventListener('click', () => {
+            indicator.addEventListener('click', async () => {
                 const stepNumber = parseInt(indicator.dataset.step);
+                
+                // If clicking on current step, do nothing
+                if (stepNumber === this.currentStep) {
+                    return;
+                }
+                
+                // Only show confirmation dialog if there are changes
+                if (this.shouldShowConfirmation()) {
+                    const result = await this.showSaveConfirmation();
+                    if (result.action === 'cancel') {
+                        return;
+                    }
+                    
+                    if (result.action === 'save') {
+                        try {
+                            // Save current step before moving
+                            await this.saveCurrentStep();
+                            // Mark step as saved
+                            this.markStepAsSaved(this.currentStep);
+                        } catch (error) {
+                            console.error('Error saving step:', error);
+                            this.showErrorMessage('خطا در ذخیره مرحله فعلی');
+                            return;
+                        }
+                    }
+                }
+                
+                // Navigate to selected step
                 this.goToStep(stepNumber);
             });
         });
@@ -1217,6 +1501,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // Make formManager globally accessible
     window.formManager = formManager;
     window.scheduleItemForm = formManager;
+    
+    // Add debug methods to window for testing
+    window.debugStepChanges = () => formManager.debugStepChanges();
+    window.forceMarkChanged = () => formManager.forceMarkCurrentStepAsChanged();
     
     // Wait a bit for step3Manager to be initialized by the form manager
     setTimeout(() => {
