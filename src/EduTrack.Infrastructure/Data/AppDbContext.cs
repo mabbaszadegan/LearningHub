@@ -644,6 +644,12 @@ public class AppDbContext : IdentityDbContext<User>
             entity.Property(e => e.Description).HasMaxLength(1000);
             entity.Property(e => e.ContentJson).IsRequired();
             entity.Property(e => e.MaxScore).HasPrecision(18, 2);
+            
+            // Configure UpdatedAt as concurrency token
+            entity.Property(e => e.UpdatedAt)
+                .IsConcurrencyToken()
+                .ValueGeneratedOnAddOrUpdate();
+            
             entity.HasOne(e => e.TeachingPlan)
                 .WithMany(e => e.ScheduleItems)
                 .HasForeignKey(e => e.TeachingPlanId)
@@ -934,6 +940,27 @@ public class AppDbContext : IdentityDbContext<User>
             await Database.ExecuteSqlRawAsync("PRAGMA busy_timeout = 5000", cancellationToken);
         }
 
-        return await base.SaveChangesAsync(cancellationToken);
+        try
+        {
+            return await base.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateConcurrencyException ex)
+        {
+            // Log the concurrency exception for debugging
+            // In a production environment, you might want to use a proper logging framework
+            System.Diagnostics.Debug.WriteLine($"Concurrency exception occurred: {ex.Message}");
+            
+            // Re-throw the exception to let the calling code handle it appropriately
+            throw;
+        }
+        catch (DbUpdateException ex) when (ex.InnerException is Microsoft.Data.SqlClient.SqlException sqlEx && 
+                                          (sqlEx.Number == 2601 || sqlEx.Number == 2627)) // Duplicate key violations
+        {
+            // Log the duplicate key exception for debugging
+            System.Diagnostics.Debug.WriteLine($"Duplicate key exception occurred: {sqlEx.Message}");
+            
+            // Re-throw as a more specific exception
+            throw new InvalidOperationException($"Duplicate key violation: {sqlEx.Message}", ex);
+        }
     }
 }

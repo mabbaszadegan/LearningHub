@@ -1,5 +1,52 @@
 /* Modern Schedule Item Form Styles */
 
+/* Button Loading States */
+.btn.loading {
+    position: relative;
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+.btn.loading .spinner {
+    margin-right: 0.5rem;
+    display: inline-block;
+}
+
+.btn.loading .spinner i {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Navigation Button Loading States */
+.navigation-buttons .btn.loading {
+    background-color: #6c757d;
+    border-color: #6c757d;
+    cursor: not-allowed;
+}
+
+.navigation-buttons .btn.loading:hover {
+    background-color: #6c757d;
+    border-color: #6c757d;
+    transform: none;
+}
+
+/* Submit Button Loading State */
+#submitBtn.loading {
+    background-color: #28a745;
+    border-color: #28a745;
+    cursor: not-allowed;
+}
+
+#submitBtn.loading:hover {
+    background-color: #28a745;
+    border-color: #28a745;
+    transform: none;
+}
+
 /* Minimal Page Header */
 .modern-page-header {
     background: #ffffff;

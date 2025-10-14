@@ -2,6 +2,15 @@ using EduTrack.Domain.Enums;
 
 namespace EduTrack.Application.Common.Models.TeachingPlans;
 
+public enum ScheduleItemStatus
+{
+    Draft = 0,
+    Published = 1,
+    Active = 2,
+    Completed = 3,
+    Expired = 4
+}
+
 public class ScheduleItemDto
 {
     public int Id { get; set; }
@@ -31,5 +40,12 @@ public class ScheduleItemDto
     // New properties for multiple assignments
     public List<ScheduleItemGroupAssignmentDto> GroupAssignments { get; set; } = new();
     public List<ScheduleItemSubChapterAssignmentDto> SubChapterAssignments { get; set; } = new();
+    public List<ScheduleItemStudentAssignmentDto> StudentAssignments { get; set; } = new();
     public bool IsAssignedToAllGroups { get; set; }
+    
+    // Additional properties for status and step tracking
+    public int CurrentStep { get; set; }
+    public ScheduleItemStatus Status { get; set; }
+    public string StatusText { get; set; } = string.Empty;
+    public string TypeName { get; set; } = string.Empty;
 }

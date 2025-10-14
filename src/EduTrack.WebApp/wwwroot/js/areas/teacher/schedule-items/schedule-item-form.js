@@ -2,7 +2,6 @@
  * Modern Schedule Item Form JavaScript
  * Advanced form management with step-by-step creation and rich content editing
  */
-
 class ModernScheduleItemFormManager {
     constructor() {
         this.currentStep = 1;
@@ -15,6 +14,8 @@ class ModernScheduleItemFormManager {
         this.currentItemId = null;
         this.isEditMode = false;
         this.handleBadgeClick = null; // Initialize badge click handler
+        this.isNavigating = false; // Prevent rapid step changes
+        this.isSaving = false; // Prevent multiple save operations
         
         // Step 3 manager
         this.step3Manager = null;
@@ -25,59 +26,51 @@ class ModernScheduleItemFormManager {
 
     async init() {
         this.setupEventListeners();
-        this.setupRichEditor();
+        // Step 1 basics handled by Step1BasicsManager
         this.setupStepNavigation();
         this.setupFormValidation();
         this.updateProgress();
         this.setupAutoSave();
-        this.setupPersianDatePicker();
-        this.setupContentBuilder();
+        // Step 2 timing handled by Step2TimingManager
         // Initialize step 3 manager early
         this.initializeStep3Manager();
         
-        await this.checkForExistingItem();
+        // Check for existing item after a delay to ensure step managers are initialized
+        setTimeout(async () => {
+            await this.checkForExistingItem();
+            
+            // If we're already on step 3, initialize step 3 content
+            if (this.currentStep === 3) {
+                // Delay to ensure DOM is ready
+                setTimeout(async () => {
+                    await this.initializeStep3();
+                }, 100);
+            }
+        }, 200);
         
-        // If we're already on step 3, initialize step 3 content
-        if (this.currentStep === 3) {
-            // Delay to ensure DOM is ready
-            setTimeout(async () => {
-                await this.initializeStep3();
-            }, 100);
-        }
-        
-        // Initialize step 4 content based on current selection
-        this.updateStep4Content();
+       
     }
 
     setupEventListeners() {
         // Step navigation
         this.setupStepNavigationListeners();
 
-        // Form inputs
-        this.setupFormInputListeners();
-
-        // Rich editor
-        this.setupRichEditorListeners();
+        // Step 1 form inputs and rich editor handled by Step1BasicsManager
 
         // Preview functionality
         this.setupPreviewListeners();
 
-        // Content type selection
-        this.setupContentTypeListeners();
+        // Content type selection handled by Step4ContentManager
 
-        // Datetime helpers
-        this.setupDatetimeHelpers();
+        // Step 2 datetime helpers handled by Step2TimingManager
 
         // Step 3 components will be handled by Step3AssignmentManager
-
-        // Score presets
-        this.setupScorePresets();
+        // Score presets handled by Step2TimingManager
 
         // Step progress indicators
         this.setupStepProgressIndicators();
 
-        // Student selection
-        this.setupStudentSelection();
+        // Student selection handled by Step3AssignmentManager
     }
 
     setupStepNavigationListeners() {
@@ -108,72 +101,9 @@ class ModernScheduleItemFormManager {
         });
     }
 
-    setupFormInputListeners() {
-        // Title character count
-        const titleInput = document.getElementById('itemTitle');
-        if (titleInput) {
-            titleInput.addEventListener('input', (e) => {
-                this.updateCharacterCount(e.target, 100);
-                this.validateField('title', e.target.value);
-            });
-        }
-
-        // Item type selection
-        const itemTypeSelect = document.getElementById('itemType');
-        if (itemTypeSelect) {
-            itemTypeSelect.addEventListener('change', (e) => {
-                this.changeItemType(parseInt(e.target.value));
-                this.validateField('type', e.target.value);
-            });
-        }
-
-        // Datetime inputs
-        const startDateInput = document.getElementById('StartDate');
-        const dueDateInput = document.getElementById('DueDate');
-
-        if (startDateInput) {
-            startDateInput.addEventListener('change', () => {
-                this.updateDurationCalculator();
-                this.validateField('StartDate', startDateInput.value);
-            });
-        }
-
-        if (dueDateInput) {
-            dueDateInput.addEventListener('change', () => {
-                this.updateDurationCalculator();
-                this.validateField('DueDate', dueDateInput.value);
-            });
-        }
-
-        // Group and lesson selection
-        const groupSelect = document.getElementById('groupId');
-        const lessonSelect = document.getElementById('lessonId');
-
-        if (groupSelect) {
-            groupSelect.addEventListener('change', () => {
-                this.updateAssignmentPreview();
-            });
-        }
-
-        if (lessonSelect) {
-            lessonSelect.addEventListener('change', () => {
-                this.updateAssignmentPreview();
-            });
-        }
-
-        // Mandatory checkbox
-        const mandatoryCheckbox = document.getElementById('isMandatory');
-        if (mandatoryCheckbox) {
-            mandatoryCheckbox.addEventListener('change', () => {
-                this.updateAssignmentPreview();
-            });
-        }
-
-        // Update assignment preview when step 3 manager changes
-        if (this.step3Manager) {
-            // The step3Manager will call updateAssignmentPreview when needed
-        }
-    }
+    // Step 1 form inputs handled by Step1BasicsManager
+    // Step 2 datetime inputs handled by Step2TimingManager
+    // Step 3 group/lesson selection handled by Step3AssignmentManager
 
     updateAssignmentPreview() {
         if (!this.step3Manager) return;
@@ -201,33 +131,7 @@ class ModernScheduleItemFormManager {
         }
     }
 
-    setupRichEditorListeners() {
-        const editor = document.getElementById('descriptionEditor');
-        if (!editor) return;
-
-        // Toolbar buttons
-        document.querySelectorAll('.toolbar-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.executeEditorCommand(e.currentTarget.dataset.command);
-            });
-        });
-
-        // Editor content changes
-        editor.addEventListener('input', () => {
-            this.updateHiddenDescription();
-            this.validateField('description', editor.innerHTML);
-        });
-
-        // Editor focus/blur
-        editor.addEventListener('focus', () => {
-            editor.parentElement.classList.add('focused');
-        });
-
-        editor.addEventListener('blur', () => {
-            editor.parentElement.classList.remove('focused');
-        });
-    }
+    // Delegated to Step1BasicsManager
 
     setupPreviewListeners() {
         const previewBtn = document.getElementById('previewBtn');
@@ -247,430 +151,42 @@ class ModernScheduleItemFormManager {
         }
     }
 
-    setupContentTypeListeners() {
-        const typeSelect = document.getElementById('itemType');
-        if (typeSelect) {
-            typeSelect.addEventListener('change', (e) => {
-                this.selectedContentType = e.target.value;
-                this.updateContentTypePreview();
-                this.updateStep4Content();
-            });
-        }
-    }
+    // setupContentTypeListeners delegated to Step4ContentManager
 
-    setupContentBuilder() {
-        // Initialize content builder integration
-        this.contentBuilder = null;
-        
-        // Wait for content builder to be available
-        const checkContentBuilder = () => {
-            if (window.contentBuilder) {
-                this.contentBuilder = window.contentBuilder;
-                this.setupContentBuilderEvents();
-            } else {
-                setTimeout(checkContentBuilder, 100);
-            }
-        };
-        
-        checkContentBuilder();
-    }
+    // Step 4 content builder handled by Step4ContentManager
 
-    setupContentBuilderEvents() {
-        if (!this.contentBuilder) return;
+    // Step 4 content builder events handled by Step4ContentManager
 
-        // Save content when save button is clicked
-        const saveBtn = document.getElementById('saveContentBtn');
-        if (saveBtn) {
-            saveBtn.addEventListener('click', () => {
-                this.saveContentBuilderData();
-            });
-        }
+    // Step 4 content UI is handled by Step4ContentManager
 
-        // Preview content when preview button is clicked
-        const previewBtn = document.getElementById('previewContentBtn');
-        if (previewBtn) {
-            previewBtn.addEventListener('click', () => {
-                this.previewContentBuilderData();
-            });
-        }
-    }
+    // Delegated to Step4ContentManager
 
-    updateStep4Content() {
-        console.log('updateStep4Content called');
-        
-        const contentTypeSelector = document.getElementById('contentTypeSelector');
-        const contentDesigner = document.getElementById('contentDesigner');
-        const contentBuilder = document.getElementById('contentBuilder');
-        const contentTemplates = document.getElementById('contentTemplates');
+    // Delegated to Step4ContentManager
 
-        console.log('Elements found:', {
-            contentTypeSelector: !!contentTypeSelector,
-            contentDesigner: !!contentDesigner,
-            contentBuilder: !!contentBuilder,
-            contentTemplates: !!contentTemplates
-        });
+    // Delegated to Step4ContentManager
 
-        // Hide all content sections first
-        if (contentTypeSelector) contentTypeSelector.style.display = 'none';
-        if (contentDesigner) contentDesigner.style.display = 'none';
-        if (contentBuilder) contentBuilder.style.display = 'none';
-        if (contentTemplates) contentTemplates.style.display = 'none';
+    // Delegated to Step4ContentManager
 
-        // Get the selected schedule item type from step 1
-        const itemTypeSelect = document.getElementById('itemType');
-        const selectedType = itemTypeSelect ? itemTypeSelect.value : '0';
-        
-        console.log('Selected type:', selectedType);
-        console.log('ItemTypeSelect element:', itemTypeSelect);
+    // Delegated to Step4ContentManager
 
-        // Show appropriate content section based on selected type
-        if (selectedType === '0') { // Reminder type
-            console.log('Showing contentBuilder for Reminder type');
-            if (contentBuilder) {
-                contentBuilder.style.display = 'block';
-                console.log('ContentBuilder display set to block');
-                
-                // Initialize content builder if not already done
-                if (!this.contentBuilder) {
-                    this.setupContentBuilder();
-                }
-            } else {
-                console.log('ContentBuilder element not found!');
-            }
-        } else {
-            console.log('Showing contentTypeSelector for other types');
-            // For other types, show content type selector
-            if (contentTypeSelector) {
-                contentTypeSelector.style.display = 'block';
-                console.log('ContentTypeSelector display set to block');
-            } else {
-                console.log('ContentTypeSelector element not found!');
-            }
-        }
-    }
-
-    saveContentBuilderData() {
-        if (!this.contentBuilder) return;
-
-        const contentData = this.contentBuilder.getContentData();
-        const contentJson = JSON.stringify(contentData);
-        
-        // Update the hidden content field
-        const contentField = document.getElementById('contentJson');
-        if (contentField) {
-            contentField.value = contentJson;
-        }
-
-        // Show success message
-        this.showSuccess('محتوای آموزشی با موفقیت ذخیره شد.');
-    }
-
-    previewContentBuilderData() {
-        if (!this.contentBuilder) return;
-
-        const contentData = this.contentBuilder.getContentData();
-        this.showContentPreview(contentData);
-    }
-
-    showContentPreview(contentData) {
-        const modal = document.getElementById('previewModal');
-        const previewContent = document.getElementById('previewContent');
-        
-        if (!modal || !previewContent) return;
-
-        // Generate preview HTML
-        let previewHTML = '<div class="content-preview">';
-        
-        if (contentData.boxes && contentData.boxes.length > 0) {
-            contentData.boxes.forEach(box => {
-                previewHTML += this.generateBoxPreview(box);
-            });
-        } else {
-            previewHTML += '<div class="empty-content">هیچ محتوایی اضافه نشده است.</div>';
-        }
-        
-        previewHTML += '</div>';
-        
-        previewContent.innerHTML = previewHTML;
-        
-        // Show modal
-        const bsModal = new bootstrap.Modal(modal);
-        bsModal.show();
-    }
-
-    generateBoxPreview(box) {
-        let html = `<div class="preview-box preview-box-${box.type}">`;
-        
-        switch (box.type) {
-            case 'text':
-                html += `<div class="text-content">${box.data.content || ''}</div>`;
-                break;
-            case 'image':
-                if (box.data.fileId) {
-                    html += `<div class="image-content" style="text-align: ${box.data.align || 'center'};">
-                        <img src="/uploads/${box.data.fileId}" alt="تصویر" style="max-width: ${this.getImageSize(box.data.size)};" />
-                        ${box.data.caption ? `<div class="image-caption">${box.data.caption}</div>` : ''}
-                    </div>`;
-                }
-                break;
-            case 'video':
-                if (box.data.fileId) {
-                    html += `<div class="video-content" style="text-align: ${box.data.align || 'center'};">
-                        <video controls style="max-width: ${this.getVideoSize(box.data.size)};">
-                            <source src="/uploads/${box.data.fileId}" type="video/mp4">
-                        </video>
-                        ${box.data.caption ? `<div class="video-caption">${box.data.caption}</div>` : ''}
-                    </div>`;
-                }
-                break;
-            case 'audio':
-                if (box.data.fileId) {
-                    html += `<div class="audio-content">
-                        <audio controls>
-                            <source src="/uploads/${box.data.fileId}" type="audio/mpeg">
-                        </audio>
-                        ${box.data.caption ? `<div class="audio-caption">${box.data.caption}</div>` : ''}
-                    </div>`;
-                }
-                break;
-        }
-        
-        html += '</div>';
-        return html;
-    }
-
-    getImageSize(size) {
-        switch (size) {
-            case 'small': return '200px';
-            case 'medium': return '400px';
-            case 'large': return '600px';
-            case 'full': return '100%';
-            default: return '400px';
-        }
-    }
-
-    getVideoSize(size) {
-        switch (size) {
-            case 'small': return '400px';
-            case 'medium': return '600px';
-            case 'large': return '800px';
-            case 'full': return '100%';
-            default: return '600px';
-        }
-    }
+    // Delegated to Step4ContentManager
 
     showSuccess(message) {
         // You can implement a toast notification system here
         console.log('Success:', message);
     }
 
-    setupDatetimeHelpers() {
-        // Setup start date preset buttons
-        this.setupStartDatePresets();
-        
-        // Setup due date preset buttons
-        this.setupDueDatePresets();
-        
-        // Setup conditional score display
-        this.setupConditionalScoreDisplay();
-    }
+    // Step 2 datetime helpers handled by Step2TimingManager
 
-    setupStartDatePresets() {
-        const startDatePresets = document.querySelectorAll('.date-preset-btn[data-preset]');
-        
-        startDatePresets.forEach(btn => {
-            btn.addEventListener('click', () => {
-                const preset = btn.dataset.preset;
-                const targetDate = this.calculateStartDate(preset);
-                
-                if (targetDate) {
-                    this.setStartDate(targetDate);
-                    this.updatePresetButtonState(btn, startDatePresets);
-                }
-            });
-        });
-    }
+    // Delegated to Step2TimingManager
 
-    setupDueDatePresets() {
-        const dueDatePresets = document.querySelectorAll('.date-preset-btn[data-preset]');
-        
-        dueDatePresets.forEach(btn => {
-            btn.addEventListener('click', () => {
-                const preset = btn.dataset.preset;
-                const targetDate = this.calculateDueDate(preset);
-                
-                if (targetDate) {
-                    this.setDueDate(targetDate);
-                    this.updatePresetButtonState(btn, dueDatePresets);
-                }
-            });
-        });
-    }
+    // Delegated to Step2TimingManager
 
-    calculateStartDate(preset) {
-        const now = new Date();
-        
-        switch (preset) {
-            case 'now':
-                return now;
-            case 'tomorrow':
-                return new Date(now.getTime() + (1 * 24 * 60 * 60 * 1000));
-            case '2days':
-                return new Date(now.getTime() + (2 * 24 * 60 * 60 * 1000));
-            case 'nextweek':
-                return new Date(now.getTime() + (7 * 24 * 60 * 60 * 1000));
-            case '2weeks':
-                return new Date(now.getTime() + (14 * 24 * 60 * 60 * 1000));
-            case 'nextmonth':
-                return new Date(now.getTime() + (30 * 24 * 60 * 60 * 1000));
-            case '2months':
-                return new Date(now.getTime() + (60 * 24 * 60 * 60 * 1000));
-            default:
-                return null;
-        }
-    }
+    // Delegated to Step2TimingManager
 
-    calculateDueDate(preset) {
-        const startDateInput = document.getElementById('StartDate');
-        const startDate = startDateInput ? new Date(startDateInput.value) : new Date();
-        
-        switch (preset) {
-            case '1day':
-                return new Date(startDate.getTime() + (1 * 24 * 60 * 60 * 1000));
-            case '2days':
-                return new Date(startDate.getTime() + (2 * 24 * 60 * 60 * 1000));
-            case '3days':
-                return new Date(startDate.getTime() + (3 * 24 * 60 * 60 * 1000));
-            case '1week':
-                return new Date(startDate.getTime() + (7 * 24 * 60 * 60 * 1000));
-            case '2weeks':
-                return new Date(startDate.getTime() + (14 * 24 * 60 * 60 * 1000));
-            case '1month':
-                return new Date(startDate.getTime() + (30 * 24 * 60 * 60 * 1000));
-            default:
-                return null;
-        }
-    }
+    // Delegated to Step2TimingManager
 
-    setStartDate(date) {
-        const persianStartDateInput = document.getElementById('PersianStartDate');
-        const startDateInput = document.getElementById('StartDate');
-        const startTimeInput = document.getElementById('StartTime');
-        
-        if (persianStartDateInput && startDateInput) {
-            // Convert to Persian date
-            const persianDate = this.convertToPersianDate(date);
-            persianStartDateInput.value = persianDate;
-            
-            // Set hidden field with date
-            startDateInput.value = date.toISOString();
-            
-            // Set time to current time
-            if (startTimeInput) {
-                const timeString = `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
-                startTimeInput.value = timeString;
-            }
-            
-            // Trigger datepicker update
-            this.updateDatePicker(persianStartDateInput, persianDate);
-            
-            // Update duration calculator
-            this.updateDurationCalculator();
-        }
-    }
-
-    setDueDate(date) {
-        const persianDueDateInput = document.getElementById('PersianDueDate');
-        const dueDateInput = document.getElementById('DueDate');
-        const dueTimeInput = document.getElementById('DueTime');
-        
-        if (persianDueDateInput && dueDateInput) {
-            // Convert to Persian date
-            const persianDate = this.convertToPersianDate(date);
-            persianDueDateInput.value = persianDate;
-            
-            // Set hidden field with date
-            dueDateInput.value = date.toISOString();
-            
-            // Set time to current time
-            if (dueTimeInput) {
-                const timeString = `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
-                dueTimeInput.value = timeString;
-            }
-            
-            // Trigger datepicker update
-            this.updateDatePicker(persianDueDateInput, persianDate);
-            
-            // Update duration calculator
-            this.updateDurationCalculator();
-        }
-    }
-
-    updatePresetButtonState(activeBtn, allButtons) {
-        // Remove active class from all buttons in the same group
-        allButtons.forEach(btn => {
-            if (btn.closest('.date-presets') === activeBtn.closest('.date-presets')) {
-                btn.classList.remove('active');
-            }
-        });
-        
-        // Add active class to clicked button
-        activeBtn.classList.add('active');
-    }
-
-    setupConditionalScoreDisplay() {
-        // Check if we're in step 2 and hide score for reminder items
-        const itemTypeSelect = document.getElementById('itemType');
-        const maxScoreSection = document.getElementById('maxScoreSection');
-        
-        if (itemTypeSelect && maxScoreSection) {
-            // Initial check
-            this.toggleScoreDisplay();
-            
-            // Listen for type changes
-            itemTypeSelect.addEventListener('change', () => {
-                this.toggleScoreDisplay();
-            });
-        }
-    }
-
-    toggleScoreDisplay() {
-        const itemTypeSelect = document.getElementById('itemType');
-        const maxScoreSection = document.getElementById('maxScoreSection');
-        
-        if (itemTypeSelect && maxScoreSection) {
-            const selectedType = parseInt(itemTypeSelect.value);
-            
-            // Hide score section for reminder items (Reminder = 0 in ScheduleItemType enum)
-            const isReminderType = selectedType === 0;
-            
-            if (isReminderType) {
-                maxScoreSection.style.display = 'none';
-            } else {
-                maxScoreSection.style.display = 'block';
-            }
-        }
-    }
-
-    setupScorePresets() {
-        document.querySelectorAll('.score-preset').forEach(preset => {
-            preset.addEventListener('click', (e) => {
-                const score = e.currentTarget.dataset.score;
-                const maxScoreInput = document.getElementById('maxScore');
-                if (maxScoreInput) {
-                    maxScoreInput.value = score;
-                    this.updateScorePresets(score);
-                }
-            });
-        });
-
-        const maxScoreInput = document.getElementById('maxScore');
-        if (maxScoreInput) {
-            maxScoreInput.addEventListener('input', (e) => {
-                this.updateScorePresets(e.target.value);
-            });
-        }
-    }
+    // All Step 2 methods delegated to Step2TimingManager
 
     setupStepNavigation() {
         this.updateStepVisibility();
@@ -696,25 +212,91 @@ class ModernScheduleItemFormManager {
 
     // Step Navigation Methods
     goToStep(step) {
-        debugger
-        if (step < 1 || step > this.totalSteps) return;
-
-        // Validate current step before moving
-        if (step > this.currentStep && !this.validateCurrentStep()) {
+        if (step < 1 || step > this.totalSteps) {
+            console.warn(`Invalid step: ${step}. Must be between 1 and ${this.totalSteps}`);
             return;
         }
 
+        // Prevent rapid step changes
+        if (this.isNavigating) {
+            console.warn('Step navigation already in progress');
+            return;
+        }
+
+        this.isNavigating = true;
+
+        // Validate current step before moving forward
+        if (step > this.currentStep && !this.validateCurrentStep()) {
+            console.warn('Current step validation failed');
+            this.isNavigating = false;
+            return;
+        }
+
+        const previousStep = this.currentStep;
         this.currentStep = step;
+        
+        console.log(`Navigating from step ${previousStep} to step ${step}`);
+        
+        // Update UI
         this.updateStepVisibility();
         this.updateStepIndicators();
         this.updateProgress();
         this.updateNavigationButtons();
         
-        // Initialize step-specific content
-        if (step === 3) {
-            this.initializeStep3();
-        } else if (step === 4) {
-            this.updateStep4Content();
+        // Initialize step-specific content and load step data
+        this.initializeStepContent(step);
+
+        // Reset navigation flag after a short delay
+        setTimeout(() => {
+            this.isNavigating = false;
+        }, 300);
+    }
+
+    async initializeStepContent(step) {
+        console.log(`Initializing step ${step} content and loading data`);
+        console.log('Existing item data available:', !!this.existingItemData);
+        
+        switch (step) {
+            case 1:
+                // Step 1: Load basic info data
+                if (window.step1Manager && typeof window.step1Manager.loadStepData === 'function') {
+                    await window.step1Manager.loadStepData();
+                }
+                break;
+                
+            case 2:
+                // Step 2: Load timing data
+                if (window.step2Manager && typeof window.step2Manager.loadStepData === 'function') {
+                    await window.step2Manager.loadStepData();
+                    // Update duration calculator after loading data
+                    setTimeout(() => {
+                        if (window.step2Manager && typeof window.step2Manager.updateDurationCalculator === 'function') {
+                            window.step2Manager.updateDurationCalculator();
+                        }
+                    }, 100);
+                }
+                break;
+                
+            case 3:
+                // Step 3: Initialize assignment manager and load data
+                await this.initializeStep3();
+                // Wait a bit for UI to be ready, then load data
+                setTimeout(async () => {
+                    if (window.step3Manager && typeof window.step3Manager.loadStepData === 'function') {
+                        await window.step3Manager.loadStepData();
+                    }
+                }, 500);
+                break;
+                
+            case 4:
+                // Step 4: Load content data
+                if (window.step4Manager && typeof window.step4Manager.updateStep4Content === 'function') {
+                    window.step4Manager.updateStep4Content();
+                }
+                if (window.step4Manager && typeof window.step4Manager.loadStepData === 'function') {
+                    await window.step4Manager.loadStepData();
+                }
+                break;
         }
     }
 
@@ -767,20 +349,77 @@ class ModernScheduleItemFormManager {
 
     async goToNextStep() {
         if (this.currentStep < this.totalSteps) {
+            const nextBtn = document.getElementById('nextStepBtn');
+            
             try {
+                
+                // Disable next button and show loading state
+                this.setButtonLoadingState(nextBtn, true, 'در حال ذخیره...');
+                
                 // Save current step before moving to next
+                console.log('About to save current step before moving to next step');
                 await this.saveCurrentStep();
+                console.log('Save current step completed');
+                
+                // Show loading state for navigation
+                this.setButtonLoadingState(nextBtn, true, 'در حال انتقال...');
+                
                 this.goToStep(this.currentStep + 1);
+                
+                // Re-enable button after navigation
+                this.setButtonLoadingState(nextBtn, false, 'مرحله بعدی');
+                
             } catch (error) {
                 console.error('Error saving step:', error);
-                this.showErrorMessage('خطا در ذخیره مرحله');
+                
+                // Re-enable button on error
+                this.setButtonLoadingState(nextBtn, false, 'مرحله بعدی');
+                
+                // Show more specific error message
+                let errorMessage = 'خطا در ذخیره مرحله';
+                if (error.message.includes('Duplicate key')) {
+                    errorMessage = 'خطا: تخصیص تکراری دانش‌آموز یا مبحث';
+                } else if (error.message.includes('Concurrency') || error.message.includes('تغییر کرده است')) {
+                    errorMessage = 'خطا: داده‌ها توسط کاربر دیگری تغییر کرده است. لطفا صفحه را رفرش کنید';
+                } else if (error.message.includes('HTTP 400')) {
+                    errorMessage = 'خطا: داده‌های ارسالی نامعتبر است';
+                }
+                
+                this.showErrorMessage(errorMessage);
+                
+                // Don't navigate if save failed
+                return false;
+            } finally {
+                this.isSaving = false;
             }
         }
+        return true;
     }
 
-    goToPreviousStep() {
+    async goToPreviousStep() {
         if (this.currentStep > 1) {
-            this.goToStep(this.currentStep - 1);
+            const prevBtn = document.getElementById('prevStepBtn');
+            
+            try {
+                // Disable previous button and show loading state
+                this.setButtonLoadingState(prevBtn, true, 'در حال انتقال...');
+                
+                // Add a small delay to show loading state
+                await new Promise(resolve => setTimeout(resolve, 300));
+                
+                this.goToStep(this.currentStep - 1);
+                
+                // Re-enable button after navigation
+                this.setButtonLoadingState(prevBtn, false, 'مرحله قبلی');
+                
+            } catch (error) {
+                console.error('Error navigating to previous step:', error);
+                
+                // Re-enable button on error
+                this.setButtonLoadingState(prevBtn, false, 'مرحله قبلی');
+                
+                this.showErrorMessage('خطا در انتقال به مرحله قبلی');
+            }
         }
     }
 
@@ -835,6 +474,46 @@ class ModernScheduleItemFormManager {
 
         if (submitBtn) {
             submitBtn.style.display = this.currentStep === this.totalSteps ? 'flex' : 'none';
+        }
+    }
+
+    setButtonLoadingState(button, isLoading, loadingText = null) {
+        if (!button) return;
+
+        if (isLoading) {
+            // Store original text if not already stored
+            if (!button.dataset.originalText) {
+                button.dataset.originalText = button.textContent.trim();
+            }
+            
+            // Disable button and show loading state
+            button.disabled = true;
+            button.classList.add('loading');
+            
+            // Clear button content and add spinner
+            button.innerHTML = '';
+            
+            // Add spinner
+            const spinner = document.createElement('span');
+            spinner.className = 'spinner';
+            spinner.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            button.appendChild(spinner);
+            
+            // Add loading text
+            const textSpan = document.createElement('span');
+            textSpan.textContent = loadingText || button.dataset.originalText;
+            button.appendChild(textSpan);
+            
+        } else {
+            // Re-enable button and remove loading state
+            button.disabled = false;
+            button.classList.remove('loading');
+            
+            // Restore original text
+            if (button.dataset.originalText) {
+                button.textContent = button.dataset.originalText;
+                delete button.dataset.originalText;
+            }
         }
     }
 
@@ -903,324 +582,19 @@ class ModernScheduleItemFormManager {
     }
 
     // Rich Editor Methods
-    setupRichEditor() {
-        const editor = document.getElementById('descriptionEditor');
-        if (!editor) return;
+    // All Step 1 methods delegated to Step1BasicsManager
 
-        // Set up basic editor functionality
-        editor.addEventListener('paste', (e) => {
-            e.preventDefault();
-            const text = e.clipboardData.getData('text/plain');
-            document.execCommand('insertText', false, text);
-        });
-    }
 
-    executeEditorCommand(command) {
-        document.execCommand(command, false, null);
-        this.updateToolbarState();
-    }
 
-    updateToolbarState() {
-        document.querySelectorAll('.toolbar-btn').forEach(btn => {
-            const command = btn.dataset.command;
-            btn.classList.toggle('active', document.queryCommandState(command));
-        });
-    }
 
-    updateHiddenDescription() {
-        const editor = document.getElementById('descriptionEditor');
-        const hiddenField = document.getElementById('descriptionHidden');
 
-        if (editor && hiddenField) {
-            hiddenField.value = editor.innerHTML;
-        }
-    }
 
-    changeItemType(typeId) {
-        this.currentType = typeId;
-        this.selectedContentType = null;
 
-        // Show type preview
-        this.showTypePreview(typeId);
 
-        // Update sidebar
-        this.updateStepIndicators();
-    }
 
-    showTypePreview(typeId) {
-        const preview = document.getElementById('typePreview');
-        const previewContent = document.getElementById('typePreviewContent');
+    // Delegated to Step1BasicsManager
 
-        if (!preview || !previewContent) return;
-
-        const typeInfo = this.contentTypes[typeId];
-        if (typeInfo) {
-            previewContent.innerHTML = `
-                <div class="type-info">
-                    <h4>${typeInfo.name}</h4>
-                    <p>${typeInfo.description}</p>
-                    <div class="type-features">
-                        <span class="feature-tag">تعاملی</span>
-                        <span class="feature-tag">جذاب</span>
-                        <span class="feature-tag">آموزشی</span>
-                    </div>
-                </div>
-            `;
-            preview.style.display = 'block';
-        } else {
-            preview.style.display = 'none';
-        }
-    }
-
-    showContentTypeSelector() {
-        const selector = document.getElementById('contentTypeSelector');
-        const grid = document.getElementById('contentTypesGrid');
-
-        if (!selector || !grid) return;
-
-        // Clear existing content
-        grid.innerHTML = '';
-
-        // Add content type options
-        Object.entries(this.contentTypes).forEach(([id, type]) => {
-            const typeCard = document.createElement('div');
-            typeCard.className = 'content-type-card';
-            typeCard.innerHTML = `
-                <div class="type-icon">
-                    <i class="fas fa-${this.getTypeIcon(id)}"></i>
-                </div>
-                <div class="type-info">
-                    <h4>${type.name}</h4>
-                    <p>${type.description}</p>
-                </div>
-                <button class="select-type-btn" data-type-id="${id}">
-                    <i class="fas fa-arrow-left"></i>
-                </button>
-            `;
-
-            typeCard.addEventListener('click', () => {
-                this.selectContentType(parseInt(id));
-            });
-
-            grid.appendChild(typeCard);
-        });
-
-        selector.style.display = 'block';
-    }
-
-    selectContentType(typeId) {
-        this.selectedContentType = typeId;
-
-        // Hide selector and show designer
-        document.getElementById('contentTypeSelector').style.display = 'none';
-        document.getElementById('contentDesigner').style.display = 'block';
-
-        // Load content designer for this type
-        this.loadContentDesigner(typeId);
-    }
-
-    loadContentDesigner(typeId) {
-        const container = document.getElementById('contentDesignContainer');
-        if (!container) return;
-
-        // Load appropriate designer based on type
-        switch (typeId) {
-            case 0: // Reminder
-                this.loadReminderDesigner(container);
-                break;
-            case 1: // Writing
-                this.loadWritingDesigner(container);
-                break;
-            case 4: // Multiple Choice
-                this.loadMultipleChoiceDesigner(container);
-                break;
-            case 3: // Gap Fill
-                this.loadGapFillDesigner(container);
-                break;
-            default:
-                this.loadGenericDesigner(container);
-        }
-    }
-
-    loadReminderDesigner(container) {
-        container.innerHTML = `
-            <div class="designer-section">
-                <h4>طراحی یادآوری</h4>
-                <div class="form-group-modern">
-                    <label class="form-label-modern">
-                        <i class="fas fa-bell"></i>
-                        <span>متن یادآوری</span>
-                    </label>
-                    <textarea class="form-input-modern" rows="4" placeholder="متن یادآوری را وارد کنید..."></textarea>
-                </div>
-                <div class="form-group-modern">
-                    <label class="form-label-modern">
-                        <i class="fas fa-calendar"></i>
-                        <span>تاریخ یادآوری</span>
-                    </label>
-                    <input type="datetime-local" class="form-input-modern" />
-                </div>
-            </div>
-        `;
-    }
-
-    loadWritingDesigner(container) {
-        container.innerHTML = `
-            <div class="designer-section">
-                <h4>طراحی تمرین نوشتاری</h4>
-                <div class="form-group-modern">
-                    <label class="form-label-modern">
-                        <i class="fas fa-question-circle"></i>
-                        <span>سوال یا موضوع</span>
-                    </label>
-                    <textarea class="form-input-modern" rows="3" placeholder="سوال یا موضوع نوشتاری را وارد کنید..."></textarea>
-                </div>
-                <div class="form-group-modern">
-                    <label class="form-label-modern">
-                        <i class="fas fa-align-left"></i>
-                        <span>راهنمایی</span>
-                    </label>
-                    <textarea class="form-input-modern" rows="3" placeholder="راهنمایی‌های لازم برای دانش‌آموزان..."></textarea>
-                </div>
-                <div class="form-group-modern">
-                    <label class="form-label-modern">
-                        <i class="fas fa-ruler"></i>
-                        <span>حداقل تعداد کلمات</span>
-                    </label>
-                    <input type="number" class="form-input-modern" placeholder="100" min="0" />
-                </div>
-            </div>
-        `;
-    }
-
-    loadMultipleChoiceDesigner(container) {
-        container.innerHTML = `
-            <div class="designer-section">
-                <h4>طراحی سوالات چند گزینه‌ای</h4>
-                <div class="form-group-modern">
-                    <label class="form-label-modern">
-                        <i class="fas fa-question-circle"></i>
-                        <span>سوال</span>
-                    </label>
-                    <textarea class="form-input-modern" rows="2" placeholder="سوال را وارد کنید..."></textarea>
-                </div>
-                <div class="form-group-modern">
-                    <label class="form-label-modern">
-                        <i class="fas fa-list"></i>
-                        <span>گزینه‌ها</span>
-                    </label>
-                    <div class="options-container">
-                        <div class="option-item">
-                            <input type="radio" name="correctAnswer" value="0" />
-                            <input type="text" class="form-input-modern" placeholder="گزینه اول..." />
-                            <button type="button" class="remove-option-btn">
-                                <i class="fas fa-times"></i>
-                            </button>
-                        </div>
-                        <div class="option-item">
-                            <input type="radio" name="correctAnswer" value="1" />
-                            <input type="text" class="form-input-modern" placeholder="گزینه دوم..." />
-                            <button type="button" class="remove-option-btn">
-                                <i class="fas fa-times"></i>
-                            </button>
-                        </div>
-                    </div>
-                    <button type="button" class="add-option-btn">
-                        <i class="fas fa-plus"></i>
-                        <span>افزودن گزینه</span>
-                    </button>
-                </div>
-            </div>
-        `;
-    }
-
-    loadGapFillDesigner(container) {
-        container.innerHTML = `
-            <div class="designer-section">
-                <h4>طراحی سوالات جای خالی</h4>
-                <div class="form-group-modern">
-                    <label class="form-label-modern">
-                        <i class="fas fa-align-left"></i>
-                        <span>متن با جای خالی</span>
-                    </label>
-                    <div class="gap-fill-editor">
-                        <div class="editor-toolbar">
-                            <button type="button" class="toolbar-btn" data-action="add-gap">
-                                <i class="fas fa-plus"></i>
-                                <span>افزودن جای خالی</span>
-                            </button>
-                        </div>
-                        <div class="editor-content" contenteditable="true" placeholder="متن خود را بنویسید و برای افزودن جای خالی از دکمه بالا استفاده کنید..."></div>
-                    </div>
-                </div>
-                <div class="form-group-modern">
-                    <label class="form-label-modern">
-                        <i class="fas fa-list"></i>
-                        <span>پاسخ‌های صحیح</span>
-                    </label>
-                    <div class="answers-container">
-                        <div class="answer-item">
-                            <span class="answer-label">جای خالی 1:</span>
-                            <input type="text" class="form-input-modern" placeholder="پاسخ صحیح..." />
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-
-    loadGenericDesigner(container) {
-        container.innerHTML = `
-            <div class="designer-section">
-                <h4>طراحی محتوا</h4>
-                <div class="form-group-modern">
-                    <label class="form-label-modern">
-                        <i class="fas fa-edit"></i>
-                        <span>محتوای آموزشی</span>
-                    </label>
-                    <div class="rich-editor-container">
-                        <div class="editor-toolbar">
-                            <button type="button" class="toolbar-btn" data-command="bold">
-                                <i class="fas fa-bold"></i>
-                            </button>
-                            <button type="button" class="toolbar-btn" data-command="italic">
-                                <i class="fas fa-italic"></i>
-                            </button>
-                            <button type="button" class="toolbar-btn" data-command="insertUnorderedList">
-                                <i class="fas fa-list-ul"></i>
-                            </button>
-                        </div>
-                        <div class="editor-content" contenteditable="true" placeholder="محتوای آموزشی خود را اینجا بنویسید..."></div>
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-
-    getTypeIcon(typeId) {
-        const icons = {
-            0: 'bell',
-            1: 'pen',
-            2: 'volume-up',
-            3: 'edit',
-            4: 'list-ul',
-            5: 'link',
-            6: 'bug',
-            7: 'code',
-            8: 'clipboard-check'
-        };
-        return icons[typeId] || 'file';
-    }
-
-    // Utility Methods
-    updateCharacterCount(input, maxLength) {
-        const charCount = input.parentElement.querySelector('.char-count');
-        if (charCount) {
-            const currentLength = input.value.length;
-            charCount.textContent = `${currentLength}/${maxLength}`;
-            charCount.classList.toggle('over-limit', currentLength > maxLength);
-        }
-    }
+    // Utility Methods - updateCharacterCount delegated to Step1BasicsManager
 
     formatDateTimeLocal(date) {
         const year = date.getFullYear();
@@ -1232,34 +606,7 @@ class ModernScheduleItemFormManager {
         return `${year}-${month}-${day}T${hours}:${minutes}`;
     }
 
-    updateDurationCalculator() {
-        const startDateInput = document.getElementById('StartDate');
-        const dueDateInput = document.getElementById('DueDate');
-        const calculator = document.getElementById('durationCalculator');
-        const durationValue = document.getElementById('durationValue');
-
-        if (!startDateInput || !dueDateInput || !calculator || !durationValue) return;
-
-        const startDate = new Date(startDateInput.value);
-        const dueDate = new Date(dueDateInput.value);
-
-        if (startDateInput.value && dueDateInput.value && dueDate > startDate) {
-            const diffMs = dueDate - startDate;
-            const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-            const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-
-            durationValue.textContent = `${diffDays} روز و ${diffHours} ساعت`;
-            calculator.style.display = 'block';
-        } else {
-            calculator.style.display = 'none';
-        }
-    }
-
-    updateScorePresets(score) {
-        document.querySelectorAll('.score-preset').forEach(preset => {
-            preset.classList.toggle('active', preset.dataset.score === score);
-        });
-    }
+    // Delegated to Step2TimingManager
 
 
     // Preview Methods
@@ -1355,23 +702,43 @@ class ModernScheduleItemFormManager {
     }
 
     // Form Submission
-    handleFormSubmit(e) {
+    async handleFormSubmit(e) {
         e.preventDefault();
+        const submitBtn = document.getElementById('submitBtn');
 
-        // Validate all steps
-        if (!this.validateAllSteps()) {
-            this.showValidationErrors();
-            return;
+        try {
+            // Disable submit button and show loading state
+            this.setButtonLoadingState(submitBtn, true, 'در حال ذخیره نهایی...');
+
+            // Validate all steps
+            if (!this.validateAllSteps()) {
+                this.setButtonLoadingState(submitBtn, false, 'ذخیره نهایی');
+                this.showValidationErrors();
+                return;
+            }
+
+            // Collect form data
+            const formData = this.collectFormData();
+
+            // Add content data from Step 4 manager
+            if (window.step4Manager && typeof window.step4Manager.collectContentData === 'function') {
+                formData.contentData = window.step4Manager.collectContentData();
+            }
+
+            // Submit form
+            await this.submitForm(formData);
+            
+            // Re-enable button after successful submission
+            this.setButtonLoadingState(submitBtn, false, 'ذخیره نهایی');
+            
+        } catch (error) {
+            console.error('Error submitting form:', error);
+            
+            // Re-enable button on error
+            this.setButtonLoadingState(submitBtn, false, 'ذخیره نهایی');
+            
+            this.showErrorMessage('خطا در ذخیره نهایی فرم');
         }
-
-        // Collect form data
-        const formData = this.collectFormData();
-
-        // Add content data
-        formData.contentData = this.collectContentData();
-
-        // Submit form
-        this.submitForm(formData);
     }
 
     validateAllSteps() {
@@ -1400,20 +767,7 @@ class ModernScheduleItemFormManager {
         }
     }
 
-    collectContentData() {
-        // Collect content-specific data based on selected type
-        const container = document.getElementById('contentDesignContainer');
-        if (!container) return "{}";
-
-        const contentData = {};
-
-        // Collect data from content designer
-        container.querySelectorAll('input, textarea, select').forEach(input => {
-            contentData[input.name || input.id] = input.value;
-        });
-
-        return JSON.stringify(contentData);
-    }
+    // Delegated to Step4ContentManager
 
     async submitForm(formData) {
         // Validate subchapter selection before submission
@@ -1421,7 +775,7 @@ class ModernScheduleItemFormManager {
         if (selectedSubChapters.length === 0) {
             this.showErrorMessage('انتخاب حداقل یک زیرمبحث اجباری است');
             this.goToStep(3); // Go to assignment step
-            return;
+            throw new Error('Subchapter selection required');
         }
 
         // Add selected groups and subchapters to form data
@@ -1436,26 +790,34 @@ class ModernScheduleItemFormManager {
         }
 
         try {
-            const response = await fetch('/Teacher/ScheduleItem/Create', {
+            // Save final step first
+            console.log('About to save final step before completion');
+            await this.saveCurrentStep();
+            console.log('Final step save completed');
+
+            // Complete the item
+            const response = await fetch('/Teacher/ScheduleItem/Complete', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
+                    'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(formData)
+                body: JSON.stringify({ Id: this.currentItemId })
             });
 
-            if (response.ok) {
-                // Success
-                this.showSuccessMessage();
-                // Redirect or close modal
+            const result = await response.json();
+
+            if (result.success) {
+                this.showSuccessMessage('آیتم آموزشی با موفقیت تکمیل شد');
+                // Redirect to index page
+                setTimeout(() => {
+                    window.location.href = `/Teacher/ScheduleItem/Index?teachingPlanId=${formData.TeachingPlanId}`;
+                }, 2000);
             } else {
-                // Error
-                const error = await response.json();
-                this.showErrorMessage(error.message || 'خطا در ایجاد آیتم');
+                throw new Error(result.message || 'خطا در تکمیل آیتم');
             }
         } catch (error) {
             console.error('Error submitting form:', error);
-            this.showErrorMessage('خطا در ارسال فرم');
+            throw error; // Re-throw to be handled by caller
         }
     }
 
@@ -1512,241 +874,50 @@ class ModernScheduleItemFormManager {
         });
     }
 
-    // Persian Date Picker Setup
-    setupPersianDatePicker() {
-        // Wait for DOM to be ready
-        setTimeout(() => {
-            // Initialize Persian date pickers
-            if (typeof initializeAllDatePickers === 'function') {
-                initializeAllDatePickers();
-            }
+    // All Persian date picker methods delegated to Step2TimingManager
 
-            // Setup custom datepicker events
-            this.setupDatePickerEvents();
-
-            // Setup time inputs
-            this.setupTimeInputs();
-        }, 100);
-    }
-
-    setupDatePickerEvents() {
-        // Setup events for Persian date pickers
-        const persianDateInputs = document.querySelectorAll('.persian-datepicker');
-        
-        persianDateInputs.forEach(input => {
-            input.addEventListener('click', () => {
-                // Ensure datepicker is properly initialized
-                if (!input._persianDatePicker) {
-                    setTimeout(() => {
-                        if (typeof initializeAllDatePickers === 'function') {
-                            initializeAllDatePickers();
-                        }
-                    }, 50);
-                }
-            });
-        });
-    }
-
-    setupTimeInputs() {
-        const startTimeInput = document.getElementById('StartTime');
-        const dueTimeInput = document.getElementById('DueTime');
-        const startDateInput = document.getElementById('StartDate');
-        const dueDateInput = document.getElementById('DueDate');
-
-        if (startTimeInput && startDateInput) {
-            startTimeInput.addEventListener('change', () => {
-                this.updateDateTimeField(startDateInput, startTimeInput);
-            });
-        }
-
-        if (dueTimeInput && dueDateInput) {
-            dueTimeInput.addEventListener('change', () => {
-                this.updateDateTimeField(dueDateInput, dueTimeInput);
-            });
-        }
-    }
-
-    updateDateTimeField(dateInput, timeInput) {
-        if (dateInput.value && timeInput.value) {
-            const date = new Date(dateInput.value);
-            const [hours, minutes] = timeInput.value.split(':');
-            date.setHours(parseInt(hours), parseInt(minutes));
-            dateInput.value = date.toISOString();
-        }
-    }
-
-    convertToPersianDate(date) {
-        try {
-            // Validate input
-            if (!date || !(date instanceof Date) || isNaN(date.getTime())) {
-                console.warn('Invalid date provided to convertToPersianDate');
-                return '0000/00/00';
-            }
-
-            // Use official jalaali-js library if available
-            if (typeof window.jalaali !== 'undefined' && window.jalaali.toJalaali) {
-                try {
-                    const jalaali = window.jalaali.toJalaali(date);
-                    return `${jalaali.jy}/${jalaali.jm.toString().padStart(2, '0')}/${jalaali.jd.toString().padStart(2, '0')}`;
-                } catch (jalaaliError) {
-                    console.warn('jalaali-js library error:', jalaaliError);
-                    // Fall through to next method
-                }
-            }
-            
-            // Fallback to old PersianDate library if available
-            if (typeof PersianDate !== 'undefined') {
-                try {
-                    const persianDate = PersianDate.fromDate(date);
-                    return persianDate.format('YYYY/MM/DD');
-                } catch (persianError) {
-                    console.warn('PersianDate library error:', persianError);
-                    // Fall through to next method
-                }
-            }
-            
-            // Fallback to persianDateUtils if available
-            if (typeof window.persianDateUtils !== 'undefined' && window.persianDateUtils.gregorianToPersian) {
-                try {
-                    return window.persianDateUtils.gregorianToPersian(date);
-                } catch (utilsError) {
-                    console.warn('persianDateUtils error:', utilsError);
-                    // Fall through to next method
-                }
-            }
-            
-            // Final fallback: simple approximation
-            console.warn('Using simple Persian date approximation');
-            const year = date.getFullYear() - 621;
-            const month = date.getMonth() + 1;
-            const day = date.getDate();
-            return `${year}/${month.toString().padStart(2, '0')}/${day.toString().padStart(2, '0')}`;
-            
-        } catch (error) {
-            console.error('Error converting to Persian date:', error);
-            
-            // Return current date as fallback
-            const now = new Date();
-            const year = now.getFullYear() - 621;
-            const month = now.getMonth() + 1;
-            const day = now.getDate();
-            return `${year}/${month.toString().padStart(2, '0')}/${day.toString().padStart(2, '0')}`;
-        }
-    }
-
-    updateDatePicker(inputElement, persianDate) {
-        try {
-            // Try to update the datepicker if it exists
-            if (inputElement._persianDatePicker && typeof inputElement._persianDatePicker.setDate === 'function') {
-                inputElement._persianDatePicker.setDate(persianDate);
-            } else {
-                // Trigger change event to update the calendar
-                const changeEvent = new Event('change', { bubbles: true });
-                inputElement.dispatchEvent(changeEvent);
-                
-                // Also trigger input event
-                const inputEvent = new Event('input', { bubbles: true });
-                inputElement.dispatchEvent(inputEvent);
-            }
-        } catch (error) {
-            console.error('Error updating datepicker:', error);
-        }
-    }
-
-    updateDatePickers() {
-        console.log('schedule-item-form: Updating datepickers');
-        
-        // Update PersianStartDate datepicker
-        const persianStartDateInput = document.getElementById('PersianStartDate');
-        if (persianStartDateInput && persianStartDateInput.value) {
-            console.log('schedule-item-form: Updating PersianStartDate datepicker', persianStartDateInput.value);
-            if (persianStartDateInput.datePicker) {
-                persianStartDateInput.datePicker.setDate(persianStartDateInput.value);
-            } else {
-                console.warn('schedule-item-form: PersianStartDate datepicker not found');
-            }
-        }
-        
-        // Update PersianDueDate datepicker
-        const persianDueDateInput = document.getElementById('PersianDueDate');
-        if (persianDueDateInput && persianDueDateInput.value) {
-            console.log('schedule-item-form: Updating PersianDueDate datepicker', persianDueDateInput.value);
-            if (persianDueDateInput.datePicker) {
-                persianDueDateInput.datePicker.setDate(persianDueDateInput.value);
-            } else {
-                console.warn('schedule-item-form: PersianDueDate datepicker not found');
-            }
-        }
-    }
-
-    // Test method to verify Persian date conversion
-    testPersianDateConversion() {
-        const testDate = new Date();
-        const persianDate = this.convertToPersianDate(testDate);
-        
-        console.log('Official Persian Date Conversion Test:', {
-            gregorian: testDate.toISOString(),
-            persian: persianDate,
-            jalaaliJs: typeof window.jalaali,
-            PersianDateClass: typeof PersianDate,
-            persianDateUtils: typeof window.persianDateUtils,
-            oldPersianDate: typeof window.persianDate,
-            jalaaliLoaded: typeof window.jalaali !== 'undefined'
-        });
-        
-        // Test jalaali-js conversion accuracy
-        if (typeof window.jalaali !== 'undefined') {
-            try {
-                const jalaali = window.jalaali.toJalaali(testDate);
-                const backToGregorian = window.jalaali.toGregorian(jalaali.jy, jalaali.jm, jalaali.jd);
-                const accuracy = Math.abs(testDate.getTime() - new Date(backToGregorian.gy, backToGregorian.gm - 1, backToGregorian.gd).getTime()) < 24 * 60 * 60 * 1000; // Within 1 day
-                
-                console.log('Jalaali-js Conversion Accuracy Test:', {
-                    original: testDate.toISOString(),
-                    converted: `${jalaali.jy}/${jalaali.jm.toString().padStart(2, '0')}/${jalaali.jd.toString().padStart(2, '0')}`,
-                    backToGregorian: `${backToGregorian.gy}/${backToGregorian.gm.toString().padStart(2, '0')}/${backToGregorian.gd.toString().padStart(2, '0')}`,
-                    accurate: accuracy
-                });
-            } catch (error) {
-                console.error('Jalaali-js accuracy test failed:', error);
-            }
-        }
-        
-        // Test conversion accuracy with old PersianDate library
-        if (typeof PersianDate !== 'undefined') {
-            try {
-                const officialPersian = PersianDate.fromDate(testDate);
-                const backToGregorian = officialPersian.toDate();
-                const accuracy = Math.abs(testDate.getTime() - backToGregorian.getTime()) < 24 * 60 * 60 * 1000; // Within 1 day
-                
-                console.log('Old PersianDate Conversion Accuracy Test:', {
-                    original: testDate.toISOString(),
-                    converted: officialPersian.format('YYYY/MM/DD'),
-                    backToGregorian: backToGregorian.toISOString(),
-                    accurate: accuracy
-                });
-            } catch (error) {
-                console.error('Old PersianDate accuracy test failed:', error);
-            }
-        }
-        
-        return persianDate;
-    }
 
     // Step Saving Methods
     async saveCurrentStep() {
-        const stepData = this.collectStepData(this.currentStep);
+        console.log('saveCurrentStep called for step:', this.currentStep);
+        
+        // Prevent multiple simultaneous save operations
+        if (this.isSaving) {
+            console.warn('Save operation already in progress, isSaving:', this.isSaving);
+            return;
+        }
 
-        const requestData = {
-            Id: this.currentItemId,
-            TeachingPlanId: parseInt(document.querySelector('[name="TeachingPlanId"]').value),
-            Step: this.currentStep,
-            ...stepData
-        };
-
+        console.log('Setting isSaving to true');
+        this.isSaving = true;
+        
         try {
-            console.log('Request data:', requestData);
+            // Collect step data from the appropriate step manager
+            const stepData = await this.collectCurrentStepData();
+            console.log('Collected step data:', stepData);
 
+            const requestData = {
+                Id: this.currentItemId,
+                TeachingPlanId: parseInt(document.querySelector('[name="TeachingPlanId"]').value),
+                Step: this.currentStep,
+                ...stepData
+            };
+
+            console.log('Saving step data:', requestData);
+
+            // For step 3, ensure we have proper data structure
+            if (this.currentStep === 3) {
+                if (!requestData.GroupIds) requestData.GroupIds = [];
+                if (!requestData.SubChapterIds) requestData.SubChapterIds = [];
+                if (!requestData.StudentIds) requestData.StudentIds = [];
+                
+                console.log('Step 3 data prepared:', {
+                    groups: requestData.GroupIds,
+                    subChapters: requestData.SubChapterIds,
+                    students: requestData.StudentIds
+                });
+            }
+
+            console.log('Making fetch request to SaveStep...');
             const response = await fetch('/Teacher/ScheduleItem/SaveStep', {
                 method: 'POST',
                 headers: {
@@ -1754,6 +925,7 @@ class ModernScheduleItemFormManager {
                 },
                 body: JSON.stringify(requestData)
             });
+            console.log('Fetch response received:', response.status, response.statusText);
 
             // Check if response is ok and has content
             if (!response.ok) {
@@ -1804,55 +976,61 @@ class ModernScheduleItemFormManager {
             }
         } catch (error) {
             console.error('Error saving step:', error);
+            console.log('Resetting isSaving to false due to error');
+            this.isSaving = false; // Reset flag on error
             throw error;
+        } finally {
+            console.log('Finally block: Resetting isSaving to false');
+            this.isSaving = false; // Ensure flag is always reset
         }
     }
 
-    collectStepData(step) {
-        const stepData = {};
+    // Method to manually reset isSaving flag (for debugging)
+    resetSavingFlag() {
+        console.log('Manually resetting isSaving flag');
+        this.isSaving = false;
+    }
 
-        switch (step) {
+    async collectCurrentStepData() {
+        console.log(`Collecting data for current step: ${this.currentStep}`);
+        console.log('Available step managers:', {
+            step1: !!window.step1Manager,
+            step2: !!window.step2Manager,
+            step3: !!window.step3Manager,
+            step4: !!window.step4Manager
+        });
+        
+        switch (this.currentStep) {
             case 1:
-                stepData.Type = parseInt(document.getElementById('itemType')?.value);
-                stepData.Title = document.getElementById('itemTitle')?.value;
-                stepData.Description = document.getElementById('descriptionHidden')?.value;
+                if (window.step1Manager && typeof window.step1Manager.collectStep1Data === 'function') {
+                    return window.step1Manager.collectStep1Data();
+                }
                 break;
-            case 2:
-                stepData.PersianStartDate = document.getElementById('PersianStartDate')?.value;
-                stepData.PersianDueDate = document.getElementById('PersianDueDate')?.value;
-                stepData.StartTime = document.getElementById('StartTime')?.value;
-                stepData.DueTime = document.getElementById('DueTime')?.value;
-                stepData.MaxScore = parseFloat(document.getElementById('maxScore')?.value) || null;
-                stepData.IsMandatory = document.getElementById('isMandatory')?.checked || false;
-                break;
-        case 3:
-            stepData.GroupId = parseInt(document.getElementById('groupId')?.value) || null;
-            // Add selected groups and subchapters for badge-based selection
-            if (this.step3Manager) {
-                const selectedGroups = this.step3Manager.getSelectedGroups();
-                const selectedSubChapters = this.step3Manager.getSelectedSubChapters();
                 
-                if (selectedGroups.length > 0) {
-                    stepData.GroupIds = selectedGroups.map(g => g.id);
+            case 2:
+                if (window.step2Manager && typeof window.step2Manager.collectStep2Data === 'function') {
+                    return window.step2Manager.collectStep2Data();
                 }
-                if (selectedSubChapters.length > 0) {
-                    stepData.SubChapterIds = selectedSubChapters.map(sc => sc.id);
-                }
-            }
-            if (this.step3Manager) {
-                const selectedStudents = this.step3Manager.getSelectedStudents();
-                if (selectedStudents.length > 0) {
-                    stepData.StudentIds = selectedStudents.map(s => s.id);
-                }
+                break;
+                
+            case 3:
+                if (window.step3Manager && typeof window.step3Manager.collectStep3Data === 'function') {
+                    return window.step3Manager.collectStep3Data();
             }
             break;
+                
             case 4:
-                stepData.ContentJson = this.collectContentData();
+                if (window.step4Manager && typeof window.step4Manager.collectStep4Data === 'function') {
+                    return window.step4Manager.collectStep4Data();
+                }
                 break;
         }
 
-        return stepData;
+        return {};
     }
+
+    // collectStepData method removed - now using collectCurrentStepData
+
 
     // Check for existing item
     async checkForExistingItem() {
@@ -1879,154 +1057,41 @@ class ModernScheduleItemFormManager {
             const result = await response.json();
 
             if (result.success) {
-                this.populateFormWithExistingData(result.data);
+                // Store the loaded data for step managers to use
+                this.existingItemData = result.data;
+                
+                // Update current step if available
+                if (result.data.currentStep) {
+                    this.currentStep = result.data.currentStep;
+                    this.updateStepVisibility();
+                    this.updateStepIndicators();
+                    this.updateProgress();
+                    this.updateNavigationButtons();
+                    
+                    // Initialize step content for the current step
+                    setTimeout(() => {
+                        this.initializeStepContent(this.currentStep);
+                    }, 300);
+                }
+
+                // Update form state indicators
+                this.updateFormStateIndicators();
+                
+                console.log('Existing item data loaded and stored for step managers');
             }
         } catch (error) {
             console.error('Error loading existing item:', error);
         }
     }
 
-    populateFormWithExistingData(data) {
-        // Populate form fields with existing data
-        if (data.title) {
-            const itemTitle = document.getElementById('itemTitle');
-            if (itemTitle) {
-                itemTitle.value = data.title;
-            }
-        }
-        if (data.type >= 0) {
-            const itemType = document.getElementById('itemType');
-            if (itemType) {
-                itemType.value = data.type;
-            }
-        }
-        if (data.description) {
-            const descriptionEditor = document.getElementById('descriptionEditor');
-            const descriptionHidden = document.getElementById('descriptionHidden');
-            if (descriptionEditor) {
-                descriptionEditor.innerHTML = data.description;
-            }
-            if (descriptionHidden) {
-                descriptionHidden.value = data.description;
-            }
-        }
-        if (data.persianStartDate) {
-            console.log('schedule-item-form: Setting PersianStartDate', data.persianStartDate);
-            const persianStartDate = document.getElementById('PersianStartDate');
-            if (persianStartDate) {
-                persianStartDate.value = data.persianStartDate;
-            }
-            const startTime = document.getElementById('StartTime');
-            if (startTime) {
-                this.updateTimeInput('StartTime', data.startDate);
-            }
-        }
-        if (data.persianDueDate) {
-            console.log('schedule-item-form: Setting PersianDueDate', data.persianDueDate);
-            const persianDueDate = document.getElementById('PersianDueDate');
-            if (persianDueDate) {
-                persianDueDate.value = data.persianDueDate;
-            }
-            const dueTime = document.getElementById('DueTime');
-            if (dueTime) {
-                this.updateTimeInput('DueTime', data.dueDate);
-            }
-        }
-        if (data.maxScore) {
-            const maxScore = document.getElementById('maxScore');
-            if (maxScore) {
-                maxScore.value = data.maxScore;
-            }
-        }
-        if (data.isMandatory) {
-            const isMandatory = document.getElementById('isMandatory');
-            if (isMandatory) {
-                isMandatory.checked = data.isMandatory;
-            }
-        }
-        if (data.groupId) {
-            const groupId = document.getElementById('groupId');
-            if (groupId) {
-                groupId.value = data.groupId;
-            }
-        }
-        if (data.lessonId) {
-            const lessonId = document.getElementById('lessonId');
-            if (lessonId) {
-                lessonId.value = data.lessonId;
-            }
-        }
-
-        // Load selected groups and subchapters for badge-based selection
-        if (data.groupIds && data.groupIds.length > 0) {
-            if (this.step3Manager) {
-                const groups = data.groupIds.map(id => ({ id: id, name: '' })); // Name will be loaded later
-                this.step3Manager.setSelectedGroups(groups);
-            }
-        }
-        if (data.subChapterIds && data.subChapterIds.length > 0) {
-            if (this.step3Manager) {
-                const subChapters = data.subChapterIds.map(id => ({ id: id, title: '' })); // Title will be loaded later
-                this.step3Manager.setSelectedSubChapters(subChapters);
-            }
-        }
-        if (data.studentIds && data.studentIds.length > 0) {
-            if (this.step3Manager) {
-                const students = data.studentIds.map(id => ({ id: id, firstName: '', lastName: '' })); // Details will be loaded later
-                this.step3Manager.setSelectedStudents(students);
-            }
-        }
-
-        // Update current step
-        if (data.currentStep) {
-            this.currentStep = data.currentStep;
-            this.updateStepVisibility();
-            this.updateStepIndicators();
-            this.updateProgress();
-            this.updateNavigationButtons();
-            
-            // If we're on step 3, initialize step 3 content after loading existing data
-            if (this.currentStep === 3) {
-                // Delay to ensure DOM is ready
-                setTimeout(async () => {
-                    await this.initializeStep3();
-                }, 100);
-            }
-        }
-
-        // Update form state indicators
-        this.updateFormStateIndicators();
-        
-        // Update datepickers after form is populated
-        setTimeout(() => {
-            this.updateDatePickers();
-            // Load and select groups and subchapters after UI is ready
-        }, 200);
+    // Get existing item data for step managers
+    getExistingItemData() {
+        return this.existingItemData || null;
     }
 
-    updatePersianDateDisplay(inputId, isoDate) {
-        if (isoDate) {
-            const date = new Date(isoDate);
-            const persianDateString = this.convertToPersianDate(date);
-            const inputElement = document.getElementById(inputId);
-            if (inputElement && persianDateString !== '0000/00/00') {
-                inputElement.value = persianDateString;
-                // Update the datepicker if it exists
-                this.updateDatePicker(inputElement, persianDateString);
-            }
-        }
-    }
+    // populateFormWithExistingData method removed - each step loads its own data
 
-    updateTimeInput(inputId, isoDate) {
-        if (isoDate) {
-            const date = new Date(isoDate);
-            const timeString = `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
-            const timeInput = document.getElementById(inputId);
-            if (timeInput) {
-                timeInput.value = timeString;
-            }
-        }
-    }
+    // Delegated to Step2TimingManager
 
    
     updateFormStateIndicators() {
@@ -2058,37 +1123,6 @@ class ModernScheduleItemFormManager {
         }
     }
 
-    // Enhanced form submission
-    async submitForm(formData) {
-        try {
-            // Save final step first
-            await this.saveCurrentStep();
-
-            // Complete the item
-            const response = await fetch('/Teacher/ScheduleItem/Complete', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ Id: this.currentItemId })
-            });
-
-            const result = await response.json();
-
-            if (result.success) {
-                this.showSuccessMessage('آیتم آموزشی با موفقیت تکمیل شد');
-                // Redirect to index page
-                setTimeout(() => {
-                    window.location.href = `/Teacher/ScheduleItem/Index?teachingPlanId=${formData.TeachingPlanId}`;
-                }, 2000);
-            } else {
-                throw new Error(result.message || 'خطا در تکمیل آیتم');
-            }
-        } catch (error) {
-            console.error('Error submitting form:', error);
-            this.showErrorMessage('خطا در ارسال فرم');
-        }
-    }
 
 
 
@@ -2146,10 +1180,6 @@ class ModernScheduleItemFormManager {
         }
     }
 
-    setupStudentSelection() {
-        // Student selection is now handled by Step3AssignmentManager
-        console.log('Student selection handled by Step3AssignmentManager');
-    }
 
 
 
@@ -2159,137 +1189,8 @@ class ModernScheduleItemFormManager {
 
 
 
-    setupModernGroupMultiSelect() {
-        const toggle = document.getElementById('groupSelectToggle');
-        const dropdown = document.getElementById('groupSelectDropdown');
-        const container = document.getElementById('groupMultiSelect');
-        const searchInput = document.getElementById('groupSearchInput');
-        const selectAllBtn = document.getElementById('selectAllGroupsBtn');
-        const clearBtn = document.getElementById('clearGroupsBtn');
 
-        if (!toggle || !dropdown || !container) return;
 
-        // Toggle dropdown
-        toggle.addEventListener('click', (e) => {
-            e.preventDefault();
-            this.toggleMultiSelectDropdown(container, dropdown);
-        });
-
-        // Search functionality
-        if (searchInput) {
-            searchInput.addEventListener('input', (e) => {
-                this.filterMultiSelectOptions('groupOptionsList', e.target.value);
-            });
-        }
-
-        // Select all
-        if (selectAllBtn) {
-            selectAllBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.selectAllGroups();
-            });
-        }
-
-        // Clear all
-        if (clearBtn) {
-            clearBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.clearAllGroups();
-            });
-        }
-
-        // Close dropdown when clicking outside
-        document.addEventListener('click', (e) => {
-            if (!container.contains(e.target)) {
-                dropdown.style.display = 'none';
-                container.classList.remove('open');
-            }
-        });
-
-        // Load groups
-        this.loadGroups();
-    }
-
-    setupModernSubChapterMultiSelect() {
-        const toggle = document.getElementById('subChapterSelectToggle');
-        const dropdown = document.getElementById('subChapterSelectDropdown');
-        const container = document.getElementById('subChapterMultiSelect');
-        const searchInput = document.getElementById('subChapterSearchInput');
-        const selectAllBtn = document.getElementById('selectAllSubChaptersBtn');
-        const clearBtn = document.getElementById('clearSubChaptersBtn');
-
-        if (!toggle || !dropdown || !container) return;
-
-        // Toggle dropdown
-        toggle.addEventListener('click', (e) => {
-            e.preventDefault();
-            this.toggleMultiSelectDropdown(container, dropdown);
-        });
-
-        // Search functionality
-        if (searchInput) {
-            searchInput.addEventListener('input', (e) => {
-                this.filterMultiSelectOptions('subChapterOptionsList', e.target.value);
-            });
-        }
-
-        // Select all
-        if (selectAllBtn) {
-            selectAllBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.selectAllSubChapters();
-            });
-        }
-
-        // Clear all
-        if (clearBtn) {
-            clearBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.clearAllSubChapters();
-            });
-        }
-
-        // Close dropdown when clicking outside
-        document.addEventListener('click', (e) => {
-            if (!container.contains(e.target)) {
-                dropdown.style.display = 'none';
-                container.classList.remove('open');
-            }
-        });
-
-        // Load subchapters
-        this.loadSubChapters();
-    }
-
-    toggleMultiSelectDropdown(container, dropdown) {
-        const isOpen = dropdown.style.display === 'block';
-        if (isOpen) {
-            dropdown.style.display = 'none';
-            container.classList.remove('open');
-        } else {
-            dropdown.style.display = 'block';
-            container.classList.add('open');
-        }
-    }
-
-    filterMultiSelectOptions(optionsListId, searchTerm) {
-        const optionsList = document.getElementById(optionsListId);
-        if (!optionsList) return;
-
-        const options = optionsList.querySelectorAll('.option-item');
-        const term = searchTerm.toLowerCase();
-
-        options.forEach(option => {
-            const text = option.querySelector('.option-text').textContent.toLowerCase();
-            const subtitle = option.querySelector('.option-subtitle')?.textContent.toLowerCase() || '';
-            
-            if (text.includes(term) || subtitle.includes(term)) {
-                option.style.display = 'flex';
-            } else {
-                option.style.display = 'none';
-            }
-        });
-    }
 
 }
 

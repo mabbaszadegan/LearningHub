@@ -66,12 +66,9 @@ public class CreateCourseCommandHandlerTests
             new TestClock(),
             new TestCurrentUserService());
 
-        // Act
-        var result = await handler.Handle(command, CancellationToken.None);
-
-        // Assert
-        result.IsSuccess.Should().BeFalse();
-        result.Error.Should().NotBeNullOrEmpty();
+        // Act & Assert
+        var act = async () => await handler.Handle(command, CancellationToken.None);
+        await act.Should().ThrowAsync<ArgumentException>();
     }
 }
 

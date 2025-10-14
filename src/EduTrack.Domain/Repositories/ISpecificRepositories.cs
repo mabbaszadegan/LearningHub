@@ -131,8 +131,18 @@ public interface IScheduleItemRepository : IRepository<ScheduleItem>
     Task<IEnumerable<ScheduleItem>> GetActiveScheduleItemsAsync(CancellationToken cancellationToken = default);
     Task<IEnumerable<ScheduleItem>> GetScheduleItemsBySubChapterAsync(int subChapterId, CancellationToken cancellationToken = default);
     Task<IEnumerable<ScheduleItem>> GetScheduleItemsByGroupAndSubChapterAsync(int groupId, int subChapterId, CancellationToken cancellationToken = default);
+    
+    // Student Assignment methods
     Task<IEnumerable<ScheduleItemStudentAssignment>> GetStudentAssignmentsAsync(int scheduleItemId, CancellationToken cancellationToken = default);
     Task RemoveStudentAssignmentsAsync(IEnumerable<ScheduleItemStudentAssignment> assignments, CancellationToken cancellationToken = default);
+    
+    // Group Assignment methods
+    Task<IEnumerable<ScheduleItemGroupAssignment>> GetGroupAssignmentsAsync(int scheduleItemId, CancellationToken cancellationToken = default);
+    Task RemoveGroupAssignmentsAsync(IEnumerable<ScheduleItemGroupAssignment> assignments, CancellationToken cancellationToken = default);
+    
+    // SubChapter Assignment methods
+    Task<IEnumerable<ScheduleItemSubChapterAssignment>> GetSubChapterAssignmentsAsync(int scheduleItemId, CancellationToken cancellationToken = default);
+    Task RemoveSubChapterAssignmentsAsync(IEnumerable<ScheduleItemSubChapterAssignment> assignments, CancellationToken cancellationToken = default);
 }
 
 /// <summary>

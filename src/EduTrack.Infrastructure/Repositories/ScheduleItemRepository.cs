@@ -124,12 +124,47 @@ public class ScheduleItemRepository : Repository<ScheduleItem>, IScheduleItemRep
             .ToListAsync(cancellationToken);
     }
 
-    public async Task RemoveStudentAssignmentsAsync(IEnumerable<ScheduleItemStudentAssignment> assignments, CancellationToken cancellationToken = default)
+    public Task RemoveStudentAssignmentsAsync(IEnumerable<ScheduleItemStudentAssignment> assignments, CancellationToken cancellationToken = default)
     {
         if (assignments.Any())
         {
             _context.Set<ScheduleItemStudentAssignment>().RemoveRange(assignments);
-            await _context.SaveChangesAsync(cancellationToken);
+            // Note: SaveChangesAsync is called by the calling code to maintain transaction integrity
         }
+        return Task.CompletedTask;
+    }
+
+    public async Task<IEnumerable<ScheduleItemGroupAssignment>> GetGroupAssignmentsAsync(int scheduleItemId, CancellationToken cancellationToken = default)
+    {
+        return await _context.Set<ScheduleItemGroupAssignment>()
+            .Where(ga => ga.ScheduleItemId == scheduleItemId)
+            .ToListAsync(cancellationToken);
+    }
+
+    public Task RemoveGroupAssignmentsAsync(IEnumerable<ScheduleItemGroupAssignment> assignments, CancellationToken cancellationToken = default)
+    {
+        if (assignments.Any())
+        {
+            _context.Set<ScheduleItemGroupAssignment>().RemoveRange(assignments);
+            // Note: SaveChangesAsync is called by the calling code to maintain transaction integrity
+        }
+        return Task.CompletedTask;
+    }
+
+    public async Task<IEnumerable<ScheduleItemSubChapterAssignment>> GetSubChapterAssignmentsAsync(int scheduleItemId, CancellationToken cancellationToken = default)
+    {
+        return await _context.Set<ScheduleItemSubChapterAssignment>()
+            .Where(sca => sca.ScheduleItemId == scheduleItemId)
+            .ToListAsync(cancellationToken);
+    }
+
+    public Task RemoveSubChapterAssignmentsAsync(IEnumerable<ScheduleItemSubChapterAssignment> assignments, CancellationToken cancellationToken = default)
+    {
+        if (assignments.Any())
+        {
+            _context.Set<ScheduleItemSubChapterAssignment>().RemoveRange(assignments);
+            // Note: SaveChangesAsync is called by the calling code to maintain transaction integrity
+        }
+        return Task.CompletedTask;
     }
 }

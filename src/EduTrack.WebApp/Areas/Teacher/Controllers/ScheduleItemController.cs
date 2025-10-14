@@ -380,6 +380,7 @@ public class ScheduleItemController : Controller
         try
         {
             _logger.LogInformation("SaveStep called with request: {@Request}", request);
+            Console.WriteLine($"SaveStep called - Step: {request.Step}, TeachingPlanId: {request.TeachingPlanId}");
             
             var currentUser = await _userManager.GetUserAsync(User);
             if (currentUser == null)

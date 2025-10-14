@@ -185,13 +185,136 @@
 }
 
 @section Scripts {
+    <script src="~/js/areas/teacher/schedule-items/step1-basics.js"></script>
+    <script src="~/js/areas/teacher/schedule-items/step2-timing.js"></script>
     <script src="~/js/areas/teacher/schedule-items/step3-assignment.js"></script>
+    <script src="~/js/areas/teacher/schedule-items/step4-content.js"></script>
     <script src="~/js/areas/teacher/schedule-items/schedule-item-form.js"></script>
+    <script>
+        // Global test function
+        function testSaveStep3() {
+            if (window.formManager) {
+                window.formManager.testSaveStep3();
+            } else {
+                console.error('FormManager not available');
+            }
+        }
+    </script>
     <script src="~/js/areas/teacher/schedule-items/content-builder.js"></script>
     <script>
         $(document).ready(function() {
             // Initialize the form manager
             window.scheduleItemForm = new ModernScheduleItemFormManager();
+            window.formManager = window.scheduleItemForm; // For global access
+            // Initialize step managers
+            window.step1Manager = new Step1BasicsManager(window.scheduleItemForm);
+            window.step2Manager = new Step2TimingManager(window.scheduleItemForm);
+            // Step3Manager is initialized by the main form, but we need to wait for it
+            setTimeout(() => {
+                window.step3Manager = window.scheduleItemForm.step3Manager;
+                console.log('Step3Manager assigned:', !!window.step3Manager);
+                console.log('All step managers status:', {
+                    step1: !!window.step1Manager,
+                    step2: !!window.step2Manager,
+                    step3: !!window.step3Manager,
+                    step4: !!window.step4Manager
+                });
+            }, 300);
+            window.step4Manager = new Step4ContentManager(window.scheduleItemForm);
+            
+            // Global debug functions
+            window.resetSavingFlag = function() {
+                if (window.scheduleItemForm && typeof window.scheduleItemForm.resetSavingFlag === 'function') {
+                    window.scheduleItemForm.resetSavingFlag();
+                } else {
+                    console.error('resetSavingFlag function not available');
+                }
+            };
+            
+            window.checkSavingFlag = function() {
+                if (window.scheduleItemForm) {
+                    console.log('isSaving flag:', window.scheduleItemForm.isSaving);
+                } else {
+                    console.error('scheduleItemForm not available');
+                }
+            };
+            
+            window.checkExistingData = function() {
+                if (window.scheduleItemForm && typeof window.scheduleItemForm.getExistingItemData === 'function') {
+                    const data = window.scheduleItemForm.getExistingItemData();
+                    console.log('Existing item data:', data);
+                    return data;
+                } else {
+                    console.error('getExistingItemData not available');
+                    return null;
+                }
+            };
+            
+            window.testStepDataLoading = function(stepNumber) {
+                console.log(`Testing step ${stepNumber} data loading...`);
+                console.log('Existing data:', window.scheduleItemForm ? window.scheduleItemForm.getExistingItemData() : 'No form manager');
+                
+                switch(stepNumber) {
+                    case 1:
+                        if (window.step1Manager && typeof window.step1Manager.loadStepData === 'function') {
+                            window.step1Manager.loadStepData();
+                        } else {
+                            console.error('Step1Manager not available or loadStepData method missing');
+                        }
+                        break;
+                    case 2:
+                        if (window.step2Manager && typeof window.step2Manager.loadStepData === 'function') {
+                            window.step2Manager.loadStepData();
+                        } else {
+                            console.error('Step2Manager not available or loadStepData method missing');
+                        }
+                        break;
+                    case 3:
+                        if (window.step3Manager && typeof window.step3Manager.loadStepData === 'function') {
+                            window.step3Manager.loadStepData();
+                        } else {
+                            console.error('Step3Manager not available or loadStepData method missing');
+                        }
+                        break;
+                    case 4:
+                        if (window.step4Manager && typeof window.step4Manager.loadStepData === 'function') {
+                            window.step4Manager.loadStepData();
+                        } else {
+                            console.error('Step4Manager not available or loadStepData method missing');
+                        }
+                        break;
+                }
+            };
+            
+            window.testAllStepDataLoading = function() {
+                console.log('Testing all step data loading...');
+                for (let i = 1; i <= 4; i++) {
+                    setTimeout(() => {
+                        console.log(`Testing step ${i}...`);
+                        window.testStepDataLoading(i);
+                    }, i * 500);
+                }
+            };
+            
+            window.debugCurrentStep = function() {
+                if (window.scheduleItemForm) {
+                    console.log('Current step:', window.scheduleItemForm.currentStep);
+                    console.log('Existing data:', window.scheduleItemForm.getExistingItemData());
+                    console.log('Step visibility:', {
+                        step1: document.querySelector('.form-step[data-step="1"]')?.classList.contains('active'),
+                        step2: document.querySelector('.form-step[data-step="2"]')?.classList.contains('active'),
+                        step3: document.querySelector('.form-step[data-step="3"]')?.classList.contains('active'),
+                        step4: document.querySelector('.form-step[data-step="4"]')?.classList.contains('active')
+                    });
+                }
+            };
+            
+            window.forceLoadCurrentStepData = function() {
+                if (window.scheduleItemForm && window.scheduleItemForm.currentStep) {
+                    console.log('Forcing load of current step data for step:', window.scheduleItemForm.currentStep);
+                    window.scheduleItemForm.initializeStepContent(window.scheduleItemForm.currentStep);
+                }
+            };
         });
     </script>
 }

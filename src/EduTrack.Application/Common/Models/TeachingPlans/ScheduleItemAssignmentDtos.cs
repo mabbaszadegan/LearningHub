@@ -18,3 +18,12 @@ public class ScheduleItemSubChapterAssignmentDto
     public string ChapterTitle { get; set; } = string.Empty;
     public DateTimeOffset CreatedAt { get; set; }
 }
+
+public class ScheduleItemStudentAssignmentDto
+{
+    public int Id { get; set; }
+    public int ScheduleItemId { get; set; }
+    public string StudentId { get; set; } = string.Empty;
+    public string StudentName { get; set; } = string.Empty;
+    public DateTimeOffset CreatedAt { get; set; }
+}
