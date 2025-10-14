@@ -26,11 +26,20 @@ class Step2TimingManager {
     }
 
     setupStartDatePresets() {
-        const startDatePresets = document.querySelectorAll('.date-preset-btn[data-preset]');
+        // فقط دکمه‌های تاریخ شروع را انتخاب کن (دکمه‌هایی که در بخش تاریخ شروع هستند)
+        const startDateSection = document.querySelector('.required-item:has(#PersianStartDate)');
+        if (!startDateSection) {
+            console.warn('Start date section not found');
+            return;
+        }
+        
+        const startDatePresets = startDateSection.querySelectorAll('.date-preset-btn[data-preset]');
+        console.log('Found start date presets:', startDatePresets.length);
         
         startDatePresets.forEach(btn => {
             btn.addEventListener('click', () => {
                 const preset = btn.dataset.preset;
+                console.log('Start date preset clicked:', preset);
                 const targetDate = this.calculateStartDate(preset);
                 
                 if (targetDate) {
@@ -42,11 +51,20 @@ class Step2TimingManager {
     }
 
     setupDueDatePresets() {
-        const dueDatePresets = document.querySelectorAll('.date-preset-btn[data-preset]');
+        // فقط دکمه‌های تاریخ مهلت را انتخاب کن (دکمه‌هایی که در بخش تاریخ مهلت هستند)
+        const dueDateSection = document.querySelector('.required-item:has(#PersianDueDate)');
+        if (!dueDateSection) {
+            console.warn('Due date section not found');
+            return;
+        }
+        
+        const dueDatePresets = dueDateSection.querySelectorAll('.date-preset-btn[data-preset]');
+        console.log('Found due date presets:', dueDatePresets.length);
         
         dueDatePresets.forEach(btn => {
             btn.addEventListener('click', () => {
                 const preset = btn.dataset.preset;
+                console.log('Due date preset clicked:', preset);
                 const targetDate = this.calculateDueDate(preset);
                 
                 if (targetDate) {
@@ -108,8 +126,12 @@ class Step2TimingManager {
         const startTimeInput = document.getElementById('StartTime');
         
         if (persianStartDateInput && startDateInput) {
+            console.log('Setting start date:', date);
+            
             // Convert to Persian date
             const persianDate = this.convertToPersianDate(date);
+            console.log('Converted to Persian:', persianDate);
+            
             persianStartDateInput.value = persianDate;
             
             // Set hidden field with date
@@ -135,8 +157,12 @@ class Step2TimingManager {
         const dueTimeInput = document.getElementById('DueTime');
         
         if (persianDueDateInput && dueDateInput) {
+            console.log('Setting due date:', date);
+            
             // Convert to Persian date
             const persianDate = this.convertToPersianDate(date);
+            console.log('Converted to Persian:', persianDate);
+            
             persianDueDateInput.value = persianDate;
             
             // Set hidden field with date
@@ -291,16 +317,45 @@ class Step2TimingManager {
         const dueTimeInput = document.getElementById('DueTime');
         const startDateInput = document.getElementById('StartDate');
         const dueDateInput = document.getElementById('DueDate');
+        const persianStartDateInput = document.getElementById('PersianStartDate');
 
         if (startTimeInput && startDateInput) {
             startTimeInput.addEventListener('change', () => {
                 this.updateDateTimeField(startDateInput, startTimeInput);
+                this.updateDurationCalculator();
             });
         }
 
         if (dueTimeInput && dueDateInput) {
             dueTimeInput.addEventListener('change', () => {
                 this.updateDateTimeField(dueDateInput, dueTimeInput);
+                this.updateDurationCalculator();
+            });
+        }
+
+        // Add event listener for start date changes to update due date presets
+        if (persianStartDateInput) {
+            persianStartDateInput.addEventListener('change', () => {
+                // Update the hidden StartDate field when Persian date changes
+                if (persianStartDateInput.value) {
+                    try {
+                        // Convert Persian date to Gregorian date
+                        const persianDate = persianStartDateInput.value;
+                        const gregorianDate = this.convertPersianToGregorian(persianDate);
+                        if (gregorianDate && startDateInput) {
+                            startDateInput.value = gregorianDate.toISOString();
+                        }
+                    } catch (error) {
+                        console.error('Error converting Persian date to Gregorian:', error);
+                    }
+                }
+                this.updateDurationCalculator();
+            });
+        }
+
+        if (startDateInput) {
+            startDateInput.addEventListener('change', () => {
+                this.updateDurationCalculator();
             });
         }
     }
@@ -373,12 +428,81 @@ class Step2TimingManager {
         }
     }
 
+    convertPersianToGregorian(persianDateString) {
+        try {
+            if (!persianDateString || persianDateString === '0000/00/00') {
+                return null;
+            }
+
+            // Use official jalaali-js library if available
+            if (typeof window.jalaali !== 'undefined' && window.jalaali.toGregorian) {
+                try {
+                    const parts = persianDateString.split('/');
+                    if (parts.length === 3) {
+                        const jy = parseInt(parts[0]);
+                        const jm = parseInt(parts[1]);
+                        const jd = parseInt(parts[2]);
+                        const gregorian = window.jalaali.toGregorian(jy, jm, jd);
+                        return new Date(gregorian.gy, gregorian.gm - 1, gregorian.gd);
+                    }
+                } catch (jalaaliError) {
+                    console.warn('jalaali-js library error:', jalaaliError);
+                    // Fall through to next method
+                }
+            }
+            
+            // Fallback to old PersianDate library if available
+            if (typeof PersianDate !== 'undefined') {
+                try {
+                    const persianDate = PersianDate.parse(persianDateString);
+                    return persianDate.toDate();
+                } catch (persianError) {
+                    console.warn('PersianDate library error:', persianError);
+                    // Fall through to next method
+                }
+            }
+            
+            // Fallback to persianDateUtils if available
+            if (typeof window.persianDateUtils !== 'undefined' && window.persianDateUtils.persianToGregorian) {
+                try {
+                    return window.persianDateUtils.persianToGregorian(persianDateString);
+                } catch (utilsError) {
+                    console.warn('persianDateUtils error:', utilsError);
+                    // Fall through to next method
+                }
+            }
+            
+            // Final fallback: simple approximation
+            console.warn('Using simple Gregorian date approximation');
+            const parts = persianDateString.split('/');
+            if (parts.length === 3) {
+                const year = parseInt(parts[0]) + 621;
+                const month = parseInt(parts[1]) - 1;
+                const day = parseInt(parts[2]);
+                return new Date(year, month, day);
+            }
+            
+            return null;
+            
+        } catch (error) {
+            console.error('Error converting Persian date to Gregorian:', error);
+            return null;
+        }
+    }
+
     updateDatePicker(inputElement, persianDate) {
         try {
+            console.log('Updating datepicker for:', inputElement.id, 'with date:', persianDate);
+            
             // Try to update the datepicker if it exists
             if (inputElement._persianDatePicker && typeof inputElement._persianDatePicker.setDate === 'function') {
+                console.log('Using _persianDatePicker.setDate');
                 inputElement._persianDatePicker.setDate(persianDate);
+            } else if (inputElement.datePicker && typeof inputElement.datePicker.setDate === 'function') {
+                console.log('Using datePicker.setDate');
+                inputElement.datePicker.setDate(persianDate);
             } else {
+                console.log('Triggering events to update calendar');
                 // Trigger change event to update the calendar
                 const changeEvent = new Event('change', { bubbles: true });
                 inputElement.dispatchEvent(changeEvent);
@@ -386,6 +510,12 @@ class Step2TimingManager {
                 // Also trigger input event
                 const inputEvent = new Event('input', { bubbles: true });
                 inputElement.dispatchEvent(inputEvent);
+                
+                // Try to trigger focus and blur to refresh the datepicker
+                inputElement.focus();
+                setTimeout(() => {
+                    inputElement.blur();
+                }, 100);
             }
         } catch (error) {
             console.error('Error updating datepicker:', error);
