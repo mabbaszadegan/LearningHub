@@ -249,6 +249,10 @@ class Step4ContentManager {
         const maxRetries = 10;
         
         const tryLoadData = () => {
+            console.log(`Attempt ${retryCount + 1} to load step data`);
+            console.log('FormManager exists:', !!this.formManager);
+            console.log('getExistingItemData function exists:', !!(this.formManager && typeof this.formManager.getExistingItemData === 'function'));
+            
             if (this.formManager && typeof this.formManager.getExistingItemData === 'function') {
                 const existingData = this.formManager.getExistingItemData();
                 console.log('Existing data from formManager:', existingData);
@@ -257,24 +261,45 @@ class Step4ContentManager {
                     const contentField = document.getElementById('contentJson');
                     const reminderField = document.getElementById('reminderContentJson');
                     
+                    console.log('Content field found:', !!contentField);
+                    console.log('Reminder field found:', !!reminderField);
+                    
                     if (contentField) {
                         contentField.value = existingData.contentJson;
+                        console.log('Content field updated with:', existingData.contentJson);
                     }
                     
                     if (reminderField) {
                         reminderField.value = existingData.contentJson;
+                        console.log('Reminder field updated with:', existingData.contentJson);
                     }
                     
                     console.log('Step 4 data loaded:', existingData.contentJson);
                     
                     // Notify reminder block manager to reload content
-                    if (window.reminderBlockManager && typeof window.reminderBlockManager.loadExistingContent === 'function') {
-                        setTimeout(() => {
+                    const notifyReminderManager = () => {
+                        console.log('Checking reminder block manager...');
+                        console.log('window.reminderBlockManager exists:', !!window.reminderBlockManager);
+                        
+                        if (window.reminderBlockManager && typeof window.reminderBlockManager.loadExistingContent === 'function') {
+                            console.log('Notifying reminder block manager to load content');
                             window.reminderBlockManager.loadExistingContent();
-                        }, 200);
+                            return true;
+                        }
+                        return false;
+                    };
+                    
+                    if (!notifyReminderManager()) {
+                        console.log('Reminder block manager not ready, will retry...');
+                        return false;
                     }
                     return true;
+                } else {
+                    console.log('No existing data or contentJson found');
+                    console.log('existingData:', existingData);
                 }
+            } else {
+                console.log('FormManager not ready or getExistingItemData not available');
             }
             return false;
         };

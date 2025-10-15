@@ -1302,15 +1302,28 @@ class ModernScheduleItemFormManager {
     }
 
     async loadExistingItem() {
-        if (!this.currentItemId) return;
+        console.log('=== loadExistingItem called ===');
+        console.log('Current item ID:', this.currentItemId);
+        
+        if (!this.currentItemId) {
+            console.log('No current item ID, returning');
+            return;
+        }
 
         try {
+            console.log('Fetching item data from server...');
             const response = await fetch(`/Teacher/ScheduleItem/GetById/${this.currentItemId}`);
             const result = await response.json();
+            
+            console.log('Server response:', result);
 
             if (result.success) {
+                console.log('Server response successful');
+                console.log('Item data:', result.data);
+                
                 // Store the loaded data for step managers to use
                 this.existingItemData = result.data;
+                console.log('Stored existing item data:', this.existingItemData);
                 
                 // Update current step if available
                 if (result.data.currentStep) {
@@ -1330,26 +1343,40 @@ class ModernScheduleItemFormManager {
                 this.updateFormStateIndicators();
                 
                 // Notify step managers to load their data
-                this.notifyStepManagersToLoadData();
+                setTimeout(() => {
+                    this.notifyStepManagersToLoadData();
+                }, 1000);
                 
+            } else {
+                console.error('Server response failed:', result);
             }
         } catch (error) {
             console.error('Error in loadExistingItem:', error);
         }
+        
+        console.log('=== loadExistingItem finished ===');
     }
 
     // Get existing item data for step managers
     getExistingItemData() {
+        console.log('getExistingItemData called');
+        console.log('existingItemData:', this.existingItemData);
         return this.existingItemData || null;
     }
 
     // Notify step managers to load their data
     notifyStepManagersToLoadData() {
+        console.log('notifyStepManagersToLoadData called');
+        console.log('Existing item data:', this.existingItemData);
+        
         // Notify step 4 manager to load data
         if (window.step4Manager && typeof window.step4Manager.loadStepData === 'function') {
+            console.log('Notifying step4Manager to load data');
             setTimeout(() => {
                 window.step4Manager.loadStepData();
             }, 100);
+        } else {
+            console.log('step4Manager not ready');
         }
         
         // Notify other step managers if needed

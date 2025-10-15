@@ -21,40 +21,6 @@
     100% { transform: rotate(360deg); }
 }
 
-/* Minimal Loading for Navigation Buttons */
-.nav-btn.loading {
-    position: relative;
-    pointer-events: none;
-    opacity: 0.8;
-}
-
-.nav-btn.loading::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    right: 0.75rem;
-    width: 12px;
-    height: 12px;
-    margin-top: -6px;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    border-top: 2px solid rgba(255, 255, 255, 0.8);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-}
-
-.nav-prev.loading::after {
-    border: 2px solid rgba(107, 114, 128, 0.3);
-    border-top: 2px solid rgba(107, 114, 128, 0.8);
-}
-
-/* Ensure navigation buttons maintain their structure during loading */
-.nav-btn.loading span {
-    opacity: 0.7;
-}
-
-.nav-btn.loading i {
-    opacity: 0.7;
-}
 
 /* Navigation Button Loading States */
 .navigation-buttons .btn.loading {
@@ -917,95 +883,70 @@
         color: #374151;
     }
 
-/* Form Navigation */
+/* Form Navigation - Beautiful Redesign */
 .form-navigation {
-    background: #f8fafc;
-    border-top: 1px solid #e5e7eb;
-    padding: 1.5rem 2rem;
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 50%, #f1f5f9 100%);
+    border-top: 1px solid #e2e8f0;
+    padding: 2.5rem 2rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.06);
+    position: relative;
+    overflow: hidden;
 }
+
+.form-navigation::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #e2e8f0, transparent);
+}
+
 
 .nav-buttons {
     display: flex;
     gap: 1rem;
-}
-
-.nav-btn {
-    display: flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.75rem 1.5rem;
-    border: none;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
 }
-
-.nav-prev {
-    background: #f8fafc;
-    color: #6b7280;
-    border: 1px solid #e5e7eb;
-}
-
-    .nav-prev:hover:not(:disabled) {
-        background: #e5e7eb;
-        color: #374151;
-    }
-
-    .nav-prev:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-    }
-
-.nav-next {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-}
-
-    .nav-next:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-    }
-
-.nav-submit {
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-    color: white;
-}
-
-    .nav-submit:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-    }
 
 .nav-progress {
     display: flex;
     flex-direction: column;
     align-items: flex-end;
-    gap: 0.5rem;
+    gap: 1rem;
 }
 
 .progress-bar {
-    width: 200px;
-    height: 6px;
-    background: #e5e7eb;
-    border-radius: 3px;
+    width: 280px;
+    height: 8px;
+    background: #f1f5f9;
+    border-radius: 6px;
     overflow: hidden;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e2e8f0;
 }
 
 .progress-fill {
     height: 100%;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    transition: width 0.3s ease;
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     width: 25%;
+    border-radius: 6px;
+    position: relative;
+    overflow: hidden;
 }
 
 .progress-text {
-    font-size: 0.8rem;
-    color: #6b7280;
-    font-weight: 500;
+    font-size: 0.9rem;
+    color: #475569;
+    font-weight: 600;
+    text-align: center;
+    min-width: 120px;
+    letter-spacing: 0.025em;
 }
 
 /* Responsive Design */
@@ -1033,6 +974,33 @@
 
     .step-progress {
         padding: 0 0.5rem;
+    }
+
+    .form-navigation {
+        padding: 2rem 1rem;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+    
+    .nav-buttons {
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    .nav-progress {
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .progress-bar {
+        width: 240px;
+        height: 8px;
+    }
+    
+    .progress-text {
+        font-size: 0.85rem;
+        min-width: 100px;
     }
 
     .step-indicator-icon {
@@ -1063,20 +1031,31 @@
 
     .form-navigation {
         flex-direction: column;
-        gap: 1rem;
+        gap: 1.5rem;
         text-align: center;
+        padding: 1.5rem 0.75rem;
     }
 
     .nav-buttons {
         justify-content: center;
+        flex-direction: column;
+        gap: 0.75rem;
+        width: 100%;
     }
 
     .nav-progress {
         align-items: center;
+        gap: 0.75rem;
     }
 
     .progress-bar {
-        width: 150px;
+        width: 200px;
+        height: 8px;
+    }
+    
+    .progress-text {
+        font-size: 0.8rem;
+        min-width: 90px;
     }
 }
 
@@ -1869,15 +1848,6 @@
     pointer-events: none;
 }
 
-/* Remove the old loading spinner for navigation buttons */
-.nav-btn.loading::after {
-    display: none !important;
-}
-
-/* Ensure no full button rotation for navigation buttons */
-.nav-btn.loading {
-    transform: none !important;
-}
 
 /* Save Confirmation Dialog - Minimal Design */
 .save-confirmation-dialog {

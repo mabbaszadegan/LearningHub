@@ -83,7 +83,10 @@ function updatePreview() {
     
     if (window.reminderBlockManager) {
         console.log('Using manager to update preview');
+        // Update both sidebar and modal preview
         window.reminderBlockManager.updatePreview();
+        // Show modal
+        window.reminderBlockManager.showPreviewModal();
     } else {
         console.log('Manager not available for preview');
         alert('سیستم پیش‌نمایش هنوز آماده نیست');
@@ -103,7 +106,9 @@ class ReminderContentBlockManager {
         this.emptyState = document.getElementById('emptyBlocksState');
         this.preview = document.getElementById('reminderPreview');
         this.hiddenField = document.getElementById('reminderContentJson');
+        this.isLoadingExistingContent = false;
         console.log('Hidden field found:', this.hiddenField);
+        console.log('Preview element found:', this.preview);
         
         this.init();
     }
@@ -466,6 +471,7 @@ class ReminderContentBlockManager {
                     mimeType: null,
                     size: 'medium',
                     position: 'center',
+                    layout: 'standalone',
                     caption: '',
                     captionPosition: 'bottom'
                 };
@@ -481,6 +487,7 @@ class ReminderContentBlockManager {
                     mimeType: null,
                     size: 'medium',
                     position: 'center',
+                    layout: 'standalone',
                     caption: '',
                     captionPosition: 'bottom'
                 };
@@ -498,6 +505,13 @@ class ReminderContentBlockManager {
                     isRecorded: false,
                     duration: null
                 };
+            case 'code':
+                return {
+                    content: '',
+                    language: 'plaintext',
+                    theme: 'default',
+                    title: ''
+                };
             default:
                 return {};
         }
@@ -505,7 +519,10 @@ class ReminderContentBlockManager {
     
     renderBlock(block) {
         const template = document.querySelector(`#contentBlockTemplates .content-block-template[data-type="${block.type}"]`);
-        if (!template) return;
+        if (!template) {
+            console.error(`Template not found for block type: ${block.type}`);
+            return;
+        }
         
         const blockElement = template.cloneNode(true);
         blockElement.classList.add('content-block');
@@ -525,6 +542,10 @@ class ReminderContentBlockManager {
             this.blocksList.appendChild(blockElement);
         }
     }
+
+
+
+
     
     setupBlockEventListeners(blockElement) {
         // Text editor events
@@ -532,6 +553,56 @@ class ReminderContentBlockManager {
         if (textEditor) {
             textEditor.addEventListener('input', () => this.updateTextBlockContent(textEditor));
             textEditor.addEventListener('blur', () => this.updateTextBlockContent(textEditor));
+        }
+        
+        // Toolbar button events - use event delegation
+        const toolbar = blockElement.querySelector('.text-editor-toolbar');
+        if (toolbar) {
+            toolbar.addEventListener('click', (e) => {
+                const button = e.target.closest('.toolbar-btn');
+                if (button) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.executeTextCommand(button);
+                }
+            });
+        }
+        
+        // Block action events - use event delegation
+        const blockActions = blockElement.querySelector('.block-actions');
+        if (blockActions) {
+            blockActions.addEventListener('click', (e) => {
+                const button = e.target.closest('.btn-icon');
+                if (button) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const action = button.dataset.action;
+                    this.handleBlockAction(action, blockElement);
+                }
+            });
+        }
+        
+        // Collapse icon event
+        const collapseIcon = blockElement.querySelector('.collapse-icon');
+        if (collapseIcon) {
+            collapseIcon.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.toggleCollapse(blockElement);
+            });
+        }
+        
+        // Block header click for collapse
+        const blockHeader = blockElement.querySelector('.block-header');
+        if (blockHeader) {
+            blockHeader.addEventListener('click', (e) => {
+                // Only collapse if clicking on header, not on buttons, and not in fullscreen
+                if (!e.target.closest('.block-actions') && 
+                    !e.target.closest('.collapse-icon') && 
+                    !blockElement.classList.contains('fullscreen')) {
+                    this.toggleCollapse(blockElement);
+                }
+            });
         }
         
         // Caption events
@@ -552,6 +623,12 @@ class ReminderContentBlockManager {
                     this.handleAudioUpload(e.target);
                 }
             });
+        });
+        
+        // Settings events
+        const settingsSelects = blockElement.querySelectorAll('[data-setting]');
+        settingsSelects.forEach(select => {
+            select.addEventListener('change', () => this.updateBlockSettings(blockElement));
         });
     }
     
@@ -622,8 +699,7 @@ class ReminderContentBlockManager {
         }
     }
     
-    moveBlockUp(button) {
-        const blockElement = button.closest('.content-block');
+    moveBlockUp(blockElement) {
         const blockId = blockElement.dataset.blockId;
         const blockIndex = this.blocks.findIndex(b => b.id === blockId);
         
@@ -644,8 +720,7 @@ class ReminderContentBlockManager {
         }
     }
     
-    moveBlockDown(button) {
-        const blockElement = button.closest('.content-block');
+    moveBlockDown(blockElement) {
         const blockId = blockElement.dataset.blockId;
         const blockIndex = this.blocks.findIndex(b => b.id === blockId);
         
@@ -666,8 +741,7 @@ class ReminderContentBlockManager {
         }
     }
     
-    insertBlockAbove(button) {
-        const blockElement = button.closest('.content-block');
+    insertBlockAbove(blockElement) {
         const blockId = blockElement.dataset.blockId;
         const blockIndex = this.blocks.findIndex(b => b.id === blockId);
         
@@ -676,9 +750,8 @@ class ReminderContentBlockManager {
         this.insertionPoint = blockIndex;
     }
     
-    deleteBlock(button) {
+    deleteBlock(blockElement) {
         if (confirm('آیا از حذف این بلاک اطمینان دارید؟')) {
-            const blockElement = button.closest('.content-block');
             const blockId = blockElement.dataset.blockId;
             
             // Remove from blocks array
@@ -1021,19 +1094,24 @@ class ReminderContentBlockManager {
         const blockElement = button.closest('.content-block');
         const textEditor = blockElement.querySelector('.rich-text-editor');
         const command = button.dataset.command;
+        const action = button.dataset.action;
         
-        if (command === 'createLink') {
-            const url = prompt('لطفاً URL لینک را وارد کنید:', 'https://');
-            if (url) {
-                document.execCommand(command, false, url);
-            }
-        } else {
+        if (action === 'create-link') {
+            this.showLinkDialog(blockElement, textEditor);
+        } else if (action === 'text-formatting') {
+            this.showTextFormattingDialog(blockElement, textEditor);
+        } else if (action === 'insert-code') {
+            this.showCodeBlockDialog(blockElement, textEditor);
+        } else if (command) {
             document.execCommand(command, false, null);
+            textEditor.focus();
+            
+            // Update block data
+            this.updateTextBlockData(blockElement, textEditor);
         }
-        
-        textEditor.focus();
-        
-        // Update block data
+    }
+    
+    updateTextBlockData(blockElement, textEditor) {
         const blockId = blockElement.dataset.blockId;
         const block = this.blocks.find(b => b.id === blockId);
         if (block) {
@@ -1042,8 +1120,335 @@ class ReminderContentBlockManager {
             this.updateHiddenField();
         }
     }
-    
-    updatePreview() {
+
+    showLinkDialog(blockElement, textEditor) {
+        const linkModal = new bootstrap.Modal(document.getElementById('linkDialogModal'));
+        const selectedText = window.getSelection().toString();
+        
+        // Pre-fill with selected text
+        document.getElementById('linkText').value = selectedText || '';
+        
+        // Show modal
+        linkModal.show();
+        
+        // Handle insert link
+        document.getElementById('insertLinkBtn').onclick = () => {
+            const linkText = document.getElementById('linkText').value;
+            const linkUrl = document.getElementById('linkUrl').value;
+            const linkTarget = document.getElementById('linkTarget').value;
+            
+            if (linkText && linkUrl) {
+                const linkHTML = `<a href="${linkUrl}" target="${linkTarget}">${linkText}</a>`;
+                
+                if (selectedText) {
+                    document.execCommand('insertHTML', false, linkHTML);
+                } else {
+                    textEditor.focus();
+                    document.execCommand('insertHTML', false, linkHTML);
+                }
+                
+                this.updateTextBlockData(blockElement, textEditor);
+                linkModal.hide();
+            }
+        };
+    }
+
+    showTextFormattingDialog(blockElement, textEditor) {
+        const formattingModal = new bootstrap.Modal(document.getElementById('textFormattingModal'));
+        formattingModal.show();
+        
+        // Handle apply formatting
+        document.getElementById('applyTextFormattingBtn').onclick = () => {
+            const textSize = document.getElementById('textSize').value;
+            const textColor = document.getElementById('textColor').value;
+            const backgroundColor = document.getElementById('backgroundColor').value;
+            const textAlign = document.getElementById('textAlign').value;
+            
+            const selectedText = window.getSelection().toString();
+            
+            if (selectedText) {
+                const span = document.createElement('span');
+                span.style.fontSize = textSize;
+                span.style.color = textColor;
+                span.style.backgroundColor = backgroundColor;
+                span.style.textAlign = textAlign;
+                span.textContent = selectedText;
+                
+                document.execCommand('insertHTML', false, span.outerHTML);
+            } else {
+                // Apply to entire block
+                textEditor.style.fontSize = textSize;
+                textEditor.style.color = textColor;
+                textEditor.style.backgroundColor = backgroundColor;
+                textEditor.style.textAlign = textAlign;
+            }
+            
+            this.updateTextBlockData(blockElement, textEditor);
+            formattingModal.hide();
+        };
+    }
+
+    showCodeBlockDialog(blockElement, textEditor) {
+        const codeModal = new bootstrap.Modal(document.getElementById('codeBlockModal'));
+        codeModal.show();
+        
+        // Handle insert code block
+        document.getElementById('insertCodeBlockBtn').onclick = () => {
+            const language = document.getElementById('codeLanguage').value;
+            const theme = document.getElementById('codeTheme').value;
+            const title = document.getElementById('codeTitle').value;
+            const content = document.getElementById('codeContent').value;
+            
+            if (content) {
+                const codeHTML = `
+                    <div class="code-block" data-language="${language}" data-theme="${theme}">
+                        ${title ? `<div class="code-title">${title}</div>` : ''}
+                        <pre><code class="language-${language}">${this.escapeHtml(content)}</code></pre>
+                    </div>
+                `;
+                
+                textEditor.focus();
+                document.execCommand('insertHTML', false, codeHTML);
+                this.updateTextBlockData(blockElement, textEditor);
+                codeModal.hide();
+            }
+        };
+    }
+
+    toggleFullscreen(blockElement) {
+        if (blockElement.classList.contains('fullscreen')) {
+            this.exitFullscreen(blockElement);
+        } else {
+            this.enterFullscreen(blockElement);
+        }
+    }
+
+    enterFullscreen(blockElement) {
+        blockElement.classList.add('fullscreen');
+        document.body.classList.add('block-fullscreen');
+        
+        // Store current fullscreen block
+        this.currentFullscreenBlock = blockElement;
+        
+        // Create exit button
+        const exitBtn = document.createElement('button');
+        exitBtn.className = 'exit-fullscreen-btn';
+        exitBtn.innerHTML = '<i class="fas fa-times"></i>';
+        exitBtn.title = 'خروج از حالت تمام صفحه (Esc)';
+        exitBtn.onclick = () => this.exitFullscreen(blockElement);
+        document.body.appendChild(exitBtn);
+        
+        // Create navigation buttons
+        this.createBlockNavigation(blockElement);
+        
+        // Add ESC key listener
+        this.escKeyListener = (e) => {
+            if (e.key === 'Escape') {
+                this.exitFullscreen(blockElement);
+            }
+        };
+        document.addEventListener('keydown', this.escKeyListener);
+        
+        // Disable other blocks' actions
+        this.disableOtherBlocksActions(blockElement);
+    }
+
+    exitFullscreen(blockElement) {
+        blockElement.classList.remove('fullscreen');
+        document.body.classList.remove('block-fullscreen');
+        
+        // Clear current fullscreen block
+        this.currentFullscreenBlock = null;
+        
+        // Remove exit button
+        const exitBtn = document.querySelector('.exit-fullscreen-btn');
+        if (exitBtn) {
+            exitBtn.remove();
+        }
+        
+        // Remove navigation
+        const navigation = document.querySelector('.block-navigation');
+        if (navigation) {
+            navigation.remove();
+        }
+        
+        // Remove ESC key listener
+        if (this.escKeyListener) {
+            document.removeEventListener('keydown', this.escKeyListener);
+            this.escKeyListener = null;
+        }
+        
+        // Enable other blocks' actions
+        this.enableAllBlocksActions();
+    }
+
+    createBlockNavigation(currentBlock) {
+        const navigation = document.createElement('div');
+        navigation.className = 'block-navigation';
+        
+        const currentIndex = this.blocks.findIndex(b => b.id === currentBlock.dataset.blockId);
+        const totalBlocks = this.blocks.length;
+        
+        // Previous button
+        const prevBtn = document.createElement('button');
+        prevBtn.className = 'nav-btn';
+        prevBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
+        prevBtn.title = 'بلاک قبلی';
+        prevBtn.disabled = currentIndex === 0;
+        prevBtn.onclick = () => this.navigateToBlock(currentIndex - 1);
+        
+        // Block counter
+        const counter = document.createElement('div');
+        counter.className = 'block-counter';
+        counter.innerHTML = `<i class="fas fa-layer-group"></i> ${currentIndex + 1} از ${totalBlocks}`;
+        
+        // Next button
+        const nextBtn = document.createElement('button');
+        nextBtn.className = 'nav-btn';
+        nextBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
+        nextBtn.title = 'بلاک بعدی';
+        nextBtn.disabled = currentIndex === totalBlocks - 1;
+        nextBtn.onclick = () => this.navigateToBlock(currentIndex + 1);
+        
+        navigation.appendChild(prevBtn);
+        navigation.appendChild(counter);
+        navigation.appendChild(nextBtn);
+        
+        document.body.appendChild(navigation);
+    }
+
+    navigateToBlock(targetIndex) {
+        if (targetIndex < 0 || targetIndex >= this.blocks.length) return;
+        
+        const targetBlockId = this.blocks[targetIndex].id;
+        const targetBlockElement = document.querySelector(`[data-block-id="${targetBlockId}"]`);
+        
+        if (targetBlockElement) {
+            // Exit current fullscreen
+            this.exitFullscreen(this.currentFullscreenBlock);
+            
+            // Enter fullscreen for target block
+            setTimeout(() => {
+                this.enterFullscreen(targetBlockElement);
+            }, 300);
+        }
+    }
+
+    disableOtherBlocksActions(currentBlock) {
+        const allBlocks = document.querySelectorAll('.content-block');
+        allBlocks.forEach(block => {
+            if (block !== currentBlock) {
+                const actions = block.querySelector('.block-actions');
+                if (actions) {
+                    actions.style.opacity = '0.3';
+                    actions.style.pointerEvents = 'none';
+                }
+            }
+        });
+        
+        // Disable add block button
+        const addBlockBtn = document.getElementById('addContentBlockBtn');
+        if (addBlockBtn) {
+            addBlockBtn.style.opacity = '0.3';
+            addBlockBtn.style.pointerEvents = 'none';
+        }
+    }
+
+    enableAllBlocksActions() {
+        const allBlocks = document.querySelectorAll('.content-block');
+        allBlocks.forEach(block => {
+            const actions = block.querySelector('.block-actions');
+            if (actions) {
+                actions.style.opacity = '';
+                actions.style.pointerEvents = '';
+            }
+        });
+        
+        // Enable add block button
+        const addBlockBtn = document.getElementById('addContentBlockBtn');
+        if (addBlockBtn) {
+            addBlockBtn.style.opacity = '';
+            addBlockBtn.style.pointerEvents = '';
+        }
+    }
+
+    toggleCollapse(blockElement) {
+        // Don't allow collapse in fullscreen mode
+        if (blockElement.classList.contains('fullscreen')) {
+            return;
+        }
+        
+        blockElement.classList.toggle('collapsed');
+    }
+
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    handleBlockAction(action, blockElement) {
+        const blockId = blockElement.dataset.blockId;
+        const block = this.blocks.find(b => b.id === blockId);
+        
+        if (!block) return;
+        
+        switch (action) {
+            case 'move-up':
+                this.moveBlockUp(blockElement);
+                break;
+            case 'move-down':
+                this.moveBlockDown(blockElement);
+                break;
+            case 'delete':
+                this.deleteBlock(blockElement);
+                break;
+            case 'insert-above':
+                this.insertBlockAbove(blockElement);
+                break;
+            case 'fullscreen':
+                this.toggleFullscreen(blockElement);
+                break;
+            case 'toggle-collapse':
+                this.toggleCollapse(blockElement);
+                break;
+            case 'edit':
+                // Handle edit action if needed
+                break;
+        }
+    }
+
+    updateBlockSettings(blockElement) {
+        const blockId = blockElement.dataset.blockId;
+        const block = this.blocks.find(b => b.id === blockId);
+        
+        if (!block) return;
+        
+        // Update settings from form elements
+        const settingsSelects = blockElement.querySelectorAll('[data-setting]');
+        settingsSelects.forEach(select => {
+            const setting = select.dataset.setting;
+            block.data[setting] = select.value;
+        });
+        
+        this.updateHiddenField();
+    }
+
+    showPreviewModal() {
+        // Show the modal
+        const previewModal = new bootstrap.Modal(document.getElementById('previewModal'));
+        previewModal.show();
+    }
+
+    updateModalPreview() {
+        const modalPreview = document.getElementById('modalReminderPreview');
+        if (!modalPreview) {
+            console.error('Modal preview element not found');
+            return;
+        }
+        
+        console.log('Updating modal preview, blocks:', this.blocks);
+        
         let previewHTML = '<div class="reminder-card"><div class="reminder-icon"><i class="fas fa-bell"></i></div><div class="reminder-text">';
         
         if (this.blocks.length === 0) {
@@ -1055,7 +1460,33 @@ class ReminderContentBlockManager {
         }
         
         previewHTML += '</div></div>';
-        this.preview.innerHTML = previewHTML;
+        modalPreview.innerHTML = previewHTML;
+        console.log('Modal preview HTML updated:', previewHTML);
+    }
+
+    updatePreview() {
+        console.log('updatePreview called');
+        console.log('Blocks to preview:', this.blocks);
+        
+        // Update sidebar preview
+        if (this.preview) {
+            let previewHTML = '<div class="reminder-card"><div class="reminder-icon"><i class="fas fa-bell"></i></div><div class="reminder-text">';
+            
+            if (this.blocks.length === 0) {
+                previewHTML += '<p>محتوای یادآوری شما اینجا نمایش داده خواهد شد...</p>';
+            } else {
+                this.blocks.forEach(block => {
+                    previewHTML += this.generateBlockPreview(block);
+                });
+            }
+            
+            previewHTML += '</div></div>';
+            this.preview.innerHTML = previewHTML;
+            console.log('Sidebar preview HTML updated:', previewHTML);
+        }
+        
+        // Update modal preview
+        this.updateModalPreview();
     }
     
     generateBlockPreview(block) {
@@ -1108,6 +1539,16 @@ class ReminderContentBlockManager {
                     html += '</div>';
                 }
                 break;
+            case 'code':
+                if (block.data.content) {
+                    html += `<div class="code-block-preview">`;
+                    if (block.data.title) {
+                        html += `<div class="code-title">${block.data.title}</div>`;
+                    }
+                    html += `<pre><code class="language-${block.data.language || 'plaintext'}">${block.data.content}</code></pre>`;
+                    html += '</div>';
+                }
+                break;
         }
         
         return html;
@@ -1150,41 +1591,91 @@ class ReminderContentBlockManager {
         if (mainContentField) {
             mainContentField.value = contentJson;
         }
+        
+        // Update preview (only if not loading existing content)
+        if (!this.isLoadingExistingContent) {
+            this.updatePreview();
+        } else {
+            console.log('Skipping preview update during loading');
+        }
     }
     
     loadExistingContent() {
+        console.log('=== loadExistingContent called ===');
+        console.log('Hidden field:', this.hiddenField);
+        console.log('Hidden field value:', this.hiddenField?.value);
+        
+        if (!this.hiddenField) {
+            console.error('Hidden field not found');
+            return;
+        }
+        
         const existingContent = this.hiddenField.value;
         console.log('Loading existing content:', existingContent);
+        console.log('Content length:', existingContent?.length);
+        console.log('Content trimmed:', existingContent?.trim());
         
-        if (existingContent) {
+        if (existingContent && existingContent.trim()) {
             try {
+                // Set flag to prevent preview updates during loading
+                this.isLoadingExistingContent = true;
+                
                 const data = JSON.parse(existingContent);
                 console.log('Parsed data:', data);
+                console.log('Data type:', typeof data);
+                console.log('Data blocks:', data.blocks);
+                console.log('Blocks is array:', Array.isArray(data.blocks));
                 
                 if (data.blocks && Array.isArray(data.blocks)) {
+                    console.log('Blocks count:', data.blocks.length);
+                    
                     // Clear existing blocks from DOM
                     const existingBlocks = this.blocksList.querySelectorAll('.content-block');
+                    console.log('Existing blocks in DOM:', existingBlocks.length);
                     existingBlocks.forEach(block => block.remove());
                     
                     this.blocks = data.blocks;
-                    this.nextBlockId = Math.max(...this.blocks.map(b => parseInt(b.id.split('-')[1]) || 0)) + 1;
+                    if (this.blocks.length > 0) {
+                        this.nextBlockId = Math.max(...this.blocks.map(b => parseInt(b.id.split('-')[1]) || 0)) + 1;
+                    } else {
+                        this.nextBlockId = 1;
+                    }
                     
                     console.log('Loading blocks:', this.blocks);
+                    console.log('Next block ID:', this.nextBlockId);
                     
                     // Render existing blocks
-                    this.blocks.forEach(block => {
-                        console.log('Rendering block:', block);
+                    this.blocks.forEach((block, index) => {
+                        console.log(`Rendering block ${index + 1}:`, block);
                         this.renderBlock(block);
                     });
                     
                     this.updateEmptyState();
+                    console.log('Existing content loaded successfully');
+                } else {
+                    console.log('No blocks found in data');
+                    console.log('Data structure:', data);
                 }
+                
+                // Clear flag after loading
+                this.isLoadingExistingContent = false;
+                
+                // Update preview after loading
+                setTimeout(() => {
+                    this.updatePreview();
+                }, 100);
+                
             } catch (error) {
                 console.error('Error loading existing content:', error);
+                console.error('Content that failed to parse:', existingContent);
+                this.isLoadingExistingContent = false;
             }
         } else {
-            console.log('No existing content found');
+            console.log('No existing content to load');
+            console.log('Content is empty or null');
         }
+        
+        console.log('=== loadExistingContent finished ===');
     }
     
     scrollToNewBlock(blockId) {

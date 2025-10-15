@@ -1,0 +1,406 @@
+/* 
+ * Teacher Panel Button Styles
+ * 
+ * Usage Examples:
+ * 
+ * Primary Button (Blue):
+ * <button class="btn-teacher btn-primary">
+ *   <i class="fas fa-save"></i>
+ *   <span>ذخیره</span>
+ * </button>
+ * 
+ * Secondary Button (Gray):
+ * <button class="btn-teacher btn-secondary">
+ *   <i class="fas fa-times"></i>
+ *   <span>لغو</span>
+ * </button>
+ * 
+ * Success Button (Green):
+ * <button class="btn-teacher btn-success">
+ *   <i class="fas fa-check"></i>
+ *   <span>تأیید</span>
+ * </button>
+ * 
+ * Navigation Buttons:
+ * <button class="btn-teacher btn-nav-prev">
+ *   <i class="fas fa-chevron-right"></i>
+ *   <span>قبلی</span>
+ * </button>
+ * 
+ * <button class="btn-teacher btn-nav-next">
+ *   <span>بعدی</span>
+ *   <i class="fas fa-chevron-left"></i>
+ * </button>
+ * 
+ * Button Sizes:
+ * <button class="btn-teacher btn-primary btn-sm">کوچک</button>
+ * <button class="btn-teacher btn-primary">عادی</button>
+ * <button class="btn-teacher btn-primary btn-lg">بزرگ</button>
+ * <button class="btn-teacher btn-primary btn-xl">خیلی بزرگ</button>
+ * 
+ * Button Variants:
+ * <button class="btn-teacher btn-primary btn-outline">Outline</button>
+ * <button class="btn-teacher btn-primary btn-ghost">Ghost</button>
+ * 
+ * Loading State:
+ * <button class="btn-teacher btn-primary loading">
+ *   <span>در حال بارگذاری...</span>
+ * </button>
+ */
+
+/* Base Button Styles */
+.btn-teacher {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    text-decoration: none;
+    outline: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    min-height: 44px;
+    gap: 0.5rem;
+}
+
+.btn-teacher:focus {
+    outline: 3px solid rgba(99, 102, 241, 0.3);
+    outline-offset: 2px;
+}
+
+.btn-teacher:focus:not(:focus-visible) {
+    outline: none;
+}
+
+.btn-teacher i {
+    font-size: 0.9rem;
+    transition: transform 0.3s ease;
+}
+
+.btn-teacher:hover i {
+    transform: translateX(2px);
+}
+
+.btn-teacher:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* Primary Button - Blue */
+.btn-primary {
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    color: #0369a1;
+    border: 1px solid #bae6fd;
+    box-shadow: 0 1px 3px rgba(3, 105, 161, 0.1);
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+    color: #0c4a6e;
+    border-color: #7dd3fc;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(3, 105, 161, 0.15);
+}
+
+.btn-primary:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(3, 105, 161, 0.1);
+}
+
+/* Secondary Button - Gray */
+.btn-secondary {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    color: #64748b;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.btn-secondary:hover:not(:disabled) {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    color: #475569;
+    border-color: #cbd5e1;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.btn-secondary:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Success Button - Green */
+.btn-success {
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+    color: #166534;
+    border: 1px solid #bbf7d0;
+    box-shadow: 0 1px 3px rgba(22, 101, 52, 0.1);
+}
+
+.btn-success:hover:not(:disabled) {
+    background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+    color: #14532d;
+    border-color: #86efac;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(22, 101, 52, 0.15);
+}
+
+.btn-success:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(22, 101, 52, 0.1);
+}
+
+/* Warning Button - Orange */
+.btn-warning {
+    background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+    color: #92400e;
+    border: 1px solid #fde68a;
+    box-shadow: 0 1px 3px rgba(146, 64, 14, 0.1);
+}
+
+.btn-warning:hover:not(:disabled) {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    color: #78350f;
+    border-color: #fcd34d;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(146, 64, 14, 0.15);
+}
+
+.btn-warning:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(146, 64, 14, 0.1);
+}
+
+/* Danger Button - Red */
+.btn-danger {
+    background: linear-gradient(135deg, #fef2f2 0%, #fecaca 100%);
+    color: #dc2626;
+    border: 1px solid #fca5a5;
+    box-shadow: 0 1px 3px rgba(220, 38, 38, 0.1);
+}
+
+.btn-danger:hover:not(:disabled) {
+    background: linear-gradient(135deg, #fecaca 0%, #fca5a5 100%);
+    color: #b91c1c;
+    border-color: #f87171;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.15);
+}
+
+.btn-danger:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(220, 38, 38, 0.1);
+}
+
+/* Info Button - Cyan */
+.btn-info {
+    background: linear-gradient(135deg, #ecfeff 0%, #cffafe 100%);
+    color: #0e7490;
+    border: 1px solid #67e8f9;
+    box-shadow: 0 1px 3px rgba(14, 116, 144, 0.1);
+}
+
+.btn-info:hover:not(:disabled) {
+    background: linear-gradient(135deg, #cffafe 0%, #67e8f9 100%);
+    color: #155e75;
+    border-color: #22d3ee;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(14, 116, 144, 0.15);
+}
+
+.btn-info:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(14, 116, 144, 0.1);
+}
+
+/* Navigation Buttons */
+.btn-nav-prev {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    color: #64748b;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.btn-nav-prev:hover:not(:disabled) {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    color: #475569;
+    border-color: #cbd5e1;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.btn-nav-prev:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.btn-nav-next {
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    color: #0369a1;
+    border: 1px solid #bae6fd;
+    box-shadow: 0 1px 3px rgba(3, 105, 161, 0.1);
+}
+
+.btn-nav-next:hover:not(:disabled) {
+    background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+    color: #0c4a6e;
+    border-color: #7dd3fc;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(3, 105, 161, 0.15);
+}
+
+.btn-nav-next:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(3, 105, 161, 0.1);
+}
+
+.btn-nav-submit {
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+    color: #166534;
+    border: 1px solid #bbf7d0;
+    box-shadow: 0 1px 3px rgba(22, 101, 52, 0.1);
+}
+
+.btn-nav-submit:hover:not(:disabled) {
+    background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+    color: #14532d;
+    border-color: #86efac;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(22, 101, 52, 0.15);
+}
+
+.btn-nav-submit:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(22, 101, 52, 0.1);
+}
+
+/* Button Sizes */
+.btn-sm {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    min-height: 36px;
+}
+
+.btn-lg {
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+    min-height: 52px;
+}
+
+.btn-xl {
+    padding: 1.25rem 2.5rem;
+    font-size: 1.2rem;
+    min-height: 60px;
+}
+
+/* Button Variants */
+.btn-outline {
+    background: transparent;
+    border-width: 2px;
+}
+
+.btn-ghost {
+    background: transparent;
+    border: 1px solid transparent;
+    box-shadow: none;
+}
+
+.btn-ghost:hover:not(:disabled) {
+    background: rgba(0, 0, 0, 0.05);
+    box-shadow: none;
+}
+
+/* Loading States */
+.btn-teacher.loading {
+    position: relative;
+    pointer-events: none;
+    opacity: 0.8;
+    cursor: wait;
+}
+
+.btn-teacher.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin-top: -10px;
+    margin-left: -10px;
+    border: 2px solid rgba(0, 0, 0, 0.1);
+    border-top: 2px solid currentColor;
+    border-radius: 50%;
+    animation: buttonSpin 1s linear infinite;
+}
+
+@keyframes buttonSpin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.btn-teacher.loading span,
+.btn-teacher.loading i {
+    opacity: 0.6;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .btn-teacher {
+        padding: 0.625rem 1.25rem;
+        font-size: 0.9rem;
+        min-height: 40px;
+    }
+    
+    .btn-lg {
+        padding: 0.875rem 1.75rem;
+        font-size: 1rem;
+        min-height: 48px;
+    }
+    
+    .btn-xl {
+        padding: 1rem 2rem;
+        font-size: 1.1rem;
+        min-height: 56px;
+    }
+}
+
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+    .btn-teacher {
+        border-width: 2px;
+    }
+    
+    .btn-teacher:focus-visible {
+        outline: 4px solid currentColor;
+        outline-offset: 2px;
+    }
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+    .btn-teacher {
+        transition: none;
+    }
+    
+    .btn-teacher:hover {
+        transform: none;
+    }
+    
+    .btn-teacher:active {
+        transform: none;
+    }
+    
+    .btn-teacher i {
+        transition: none;
+    }
+    
+    .btn-teacher.loading::after {
+        animation: none;
+    }
+}

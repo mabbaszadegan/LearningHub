@@ -1,25 +1,25 @@
 @model EduTrack.Application.Common.Models.ScheduleItems.CreateScheduleItemRequest
 
 <div class="reminder-content-builder">
-    <div class="builder-content">
-        <div class="content-blocks-container">
-            <div class="blocks-header">
-                <div class="blocks-title">
-                    <i class="fas fa-layer-group"></i>
-                    <span>بلاک‌های محتوایی</span>
-            </div>
-                <div class="blocks-actions">
-                    <button type="button" class="btn-add-block" id="addContentBlockBtn" onclick="showBlockTypeModal()">
-                        <i class="fas fa-plus"></i>
-                        افزودن بلاک
-                    </button>
-                    <button type="button" class="btn-preview" id="previewReminderBtn" onclick="updatePreview()">
-                        <i class="fas fa-eye"></i>
-                        پیش‌نمایش
-                    </button>
-                </div>
-            </div>
-            
+    <div class="content-builder-header">
+        <div class="header-content">
+            <h3>طراحی محتوای یادآوری</h3>
+            <p>بلاک‌های مختلف را اضافه کنید تا محتوای یادآوری خود را بسازید</p>
+        </div>
+        <div class="blocks-actions">
+            <button type="button" class="btn-add-block" id="addContentBlockBtn" onclick="showBlockTypeModal()">
+                <i class="fas fa-plus"></i>
+                افزودن بلاک
+            </button>
+            <button type="button" class="btn-preview" id="previewReminderBtn" onclick="updatePreview()">
+                <i class="fas fa-eye"></i>
+                پیش‌نمایش
+            </button>
+        </div>
+    </div>
+    
+    <div class="content-builder-container">
+        <div class="blocks-section">
             <div class="blocks-list" id="contentBlocksList">
                 <!-- Content blocks will be added here dynamically -->
                 <div class="empty-state" id="emptyBlocksState">
@@ -32,17 +32,19 @@
             </div>
         </div>
         
-        <div class="content-preview">
-            <div class="preview-header">
-                <h4>پیش‌نمایش یادآوری</h4>
-            </div>
-            <div class="preview-content" id="reminderPreview">
-                <div class="reminder-card">
-                    <div class="reminder-icon">
-                        <i class="fas fa-bell"></i>
-                    </div>
-                    <div class="reminder-text">
-                        <p>محتوای یادآوری شما اینجا نمایش داده خواهد شد...</p>
+        <div class="preview-section" style="display: none;">
+            <div class="content-preview">
+                <div class="preview-header">
+                    <h4>پیش‌نمایش یادآوری</h4>
+                </div>
+                <div class="preview-content" id="reminderPreview">
+                    <div class="reminder-card">
+                        <div class="reminder-icon">
+                            <i class="fas fa-bell"></i>
+                        </div>
+                        <div class="reminder-text">
+                            <p>محتوای یادآوری شما اینجا نمایش داده خواهد شد...</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -69,13 +71,14 @@
                 <button type="button" class="btn-icon" data-action="insert-above" title="درج بلاک بالا">
                     <i class="fas fa-plus"></i>
                 </button>
-                <button type="button" class="btn-icon" data-action="edit" title="ویرایش">
-                    <i class="fas fa-edit"></i>
+                <button type="button" class="btn-icon" data-action="fullscreen" title="تمام صفحه">
+                    <i class="fas fa-expand"></i>
                 </button>
                 <button type="button" class="btn-icon" data-action="delete" title="حذف">
                     <i class="fas fa-trash"></i>
                 </button>
             </div>
+            <i class="fas fa-chevron-down collapse-icon" data-action="toggle-collapse"></i>
         </div>
         <div class="block-content">
             <div class="text-editor-toolbar">
@@ -96,8 +99,14 @@
                             <i class="fas fa-list-ol"></i>
                         </button>
                         <div class="toolbar-separator"></div>
-                        <button type="button" class="toolbar-btn" data-command="createLink" title="لینک">
+                        <button type="button" class="toolbar-btn" data-action="text-formatting" title="فرمت‌بندی متن">
+                            <i class="fas fa-paint-brush"></i>
+                        </button>
+                        <button type="button" class="toolbar-btn" data-action="create-link" title="لینک">
                             <i class="fas fa-link"></i>
+                        </button>
+                        <button type="button" class="toolbar-btn" data-action="insert-code" title="بلاک کد">
+                            <i class="fas fa-code"></i>
                         </button>
                     </div>
             <div class="rich-text-editor" contenteditable="true" data-placeholder="متن خود را اینجا تایپ کنید...">
@@ -123,13 +132,14 @@
                 <button type="button" class="btn-icon" data-action="insert-above" title="درج بلاک بالا">
                     <i class="fas fa-plus"></i>
                 </button>
-                <button type="button" class="btn-icon" data-action="edit" title="ویرایش">
-                    <i class="fas fa-edit"></i>
+                <button type="button" class="btn-icon" data-action="fullscreen" title="تمام صفحه">
+                    <i class="fas fa-expand"></i>
                 </button>
                 <button type="button" class="btn-icon" data-action="delete" title="حذف">
                     <i class="fas fa-trash"></i>
                 </button>
             </div>
+            <i class="fas fa-chevron-down collapse-icon" data-action="toggle-collapse"></i>
         </div>
         <div class="block-content">
             <div class="image-upload-area">
@@ -205,13 +215,14 @@
                 <button type="button" class="btn-icon" data-action="insert-above" title="درج بلاک بالا">
                     <i class="fas fa-plus"></i>
                 </button>
-                <button type="button" class="btn-icon" data-action="edit" title="ویرایش">
-                    <i class="fas fa-edit"></i>
+                <button type="button" class="btn-icon" data-action="fullscreen" title="تمام صفحه">
+                    <i class="fas fa-expand"></i>
                 </button>
                 <button type="button" class="btn-icon" data-action="delete" title="حذف">
                     <i class="fas fa-trash"></i>
                 </button>
             </div>
+            <i class="fas fa-chevron-down collapse-icon" data-action="toggle-collapse"></i>
         </div>
         <div class="block-content">
             <div class="video-upload-area">
@@ -289,13 +300,14 @@
                 <button type="button" class="btn-icon" data-action="insert-above" title="درج بلاک بالا">
                     <i class="fas fa-plus"></i>
                 </button>
-                <button type="button" class="btn-icon" data-action="edit" title="ویرایش">
-                    <i class="fas fa-edit"></i>
+                <button type="button" class="btn-icon" data-action="fullscreen" title="تمام صفحه">
+                    <i class="fas fa-expand"></i>
                 </button>
                 <button type="button" class="btn-icon" data-action="delete" title="حذف">
                     <i class="fas fa-trash"></i>
                 </button>
             </div>
+            <i class="fas fa-chevron-down collapse-icon" data-action="toggle-collapse"></i>
         </div>
         <div class="block-content">
             <div class="audio-upload-area">
@@ -399,11 +411,21 @@
                     <div class="block-type-item" data-type="audio">
                         <div class="type-icon">
                             <i class="fas fa-microphone"></i>
-            </div>
+                        </div>
                         <div class="type-info">
                             <h6>صوت</h6>
                             <p>آپلود فایل صوتی یا ضبط صدای خود</p>
+                        </div>
                     </div>
+                    
+                    <div class="block-type-item" data-type="code">
+                        <div class="type-icon">
+                            <i class="fas fa-code"></i>
+                        </div>
+                        <div class="type-info">
+                            <h6>کد</h6>
+                            <p>بلاک کد برنامه‌نویسی با syntax highlighting</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -413,5 +435,199 @@
 
 <!-- Hidden field for content -->
 <input type="hidden" id="reminderContentJson" name="ReminderContentJson" value="@Model.ContentJson" />
+
+<!-- Link Dialog Modal -->
+<div class="modal fade" id="linkDialogModal" tabindex="-1" aria-labelledby="linkDialogModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="linkDialogModalLabel">
+                    <i class="fas fa-link"></i>
+                    افزودن لینک
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="linkText">متن لینک:</label>
+                    <input type="text" class="form-control" id="linkText" placeholder="متن لینک را وارد کنید">
+                </div>
+                <div class="form-group">
+                    <label for="linkUrl">آدرس لینک:</label>
+                    <input type="url" class="form-control" id="linkUrl" placeholder="https://example.com">
+                </div>
+                <div class="form-group">
+                    <label for="linkTarget">نحوه باز شدن:</label>
+                    <select class="form-control" id="linkTarget">
+                        <option value="_self">همان پنجره</option>
+                        <option value="_blank">پنجره جدید</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">انصراف</button>
+                <button type="button" class="btn btn-primary" id="insertLinkBtn">افزودن لینک</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Text Formatting Dialog Modal -->
+<div class="modal fade" id="textFormattingModal" tabindex="-1" aria-labelledby="textFormattingModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="textFormattingModalLabel">
+                    <i class="fas fa-paint-brush"></i>
+                    فرمت‌بندی متن
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="textSize">اندازه متن:</label>
+                            <select class="form-control" id="textSize">
+                                <option value="12px">خیلی کوچک (12px)</option>
+                                <option value="14px">کوچک (14px)</option>
+                                <option value="16px" selected>معمولی (16px)</option>
+                                <option value="18px">متوسط (18px)</option>
+                                <option value="20px">بزرگ (20px)</option>
+                                <option value="24px">خیلی بزرگ (24px)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="textColor">رنگ متن:</label>
+                            <input type="color" class="form-control" id="textColor" value="#000000">
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="backgroundColor">رنگ پس‌زمینه:</label>
+                            <input type="color" class="form-control" id="backgroundColor" value="#ffffff">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="textAlign">تراز متن:</label>
+                            <select class="form-control" id="textAlign">
+                                <option value="right" selected>راست</option>
+                                <option value="center">وسط</option>
+                                <option value="left">چپ</option>
+                                <option value="justify">تمام عرض</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">انصراف</button>
+                <button type="button" class="btn btn-primary" id="applyTextFormattingBtn">اعمال فرمت</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Code Block Dialog Modal -->
+<div class="modal fade" id="codeBlockModal" tabindex="-1" aria-labelledby="codeBlockModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="codeBlockModalLabel">
+                    <i class="fas fa-code"></i>
+                    بلاک کد برنامه‌نویسی
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="codeLanguage">زبان برنامه‌نویسی:</label>
+                            <select class="form-control" id="codeLanguage">
+                                <option value="javascript">JavaScript</option>
+                                <option value="python">Python</option>
+                                <option value="csharp">C#</option>
+                                <option value="java">Java</option>
+                                <option value="html">HTML</option>
+                                <option value="css">CSS</option>
+                                <option value="sql">SQL</option>
+                                <option value="json">JSON</option>
+                                <option value="xml">XML</option>
+                                <option value="plaintext">Plain Text</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="codeTheme">تم رنگی:</label>
+                            <select class="form-control" id="codeTheme">
+                                <option value="default">پیش‌فرض</option>
+                                <option value="dark">تیره</option>
+                                <option value="light">روشن</option>
+                                <option value="monokai">Monokai</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="codeTitle">عنوان کد (اختیاری):</label>
+                            <input type="text" class="form-control" id="codeTitle" placeholder="عنوان کد را وارد کنید">
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="codeContent">محتوای کد:</label>
+                    <textarea class="form-control" id="codeContent" rows="15" placeholder="کد خود را اینجا وارد کنید..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">انصراف</button>
+                <button type="button" class="btn btn-primary" id="insertCodeBlockBtn">افزودن بلاک کد</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Preview Modal -->
+<div class="modal fade" id="previewModal" tabindex="-1" aria-labelledby="previewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="previewModalLabel">
+                    <i class="fas fa-eye"></i>
+                    پیش‌نمایش محتوای یادآوری
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="preview-container">
+                    <div class="preview-content" id="modalReminderPreview">
+                        <div class="reminder-card">
+                            <div class="reminder-icon">
+                                <i class="fas fa-bell"></i>
+                            </div>
+                            <div class="reminder-text">
+                                <p>محتوای یادآوری شما اینجا نمایش داده خواهد شد...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">بستن</button>
+                <button type="button" class="btn btn-primary" onclick="updatePreview()">
+                    <i class="fas fa-sync-alt"></i>
+                    به‌روزرسانی پیش‌نمایش
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- Styles and Scripts are included in the main Create.cshtml view -->
