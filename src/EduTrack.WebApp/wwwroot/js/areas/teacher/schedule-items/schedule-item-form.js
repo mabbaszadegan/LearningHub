@@ -384,13 +384,13 @@ class ModernScheduleItemFormManager {
                     }
                     
                     if (result.action === 'save') {
-                        // Disable next button and show loading state
-                        this.setButtonLoadingState(nextBtn, true, 'در حال ذخیره...');
-                        
-                        // Save current step before moving to next
-                        console.log('About to save current step before moving to next step');
-                        await this.saveCurrentStep();
-                        console.log('Save current step completed');
+                // Disable next button and show loading state
+                this.setButtonLoadingState(nextBtn, true, 'در حال ذخیره...');
+                
+                // Save current step before moving to next
+                console.log('About to save current step before moving to next step');
+                await this.saveCurrentStep();
+                console.log('Save current step completed');
                         
                         // Mark step as saved
                         this.markStepAsSaved(this.currentStep);
@@ -633,6 +633,7 @@ class ModernScheduleItemFormManager {
         console.log(`Step ${step} cache cleared`);
     }
 
+
     // Setup change detection for form inputs
     setupChangeDetection() {
         // Use event delegation for better performance and coverage
@@ -678,11 +679,37 @@ class ModernScheduleItemFormManager {
             }
         });
 
+        // Listen for changes on timing (Step 2)
+        document.addEventListener('timingChanged', (e) => {
+            console.log('Timing changed event detected:', e.detail);
+            if (this.currentStep === 2) {
+                this.markStepAsChanged(2);
+            }
+        });
+
         // Also listen for click events on buttons that might change data
         document.addEventListener('click', (e) => {
             const target = e.target;
             if (target.matches('.date-preset-btn, .score-preset, .subchapter-badge, .student-badge, .group-badge, .toolbar-btn')) {
                 console.log('Button click detected:', target.className);
+                this.markStepAsChanged(this.currentStep);
+            }
+        }, true);
+
+        // Listen for changes on Persian date pickers
+        document.addEventListener('change', (e) => {
+            const target = e.target;
+            if (target.matches('.persian-datepicker')) {
+                console.log('Persian date picker change detected:', target.id);
+                this.markStepAsChanged(this.currentStep);
+            }
+        }, true);
+
+        // Listen for changes on time inputs
+        document.addEventListener('change', (e) => {
+            const target = e.target;
+            if (target.matches('input[type="time"]')) {
+                console.log('Time input change detected:', target.id);
                 this.markStepAsChanged(this.currentStep);
             }
         }, true);
@@ -1280,8 +1307,8 @@ class ModernScheduleItemFormManager {
                 }
                 if (window.step3Manager && typeof window.step3Manager.collectStep3Data === 'function') {
                     return window.step3Manager.collectStep3Data();
-                }
-                break;
+            }
+            break;
                 
             case 4:
                 if (window.step4Manager && typeof window.step4Manager.collectStep4Data === 'function') {

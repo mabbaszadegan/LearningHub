@@ -795,6 +795,7 @@ class Step3AssignmentManager {
         }
     }
 
+
     // Load existing assignments
     async loadAndSelectExistingAssignments() {
         // Select existing groups and subchapters (content already loaded in initializeStep3Content)

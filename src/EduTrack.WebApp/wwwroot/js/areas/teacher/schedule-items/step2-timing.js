@@ -45,6 +45,11 @@ class Step2TimingManager {
                 if (targetDate) {
                     this.setStartDate(targetDate);
                     this.updatePresetButtonState(btn, startDatePresets);
+                    
+                    // Dispatch timing changed event
+                    document.dispatchEvent(new CustomEvent('timingChanged', {
+                        detail: { type: 'startDatePreset', preset: preset, date: targetDate }
+                    }));
                 }
             });
         });
@@ -70,6 +75,11 @@ class Step2TimingManager {
                 if (targetDate) {
                     this.setDueDate(targetDate);
                     this.updatePresetButtonState(btn, dueDatePresets);
+                    
+                    // Dispatch timing changed event
+                    document.dispatchEvent(new CustomEvent('timingChanged', {
+                        detail: { type: 'dueDatePreset', preset: preset, date: targetDate }
+                    }));
                 }
             });
         });
@@ -100,24 +110,60 @@ class Step2TimingManager {
 
     calculateDueDate(preset) {
         const startDateInput = document.getElementById('StartDate');
-        const startDate = startDateInput ? new Date(startDateInput.value) : new Date();
+        const persianStartDateInput = document.getElementById('PersianStartDate');
         
+        let startDate;
+        
+        // Try to get start date from hidden field first
+        if (startDateInput && startDateInput.value) {
+            startDate = new Date(startDateInput.value);
+            console.log('Using start date from hidden field:', startDate);
+            console.log('Hidden field value:', startDateInput.value);
+        } else if (persianStartDateInput && persianStartDateInput.value) {
+            // Convert Persian date to Gregorian
+            startDate = this.convertPersianToGregorian(persianStartDateInput.value);
+            console.log('Using start date from Persian field:', startDate);
+            console.log('Persian field value:', persianStartDateInput.value);
+        } else {
+            // Use current date as fallback
+            startDate = new Date();
+            console.log('Using current date as fallback:', startDate);
+        }
+        
+        // Validate the date
+        if (!startDate || isNaN(startDate.getTime())) {
+            console.error('Invalid start date, using current date');
+            startDate = new Date();
+        }
+        
+        console.log('Calculating due date from start date:', startDate);
+        
+        let dueDate;
         switch (preset) {
             case '1day':
-                return new Date(startDate.getTime() + (1 * 24 * 60 * 60 * 1000));
+                dueDate = new Date(startDate.getTime() + (1 * 24 * 60 * 60 * 1000));
+                break;
             case '2days':
-                return new Date(startDate.getTime() + (2 * 24 * 60 * 60 * 1000));
+                dueDate = new Date(startDate.getTime() + (2 * 24 * 60 * 60 * 1000));
+                break;
             case '3days':
-                return new Date(startDate.getTime() + (3 * 24 * 60 * 60 * 1000));
+                dueDate = new Date(startDate.getTime() + (3 * 24 * 60 * 60 * 1000));
+                break;
             case '1week':
-                return new Date(startDate.getTime() + (7 * 24 * 60 * 60 * 1000));
+                dueDate = new Date(startDate.getTime() + (7 * 24 * 60 * 60 * 1000));
+                break;
             case '2weeks':
-                return new Date(startDate.getTime() + (14 * 24 * 60 * 60 * 1000));
+                dueDate = new Date(startDate.getTime() + (14 * 24 * 60 * 60 * 1000));
+                break;
             case '1month':
-                return new Date(startDate.getTime() + (30 * 24 * 60 * 60 * 1000));
+                dueDate = new Date(startDate.getTime() + (30 * 24 * 60 * 60 * 1000));
+                break;
             default:
                 return null;
         }
+        
+        console.log('Calculated due date:', dueDate);
+        return dueDate;
     }
 
     setStartDate(date) {
@@ -128,26 +174,37 @@ class Step2TimingManager {
         if (persianStartDateInput && startDateInput) {
             console.log('Setting start date:', date);
             
+            // Validate the date
+            if (!date || isNaN(date.getTime())) {
+                console.error('Invalid start date provided');
+                return;
+            }
+            
             // Convert to Persian date
             const persianDate = this.convertToPersianDate(date);
             console.log('Converted to Persian:', persianDate);
             
-            persianStartDateInput.value = persianDate;
-            
-            // Set hidden field with date
-            startDateInput.value = date.toISOString();
-            
-            // Set time to current time
-            if (startTimeInput) {
-                const timeString = `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
-                startTimeInput.value = timeString;
+            if (persianDate && persianDate !== '0000/00/00') {
+                persianStartDateInput.value = persianDate;
+                
+                // Set hidden field with date
+                startDateInput.value = date.toISOString();
+                console.log('Updated startDateInput with:', startDateInput.value);
+                
+                // Set time to current time
+                if (startTimeInput) {
+                    const timeString = `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+                    startTimeInput.value = timeString;
+                }
+                
+                // Trigger datepicker update
+                this.updateDatePicker(persianStartDateInput, persianDate);
+                
+                // Update duration calculator
+                this.updateDurationCalculator();
+            } else {
+                console.error('Failed to convert start date to Persian');
             }
-            
-            // Trigger datepicker update
-            this.updateDatePicker(persianStartDateInput, persianDate);
-            
-            // Update duration calculator
-            this.updateDurationCalculator();
         }
     }
 
@@ -155,30 +212,50 @@ class Step2TimingManager {
         const persianDueDateInput = document.getElementById('PersianDueDate');
         const dueDateInput = document.getElementById('DueDate');
         const dueTimeInput = document.getElementById('DueTime');
+        const startTimeInput = document.getElementById('StartTime');
         
         if (persianDueDateInput && dueDateInput) {
             console.log('Setting due date:', date);
+            
+            // Validate the date
+            if (!date || isNaN(date.getTime())) {
+                console.error('Invalid due date provided');
+                return;
+            }
             
             // Convert to Persian date
             const persianDate = this.convertToPersianDate(date);
             console.log('Converted to Persian:', persianDate);
             
-            persianDueDateInput.value = persianDate;
-            
-            // Set hidden field with date
-            dueDateInput.value = date.toISOString();
-            
-            // Set time to current time
-            if (dueTimeInput) {
-                const timeString = `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
-                dueTimeInput.value = timeString;
+            if (persianDate && persianDate !== '0000/00/00') {
+                persianDueDateInput.value = persianDate;
+                
+                // Set hidden field with date
+                dueDateInput.value = date.toISOString();
+                
+                // Set time to start time if available, otherwise current time
+                if (dueTimeInput) {
+                    let timeString;
+                    if (startTimeInput && startTimeInput.value) {
+                        // Use start time
+                        timeString = startTimeInput.value;
+                        console.log('Using start time:', timeString);
+                    } else {
+                        // Use current time
+                        timeString = `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+                        console.log('Using current time:', timeString);
+                    }
+                    dueTimeInput.value = timeString;
+                }
+                
+                // Trigger datepicker update
+                this.updateDatePicker(persianDueDateInput, persianDate);
+                
+                // Update duration calculator
+                this.updateDurationCalculator();
+            } else {
+                console.error('Failed to convert due date to Persian');
             }
-            
-            // Trigger datepicker update
-            this.updateDatePicker(persianDueDateInput, persianDate);
-            
-            // Update duration calculator
-            this.updateDurationCalculator();
         }
     }
 
@@ -323,6 +400,11 @@ class Step2TimingManager {
             startTimeInput.addEventListener('change', () => {
                 this.updateDateTimeField(startDateInput, startTimeInput);
                 this.updateDurationCalculator();
+                
+                // Dispatch timing changed event
+                document.dispatchEvent(new CustomEvent('timingChanged', {
+                    detail: { type: 'startTime', value: startTimeInput.value }
+                }));
             });
         }
 
@@ -330,6 +412,11 @@ class Step2TimingManager {
             dueTimeInput.addEventListener('change', () => {
                 this.updateDateTimeField(dueDateInput, dueTimeInput);
                 this.updateDurationCalculator();
+                
+                // Dispatch timing changed event
+                document.dispatchEvent(new CustomEvent('timingChanged', {
+                    detail: { type: 'dueTime', value: dueTimeInput.value }
+                }));
             });
         }
 
@@ -344,18 +431,50 @@ class Step2TimingManager {
                         const gregorianDate = this.convertPersianToGregorian(persianDate);
                         if (gregorianDate && startDateInput) {
                             startDateInput.value = gregorianDate.toISOString();
+                            console.log('Updated startDateInput with:', startDateInput.value);
                         }
                     } catch (error) {
                         console.error('Error converting Persian date to Gregorian:', error);
                     }
                 }
                 this.updateDurationCalculator();
+                
+                // Dispatch timing changed event
+                document.dispatchEvent(new CustomEvent('timingChanged', {
+                    detail: { type: 'startDate', value: persianStartDateInput.value }
+                }));
             });
         }
 
         if (startDateInput) {
             startDateInput.addEventListener('change', () => {
                 this.updateDurationCalculator();
+            });
+        }
+
+        // Add event listener for due date changes
+        const persianDueDateInput = document.getElementById('PersianDueDate');
+        if (persianDueDateInput) {
+            persianDueDateInput.addEventListener('change', () => {
+                // Update the hidden DueDate field when Persian date changes
+                if (persianDueDateInput.value) {
+                    try {
+                        // Convert Persian date to Gregorian date
+                        const persianDate = persianDueDateInput.value;
+                        const gregorianDate = this.convertPersianToGregorian(persianDate);
+                        if (gregorianDate && dueDateInput) {
+                            dueDateInput.value = gregorianDate.toISOString();
+                        }
+                    } catch (error) {
+                        console.error('Error converting Persian date to Gregorian:', error);
+                    }
+                }
+                this.updateDurationCalculator();
+                
+                // Dispatch timing changed event
+                document.dispatchEvent(new CustomEvent('timingChanged', {
+                    detail: { type: 'dueDate', value: persianDueDateInput.value }
+                }));
             });
         }
     }
@@ -366,6 +485,7 @@ class Step2TimingManager {
             const [hours, minutes] = timeInput.value.split(':');
             date.setHours(parseInt(hours), parseInt(minutes));
             dateInput.value = date.toISOString();
+            console.log('Updated dateTimeField:', dateInput.id, 'with value:', dateInput.value);
         }
     }
 
@@ -411,10 +531,37 @@ class Step2TimingManager {
             
             // Final fallback: simple approximation
             console.warn('Using simple Persian date approximation');
-            const year = date.getFullYear() - 621;
-            const month = date.getMonth() + 1;
-            const day = date.getDate();
-            return `${year}/${month.toString().padStart(2, '0')}/${day.toString().padStart(2, '0')}`;
+            const gregorianYear = date.getFullYear();
+            const gregorianMonth = date.getMonth() + 1;
+            const gregorianDay = date.getDate();
+            
+            // More accurate Gregorian to Persian conversion
+            let persianYear = gregorianYear - 621;
+            let persianMonth = gregorianMonth;
+            let persianDay = gregorianDay;
+            
+            // Adjust for Persian calendar differences
+            if (gregorianMonth >= 3 && gregorianMonth <= 5) {
+                persianMonth = gregorianMonth - 2;
+            } else if (gregorianMonth >= 6 && gregorianMonth <= 8) {
+                persianMonth = gregorianMonth - 2;
+            } else if (gregorianMonth >= 9 && gregorianMonth <= 11) {
+                persianMonth = gregorianMonth - 2;
+            } else if (gregorianMonth >= 12 || gregorianMonth <= 2) {
+                persianMonth = gregorianMonth + 10;
+                if (gregorianMonth <= 2) {
+                    persianYear -= 1;
+                }
+            }
+            
+            // Handle month boundaries
+            if (persianMonth > 12) {
+                persianMonth -= 12;
+                persianYear += 1;
+            }
+            
+            console.log(`Converting ${gregorianYear}/${gregorianMonth}/${gregorianDay} to ${persianYear}/${persianMonth}/${persianDay}`);
+            return `${persianYear}/${persianMonth.toString().padStart(2, '0')}/${persianDay.toString().padStart(2, '0')}`;
             
         } catch (error) {
             console.error('Error converting to Persian date:', error);
@@ -476,10 +623,31 @@ class Step2TimingManager {
             console.warn('Using simple Gregorian date approximation');
             const parts = persianDateString.split('/');
             if (parts.length === 3) {
-                const year = parseInt(parts[0]) + 621;
-                const month = parseInt(parts[1]) - 1;
-                const day = parseInt(parts[2]);
-                return new Date(year, month, day);
+                const persianYear = parseInt(parts[0]);
+                const persianMonth = parseInt(parts[1]);
+                const persianDay = parseInt(parts[2]);
+                
+                // More accurate Persian to Gregorian conversion
+                let gregorianYear = persianYear + 621;
+                let gregorianMonth = persianMonth;
+                let gregorianDay = persianDay;
+                
+                // Adjust for Persian calendar differences
+                if (persianMonth <= 6) {
+                    gregorianMonth = persianMonth + 3;
+                } else {
+                    gregorianMonth = persianMonth - 9;
+                    gregorianYear += 1;
+                }
+                
+                // Handle month boundaries
+                if (gregorianMonth > 12) {
+                    gregorianMonth -= 12;
+                    gregorianYear += 1;
+                }
+                
+                console.log(`Converting ${persianDateString} to ${gregorianYear}/${gregorianMonth}/${gregorianDay}`);
+                return new Date(gregorianYear, gregorianMonth - 1, gregorianDay);
             }
             
             return null;
@@ -645,8 +813,18 @@ class Step2TimingManager {
         if (startDateField) {
             console.log('step2-timing: Setting PersianStartDate', startDateField);
             const persianStartDate = document.getElementById('PersianStartDate');
+            const startDateInput = document.getElementById('StartDate');
             if (persianStartDate) {
                 persianStartDate.value = startDateField;
+                
+                // Update hidden field
+                if (startDateInput) {
+                    const gregorianDate = this.convertPersianToGregorian(startDateField);
+                    if (gregorianDate) {
+                        startDateInput.value = gregorianDate.toISOString();
+                        console.log('Updated startDateInput with:', startDateInput.value);
+                    }
+                }
             }
         }
         
@@ -676,8 +854,18 @@ class Step2TimingManager {
         if (dueDateField) {
             console.log('step2-timing: Setting PersianDueDate', dueDateField);
             const persianDueDate = document.getElementById('PersianDueDate');
+            const dueDateInput = document.getElementById('DueDate');
             if (persianDueDate) {
                 persianDueDate.value = dueDateField;
+                
+                // Update hidden field
+                if (dueDateInput) {
+                    const gregorianDate = this.convertPersianToGregorian(dueDateField);
+                    if (gregorianDate) {
+                        dueDateInput.value = gregorianDate.toISOString();
+                        console.log('Updated dueDateInput with:', dueDateInput.value);
+                    }
+                }
             }
         }
         

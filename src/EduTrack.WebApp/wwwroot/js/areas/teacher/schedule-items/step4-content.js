@@ -117,6 +117,8 @@ class Step4ContentManager {
         }
         previewHTML += '</div>';
         previewContent.innerHTML = previewHTML;
+    }
+
         const bsModal = new bootstrap.Modal(modal);
         bsModal.show();
     }
