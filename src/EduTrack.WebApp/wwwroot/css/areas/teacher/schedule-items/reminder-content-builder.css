@@ -3,7 +3,7 @@
     background: #ffffff;
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    overflow: hidden;
+    overflow: visible;
 }
 
 
@@ -45,10 +45,12 @@
 .blocks-actions {
     display: flex;
     gap: 0.5rem;
+    align-items: center;
+    flex-wrap: nowrap;
 }
 
 .btn-add-block, .btn-preview {
-    display: flex;
+    display: flex !important;
     align-items: center;
     gap: 0.5rem;
     padding: 0.5rem 1rem;
@@ -57,26 +59,47 @@
     font-size: 0.875rem;
     cursor: pointer;
     transition: all 0.2s ease;
+    text-decoration: none;
+    font-family: inherit;
+    line-height: 1.5;
+    margin: 0;
+    min-height: 40px;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .btn-add-block {
-    background: #667eea;
-    color: white;
+    background: #667eea !important;
+    color: white !important;
+    border: 1px solid #667eea !important;
 }
 
 .btn-add-block:hover {
-    background: #5a67d8;
+    background: #5a67d8 !important;
+    border-color: #5a67d8 !important;
+    color: white !important;
+}
+
+.btn-add-block:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3);
 }
 
 .btn-preview {
-    background: #f3f4f6;
-    color: #6b7280;
-    border: 1px solid #e5e7eb;
+    background: #f3f4f6 !important;
+    color: #6b7280 !important;
+    border: 1px solid #e5e7eb !important;
 }
 
 .btn-preview:hover {
-    background: #e5e7eb;
-    color: #374151;
+    background: #e5e7eb !important;
+    color: #374151 !important;
+    border-color: #d1d5db !important;
+}
+
+.btn-preview:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(107, 114, 128, 0.3);
 }
 
 /* Blocks List */
@@ -781,6 +804,104 @@
     margin-top: 0.5rem;
 }
 
+/* Custom Scrollbar Styles */
+.reminder-content-builder {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(102, 126, 234, 0.3) transparent;
+}
+
+.reminder-content-builder::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.reminder-content-builder::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 4px;
+}
+
+.reminder-content-builder::-webkit-scrollbar-thumb {
+    background: rgba(102, 126, 234, 0.3);
+    border-radius: 4px;
+    transition: background 0.2s ease;
+}
+
+.reminder-content-builder::-webkit-scrollbar-thumb:hover {
+    background: rgba(102, 126, 234, 0.5);
+}
+
+.reminder-content-builder::-webkit-scrollbar-thumb:active {
+    background: rgba(102, 126, 234, 0.7);
+}
+
+.reminder-content-builder::-webkit-scrollbar-corner {
+    background: transparent;
+}
+
+/* Scrollable areas within the builder */
+.blocks-list {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(156, 163, 175, 0.3) transparent;
+}
+
+.blocks-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.blocks-list::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 3px;
+}
+
+.blocks-list::-webkit-scrollbar-thumb {
+    background: rgba(156, 163, 175, 0.3);
+    border-radius: 3px;
+    transition: background 0.2s ease;
+}
+
+.blocks-list::-webkit-scrollbar-thumb:hover {
+    background: rgba(156, 163, 175, 0.5);
+}
+
+.preview-content {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(156, 163, 175, 0.3) transparent;
+}
+
+.preview-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.preview-content::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 3px;
+}
+
+.preview-content::-webkit-scrollbar-thumb {
+    background: rgba(156, 163, 175, 0.3);
+    border-radius: 3px;
+    transition: background 0.2s ease;
+}
+
+.preview-content::-webkit-scrollbar-thumb:hover {
+    background: rgba(156, 163, 175, 0.5);
+}
+
+/* Smooth scrolling for the entire page */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Enhanced block highlight animation */
+.content-block {
+    transition: all 0.3s ease;
+}
+
+.content-block.highlight {
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3) !important;
+    transform: translateY(-2px);
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .builder-content {
@@ -823,5 +944,16 @@
         flex-direction: column;
         align-items: flex-start;
         gap: 0.5rem;
+    }
+    
+    /* Smaller scrollbars on mobile */
+    .reminder-content-builder::-webkit-scrollbar {
+        width: 4px;
+        height: 4px;
+    }
+    
+    .blocks-list::-webkit-scrollbar,
+    .preview-content::-webkit-scrollbar {
+        width: 3px;
     }
 }

@@ -1,0 +1,201 @@
+---
+alwaysApply: true
+---
+# Cursor Project Rules — ASP.NET Core / MVC / DDD Architecture
+
+## 🔒 Core Principles
+- Never auto-commit or auto-push any code. All changes must remain local unless I explicitly instruct otherwise.
+- Always inspect the project structure before creating new files.  
+  → If a similar class, model, or component already exists, update it instead of duplicating.
+- Respect the layered architecture: **Domain → Application → Infrastructure → WebApp**.
+- Write clean, minimal, testable, and maintainable code. Avoid shortcuts or magic numbers.
+
+---
+
+## 🧱 File & Folder Structure
+- Each **class, model, interface, or enum** must be in its **own file**.
+  - ✅ Correct: `User.cs`, `UserDto.cs`, `IUserRepository.cs`
+  - ❌ Wrong: multiple unrelated classes in one file.
+- Folder conventions:
+  - `Domain/Entities`, `Domain/ValueObjects`, `Domain/Enums`
+  - `Application/Services`, `Application/DTOs`, `Application/Interfaces`
+  - `Infrastructure/Data`, `Infrastructure/Repositories`
+  - `WebApp/Controllers`, `WebApp/Views`, `wwwroot/css`, `wwwroot/js`
+- File names must match class names (PascalCase).
+
+---
+
+## 🚫 Inline Code Rules
+- **Never** put `<style>` or `<script>` directly inside `.cshtml` files.
+- If a view needs JS or CSS:
+  - Create separate files under `wwwroot/js/` and `wwwroot/css/`.
+  - Include them using `@section Scripts{...}` or `@section Styles{...}`.
+  - Always use `asp-append-version="true"` for cache busting.
+- Keep views clean — markup only, no business logic.
+
+---
+
+## 🎨 Naming Conventions
+- C#: PascalCase for classes/methods; camelCase for locals and parameters.
+- JS/CSS: kebab-case for filenames (`user-profile.js`, `user-profile.css`).
+- Namespaces match folder hierarchy.
+- Avoid abbreviations and meaningless names.
+
+---
+
+## 🧩 Architectural Rules
+- Domain: pure business logic, no external dependencies.
+- Application: orchestrates use cases; depends only on Domain.
+- Infrastructure: concrete implementations for Application interfaces.
+- WebApp: presentation and endpoints; depends only on Application.
+- Controllers must be thin — delegate logic to services or handlers.
+- Do not bypass the Application layer or directly access the database from WebApp.
+
+---
+
+## 🧠 Entity Framework / Database
+- Create migrations via EF tools only; do not edit them manually unless necessary.
+- Migration naming: `yyyyMMddHHmm_{ShortDescription}`.
+- Never drop or truncate tables in production migrations.
+- Seed data must be idempotent.
+- Store secrets and connection strings using **User Secrets / Env Vars / Key Vault**.
+
+---
+
+## ⚙️ Behavior for Existing Code
+- Before adding new files, search the solution for existing types.
+- If a file already exists:
+  - Review its contents.
+  - Extend or modify only what’s necessary.
+  - Do not duplicate logic or types.
+- Place all new code in the correct layer and namespace.
+
+---
+
+## 🔐 Security & Configuration
+- Never store credentials, tokens, or API keys in the codebase.
+- Apply secure headers (CSP, X-Frame-Options, etc.) via middleware.
+- Configure strict CORS (allow only whitelisted origins).
+- Log safely — never expose secrets or PII in logs.
+
+---
+
+## 🪶 Front-End Integration
+- Each feature has its own JS/CSS modules.
+- No inline event handlers (`onclick`, `onchange`, etc.).
+- Use delegated event binding for dynamic elements.
+- Introduce no new libraries unless approved and consistent with the tech stack.
+- Ensure accessibility (ARIA labels, contrast, keyboard navigation).
+
+---
+
+## ⚡ Async & Performance
+- Use `async`/`await` for all I/O.
+- Include `CancellationToken` in async workflows.
+- Avoid blocking calls (`.Result`, `.Wait()`).
+- Optimize LINQ queries and database access.
+- Cache smartly (MemoryCache/DistributedCache), never premature optimization.
+
+---
+
+## 🧮 Validation & API Standards
+- Use **FluentValidation** or DataAnnotations for all DTOs.
+- Return consistent error responses (`ProblemDetails`).
+- Use pagination, filtering, and sorting patterns consistently.
+- Version APIs (`/api/v1/...`, `/api/v2/...`) — no breaking changes without version bump.
+
+---
+
+## 🧰 HttpClient & Resilience
+- Always use **HttpClientFactory** (never `new HttpClient()` manually).
+- Implement retry & timeout policies with Polly.
+- Manage headers/authentication via DelegatingHandlers.
+
+---
+
+## 🕒 Time & Culture
+- Store all timestamps in UTC (`DateTimeOffset` recommended).
+- Convert to local time zones only for display.
+- Use culture-invariant parsing/formatting for dates and currency.
+
+---
+
+## 🧾 Logging & Error Handling
+- Use Serilog (or the configured logging provider).
+- Log key context info, not sensitive data.
+- Handle exceptions gracefully — no swallowing errors.
+- In APIs, map exceptions to structured responses, not stack traces.
+
+---
+
+## 🧩 CQRS & Mapping (if applicable)
+- Separate Commands and Queries.
+- Each Handler must do one job — small, testable, isolated.
+- Use AutoMapper Profiles; no inline mapping inside controllers.
+
+---
+
+## 🧱 Testing
+- All logic in Domain/Application must have unit tests.
+- Run all tests before PR.
+- New features must include test coverage.
+- Never commit failing or skipped tests.
+
+---
+
+## 🔄 Source Control & Pull Requests
+- Branch naming: `feature/{name}`, `bugfix/{name}`, `hotfix/{name}`
+- Commits: small, atomic, descriptive (“feat(user): add registration endpoint”)
+- PR template:
+  - What changed?
+  - Why?
+  - Risk/impact?
+  - Screenshot (if UI)
+  - Migration? (yes/no)
+- PRs must pass all builds and checks before merging.
+- Absolutely **no auto-commits or auto-pushes.**
+
+---
+
+## ✅ Pre-Delivery Checklist
+- [ ] No inline `<script>` or `<style>` tags.
+- [ ] Each class/model/interface has its own file.
+- [ ] JS/CSS files external and versioned.
+- [ ] Correct layer and folder placement.
+- [ ] Domain is clean; Controllers thin.
+- [ ] Build succeeds; all tests green.
+- [ ] No duplicate or unnecessary files.
+- [ ] No auto-push/commit performed.
+- [ ] Log statements safe (no PII).
+- [ ] Reviewed naming and architecture consistency.
+
+---
+
+## ⚖️ Code Quality & Static Analysis
+- Enable nullable reference types (`<Nullable>enable</Nullable>`).
+- Treat warnings as errors (`<TreatWarningsAsErrors>true</TreatWarningsAsErrors>`).
+- Enforce `.editorconfig` rules (indent, encoding, line length).
+- Run `dotnet format` or equivalent **manually**, not automatically on commit.
+- Lint JS/CSS with ESLint/Stylelint.
+
+---
+
+## 🌐 Optional Enhancements (recommended)
+- Implement feature flags for incomplete features.
+- Use correlation IDs for tracing and telemetry.
+- Document major schema/API changes.
+- Apply accessibility and SEO best practices if the app is public.
+- Use background jobs (Hangfire/HostedService) for long-running tasks.
+
+---
+
+## 🚀 Quick Decision Flow
+1. Understand the feature/issue.
+2. Search for existing code before creating anything new.
+3. If needed → create new file in the correct layer (one class per file).
+4. Keep CSS/JS external and modular.
+5. Build and run locally — no errors.
+6. Validate architecture and naming.
+7. Commit manually with clear message.
+8. No auto-push. No auto-merge.
+

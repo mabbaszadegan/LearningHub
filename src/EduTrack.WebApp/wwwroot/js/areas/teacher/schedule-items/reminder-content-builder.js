@@ -3,6 +3,93 @@
  * Handles content block creation, editing, and management for reminder-type schedule items
  */
 
+// Global cleanup function for modal backdrops
+function cleanupModalBackdrops() {
+    const backdrops = document.querySelectorAll('.modal-backdrop');
+    backdrops.forEach(backdrop => {
+        backdrop.remove();
+    });
+    document.body.classList.remove('modal-open');
+    document.body.style.paddingRight = '';
+    document.body.style.overflow = '';
+    document.body.style.overflowX = '';
+    document.body.style.overflowY = '';
+    document.documentElement.style.overflow = '';
+    document.documentElement.style.overflowX = '';
+    document.documentElement.style.overflowY = '';
+    console.log('Global modal backdrop cleanup completed');
+}
+
+// Global functions for onclick handlers - defined at the top to avoid timing issues
+function showBlockTypeModal() {
+    console.log('showBlockTypeModal called');
+    
+    // Check if modal element exists
+    const modalElement = document.getElementById('blockTypeModal');
+    if (!modalElement) {
+        console.error('Modal element not found in DOM');
+        // Use fallback immediately
+        const types = [
+            { type: 'text', name: 'متن' },
+            { type: 'image', name: 'تصویر' },
+            { type: 'video', name: 'ویدیو' },
+            { type: 'audio', name: 'صوت' }
+        ];
+        
+        const selection = prompt('انتخاب نوع بلاک:\n1. متن\n2. تصویر\n3. ویدیو\n4. صوت\n\nلطفاً شماره مورد نظر را وارد کنید:');
+        
+        if (selection && selection >= 1 && selection <= 4) {
+            const selectedType = types[selection - 1].type;
+            if (window.reminderBlockManager) {
+                window.reminderBlockManager.addBlock(selectedType);
+            } else {
+                console.warn('Manager still not available after selection');
+            }
+        }
+        return;
+    }
+    
+    // Clean up any existing backdrops first
+    cleanupModalBackdrops();
+    
+    if (window.reminderBlockManager) {
+        console.log('Using manager to show modal');
+        window.reminderBlockManager.showBlockTypeModal();
+    } else {
+        console.log('Manager not available, using fallback');
+        // Fallback: show simple selection
+        const types = [
+            { type: 'text', name: 'متن' },
+            { type: 'image', name: 'تصویر' },
+            { type: 'video', name: 'ویدیو' },
+            { type: 'audio', name: 'صوت' }
+        ];
+        
+        const selection = prompt('انتخاب نوع بلاک:\n1. متن\n2. تصویر\n3. ویدیو\n4. صوت\n\nلطفاً شماره مورد نظر را وارد کنید:');
+        
+        if (selection && selection >= 1 && selection <= 4) {
+            const selectedType = types[selection - 1].type;
+            if (window.reminderBlockManager) {
+                window.reminderBlockManager.addBlock(selectedType);
+            } else {
+                console.warn('Manager still not available after selection');
+            }
+        }
+    }
+}
+
+function updatePreview() {
+    console.log('updatePreview called');
+    
+    if (window.reminderBlockManager) {
+        console.log('Using manager to update preview');
+        window.reminderBlockManager.updatePreview();
+    } else {
+        console.log('Manager not available for preview');
+        alert('سیستم پیش‌نمایش هنوز آماده نیست');
+    }
+}
+
 class ReminderContentBlockManager {
     constructor() {
         this.blocks = [];
@@ -21,20 +108,66 @@ class ReminderContentBlockManager {
     }
     
     init() {
+        console.log('ReminderContentBlockManager: Initializing...');
+        
+        // Check if required elements exist
+        const addBlockBtn = document.getElementById('addContentBlockBtn');
+        const previewBtn = document.getElementById('previewReminderBtn');
+        
+        console.log('Add block button found:', !!addBlockBtn);
+        console.log('Preview button found:', !!previewBtn);
+        
+        if (!addBlockBtn) {
+            console.error('Add block button not found!');
+            return;
+        }
+        
+        if (!previewBtn) {
+            console.error('Preview button not found!');
+            return;
+        }
+        
         this.setupEventListeners();
         this.loadExistingContent();
+        
+        // Ensure scroll is enabled on initialization
+        this.ensureScrollEnabled();
+        
+        console.log('ReminderContentBlockManager: Initialization complete');
     }
     
     setupEventListeners() {
         // Add block button
-        document.getElementById('addContentBlockBtn').addEventListener('click', () => {
-            this.showBlockTypeModal();
-        });
+        const addBlockBtn = document.getElementById('addContentBlockBtn');
+        if (addBlockBtn) {
+            // Remove any existing listeners to prevent duplicates
+            addBlockBtn.removeEventListener('click', this.handleAddBlockClick);
+            this.handleAddBlockClick = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Add block button clicked');
+                this.showBlockTypeModal();
+            };
+            addBlockBtn.addEventListener('click', this.handleAddBlockClick);
+        } else {
+            console.warn('Add block button not found');
+        }
         
         // Preview button
-        document.getElementById('previewReminderBtn').addEventListener('click', () => {
-            this.updatePreview();
-        });
+        const previewBtn = document.getElementById('previewReminderBtn');
+        if (previewBtn) {
+            // Remove any existing listeners to prevent duplicates
+            previewBtn.removeEventListener('click', this.handlePreviewClick);
+            this.handlePreviewClick = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Preview button clicked');
+                this.updatePreview();
+            };
+            previewBtn.addEventListener('click', this.handlePreviewClick);
+        } else {
+            console.warn('Preview button not found');
+        }
         
         // Block type selection
         document.querySelectorAll('.block-type-item').forEach(item => {
@@ -118,14 +251,177 @@ class ReminderContentBlockManager {
     }
     
     showBlockTypeModal() {
-        const modal = new bootstrap.Modal(document.getElementById('blockTypeModal'));
-        modal.show();
+        const modalElement = document.getElementById('blockTypeModal');
+        if (!modalElement) {
+            console.warn('Modal element not found, using fallback');
+            // Fallback: show block type selection directly
+            this.showBlockTypeSelection();
+            return;
+        }
+        
+        // Clean up any existing backdrops first
+        this.cleanupModalBackdrop();
+        
+        // Try to use Bootstrap Modal if available
+        if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+            try {
+                // Dispose any existing modal instance
+                const existingModal = bootstrap.Modal.getInstance(modalElement);
+                if (existingModal) {
+                    existingModal.dispose();
+                }
+                
+                // Ensure the modal element is still in the DOM
+                if (!document.body.contains(modalElement)) {
+                    console.error('Modal element not in DOM, using fallback');
+                    this.showBlockTypeSelection();
+                    return;
+                }
+                
+                // Create new modal instance
+                const modal = new bootstrap.Modal(modalElement, {
+                    backdrop: true,
+                    keyboard: true,
+                    focus: true
+                });
+                
+                // Add event listener for when modal is hidden
+                modalElement.addEventListener('hidden.bs.modal', () => {
+                    this.cleanupModalBackdrop();
+                }, { once: true });
+                
+                modal.show();
+            } catch (error) {
+                console.error('Error showing Bootstrap modal:', error);
+                // Fallback to manual modal
+                this.showModalManually(modalElement);
+            }
+        } else {
+            // Fallback: show modal manually
+            this.showModalManually(modalElement);
+        }
+    }
+    
+    showModalManually(modalElement) {
+        if (!modalElement || !document.body.contains(modalElement)) {
+            console.error('Modal element not available for manual display');
+            this.showBlockTypeSelection();
+            return;
+        }
+        
+        modalElement.style.display = 'block';
+        modalElement.classList.add('show');
+        document.body.classList.add('modal-open');
+        
+        // Add backdrop
+        const backdrop = document.createElement('div');
+        backdrop.className = 'modal-backdrop fade show';
+        backdrop.id = 'blockTypeModalBackdrop';
+        document.body.appendChild(backdrop);
+        
+        // Close modal when backdrop is clicked
+        backdrop.addEventListener('click', () => {
+            this.hideBlockTypeModal();
+        });
     }
     
     hideBlockTypeModal() {
-        const modal = bootstrap.Modal.getInstance(document.getElementById('blockTypeModal'));
-        if (modal) {
-            modal.hide();
+        const modalElement = document.getElementById('blockTypeModal');
+        if (!modalElement) {
+            console.warn('Modal element not found when trying to hide');
+            this.cleanupModalBackdrop();
+            return;
+        }
+        
+        // Try to use Bootstrap Modal if available
+        if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+            try {
+                const modal = bootstrap.Modal.getInstance(modalElement);
+                if (modal) {
+                    modal.hide();
+                    
+                    // Ensure backdrop is removed after Bootstrap hides the modal
+                    setTimeout(() => {
+                        this.cleanupModalBackdrop();
+                    }, 300); // Wait for Bootstrap's animation to complete
+                } else {
+                    // No existing instance, try to create one and hide it
+                    if (document.body.contains(modalElement)) {
+                        const newModal = new bootstrap.Modal(modalElement);
+                        newModal.hide();
+                        
+                        setTimeout(() => {
+                            this.cleanupModalBackdrop();
+                        }, 300);
+                    } else {
+                        console.warn('Modal element not in DOM, cleaning up manually');
+                        this.cleanupModalBackdrop();
+                    }
+                }
+            } catch (error) {
+                console.error('Error hiding Bootstrap modal:', error);
+                // Fallback to manual hide
+                this.hideModalManually(modalElement);
+            }
+        } else {
+            // Fallback: hide modal manually
+            this.hideModalManually(modalElement);
+        }
+    }
+    
+    hideModalManually(modalElement) {
+        if (!modalElement || !document.body.contains(modalElement)) {
+            console.warn('Modal element not available for manual hide');
+            this.cleanupModalBackdrop();
+            return;
+        }
+        
+        modalElement.style.display = 'none';
+        modalElement.classList.remove('show');
+        document.body.classList.remove('modal-open');
+        
+        // Remove backdrop
+        this.cleanupModalBackdrop();
+    }
+    
+    cleanupModalBackdrop() {
+        // Remove any existing modal backdrops
+        const backdrops = document.querySelectorAll('.modal-backdrop');
+        backdrops.forEach(backdrop => {
+            backdrop.remove();
+        });
+        
+        // Remove modal-open class from body
+        document.body.classList.remove('modal-open');
+        
+        // Reset body padding and overflow if they were modified
+        document.body.style.paddingRight = '';
+        document.body.style.overflow = '';
+        document.body.style.overflowX = '';
+        document.body.style.overflowY = '';
+        
+        // Ensure html element is also clean
+        document.documentElement.style.overflow = '';
+        document.documentElement.style.overflowX = '';
+        document.documentElement.style.overflowY = '';
+        
+        console.log('Modal backdrop cleanup completed');
+    }
+    
+    showBlockTypeSelection() {
+        // Fallback: show a simple selection dialog
+        const types = [
+            { type: 'text', name: 'متن', icon: 'fas fa-font' },
+            { type: 'image', name: 'تصویر', icon: 'fas fa-image' },
+            { type: 'video', name: 'ویدیو', icon: 'fas fa-video' },
+            { type: 'audio', name: 'صوت', icon: 'fas fa-microphone' }
+        ];
+        
+        const selection = prompt('انتخاب نوع بلاک:\n1. متن\n2. تصویر\n3. ویدیو\n4. صوت\n\nلطفاً شماره مورد نظر را وارد کنید:');
+        
+        if (selection && selection >= 1 && selection <= 4) {
+            const selectedType = types[selection - 1].type;
+            this.addBlock(selectedType);
         }
     }
     
@@ -142,6 +438,12 @@ class ReminderContentBlockManager {
         this.renderBlock(block);
         this.updateEmptyState();
         this.updateHiddenField();
+        
+        // Ensure scroll is enabled
+        this.ensureScrollEnabled();
+        
+        // Auto-scroll to the new block
+        this.scrollToNewBlock(blockId);
     }
     
     getDefaultBlockData(type) {
@@ -288,6 +590,9 @@ class ReminderContentBlockManager {
             }
             
             this.updateHiddenField();
+            
+            // Scroll to the moved block
+            this.scrollToBlock(blockId);
         }
     }
     
@@ -307,6 +612,9 @@ class ReminderContentBlockManager {
             }
             
             this.updateHiddenField();
+            
+            // Scroll to the moved block
+            this.scrollToBlock(blockId);
         }
     }
     
@@ -668,6 +976,63 @@ class ReminderContentBlockManager {
         }
     }
     
+    scrollToNewBlock(blockId) {
+        // Wait a bit for the DOM to update
+        setTimeout(() => {
+            const blockElement = document.querySelector(`[data-block-id="${blockId}"]`);
+            if (blockElement) {
+                // Smooth scroll to the new block
+                blockElement.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center',
+                    inline: 'nearest'
+                });
+                
+                // Add highlight class for better animation
+                blockElement.classList.add('highlight');
+                
+                // Remove highlight after 2 seconds
+                setTimeout(() => {
+                    blockElement.classList.remove('highlight');
+                }, 2000);
+                
+                console.log('Scrolled to new block:', blockId);
+            }
+        }, 100);
+    }
+    
+    scrollToBlock(blockId) {
+        // Wait a bit for the DOM to update
+        setTimeout(() => {
+            const blockElement = document.querySelector(`[data-block-id="${blockId}"]`);
+            if (blockElement) {
+                // Smooth scroll to the block
+                blockElement.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center',
+                    inline: 'nearest'
+                });
+                
+                console.log('Scrolled to block:', blockId);
+            }
+        }, 50);
+    }
+    
+    ensureScrollEnabled() {
+        // Ensure body and html can scroll
+        document.body.style.overflow = '';
+        document.body.style.overflowX = '';
+        document.body.style.overflowY = '';
+        document.documentElement.style.overflow = '';
+        document.documentElement.style.overflowX = '';
+        document.documentElement.style.overflowY = '';
+        
+        // Remove any classes that might disable scroll
+        document.body.classList.remove('modal-open');
+        
+        console.log('Scroll enabled');
+    }
+    
     getContent() {
         return {
             type: 'reminder',
@@ -676,7 +1041,67 @@ class ReminderContentBlockManager {
     }
 }
 
+
+// Initialize when DOM is loaded
+function initializeReminderBlockManager() {
+    try {
+        // Check if already initialized
+        if (window.reminderBlockManager) {
+            return;
+        }
+        
+        // Check if required elements exist
+        const requiredElements = [
+            'contentBlocksList',
+            'emptyBlocksState', 
+            'reminderPreview',
+            'reminderContentJson'
+        ];
+        
+        let missingElements = [];
+        requiredElements.forEach(id => {
+            if (!document.getElementById(id)) {
+                missingElements.push(id);
+            }
+        });
+        
+        if (missingElements.length > 0) {
+            console.warn('ReminderContentBlockManager: Missing required elements:', missingElements);
+            return;
+        }
+        
+        window.reminderBlockManager = new ReminderContentBlockManager();
+        console.log('ReminderContentBlockManager initialized successfully');
+        
+    } catch (error) {
+        console.error('Error initializing ReminderContentBlockManager:', error);
+    }
+}
+
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    window.reminderBlockManager = new ReminderContentBlockManager();
+    // Add a small delay to ensure all elements are ready
+    setTimeout(initializeReminderBlockManager, 100);
+});
+
+// Also try to initialize immediately if DOM is already loaded
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(initializeReminderBlockManager, 100);
+    });
+} else {
+    // DOM is already loaded
+    setTimeout(initializeReminderBlockManager, 100);
+}
+
+// Clean up modal backdrops when page is about to unload
+window.addEventListener('beforeunload', () => {
+    cleanupModalBackdrops();
+});
+
+// Also clean up on page visibility change (when user switches tabs)
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+        cleanupModalBackdrops();
+    }
 });
