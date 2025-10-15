@@ -116,47 +116,6 @@
     align-items: center;
 }
 
-.btn-preview-modern {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 1rem;
-    background: #f8f9fa;
-    border: 1px solid #e9ecef;
-    color: #495057;
-    border-radius: 6px;
-    font-weight: 500;
-    font-size: 0.875rem;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-    .btn-preview-modern:hover {
-        background: #e9ecef;
-        border-color: #dee2e6;
-        color: #495057;
-    }
-
-.btn-back-modern {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 1rem;
-    background: #667eea;
-    border: 1px solid #667eea;
-    color: white;
-    border-radius: 6px;
-    font-weight: 500;
-    font-size: 0.875rem;
-    text-decoration: none;
-    transition: all 0.2s ease;
-}
-
-    .btn-back-modern:hover {
-        background: #5a6fd8;
-        border-color: #5a6fd8;
-        color: white;
-    }
 
 
 /* Step Progress Container */
@@ -328,10 +287,14 @@
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
     border: 1px solid #e5e7eb;
     overflow: hidden;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .modern-form {
     padding: 0;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 /* Form Steps */
@@ -341,9 +304,11 @@
     min-height: 600px;
     background: #ffffff;
     border-radius: 8px;
-    margin: 0 auto;
-    max-width: 1000px;
+    margin: 0;
+    width: 100%;
+    max-width: none;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    box-sizing: border-box;
 }
 
     .form-step.active {
@@ -1020,7 +985,8 @@
     .form-step {
         padding: 1rem;
         min-height: auto;
-        margin: 0 0.5rem;
+        margin: 0;
+        width: 100%;
     }
 
     .step-header {

@@ -34,11 +34,11 @@
             </div>
             <div class="col-md-4">
                 <div class="page-actions-modern">
-                    <button type="button" class="btn-preview-modern" id="previewBtn">
+                    <button type="button" class="btn-teacher btn-info" id="previewBtn">
                         <i class="fas fa-eye"></i>
                         <span>پیش‌نمایش</span>
                     </button>
-                    <a asp-action="Index" asp-route-teachingPlanId="@teachingPlanId" class="btn-back-modern">
+                    <a asp-action="Index" asp-route-teachingPlanId="@teachingPlanId" class="btn-teacher btn-secondary">
                         <i class="fas fa-arrow-right"></i>
                         <span>بازگشت</span>
                     </a>
@@ -172,8 +172,8 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">بستن</button>
-                <button type="button" class="btn btn-primary" id="editFromPreview">ویرایش</button>
+                <button type="button" class="btn-teacher btn-secondary" data-bs-dismiss="modal">بستن</button>
+                <button type="button" class="btn-teacher btn-primary" id="editFromPreview">ویرایش</button>
             </div>
         </div>
     </div>

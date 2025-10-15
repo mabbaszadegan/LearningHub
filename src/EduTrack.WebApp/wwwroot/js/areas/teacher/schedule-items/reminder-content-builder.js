@@ -233,6 +233,19 @@ class ReminderContentBlockManager {
             }
         });
         
+        // File change buttons
+        document.addEventListener('click', (e) => {
+            if (e.target.matches('[data-action="change-image"]')) {
+                this.handleChangeFile(e.target, 'image');
+            } else if (e.target.matches('[data-action="change-video"]')) {
+                this.handleChangeFile(e.target, 'video');
+            } else if (e.target.matches('[data-action="change-audio"]')) {
+                this.handleChangeFile(e.target, 'audio');
+            } else if (e.target.matches('[data-action="reset-file"]')) {
+                this.handleResetFile(e.target);
+            }
+        });
+        
         // Caption changes
         document.addEventListener('input', (e) => {
             if (e.target.matches('[data-caption="true"]')) {
@@ -533,6 +546,9 @@ class ReminderContentBlockManager {
         
         // Setup event listeners for this block
         this.setupBlockEventListeners(blockElement);
+        
+        // Initialize file change buttons
+        this.initializeFileChangeButtons(blockElement);
         
         // Insert at correct position
         const emptyState = this.blocksList.querySelector('.empty-state');
@@ -856,6 +872,131 @@ class ReminderContentBlockManager {
         
         // Clear the input to allow selecting the same file again
         input.value = '';
+    }
+    
+    handleChangeFile(button, fileType) {
+        const blockElement = button.closest('.content-block');
+        const blockId = blockElement.dataset.blockId;
+        const block = this.blocks.find(b => b.id === blockId);
+        
+        if (!block) return;
+        
+        // Store original data for reset functionality
+        if (!block.data.originalData) {
+            block.data.originalData = JSON.parse(JSON.stringify(block.data));
+        }
+        
+        // Create file input
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.style.display = 'none';
+        
+        // Set accept attribute based on file type
+        switch (fileType) {
+            case 'image':
+                fileInput.accept = 'image/*';
+                fileInput.setAttribute('data-action', 'image-upload');
+                break;
+            case 'video':
+                fileInput.accept = 'video/*';
+                fileInput.setAttribute('data-action', 'video-upload');
+                break;
+            case 'audio':
+                fileInput.accept = 'audio/*';
+                fileInput.setAttribute('data-action', 'audio-upload');
+                break;
+        }
+        
+        // Add to DOM temporarily
+        document.body.appendChild(fileInput);
+        
+        // Handle file selection
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                // Remove old file data
+                delete block.data.pendingFile;
+                delete block.data.previewUrl;
+                delete block.data.originalFileName;
+                delete block.data.fileSize;
+                delete block.data.mimeType;
+                delete block.data.isRecorded;
+                
+                // Process new file
+                if (fileType === 'image') {
+                    this.handleImageUpload(fileInput);
+                } else if (fileType === 'video') {
+                    this.handleVideoUpload(fileInput);
+                } else if (fileType === 'audio') {
+                    this.handleAudioUpload(fileInput);
+                }
+                
+                // Update UI to show reset button
+                this.updateFileChangeButtons(blockElement, true);
+            }
+            
+            // Clean up
+            document.body.removeChild(fileInput);
+        });
+        
+        // Trigger file selection
+        fileInput.click();
+    }
+    
+    handleResetFile(button) {
+        const blockElement = button.closest('.content-block');
+        const blockId = blockElement.dataset.blockId;
+        const block = this.blocks.find(b => b.id === blockId);
+        
+        if (!block || !block.data.originalData) return;
+        
+        // Restore original data
+        block.data = JSON.parse(JSON.stringify(block.data.originalData));
+        delete block.data.originalData;
+        
+        // Update UI
+        this.updateBlockContent(blockElement, block);
+        this.updateFileChangeButtons(blockElement, false);
+        this.updateHiddenField();
+    }
+    
+    updateFileChangeButtons(blockElement, hasChanged) {
+        const changeButton = blockElement.querySelector('[data-action^="change-"]');
+        const resetButton = blockElement.querySelector('[data-action="reset-file"]');
+        
+        if (changeButton) {
+            changeButton.style.display = hasChanged ? 'none' : 'inline-flex';
+        }
+        
+        if (resetButton) {
+            resetButton.style.display = hasChanged ? 'inline-flex' : 'none';
+        } else if (hasChanged) {
+            // Create reset button if it doesn't exist
+            const resetBtn = document.createElement('button');
+            resetBtn.type = 'button';
+            resetBtn.className = 'btn-teacher btn-warning btn-sm';
+            resetBtn.setAttribute('data-action', 'reset-file');
+            resetBtn.innerHTML = '<i class="fas fa-undo"></i><span>بازگشت به حالت اولیه</span>';
+            
+            // Insert after change button
+            if (changeButton) {
+                changeButton.parentNode.insertBefore(resetBtn, changeButton.nextSibling);
+            }
+        }
+    }
+    
+    initializeFileChangeButtons(blockElement) {
+        // Initialize file change buttons for image, video, and audio blocks
+        const changeButtons = blockElement.querySelectorAll('[data-action^="change-"]');
+        changeButtons.forEach(button => {
+            button.style.display = 'inline-flex';
+        });
+        
+        // Remove any existing reset buttons
+        const resetButtons = blockElement.querySelectorAll('[data-action="reset-file"]');
+        resetButtons.forEach(button => {
+            button.remove();
+        });
     }
     
     showUploadProgress(blockElement, show) {
