@@ -8,6 +8,7 @@ class Step4ContentManager {
         this.formManager = formManager;
         this.contentBuilder = null;
         this.selectedContentType = null;
+        console.log('Step4ContentManager initialized with formManager:', formManager);
         this.init();
     }
 
@@ -16,8 +17,9 @@ class Step4ContentManager {
         this.setupContentBuilder();
         
         // Wait a bit for DOM to be ready
-        setTimeout(() => {
+        setTimeout(async () => {
             this.updateStep4Content();
+            await this.loadStepData();
         }, 100);
     }
 
@@ -240,15 +242,60 @@ class Step4ContentManager {
 
     // Load step 4 data from existing item
     async loadStepData() {
-        if (this.formManager && typeof this.formManager.getExistingItemData === 'function') {
-            const existingData = this.formManager.getExistingItemData();
-            if (existingData && existingData.contentJson) {
-                const contentField = document.getElementById('contentJson');
-                if (contentField) {
-                    contentField.value = existingData.contentJson;
+        console.log('loadStepData called');
+        
+        // Try to load data with retry mechanism
+        let retryCount = 0;
+        const maxRetries = 10;
+        
+        const tryLoadData = () => {
+            if (this.formManager && typeof this.formManager.getExistingItemData === 'function') {
+                const existingData = this.formManager.getExistingItemData();
+                console.log('Existing data from formManager:', existingData);
+                
+                if (existingData && existingData.contentJson) {
+                    const contentField = document.getElementById('contentJson');
+                    const reminderField = document.getElementById('reminderContentJson');
+                    
+                    if (contentField) {
+                        contentField.value = existingData.contentJson;
+                    }
+                    
+                    if (reminderField) {
+                        reminderField.value = existingData.contentJson;
+                    }
+                    
+                    console.log('Step 4 data loaded:', existingData.contentJson);
+                    
+                    // Notify reminder block manager to reload content
+                    if (window.reminderBlockManager && typeof window.reminderBlockManager.loadExistingContent === 'function') {
+                        setTimeout(() => {
+                            window.reminderBlockManager.loadExistingContent();
+                        }, 200);
+                    }
+                    return true;
                 }
             }
+            return false;
+        };
+        
+        // Try immediately
+        if (tryLoadData()) {
+            return;
         }
+        
+        // Retry with intervals
+        const retryInterval = setInterval(() => {
+            retryCount++;
+            console.log(`Retry ${retryCount} to load step 4 data`);
+            
+            if (tryLoadData() || retryCount >= maxRetries) {
+                clearInterval(retryInterval);
+                if (retryCount >= maxRetries) {
+                    console.log('Max retries reached, giving up on loading step 4 data');
+                }
+            }
+        }, 500);
     }
 }
 

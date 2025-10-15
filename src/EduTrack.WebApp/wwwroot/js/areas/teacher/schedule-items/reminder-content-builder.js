@@ -103,6 +103,7 @@ class ReminderContentBlockManager {
         this.emptyState = document.getElementById('emptyBlocksState');
         this.preview = document.getElementById('reminderPreview');
         this.hiddenField = document.getElementById('reminderContentJson');
+        console.log('Hidden field found:', this.hiddenField);
         
         this.init();
     }
@@ -513,6 +514,9 @@ class ReminderContentBlockManager {
         // Update block content based on data
         this.updateBlockContent(blockElement, block);
         
+        // Setup event listeners for this block
+        this.setupBlockEventListeners(blockElement);
+        
         // Insert at correct position
         const emptyState = this.blocksList.querySelector('.empty-state');
         if (emptyState) {
@@ -520,6 +524,35 @@ class ReminderContentBlockManager {
         } else {
             this.blocksList.appendChild(blockElement);
         }
+    }
+    
+    setupBlockEventListeners(blockElement) {
+        // Text editor events
+        const textEditor = blockElement.querySelector('.rich-text-editor');
+        if (textEditor) {
+            textEditor.addEventListener('input', () => this.updateTextBlockContent(textEditor));
+            textEditor.addEventListener('blur', () => this.updateTextBlockContent(textEditor));
+        }
+        
+        // Caption events
+        const captionTextarea = blockElement.querySelector('[data-caption="true"]');
+        if (captionTextarea) {
+            captionTextarea.addEventListener('input', () => this.updateBlockCaption(captionTextarea));
+        }
+        
+        // File input events
+        const fileInputs = blockElement.querySelectorAll('input[type="file"]');
+        fileInputs.forEach(input => {
+            input.addEventListener('change', (e) => {
+                if (e.target.matches('input[data-action="image-upload"]')) {
+                    this.handleImageUpload(e.target);
+                } else if (e.target.matches('input[data-action="video-upload"]')) {
+                    this.handleVideoUpload(e.target);
+                } else if (e.target.matches('input[data-action="audio-upload"]')) {
+                    this.handleAudioUpload(e.target);
+                }
+            });
+        });
     }
     
     updateBlockContent(element, block) {
@@ -989,16 +1022,25 @@ class ReminderContentBlockManager {
         const textEditor = blockElement.querySelector('.rich-text-editor');
         const command = button.dataset.command;
         
-        document.execCommand(command, false, null);
+        if (command === 'createLink') {
+            const url = prompt('لطفاً URL لینک را وارد کنید:', 'https://');
+            if (url) {
+                document.execCommand(command, false, url);
+            }
+        } else {
+            document.execCommand(command, false, null);
+        }
+        
         textEditor.focus();
         
         // Update block data
         const blockId = blockElement.dataset.blockId;
         const block = this.blocks.find(b => b.id === blockId);
-        block.data.content = textEditor.innerHTML;
-        block.data.textContent = textEditor.textContent || textEditor.innerText || '';
-        
-        this.updateHiddenField();
+        if (block) {
+            block.data.content = textEditor.innerHTML;
+            block.data.textContent = textEditor.textContent || textEditor.innerText || '';
+            this.updateHiddenField();
+        }
     }
     
     updatePreview() {
@@ -1024,14 +1066,15 @@ class ReminderContentBlockManager {
                 html += `<div class="text-block">${block.data.content || ''}</div>`;
                 break;
             case 'image':
-                if (block.data.fileUrl) {
+                if (block.data.fileUrl || block.data.previewUrl) {
+                    const imageUrl = block.data.fileUrl || block.data.previewUrl;
                     const sizeClass = this.getSizeClass(block.data.size);
                     const positionClass = this.getPositionClass(block.data.position);
                     html += `<div class="image-block ${positionClass}">`;
                     if (block.data.caption && block.data.captionPosition === 'top') {
                         html += `<div class="caption caption-top">${block.data.caption}</div>`;
                     }
-                    html += `<img src="${block.data.fileUrl}" alt="تصویر" class="${sizeClass}" />`;
+                    html += `<img src="${imageUrl}" alt="تصویر" class="${sizeClass}" />`;
                     if (block.data.caption && block.data.captionPosition === 'bottom') {
                         html += `<div class="caption caption-bottom">${block.data.caption}</div>`;
                     }
@@ -1039,14 +1082,15 @@ class ReminderContentBlockManager {
                 }
                 break;
             case 'video':
-                if (block.data.fileUrl) {
+                if (block.data.fileUrl || block.data.previewUrl) {
+                    const videoUrl = block.data.fileUrl || block.data.previewUrl;
                     const sizeClass = this.getSizeClass(block.data.size);
                     const positionClass = this.getPositionClass(block.data.position);
                     html += `<div class="video-block ${positionClass}">`;
                     if (block.data.caption && block.data.captionPosition === 'top') {
                         html += `<div class="caption caption-top">${block.data.caption}</div>`;
                     }
-                    html += `<video controls class="${sizeClass}"><source src="${block.data.fileUrl}" type="video/mp4"></video>`;
+                    html += `<video controls class="${sizeClass}"><source src="${videoUrl}" type="video/mp4"></video>`;
                     if (block.data.caption && block.data.captionPosition === 'bottom') {
                         html += `<div class="caption caption-bottom">${block.data.caption}</div>`;
                     }
@@ -1054,12 +1098,13 @@ class ReminderContentBlockManager {
                 }
                 break;
             case 'audio':
-                if (block.data.fileUrl) {
+                if (block.data.fileUrl || block.data.previewUrl) {
+                    const audioUrl = block.data.fileUrl || block.data.previewUrl;
                     html += `<div class="audio-block">`;
                     if (block.data.caption) {
                         html += `<div class="caption">${block.data.caption}</div>`;
                     }
-                    html += `<audio controls><source src="${block.data.fileUrl}" type="audio/mpeg"></audio>`;
+                    html += `<audio controls><source src="${audioUrl}" type="audio/mpeg"></audio>`;
                     html += '</div>';
                 }
                 break;
@@ -1109,23 +1154,36 @@ class ReminderContentBlockManager {
     
     loadExistingContent() {
         const existingContent = this.hiddenField.value;
+        console.log('Loading existing content:', existingContent);
+        
         if (existingContent) {
             try {
                 const data = JSON.parse(existingContent);
+                console.log('Parsed data:', data);
+                
                 if (data.blocks && Array.isArray(data.blocks)) {
+                    // Clear existing blocks from DOM
+                    const existingBlocks = this.blocksList.querySelectorAll('.content-block');
+                    existingBlocks.forEach(block => block.remove());
+                    
                     this.blocks = data.blocks;
                     this.nextBlockId = Math.max(...this.blocks.map(b => parseInt(b.id.split('-')[1]) || 0)) + 1;
                     
+                    console.log('Loading blocks:', this.blocks);
+                    
                     // Render existing blocks
                     this.blocks.forEach(block => {
+                        console.log('Rendering block:', block);
                         this.renderBlock(block);
                     });
                     
                     this.updateEmptyState();
                 }
             } catch (error) {
-                // Error loading existing content - ignore silently
+                console.error('Error loading existing content:', error);
             }
+        } else {
+            console.log('No existing content found');
         }
     }
     

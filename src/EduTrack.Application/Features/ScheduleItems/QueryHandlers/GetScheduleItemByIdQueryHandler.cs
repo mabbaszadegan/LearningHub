@@ -57,6 +57,7 @@ public class GetScheduleItemByIdQueryHandler : IRequestHandler<GetScheduleItemBy
                 UpdatedAt = scheduleItem.UpdatedAt,
                 Status = GetStatus(scheduleItem),
                 StatusText = GetStatusText(GetStatus(scheduleItem)),
+                ContentJson = scheduleItem.ContentJson,
                 GroupIds = scheduleItem.GroupAssignments.Select(ga => ga.StudentGroupId).ToList(),
                 SubChapterIds = scheduleItem.SubChapterAssignments.Select(sca => sca.SubChapterId).ToList(),
                 StudentIds = scheduleItem.StudentAssignments.Select(sa => sa.StudentId).ToList()

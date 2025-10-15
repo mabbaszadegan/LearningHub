@@ -1218,13 +1218,11 @@ class ModernScheduleItemFormManager {
                     }
                 }
 
-                // Load existing data after first save
-                if (this.currentStep === 1) {
-                    try {
-                        await this.loadExistingItem();
-                    } catch (error) {
-                        // Don't throw error here, just log it
-                    }
+                // Load existing data after save
+                try {
+                    await this.loadExistingItem();
+                } catch (error) {
+                    console.error('Error loading existing item after save:', error);
                 }
 
                 return result;
@@ -1331,14 +1329,47 @@ class ModernScheduleItemFormManager {
                 // Update form state indicators
                 this.updateFormStateIndicators();
                 
+                // Notify step managers to load their data
+                this.notifyStepManagersToLoadData();
+                
             }
         } catch (error) {
+            console.error('Error in loadExistingItem:', error);
         }
     }
 
     // Get existing item data for step managers
     getExistingItemData() {
         return this.existingItemData || null;
+    }
+
+    // Notify step managers to load their data
+    notifyStepManagersToLoadData() {
+        // Notify step 4 manager to load data
+        if (window.step4Manager && typeof window.step4Manager.loadStepData === 'function') {
+            setTimeout(() => {
+                window.step4Manager.loadStepData();
+            }, 100);
+        }
+        
+        // Notify other step managers if needed
+        if (window.step1Manager && typeof window.step1Manager.loadStepData === 'function') {
+            setTimeout(() => {
+                window.step1Manager.loadStepData();
+            }, 100);
+        }
+        
+        if (window.step2Manager && typeof window.step2Manager.loadStepData === 'function') {
+            setTimeout(() => {
+                window.step2Manager.loadStepData();
+            }, 100);
+        }
+        
+        if (window.step3Manager && typeof window.step3Manager.loadStepData === 'function') {
+            setTimeout(() => {
+                window.step3Manager.loadStepData();
+            }, 100);
+        }
     }
 
     // populateFormWithExistingData method removed - each step loads its own data
