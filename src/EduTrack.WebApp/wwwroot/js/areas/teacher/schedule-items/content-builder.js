@@ -557,7 +557,7 @@ class ContentBuilder {
             formData.append('file', file);
             formData.append('type', type);
 
-            const response = await fetch('/FileUpload/UploadContentFile', {
+            const response = await fetch('/Teacher/FileUpload/UploadContentFile', {
                 method: 'POST',
                 body: formData,
                 headers: {

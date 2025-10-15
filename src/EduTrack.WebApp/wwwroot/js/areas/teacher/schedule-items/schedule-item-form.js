@@ -69,6 +69,9 @@ class ModernScheduleItemFormManager {
         // Step navigation
         this.setupStepNavigationListeners();
 
+        // Form submit prevention
+        this.setupFormSubmitListener();
+
         // Step 1 form inputs and rich editor handled by Step1BasicsManager
 
         // Preview functionality
@@ -103,9 +106,21 @@ class ModernScheduleItemFormManager {
             nextBtn.addEventListener('click', () => this.goToNextStep());
         }
 
-        //if (submitBtn) {
-        //    submitBtn.addEventListener('click', (e) => this.handleFormSubmit(e));
-        //}
+        if (submitBtn) {
+            submitBtn.addEventListener('click', (e) => this.handleFormSubmit(e));
+        }
+    }
+
+    setupFormSubmitListener() {
+        const form = document.getElementById('createItemForm');
+        if (form) {
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                // Form submission is handled by step navigation buttons
+                return false;
+            });
+        }
 
         // Sidebar step navigation
         document.querySelectorAll('.step-item').forEach(item => {
@@ -879,11 +894,13 @@ class ModernScheduleItemFormManager {
         // Show content-specific preview
     }
 
-    saveFromPreview() {
-        // Save form from preview mode
-        const form = document.getElementById('createItemForm');
-        if (form) {
-            form.submit();
+    async saveFromPreview() {
+        // Save form from preview mode using AJAX
+        try {
+            await this.saveCurrentStep();
+        } catch (error) {
+            console.error('Error saving from preview:', error);
+            this.showErrorMessage('خطا در ذخیره از پیش‌نمایش');
         }
     }
 
@@ -1138,11 +1155,15 @@ class ModernScheduleItemFormManager {
 
             const requestData = {
                 Id: this.currentItemId,
-                TeachingPlanId: parseInt(document.querySelector('[name="TeachingPlanId"]').value),
+                TeachingPlanId: parseInt(document.querySelector('input[name="TeachingPlanId"]')?.value) || 0,
                 Step: this.currentStep,
                 ...stepData
             };
 
+            console.log('Request data being sent:', requestData);
+            console.log('Step data collected:', stepData);
+            console.log('Current step:', this.currentStep);
+            console.log('Current item ID:', this.currentItemId);
 
             // For step 3, ensure we have proper data structure
             if (this.currentStep === 3) {
@@ -1151,10 +1172,18 @@ class ModernScheduleItemFormManager {
                 if (!requestData.StudentIds) requestData.StudentIds = [];
             }
 
+            // Ensure ContentJson is a string, not an object
+            if (requestData.ContentJson && typeof requestData.ContentJson === 'object') {
+                requestData.ContentJson = JSON.stringify(requestData.ContentJson);
+            }
+
+            console.log('Final request data before sending:', requestData);
+
             const response = await fetch('/Teacher/ScheduleItem/SaveStep', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
                 },
                 body: JSON.stringify(requestData)
             });
@@ -1216,38 +1245,43 @@ class ModernScheduleItemFormManager {
     }
 
     async collectCurrentStepData() {
+        // Collect data from all steps that have been completed
+        const stepData = {};
+
+        console.log('collectCurrentStepData called for step:', this.currentStep);
+
+        if (this.currentStep >= 1 && window.step1Manager && typeof window.step1Manager.collectStep1Data === 'function') {
+            const step1Data = window.step1Manager.collectStep1Data();
+            console.log('Step 1 data:', step1Data);
+            Object.assign(stepData, step1Data);
+        }
         
-        switch (this.currentStep) {
-            case 1:
-                if (window.step1Manager && typeof window.step1Manager.collectStep1Data === 'function') {
-                    return window.step1Manager.collectStep1Data();
-                }
-                break;
-                
-            case 2:
-                if (window.step2Manager && typeof window.step2Manager.collectStep2Data === 'function') {
-                    return window.step2Manager.collectStep2Data();
-                }
-                break;
-                
-            case 3:
-                // Make sure step3Manager is available
-                if (this.step3Manager && !window.step3Manager) {
-                    window.step3Manager = this.step3Manager;
-                }
-                if (window.step3Manager && typeof window.step3Manager.collectStep3Data === 'function') {
-                    return window.step3Manager.collectStep3Data();
+        if (this.currentStep >= 2 && window.step2Manager && typeof window.step2Manager.collectStep2Data === 'function') {
+            const step2Data = window.step2Manager.collectStep2Data();
+            console.log('Step 2 data:', step2Data);
+            Object.assign(stepData, step2Data);
+        }
+        
+        if (this.currentStep >= 3) {
+            // Make sure step3Manager is available
+            if (this.step3Manager && !window.step3Manager) {
+                window.step3Manager = this.step3Manager;
             }
-            break;
-                
-            case 4:
-                if (window.step4Manager && typeof window.step4Manager.collectStep4Data === 'function') {
-                    return window.step4Manager.collectStep4Data();
-                }
-                break;
+            if (window.step3Manager && typeof window.step3Manager.collectStep3Data === 'function') {
+                const step3Data = window.step3Manager.collectStep3Data();
+                console.log('Step 3 data:', step3Data);
+                Object.assign(stepData, step3Data);
+            }
+        }
+        
+        if (this.currentStep >= 4 && window.step4Manager && typeof window.step4Manager.collectStep4Data === 'function') {
+            const step4Data = await window.step4Manager.collectStep4Data();
+            console.log('Step 4 data:', step4Data);
+            Object.assign(stepData, step4Data);
         }
 
-        return {};
+        console.log('Final step data collected:', stepData);
+        return stepData;
     }
 
     // collectStepData method removed - now using collectCurrentStepData

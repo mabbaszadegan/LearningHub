@@ -206,7 +206,8 @@ class Step4ContentManager {
         
         if (selectedType === '0') {
             // Reminder type - collect from reminder editor
-            return this.collectReminderContentData();
+            const reminderData = this.collectReminderContentData();
+            return reminderData;
         } else {
             // Other types - collect from content designer
             const container = document.getElementById('contentDesignContainer');
@@ -220,9 +221,20 @@ class Step4ContentManager {
     }
 
     // Collect step 4 data for saving
-    collectStep4Data() {
+    async collectStep4Data() {
+        // First upload all pending files
+        if (window.reminderBlockManager && typeof window.reminderBlockManager.uploadAllPendingFiles === 'function') {
+            try {
+                await window.reminderBlockManager.uploadAllPendingFiles();
+            } catch (error) {
+                console.error('Error uploading files:', error);
+                throw new Error('خطا در آپلود فایل‌ها: ' + error.message);
+            }
+        }
+        
+        const contentData = this.collectContentData();
         return {
-            ContentJson: this.collectContentData()
+            ContentJson: typeof contentData === 'string' ? contentData : JSON.stringify(contentData)
         };
     }
 

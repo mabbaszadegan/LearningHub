@@ -458,6 +458,11 @@ class ReminderContentBlockManager {
                     fileId: null,
                     fileName: null,
                     fileUrl: null,
+                    previewUrl: null,
+                    pendingFile: null,
+                    originalFileName: null,
+                    fileSize: null,
+                    mimeType: null,
                     size: 'medium',
                     position: 'center',
                     caption: '',
@@ -468,6 +473,11 @@ class ReminderContentBlockManager {
                     fileId: null,
                     fileName: null,
                     fileUrl: null,
+                    previewUrl: null,
+                    pendingFile: null,
+                    originalFileName: null,
+                    fileSize: null,
+                    mimeType: null,
                     size: 'medium',
                     position: 'center',
                     caption: '',
@@ -478,6 +488,11 @@ class ReminderContentBlockManager {
                     fileId: null,
                     fileName: null,
                     fileUrl: null,
+                    previewUrl: null,
+                    pendingFile: null,
+                    originalFileName: null,
+                    fileSize: null,
+                    mimeType: null,
                     caption: '',
                     isRecorded: false,
                     duration: null
@@ -516,36 +531,36 @@ class ReminderContentBlockManager {
                 }
                 break;
             case 'image':
-                if (block.data.fileUrl) {
+                if (block.data.previewUrl || block.data.fileUrl) {
                     const uploadArea = element.querySelector('.image-upload-area');
                     const preview = element.querySelector('.image-preview');
                     const img = element.querySelector('.preview-image');
                     
                     uploadArea.style.display = 'none';
                     preview.style.display = 'flex';
-                    img.src = block.data.fileUrl;
+                    img.src = block.data.previewUrl || block.data.fileUrl;
                 }
                 break;
             case 'video':
-                if (block.data.fileUrl) {
+                if (block.data.previewUrl || block.data.fileUrl) {
                     const uploadArea = element.querySelector('.video-upload-area');
                     const preview = element.querySelector('.video-preview');
                     const video = element.querySelector('.preview-video source');
                     
                     uploadArea.style.display = 'none';
                     preview.style.display = 'flex';
-                    video.src = block.data.fileUrl;
+                    video.src = block.data.previewUrl || block.data.fileUrl;
                 }
                 break;
             case 'audio':
-                if (block.data.fileUrl) {
+                if (block.data.previewUrl || block.data.fileUrl) {
                     const uploadArea = element.querySelector('.audio-upload-area');
                     const preview = element.querySelector('.audio-preview');
                     const audio = element.querySelector('.preview-audio source');
                     
                     uploadArea.style.display = 'none';
                     preview.style.display = 'flex';
-                    audio.src = block.data.fileUrl;
+                    audio.src = block.data.previewUrl || block.data.fileUrl;
                 }
                 break;
         }
@@ -663,18 +678,23 @@ class ReminderContentBlockManager {
         const blockId = blockElement.dataset.blockId;
         const block = this.blocks.find(b => b.id === blockId);
         
-        // Simulate upload (in real implementation, upload to server)
+        // Store file for later upload
+        block.data.pendingFile = file;
+        block.data.originalFileName = file.name;
+        block.data.fileSize = file.size;
+        block.data.mimeType = file.type;
+        
+        // Show preview using FileReader
         const reader = new FileReader();
         reader.onload = (e) => {
-            block.data.fileUrl = e.target.result;
-            block.data.fileName = file.name;
-            block.data.fileSize = file.size;
-            block.data.mimeType = file.type;
-            
+            block.data.previewUrl = e.target.result;
             this.updateBlockContent(blockElement, block);
             this.updateHiddenField();
         };
         reader.readAsDataURL(file);
+        
+        // Clear the input to allow selecting the same file again
+        input.value = '';
     }
     
     handleVideoUpload(input) {
@@ -685,18 +705,23 @@ class ReminderContentBlockManager {
         const blockId = blockElement.dataset.blockId;
         const block = this.blocks.find(b => b.id === blockId);
         
-        // Simulate upload
+        // Store file for later upload
+        block.data.pendingFile = file;
+        block.data.originalFileName = file.name;
+        block.data.fileSize = file.size;
+        block.data.mimeType = file.type;
+        
+        // Show preview using FileReader
         const reader = new FileReader();
         reader.onload = (e) => {
-            block.data.fileUrl = e.target.result;
-            block.data.fileName = file.name;
-            block.data.fileSize = file.size;
-            block.data.mimeType = file.type;
-            
+            block.data.previewUrl = e.target.result;
             this.updateBlockContent(blockElement, block);
             this.updateHiddenField();
         };
         reader.readAsDataURL(file);
+        
+        // Clear the input to allow selecting the same file again
+        input.value = '';
     }
     
     handleAudioUpload(input) {
@@ -707,19 +732,112 @@ class ReminderContentBlockManager {
         const blockId = blockElement.dataset.blockId;
         const block = this.blocks.find(b => b.id === blockId);
         
-        // Simulate upload
+        // Store file for later upload
+        block.data.pendingFile = file;
+        block.data.originalFileName = file.name;
+        block.data.fileSize = file.size;
+        block.data.mimeType = file.type;
+        block.data.isRecorded = false;
+        
+        // Show preview using FileReader
         const reader = new FileReader();
         reader.onload = (e) => {
-            block.data.fileUrl = e.target.result;
-            block.data.fileName = file.name;
-            block.data.fileSize = file.size;
-            block.data.mimeType = file.type;
-            block.data.isRecorded = false;
-            
+            block.data.previewUrl = e.target.result;
             this.updateBlockContent(blockElement, block);
             this.updateHiddenField();
         };
         reader.readAsDataURL(file);
+        
+        // Clear the input to allow selecting the same file again
+        input.value = '';
+    }
+    
+    showUploadProgress(blockElement, show) {
+        const progressElement = blockElement.querySelector('.upload-progress');
+        const placeholderElement = blockElement.querySelector('.upload-placeholder');
+        
+        if (progressElement) {
+            progressElement.style.display = show ? 'block' : 'none';
+        }
+        
+        if (placeholderElement) {
+            placeholderElement.style.display = show ? 'none' : 'block';
+        }
+    }
+    
+    async uploadAllPendingFiles() {
+        const uploadPromises = [];
+        
+        for (const block of this.blocks) {
+            if (block.data.pendingFile) {
+                const uploadPromise = this.uploadBlockFile(block);
+                uploadPromises.push(uploadPromise);
+            }
+        }
+        
+        if (uploadPromises.length > 0) {
+            try {
+                await Promise.all(uploadPromises);
+                console.log('All files uploaded successfully');
+                return true;
+            } catch (error) {
+                console.error('Error uploading files:', error);
+                throw error;
+            }
+        }
+        
+        return true;
+    }
+    
+    async uploadBlockFile(block) {
+        const file = block.data.pendingFile;
+        const fileType = block.type;
+        
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('type', fileType);
+            
+            const response = await fetch('/Teacher/FileUpload/UploadContentFile', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                }
+            });
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`HTTP ${response.status}: ${errorText}`);
+            }
+            
+            const responseText = await response.text();
+            if (!responseText) {
+                throw new Error('Empty response from server');
+            }
+            
+            const result = JSON.parse(responseText);
+            
+            if (result.success) {
+                // Update block data with server response
+                block.data.fileId = result.data.id;
+                block.data.fileName = result.data.fileName;
+                block.data.fileUrl = result.data.url;
+                block.data.fileSize = result.data.size;
+                block.data.mimeType = result.data.mimeType;
+                
+                // Remove pending file
+                delete block.data.pendingFile;
+                delete block.data.previewUrl;
+                
+                console.log(`File uploaded successfully for block ${block.id}`);
+            } else {
+                throw new Error(result.message || 'خطا در آپلود فایل');
+            }
+        } catch (error) {
+            console.error(`Error uploading file for block ${block.id}:`, error);
+            throw error;
+        }
     }
     
     async startRecording(button) {
@@ -796,6 +914,29 @@ class ReminderContentBlockManager {
                 clearInterval(this.recordingTimer);
                 this.recordingTimer = null;
             }
+            
+            // Handle recorded data
+            this.mediaRecorder.onstop = () => {
+                const blob = new Blob(this.recordedChunks, { type: 'audio/webm' });
+                const blockElement = button.closest('.content-block');
+                const blockId = blockElement.dataset.blockId;
+                const block = this.blocks.find(b => b.id === blockId);
+                
+                // Store recorded file for later upload
+                block.data.pendingFile = blob;
+                block.data.originalFileName = `recording_${Date.now()}.webm`;
+                block.data.fileSize = blob.size;
+                block.data.mimeType = 'audio/webm';
+                block.data.isRecorded = true;
+                block.data.duration = Math.floor((Date.now() - this.recordingStartTime) / 1000);
+                
+                // Create preview URL
+                const url = URL.createObjectURL(blob);
+                block.data.previewUrl = url;
+                
+                this.updateBlockContent(blockElement, block);
+                this.updateHiddenField();
+            };
         }
     }
     
@@ -804,8 +945,9 @@ class ReminderContentBlockManager {
         const blockId = blockElement.dataset.blockId;
         const block = this.blocks.find(b => b.id === blockId);
         
-        if (block.data.fileUrl) {
-            const audio = new Audio(block.data.fileUrl);
+        const audioUrl = block.data.previewUrl || block.data.fileUrl;
+        if (audioUrl) {
+            const audio = new Audio(audioUrl);
             audio.play();
         }
     }
@@ -951,7 +1093,18 @@ class ReminderContentBlockManager {
             blocks: this.blocks
         };
         
-        this.hiddenField.value = JSON.stringify(content);
+        const contentJson = JSON.stringify(content);
+        
+        // Update the reminder-specific field
+        if (this.hiddenField) {
+            this.hiddenField.value = contentJson;
+        }
+        
+        // Also update the main contentJson field for form submission
+        const mainContentField = document.getElementById('contentJson');
+        if (mainContentField) {
+            mainContentField.value = contentJson;
+        }
     }
     
     loadExistingContent() {
