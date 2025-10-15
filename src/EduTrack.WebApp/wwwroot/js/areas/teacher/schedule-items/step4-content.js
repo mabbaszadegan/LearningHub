@@ -14,7 +14,11 @@ class Step4ContentManager {
     init() {
         this.setupContentTypeListeners();
         this.setupContentBuilder();
-        this.updateStep4Content();
+        
+        // Wait a bit for DOM to be ready
+        setTimeout(() => {
+            this.updateStep4Content();
+        }, 100);
     }
 
     setupContentTypeListeners() {
@@ -60,24 +64,26 @@ class Step4ContentManager {
         const contentTypeSelector = document.getElementById('contentTypeSelector');
         const contentDesigner = document.getElementById('contentDesigner');
         const contentBuilder = document.getElementById('contentBuilder');
+        const reminderContentBuilder = document.getElementById('reminderContentBuilder');
         const contentTemplates = document.getElementById('contentTemplates');
 
+        // Hide all content builders first
         if (contentTypeSelector) contentTypeSelector.style.display = 'none';
         if (contentDesigner) contentDesigner.style.display = 'none';
         if (contentBuilder) contentBuilder.style.display = 'none';
+        if (reminderContentBuilder) reminderContentBuilder.style.display = 'none';
         if (contentTemplates) contentTemplates.style.display = 'none';
 
         const itemTypeSelect = document.getElementById('itemType');
         const selectedType = itemTypeSelect ? itemTypeSelect.value : '0';
 
         if (selectedType === '0') {
-            if (contentBuilder) {
-                contentBuilder.style.display = 'block';
-                if (!this.contentBuilder) {
-                    this.setupContentBuilder();
-                }
+            // Reminder type
+            if (reminderContentBuilder) {
+                reminderContentBuilder.style.display = 'block';
             }
         } else {
+            // Other types
             if (contentTypeSelector) {
                 contentTypeSelector.style.display = 'block';
             }
@@ -95,6 +101,19 @@ class Step4ContentManager {
         if (this.formManager && typeof this.formManager.showSuccess === 'function') {
             this.formManager.showSuccess('محتوای آموزشی با موفقیت ذخیره شد.');
         }
+    }
+
+    // Collect reminder content data
+    collectReminderContentData() {
+        if (window.reminderBlockManager && typeof window.reminderBlockManager.getContent === 'function') {
+            return window.reminderBlockManager.getContent();
+        }
+        return null;
+    }
+
+    // Debug method to check step 4 elements
+    debugStep4Elements() {
+        // Debug method - elements can be checked in browser dev tools
     }
 
     previewContentBuilderData() {
@@ -117,8 +136,7 @@ class Step4ContentManager {
         }
         previewHTML += '</div>';
         previewContent.innerHTML = previewHTML;
-    }
-
+        
         const bsModal = new bootstrap.Modal(modal);
         bsModal.show();
     }
@@ -183,13 +201,22 @@ class Step4ContentManager {
     }
 
     collectContentData() {
-        const container = document.getElementById('contentDesignContainer');
-        if (!container) return "{}";
-        const contentData = {};
-        container.querySelectorAll('input, textarea, select').forEach(input => {
-            contentData[input.name || input.id] = input.value;
-        });
-        return JSON.stringify(contentData);
+        const itemTypeSelect = document.getElementById('itemType');
+        const selectedType = itemTypeSelect ? itemTypeSelect.value : '0';
+        
+        if (selectedType === '0') {
+            // Reminder type - collect from reminder editor
+            return this.collectReminderContentData();
+        } else {
+            // Other types - collect from content designer
+            const container = document.getElementById('contentDesignContainer');
+            if (!container) return "{}";
+            const contentData = {};
+            container.querySelectorAll('input, textarea, select').forEach(input => {
+                contentData[input.name || input.id] = input.value;
+            });
+            return JSON.stringify(contentData);
+        }
     }
 
     // Collect step 4 data for saving
@@ -208,7 +235,6 @@ class Step4ContentManager {
                 if (contentField) {
                     contentField.value = existingData.contentJson;
                 }
-                console.log('Step 4 data loaded from existing item');
             }
         }
     }

@@ -190,7 +190,7 @@ class ModernScheduleItemFormManager {
 
     showSuccess(message) {
         // You can implement a toast notification system here
-        console.log('Success:', message);
+        // Success message displayed
     }
 
     // Step 2 datetime helpers handled by Step2TimingManager
@@ -230,13 +230,11 @@ class ModernScheduleItemFormManager {
     // Step Navigation Methods
     goToStep(step) {
         if (step < 1 || step > this.totalSteps) {
-            console.warn(`Invalid step: ${step}. Must be between 1 and ${this.totalSteps}`);
             return;
         }
 
         // Prevent rapid step changes
         if (this.isNavigating) {
-            console.warn('Step navigation already in progress');
             return;
         }
 
@@ -244,7 +242,6 @@ class ModernScheduleItemFormManager {
 
         // Validate current step before moving forward
         if (step > this.currentStep && !this.validateCurrentStep()) {
-            console.warn('Current step validation failed');
             this.isNavigating = false;
             return;
         }
@@ -252,7 +249,6 @@ class ModernScheduleItemFormManager {
         const previousStep = this.currentStep;
         this.currentStep = step;
         
-        console.log(`Navigating from step ${previousStep} to step ${step}`);
         
         // Update UI
         this.updateStepVisibility();
@@ -273,8 +269,6 @@ class ModernScheduleItemFormManager {
     }
 
     async initializeStepContent(step) {
-        console.log(`Initializing step ${step} content and loading data`);
-        console.log('Existing item data available:', !!this.existingItemData);
         
         switch (step) {
             case 1:
@@ -329,19 +323,15 @@ class ModernScheduleItemFormManager {
         if (!this.step3Manager) {
             // Check if Step3AssignmentManager is available
             if (typeof window.Step3AssignmentManager === 'undefined') {
-                console.error('Step3AssignmentManager is not available. Make sure step3-assignment.js is loaded before schedule-item-form.js');
                 return;
             }
-            console.log('Initializing Step3AssignmentManager...');
             this.step3Manager = new window.Step3AssignmentManager(this);
-            console.log('Step3AssignmentManager initialized:', this.step3Manager);
         }
     }
 
     async initializeStep3() {
         // Prevent double initialization
         if (this.step3Initialized) {
-            console.log('Step 3 already initialized, skipping...');
             return;
         }
         
@@ -354,21 +344,18 @@ class ModernScheduleItemFormManager {
         if (this.step3Manager) {
             await this.step3Manager.initializeStep3Content();
             this.step3Initialized = true;
-            console.log('Step 3 initialization completed');
         }
     }
 
 
     // Cleanup method for memory management
     cleanup() {
-        console.log('Cleaning up event listeners...');
         
         // Cleanup step 3 manager
         if (this.step3Manager && typeof this.step3Manager.cleanup === 'function') {
             this.step3Manager.cleanup();
         }
         
-        console.log('Cleanup completed');
     }
 
     async goToNextStep() {
@@ -388,9 +375,7 @@ class ModernScheduleItemFormManager {
                 this.setButtonLoadingState(nextBtn, true, 'در حال ذخیره...');
                 
                 // Save current step before moving to next
-                console.log('About to save current step before moving to next step');
                 await this.saveCurrentStep();
-                console.log('Save current step completed');
                         
                         // Mark step as saved
                         this.markStepAsSaved(this.currentStep);
@@ -406,7 +391,6 @@ class ModernScheduleItemFormManager {
                 this.setButtonLoadingState(nextBtn, false, 'مرحله بعدی');
                 
             } catch (error) {
-                console.error('Error saving step:', error);
                 
                 // Re-enable button on error
                 this.setButtonLoadingState(nextBtn, false, 'مرحله بعدی');
@@ -449,7 +433,6 @@ class ModernScheduleItemFormManager {
                 this.setButtonLoadingState(prevBtn, false, 'مرحله قبلی');
                 
             } catch (error) {
-                console.error('Error navigating to previous step:', error);
                 
                 // Re-enable button on error
                 this.setButtonLoadingState(prevBtn, false, 'مرحله قبلی');
@@ -611,7 +594,6 @@ class ModernScheduleItemFormManager {
     // Mark step as changed
     markStepAsChanged(step) {
         this.stepChanges[step] = true;
-        console.log(`Step ${step} marked as changed`);
     }
 
     // Mark step as saved (no changes)
@@ -619,7 +601,6 @@ class ModernScheduleItemFormManager {
         this.stepChanges[step] = false;
         // Update original data after save
         this.originalStepData[step] = this.collectCurrentStepData();
-        console.log(`Step ${step} marked as saved`);
     }
 
     // Clear step cache to force reload from server
@@ -630,7 +611,6 @@ class ModernScheduleItemFormManager {
         }
         // Reset change tracking
         this.stepChanges[step] = false;
-        console.log(`Step ${step} cache cleared`);
     }
 
 
@@ -640,7 +620,6 @@ class ModernScheduleItemFormManager {
         document.addEventListener('input', (e) => {
             const target = e.target;
             if (target.matches('input, select, textarea')) {
-                console.log('Input change detected:', target.name || target.id);
                 this.markStepAsChanged(this.currentStep);
             }
         }, true);
@@ -649,7 +628,6 @@ class ModernScheduleItemFormManager {
         document.addEventListener('change', (e) => {
             const target = e.target;
             if (target.matches('input[type="checkbox"], input[type="radio"], select')) {
-                console.log('Change detected:', target.name || target.id);
                 this.markStepAsChanged(this.currentStep);
             }
         }, true);
@@ -658,14 +636,12 @@ class ModernScheduleItemFormManager {
         document.addEventListener('input', (e) => {
             const target = e.target;
             if (target.matches('[contenteditable="true"]')) {
-                console.log('Rich text editor change detected:', target.id);
                 this.markStepAsChanged(this.currentStep);
             }
         }, true);
 
         // Listen for changes on content builder (Step 4)
         document.addEventListener('contentChanged', (e) => {
-            console.log('Content changed event detected');
             if (this.currentStep === 4) {
                 this.markStepAsChanged(4);
             }
@@ -673,7 +649,6 @@ class ModernScheduleItemFormManager {
 
         // Listen for changes on assignment selection (Step 3)
         document.addEventListener('assignmentChanged', (e) => {
-            console.log('Assignment changed event detected');
             if (this.currentStep === 3) {
                 this.markStepAsChanged(3);
             }
@@ -681,7 +656,6 @@ class ModernScheduleItemFormManager {
 
         // Listen for changes on timing (Step 2)
         document.addEventListener('timingChanged', (e) => {
-            console.log('Timing changed event detected:', e.detail);
             if (this.currentStep === 2) {
                 this.markStepAsChanged(2);
             }
@@ -691,7 +665,6 @@ class ModernScheduleItemFormManager {
         document.addEventListener('click', (e) => {
             const target = e.target;
             if (target.matches('.date-preset-btn, .score-preset, .subchapter-badge, .student-badge, .group-badge, .toolbar-btn')) {
-                console.log('Button click detected:', target.className);
                 this.markStepAsChanged(this.currentStep);
             }
         }, true);
@@ -700,7 +673,6 @@ class ModernScheduleItemFormManager {
         document.addEventListener('change', (e) => {
             const target = e.target;
             if (target.matches('.persian-datepicker')) {
-                console.log('Persian date picker change detected:', target.id);
                 this.markStepAsChanged(this.currentStep);
             }
         }, true);
@@ -709,7 +681,6 @@ class ModernScheduleItemFormManager {
         document.addEventListener('change', (e) => {
             const target = e.target;
             if (target.matches('input[type="time"]')) {
-                console.log('Time input change detected:', target.id);
                 this.markStepAsChanged(this.currentStep);
             }
         }, true);
@@ -718,24 +689,16 @@ class ModernScheduleItemFormManager {
     // Check if we should show confirmation dialog
     shouldShowConfirmation() {
         const hasChanges = this.hasStepChanges(this.currentStep);
-        console.log(`Should show confirmation for step ${this.currentStep}:`, hasChanges);
-        console.log('Step changes status:', this.stepChanges);
         return hasChanges;
     }
 
     // Force mark current step as changed (for testing)
     forceMarkCurrentStepAsChanged() {
         this.markStepAsChanged(this.currentStep);
-        console.log(`Forced step ${this.currentStep} as changed`);
     }
 
     // Debug method to check current state
     debugStepChanges() {
-        console.log('=== Step Changes Debug ===');
-        console.log('Current step:', this.currentStep);
-        console.log('Step changes:', this.stepChanges);
-        console.log('Should show confirmation:', this.shouldShowConfirmation());
-        console.log('========================');
     }
 
     async showSaveConfirmation() {
@@ -914,7 +877,6 @@ class ModernScheduleItemFormManager {
 
     showContentPreview() {
         // Show content-specific preview
-        console.log('Content preview functionality');
     }
 
     saveFromPreview() {
@@ -1019,7 +981,6 @@ class ModernScheduleItemFormManager {
             this.setButtonLoadingState(submitBtn, false, 'ذخیره نهایی');
             
         } catch (error) {
-            console.error('Error submitting form:', error);
             
             // Re-enable button on error
             this.setButtonLoadingState(submitBtn, false, 'ذخیره نهایی');
@@ -1078,9 +1039,7 @@ class ModernScheduleItemFormManager {
 
         try {
             // Save final step first
-            console.log('About to save final step before completion');
             await this.saveCurrentStep();
-            console.log('Final step save completed');
 
             // Complete the item
             const response = await fetch('/Teacher/ScheduleItem/Complete', {
@@ -1103,7 +1062,6 @@ class ModernScheduleItemFormManager {
                 throw new Error(result.message || 'خطا در تکمیل آیتم');
             }
         } catch (error) {
-            console.error('Error submitting form:', error);
             throw error; // Re-throw to be handled by caller
         }
     }
@@ -1166,21 +1124,17 @@ class ModernScheduleItemFormManager {
 
     // Step Saving Methods
     async saveCurrentStep() {
-        console.log('saveCurrentStep called for step:', this.currentStep);
         
         // Prevent multiple simultaneous save operations
         if (this.isSaving) {
-            console.warn('Save operation already in progress, isSaving:', this.isSaving);
             return;
         }
 
-        console.log('Setting isSaving to true');
         this.isSaving = true;
         
         try {
             // Collect step data from the appropriate step manager
             const stepData = await this.collectCurrentStepData();
-            console.log('Collected step data:', stepData);
 
             const requestData = {
                 Id: this.currentItemId,
@@ -1189,22 +1143,14 @@ class ModernScheduleItemFormManager {
                 ...stepData
             };
 
-            console.log('Saving step data:', requestData);
 
             // For step 3, ensure we have proper data structure
             if (this.currentStep === 3) {
                 if (!requestData.GroupIds) requestData.GroupIds = [];
                 if (!requestData.SubChapterIds) requestData.SubChapterIds = [];
                 if (!requestData.StudentIds) requestData.StudentIds = [];
-                
-                console.log('Step 3 data prepared:', {
-                    groups: requestData.GroupIds,
-                    subChapters: requestData.SubChapterIds,
-                    students: requestData.StudentIds
-                });
             }
 
-            console.log('Making fetch request to SaveStep...');
             const response = await fetch('/Teacher/ScheduleItem/SaveStep', {
                 method: 'POST',
                 headers: {
@@ -1212,17 +1158,14 @@ class ModernScheduleItemFormManager {
                 },
                 body: JSON.stringify(requestData)
             });
-            console.log('Fetch response received:', response.status, response.statusText);
 
             // Check if response is ok and has content
             if (!response.ok) {
                 const errorText = await response.text();
-                console.error('Response not OK:', response.status, errorText);
                 throw new Error(`HTTP ${response.status}: ${errorText}`);
             }
 
             const responseText = await response.text();
-            console.log('Response text:', responseText);
 
             if (!responseText) {
                 throw new Error('Empty response from server');
@@ -1242,7 +1185,6 @@ class ModernScheduleItemFormManager {
                         url.searchParams.set('id', result.id);
                         window.history.replaceState({}, '', url);
                     } catch (error) {
-                        console.error('Error updating URL:', error);
                         // Don't throw error here, just log it
                     }
                 }
@@ -1252,7 +1194,6 @@ class ModernScheduleItemFormManager {
                     try {
                         await this.loadExistingItem();
                     } catch (error) {
-                        console.error('Error loading existing item after save:', error);
                         // Don't throw error here, just log it
                     }
                 }
@@ -1262,30 +1203,19 @@ class ModernScheduleItemFormManager {
                 throw new Error(result.message || 'خطا در ذخیره مرحله');
             }
         } catch (error) {
-            console.error('Error saving step:', error);
-            console.log('Resetting isSaving to false due to error');
             this.isSaving = false; // Reset flag on error
             throw error;
         } finally {
-            console.log('Finally block: Resetting isSaving to false');
             this.isSaving = false; // Ensure flag is always reset
         }
     }
 
     // Method to manually reset isSaving flag (for debugging)
     resetSavingFlag() {
-        console.log('Manually resetting isSaving flag');
         this.isSaving = false;
     }
 
     async collectCurrentStepData() {
-        console.log(`Collecting data for current step: ${this.currentStep}`);
-        console.log('Available step managers:', {
-            step1: !!window.step1Manager,
-            step2: !!window.step2Manager,
-            step3: !!window.step3Manager,
-            step4: !!window.step4Manager
-        });
         
         switch (this.currentStep) {
             case 1:
@@ -1334,7 +1264,6 @@ class ModernScheduleItemFormManager {
             try {
                 await this.loadExistingItem();
             } catch (error) {
-                console.error('Error loading existing item:', error);
                 this.showErrorMessage('خطا در بارگذاری آیتم موجود');
             }
         }
@@ -1368,10 +1297,8 @@ class ModernScheduleItemFormManager {
                 // Update form state indicators
                 this.updateFormStateIndicators();
                 
-                console.log('Existing item data loaded and stored for step managers');
             }
         } catch (error) {
-            console.error('Error loading existing item:', error);
         }
     }
 
@@ -1455,7 +1382,6 @@ class ModernScheduleItemFormManager {
                             // Mark step as saved
                             this.markStepAsSaved(this.currentStep);
                         } catch (error) {
-                            console.error('Error saving step:', error);
                             this.showErrorMessage('خطا در ذخیره مرحله فعلی');
                             return;
                         }
@@ -1532,6 +1458,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // Add debug methods to window for testing
     window.debugStepChanges = () => formManager.debugStepChanges();
     window.forceMarkChanged = () => formManager.forceMarkCurrentStepAsChanged();
+    window.debugStep4Elements = () => {
+        if (window.step4Manager && typeof window.step4Manager.debugStep4Elements === 'function') {
+            window.step4Manager.debugStep4Elements();
+        }
+    };
     
     // Wait a bit for step3Manager to be initialized by the form manager
     setTimeout(() => {

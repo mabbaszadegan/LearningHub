@@ -26,12 +26,10 @@ class Step3AssignmentManager {
     }
 
     async init() {
-        console.log('Step 3 Assignment Manager initialized');
     }
 
     // Initialize step 3 content when entering step 3
     async initializeStep3Content() {
-        console.log('Initializing step 3 content...');
 
         // Wait for DOM to be ready
         await this.waitForDOMReady();
@@ -44,7 +42,6 @@ class Step3AssignmentManager {
             'studentGrid': document.getElementById('studentGrid')
         };
 
-        console.log('Required elements check:', requiredElements);
 
         // Check if all required elements exist
         const missingElements = Object.entries(requiredElements)
@@ -52,7 +49,6 @@ class Step3AssignmentManager {
             .map(([name]) => name);
 
         if (missingElements.length > 0) {
-            console.error('Missing required elements:', missingElements);
             return;
         }
 
@@ -75,7 +71,6 @@ class Step3AssignmentManager {
             this.formManager.updateAssignmentPreview();
         }
 
-        console.log('Step 3 initialization completed');
     }
 
     // Wait for DOM to be ready
@@ -92,13 +87,11 @@ class Step3AssignmentManager {
     setupStep3EventListeners() {
         // Event listeners are now added directly to each badge in render methods
         // This method is kept for compatibility but doesn't do anything
-        console.log('Step 3 event listeners setup completed (direct listeners used)');
         this.step3EventListenersSetup = true;
     }
 
     // Cleanup method for memory management
     cleanup() {
-        console.log('Cleaning up step 3 event listeners...');
 
         // Reset flags
         this.step3EventListenersSetup = false;
@@ -107,39 +100,30 @@ class Step3AssignmentManager {
         this.processingSubChapter = null;
         this.step3ClickHandler = null;
 
-        console.log('Step 3 cleanup completed');
     }
 
     // Group Management Methods
     async loadGroupsAsBadges() {
         try {
             const teachingPlanId = this.getTeachingPlanId();
-            console.log('Loading groups for teaching plan ID:', teachingPlanId);
             
             if (!teachingPlanId) {
-                console.error('TeachingPlanId is null or undefined');
                 return;
             }
             
             const response = await fetch(`/Teacher/Schedule/GetGroups?teachingPlanId=${teachingPlanId}`);
-            console.log('Groups response status:', response.status);
             
             if (!response.ok) {
-                console.error('Failed to fetch groups:', response.statusText);
                 return;
             }
             
             const groups = await response.json();
-            console.log('Groups response:', groups);
 
             if (groups.success) {
                 this.renderGroupBadges(groups.data);
-                console.log('Groups rendered successfully');
             } else {
-                console.error('Failed to load groups:', groups.message);
             }
         } catch (error) {
-            console.error('Error loading groups:', error);
         }
     }
 
@@ -168,19 +152,15 @@ class Step3AssignmentManager {
                 e.preventDefault();
                 e.stopPropagation();
                 const groupId = parseInt(badge.dataset.groupId);
-                console.log('Group badge clicked directly:', groupId);
                 this.toggleGroupSelection(groupId);
             });
         });
     }
 
     toggleGroupSelection(groupId) {
-        console.log('toggleGroupSelection called for groupId:', groupId);
-        console.log('Current processingGroup:', this.processingGroup);
         
         // Prevent multiple executions for the same group
         if (this.processingGroup === groupId) {
-            console.log('Group is already being processed, skipping...');
             return;
         }
 
@@ -189,26 +169,21 @@ class Step3AssignmentManager {
         const badge = document.querySelector(`[data-group-id="${groupId}"]`);
 
         if (!badge) {
-            console.error('Group badge not found for ID:', groupId);
             this.processingGroup = null;
             return;
         }
 
         const isSelected = badge.classList.contains('selected');
-        console.log('Group isSelected:', isSelected);
 
         if (isSelected) {
-            console.log('Removing selected class from group');
             badge.classList.remove('selected');
             this.selectedGroups = this.selectedGroups.filter(g => g.id !== groupId);
         } else {
-            console.log('Adding selected class to group');
             badge.classList.add('selected');
             const group = { id: groupId, name: badge.querySelector('.group-badge-name').textContent };
             this.selectedGroups.push(group);
         }
         
-        console.log('Selected groups after toggle:', this.selectedGroups);
 
         this.updateGroupSelectionSummary();
         this.updateAssignmentPreview();
@@ -228,7 +203,6 @@ class Step3AssignmentManager {
         // Reset processing flag after a short delay
         setTimeout(() => {
             this.processingGroup = null;
-            console.log('Processing flag reset for group:', groupId);
         }, 300);
     }
 
@@ -249,43 +223,33 @@ class Step3AssignmentManager {
     async loadChaptersWithSubChapters() {
         try {
             const teachingPlanId = this.getTeachingPlanId();
-            console.log('Loading subchapters for teaching plan ID:', teachingPlanId);
             
             if (!teachingPlanId) {
-                console.error('TeachingPlanId is null or undefined');
                 return;
             }
             
             const response = await fetch(`/Teacher/Schedule/GetSubChapters?teachingPlanId=${teachingPlanId}`);
-            console.log('Subchapters response status:', response.status);
             
             if (!response.ok) {
-                console.error('Failed to fetch subchapters:', response.statusText);
                 return;
             }
             
             const subChapters = await response.json();
-            console.log('Subchapters response:', subChapters);
 
             if (subChapters.success) {
                 this.renderChapterHierarchy(subChapters.data);
-                console.log('Chapter hierarchy rendered successfully');
             } else {
-                console.error('Failed to load subchapters:', subChapters.message);
             }
         } catch (error) {
-            console.error('Error loading chapters:', error);
         }
     }
 
     renderChapterHierarchy(subChapters) {
         const container = document.getElementById('chapterList');
         if (!container) {
-            console.error('Chapter list container not found');
             return;
         }
 
-        console.log('Rendering chapter hierarchy with subchapters:', subChapters);
 
         // Group subchapters by chapter
         const chaptersMap = new Map();
@@ -297,7 +261,6 @@ class Step3AssignmentManager {
             chaptersMap.get(chapterTitle).push(subChapter);
         });
 
-        console.log('Grouped chapters:', chaptersMap);
 
         container.innerHTML = Array.from(chaptersMap.entries()).map(([chapterTitle, chapterSubChapters]) => `
             <div class="chapter-item">
@@ -332,7 +295,6 @@ class Step3AssignmentManager {
             </div>
         `).join('');
 
-        console.log('Chapter hierarchy rendered. Container HTML:', container.innerHTML);
 
         // Add event listeners directly to each subchapter badge
         container.querySelectorAll('.subchapter-badge').forEach(badge => {
@@ -340,7 +302,6 @@ class Step3AssignmentManager {
                 e.preventDefault();
                 e.stopPropagation();
                 const subChapterId = parseInt(badge.dataset.subchapterId);
-                console.log('Subchapter badge clicked directly:', subChapterId);
                 this.toggleSubChapterSelection(subChapterId);
             });
         });
@@ -351,25 +312,19 @@ class Step3AssignmentManager {
                 e.preventDefault();
                 e.stopPropagation();
                 const chapterItem = header.closest('.chapter-item');
-                console.log('Chapter header clicked directly');
                 this.toggleChapterExpansion(chapterItem);
             });
         });
     }
 
     toggleChapterExpansion(chapterItem) {
-        console.log('toggleChapterExpansion called for:', chapterItem);
         chapterItem.classList.toggle('expanded');
-        console.log('Chapter expanded state:', chapterItem.classList.contains('expanded'));
     }
 
     toggleSubChapterSelection(subChapterId) {
-        console.log('toggleSubChapterSelection called for subChapterId:', subChapterId);
-        console.log('Current processingSubChapter:', this.processingSubChapter);
         
         // Prevent multiple executions for the same subchapter
         if (this.processingSubChapter === subChapterId) {
-            console.log('SubChapter is already being processed, skipping...');
             return;
         }
 
@@ -378,20 +333,16 @@ class Step3AssignmentManager {
         const badge = document.querySelector(`[data-subchapter-id="${subChapterId}"]`);
 
         if (!badge) {
-            console.error('Subchapter badge not found for ID:', subChapterId);
             this.processingSubChapter = null;
             return;
         }
 
         const isSelected = badge.classList.contains('selected');
-        console.log('SubChapter isSelected:', isSelected);
 
         if (isSelected) {
-            console.log('Removing selected class from subchapter');
             badge.classList.remove('selected');
             this.selectedSubChapters = this.selectedSubChapters.filter(sc => sc.id !== subChapterId);
         } else {
-            console.log('Adding selected class to subchapter');
             badge.classList.add('selected');
             const titleElement = badge.querySelector('.subchapter-title');
             const title = titleElement ? titleElement.textContent : `زیرمبحث ${subChapterId}`;
@@ -402,7 +353,6 @@ class Step3AssignmentManager {
             this.selectedSubChapters.push(subChapter);
         }
         
-        console.log('Selected subchapters after toggle:', this.selectedSubChapters);
 
         this.updateSubChapterSelectionSummary();
         this.updateAssignmentPreview();
@@ -422,7 +372,6 @@ class Step3AssignmentManager {
         // Reset processing flag after a short delay
         setTimeout(() => {
             this.processingSubChapter = null;
-            console.log('Processing flag reset for subchapter:', subChapterId);
         }, 300);
     }
 
@@ -474,17 +423,13 @@ class Step3AssignmentManager {
 
     async loadStudentsForSelectedGroups() {
         try {
-            console.log('Loading students for selected groups:', this.selectedGroups);
             this.allStudents = [];
 
             // Load students for each selected group
             for (const group of this.selectedGroups) {
-                console.log('Loading students for group:', group);
                 const response = await fetch(`/Teacher/StudentGroup/GetStudents?groupId=${group.id}`);
-                console.log('Student response status for group', group.id, ':', response.status);
                 if (response.ok) {
                     const students = await response.json();
-                    console.log('Students loaded for group', group.id, ':', students);
                     // Add group info to each student
                     const studentsWithGroup = students.map(student => ({
                         ...student,
@@ -493,7 +438,6 @@ class Step3AssignmentManager {
                     }));
                     this.allStudents.push(...studentsWithGroup);
                 } else {
-                    console.error('Failed to load students for group', group.id, ':', response.statusText);
                 }
             }
 
@@ -502,7 +446,6 @@ class Step3AssignmentManager {
                 index === self.findIndex(s => s.id === student.id)
             );
 
-            console.log('Total students loaded:', this.allStudents.length);
 
             // Update selected students with full details from loaded students
             this.updateSelectedStudentsWithDetails();
@@ -510,7 +453,6 @@ class Step3AssignmentManager {
             this.renderStudents();
             this.updateStudentCount();
         } catch (error) {
-            console.error('Error loading students:', error);
         }
     }
 
@@ -533,8 +475,6 @@ class Step3AssignmentManager {
             this.allStudents.some(student => student.id === selectedStudent.id)
         );
 
-        console.log('Updated selected students:', this.selectedStudents);
-        console.log('All students:', this.allStudents);
     }
 
     renderStudents() {
@@ -543,8 +483,6 @@ class Step3AssignmentManager {
 
         studentGrid.innerHTML = '';
 
-        console.log('Rendering students. All students:', this.allStudents.length);
-        console.log('Selected students:', this.selectedStudents.length);
 
         this.allStudents.forEach(student => {
             const studentBadge = document.createElement('div');
@@ -552,7 +490,6 @@ class Step3AssignmentManager {
             studentBadge.dataset.studentId = student.id;
 
             const isSelected = this.selectedStudents.some(s => s.id === student.id);
-            console.log(`Student ${student.id} (${student.firstName} ${student.lastName}) isSelected:`, isSelected);
 
             if (isSelected) {
                 studentBadge.classList.add('selected');
@@ -578,11 +515,9 @@ class Step3AssignmentManager {
     }
 
     toggleStudentSelection(student) {
-        console.log('toggleStudentSelection called for student:', student);
         
         const badge = document.querySelector(`[data-student-id="${student.id}"]`);
         if (!badge) {
-            console.error('Student badge not found for ID:', student.id);
             return;
         }
         
@@ -590,16 +525,13 @@ class Step3AssignmentManager {
         const isSelected = existingIndex > -1;
 
         if (isSelected) {
-            console.log('Removing selected class from student');
             badge.classList.remove('selected');
             this.selectedStudents.splice(existingIndex, 1);
         } else {
-            console.log('Adding selected class to student');
             badge.classList.add('selected');
             this.selectedStudents.push(student);
         }
         
-        console.log('Selected students after toggle:', this.selectedStudents);
         this.updateSelectedStudentsSummary();
         
         // Dispatch assignment changed event
@@ -721,33 +653,19 @@ class Step3AssignmentManager {
 
     // Collect step 3 data for saving
     collectStep3Data() {
-        console.log('Collecting step 3 data...');
         const stepData = {
             GroupId: parseInt(document.getElementById('groupId')?.value) || null
         };
         
         // Add selected groups and subchapters for badge-based selection
-        console.log('Step3Manager is available');
         const selectedGroups = this.getSelectedGroups();
         const selectedSubChapters = this.getSelectedSubChapters();
         const selectedStudents = this.getSelectedStudents();
-        
-        console.log('Selected items:', {
-            groups: selectedGroups,
-            subChapters: selectedSubChapters,
-            students: selectedStudents
-        });
         
         // Always include arrays, even if empty, to ensure proper handling
         stepData.GroupIds = selectedGroups.length > 0 ? selectedGroups.map(g => g.id) : [];
         stepData.SubChapterIds = selectedSubChapters.length > 0 ? selectedSubChapters.map(sc => sc.id) : [];
         stepData.StudentIds = selectedStudents.length > 0 ? selectedStudents.map(s => s.id) : [];
-        
-        console.log('Step 3 data collected:', {
-            groups: stepData.GroupIds,
-            subChapters: stepData.SubChapterIds,
-            students: stepData.StudentIds
-        });
 
         return stepData;
     }
@@ -757,23 +675,19 @@ class Step3AssignmentManager {
         if (this.formManager && typeof this.formManager.getExistingItemData === 'function') {
             const existingData = this.formManager.getExistingItemData();
             if (existingData) {
-                console.log('Loading Step 3 data:', existingData);
                 
                 // Load selected groups and subchapters for badge-based selection
                 if (existingData.groupIds && existingData.groupIds.length > 0) {
                     const groups = existingData.groupIds.map(id => ({ id: id, name: '' })); // Name will be loaded later
                     this.setSelectedGroups(groups);
-                    console.log('Step 3: Loaded groups:', groups);
                 }
                 if (existingData.subChapterIds && existingData.subChapterIds.length > 0) {
                     const subChapters = existingData.subChapterIds.map(id => ({ id: id, title: '' })); // Title will be loaded later
                     this.setSelectedSubChapters(subChapters);
-                    console.log('Step 3: Loaded subchapters:', subChapters);
                 }
                 if (existingData.studentIds && existingData.studentIds.length > 0) {
                     const students = existingData.studentIds.map(id => ({ id: id, firstName: '', lastName: '' })); // Details will be loaded later
                     this.setSelectedStudents(students);
-                    console.log('Step 3: Loaded students:', students);
                 }
                 
                 // Update UI to show selected items
@@ -786,12 +700,9 @@ class Step3AssignmentManager {
                 // Load and select existing assignments in UI
                 await this.loadAndSelectExistingAssignments();
                 
-                console.log('Step 3 data loaded from existing item');
             } else {
-                console.log('No existing data found for Step 3');
             }
         } else {
-            console.log('FormManager or getExistingItemData not available');
         }
     }
 
@@ -800,21 +711,18 @@ class Step3AssignmentManager {
     async loadAndSelectExistingAssignments() {
         // Select existing groups and subchapters (content already loaded in initializeStep3Content)
         try {
-            console.log('Loading existing assignments. Selected groups:', this.selectedGroups.length, 'Selected subchapters:', this.selectedSubChapters.length);
             
             // Select existing groups
             this.selectedGroups.forEach(group => {
                 const badge = document.querySelector(`[data-group-id="${group.id}"]`);
                 if (badge) {
                     badge.classList.add('selected');
-                    console.log('Selected group badge:', group.id);
                     // Update the group name if we have it
                     const nameElement = badge.querySelector('.group-badge-name');
                     if (nameElement) {
                         group.name = nameElement.textContent;
                     }
                 } else {
-                    console.warn('Group badge not found for ID:', group.id);
                 }
             });
 
@@ -823,7 +731,6 @@ class Step3AssignmentManager {
                 const badge = document.querySelector(`[data-subchapter-id="${subChapter.id}"]`);
                 if (badge) {
                     badge.classList.add('selected');
-                    console.log('Selected subchapter badge:', subChapter.id);
                     // Update the subchapter title if we have it
                     const titleElement = badge.querySelector('.subchapter-title');
                     if (titleElement) {
@@ -836,7 +743,6 @@ class Step3AssignmentManager {
                         chapterItem.classList.add('expanded');
                     }
                 } else {
-                    console.warn('Subchapter badge not found for ID:', subChapter.id);
                 }
             });
 
@@ -857,7 +763,6 @@ class Step3AssignmentManager {
             }
 
         } catch (error) {
-            console.error('Error loading existing assignments:', error);
         }
     }
 

@@ -1,0 +1,423 @@
+@model EduTrack.Application.Common.Models.ScheduleItems.CreateScheduleItemRequest
+
+<div class="reminder-content-builder">
+    <div class="builder-content">
+        <div class="content-blocks-container">
+            <div class="blocks-header">
+                <div class="blocks-title">
+                    <i class="fas fa-layer-group"></i>
+                    <span>بلاک‌های محتوایی</span>
+                </div>
+                <div class="blocks-actions">
+                    <button type="button" class="btn-add-block" id="addContentBlockBtn">
+                        <i class="fas fa-plus"></i>
+                        افزودن بلاک
+                    </button>
+                    <button type="button" class="btn-preview" id="previewReminderBtn">
+                        <i class="fas fa-eye"></i>
+                        پیش‌نمایش
+                    </button>
+                </div>
+            </div>
+            
+            <div class="blocks-list" id="contentBlocksList">
+                <!-- Content blocks will be added here dynamically -->
+                <div class="empty-state" id="emptyBlocksState">
+                    <div class="empty-state-icon">
+                        <i class="fas fa-plus-circle"></i>
+                    </div>
+                    <h4>هنوز بلاکی اضافه نشده</h4>
+                    <p>برای شروع، روی دکمه "افزودن بلاک" کلیک کنید</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="content-preview">
+            <div class="preview-header">
+                <h4>پیش‌نمایش یادآوری</h4>
+            </div>
+            <div class="preview-content" id="reminderPreview">
+                <div class="reminder-card">
+                    <div class="reminder-icon">
+                        <i class="fas fa-bell"></i>
+                    </div>
+                    <div class="reminder-text">
+                        <p>محتوای یادآوری شما اینجا نمایش داده خواهد شد...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Content Block Templates -->
+<div id="contentBlockTemplates" style="display: none;">
+    <!-- Text Block Template -->
+    <div class="content-block-template" data-type="text">
+        <div class="block-header">
+            <div class="block-type">
+                <i class="fas fa-font"></i>
+                <span>بلاک متن</span>
+            </div>
+            <div class="block-actions">
+                <button type="button" class="btn-icon" data-action="move-up" title="انتقال به بالا">
+                    <i class="fas fa-arrow-up"></i>
+                </button>
+                <button type="button" class="btn-icon" data-action="move-down" title="انتقال به پایین">
+                    <i class="fas fa-arrow-down"></i>
+                </button>
+                <button type="button" class="btn-icon" data-action="insert-above" title="درج بلاک بالا">
+                    <i class="fas fa-plus"></i>
+                </button>
+                <button type="button" class="btn-icon" data-action="edit" title="ویرایش">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button type="button" class="btn-icon" data-action="delete" title="حذف">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </div>
+        <div class="block-content">
+            <div class="text-editor-toolbar">
+                <button type="button" class="toolbar-btn" data-command="bold" title="ضخیم">
+                    <i class="fas fa-bold"></i>
+                </button>
+                <button type="button" class="toolbar-btn" data-command="italic" title="مورب">
+                    <i class="fas fa-italic"></i>
+                </button>
+                <button type="button" class="toolbar-btn" data-command="underline" title="زیرخط">
+                    <i class="fas fa-underline"></i>
+                </button>
+                <div class="toolbar-separator"></div>
+                <button type="button" class="toolbar-btn" data-command="insertUnorderedList" title="لیست نقطه‌ای">
+                    <i class="fas fa-list-ul"></i>
+                </button>
+                <button type="button" class="toolbar-btn" data-command="insertOrderedList" title="لیست شماره‌ای">
+                    <i class="fas fa-list-ol"></i>
+                </button>
+                <div class="toolbar-separator"></div>
+                <button type="button" class="toolbar-btn" data-command="createLink" title="لینک">
+                    <i class="fas fa-link"></i>
+                </button>
+            </div>
+            <div class="rich-text-editor" contenteditable="true" data-placeholder="متن خود را اینجا تایپ کنید...">
+                <!-- Rich text content will be here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Block Template -->
+    <div class="content-block-template" data-type="image">
+        <div class="block-header">
+            <div class="block-type">
+                <i class="fas fa-image"></i>
+                <span>بلاک تصویر</span>
+            </div>
+            <div class="block-actions">
+                <button type="button" class="btn-icon" data-action="move-up" title="انتقال به بالا">
+                    <i class="fas fa-arrow-up"></i>
+                </button>
+                <button type="button" class="btn-icon" data-action="move-down" title="انتقال به پایین">
+                    <i class="fas fa-arrow-down"></i>
+                </button>
+                <button type="button" class="btn-icon" data-action="insert-above" title="درج بلاک بالا">
+                    <i class="fas fa-plus"></i>
+                </button>
+                <button type="button" class="btn-icon" data-action="edit" title="ویرایش">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button type="button" class="btn-icon" data-action="delete" title="حذف">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </div>
+        <div class="block-content">
+            <div class="image-upload-area">
+                <input type="file" accept="image/*" class="file-input" data-action="image-upload">
+                <div class="upload-placeholder">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <span>تصویر را اینجا بکشید یا کلیک کنید</span>
+                    <small>فرمت‌های پشتیبانی شده: JPG, PNG, GIF (حداکثر 5MB)</small>
+                </div>
+                <div class="upload-progress" style="display: none;">
+                    <div class="progress-bar">
+                        <div class="progress-fill"></div>
+                    </div>
+                    <span class="progress-text">در حال آپلود...</span>
+                </div>
+            </div>
+            <div class="image-preview" style="display: none;">
+                <img src="" alt="پیش‌نمایش تصویر" class="preview-image">
+                <button type="button" class="btn-change-image" data-action="change-image">
+                    <i class="fas fa-edit"></i>
+                    تغییر تصویر
+                </button>
+            </div>
+            <div class="image-settings">
+                <div class="settings-grid">
+                    <div class="setting-item">
+                        <label>اندازه:</label>
+                        <select class="form-select-sm" data-setting="size">
+                            <option value="small">کوچک (300px)</option>
+                            <option value="medium" selected>متوسط (500px)</option>
+                            <option value="large">بزرگ (700px)</option>
+                            <option value="full">تمام عرض</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <label>موقعیت:</label>
+                        <select class="form-select-sm" data-setting="position">
+                            <option value="left">چپ</option>
+                            <option value="center" selected>وسط</option>
+                            <option value="right">راست</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="image-caption">
+                <textarea placeholder="توضیحات تصویر (اختیاری)" rows="2" data-caption="true"></textarea>
+                <div class="caption-position">
+                    <label>موقعیت توضیحات:</label>
+                    <select class="form-select-sm" data-setting="captionPosition">
+                        <option value="top">بالای تصویر</option>
+                        <option value="bottom" selected>زیر تصویر</option>
+                        <option value="overlay">روی تصویر</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Video Block Template -->
+    <div class="content-block-template" data-type="video">
+        <div class="block-header">
+            <div class="block-type">
+                <i class="fas fa-video"></i>
+                <span>بلاک ویدیو</span>
+            </div>
+            <div class="block-actions">
+                <button type="button" class="btn-icon" data-action="move-up" title="انتقال به بالا">
+                    <i class="fas fa-arrow-up"></i>
+                </button>
+                <button type="button" class="btn-icon" data-action="move-down" title="انتقال به پایین">
+                    <i class="fas fa-arrow-down"></i>
+                </button>
+                <button type="button" class="btn-icon" data-action="insert-above" title="درج بلاک بالا">
+                    <i class="fas fa-plus"></i>
+                </button>
+                <button type="button" class="btn-icon" data-action="edit" title="ویرایش">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button type="button" class="btn-icon" data-action="delete" title="حذف">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </div>
+        <div class="block-content">
+            <div class="video-upload-area">
+                <input type="file" accept="video/*" class="file-input" data-action="video-upload">
+                <div class="upload-placeholder">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <span>ویدیو را اینجا بکشید یا کلیک کنید</span>
+                    <small>فرمت‌های پشتیبانی شده: MP4, WebM, MOV (حداکثر 50MB)</small>
+                </div>
+                <div class="upload-progress" style="display: none;">
+                    <div class="progress-bar">
+                        <div class="progress-fill"></div>
+                    </div>
+                    <span class="progress-text">در حال آپلود...</span>
+                </div>
+            </div>
+            <div class="video-preview" style="display: none;">
+                <video controls class="preview-video">
+                    <source src="" type="video/mp4">
+                </video>
+                <button type="button" class="btn-change-video" data-action="change-video">
+                    <i class="fas fa-edit"></i>
+                    تغییر ویدیو
+                </button>
+            </div>
+            <div class="video-settings">
+                <div class="settings-grid">
+                    <div class="setting-item">
+                        <label>اندازه:</label>
+                        <select class="form-select-sm" data-setting="size">
+                            <option value="small">کوچک (400px)</option>
+                            <option value="medium" selected>متوسط (600px)</option>
+                            <option value="large">بزرگ (800px)</option>
+                            <option value="full">تمام عرض</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <label>موقعیت:</label>
+                        <select class="form-select-sm" data-setting="position">
+                            <option value="left">چپ</option>
+                            <option value="center" selected>وسط</option>
+                            <option value="right">راست</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="video-caption">
+                <textarea placeholder="توضیحات ویدیو (اختیاری)" rows="2" data-caption="true"></textarea>
+                <div class="caption-position">
+                    <label>موقعیت توضیحات:</label>
+                    <select class="form-select-sm" data-setting="captionPosition">
+                        <option value="top">بالای ویدیو</option>
+                        <option value="bottom" selected>زیر ویدیو</option>
+                        <option value="overlay">روی ویدیو</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Audio Block Template -->
+    <div class="content-block-template" data-type="audio">
+        <div class="block-header">
+            <div class="block-type">
+                <i class="fas fa-microphone"></i>
+                <span>بلاک صوت</span>
+            </div>
+            <div class="block-actions">
+                <button type="button" class="btn-icon" data-action="move-up" title="انتقال به بالا">
+                    <i class="fas fa-arrow-up"></i>
+                </button>
+                <button type="button" class="btn-icon" data-action="move-down" title="انتقال به پایین">
+                    <i class="fas fa-arrow-down"></i>
+                </button>
+                <button type="button" class="btn-icon" data-action="insert-above" title="درج بلاک بالا">
+                    <i class="fas fa-plus"></i>
+                </button>
+                <button type="button" class="btn-icon" data-action="edit" title="ویرایش">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button type="button" class="btn-icon" data-action="delete" title="حذف">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </div>
+        <div class="block-content">
+            <div class="audio-upload-area">
+                <input type="file" accept="audio/*" class="file-input" data-action="audio-upload">
+                <div class="upload-placeholder">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <span>فایل صوتی را اینجا بکشید یا کلیک کنید</span>
+                    <small>فرمت‌های پشتیبانی شده: MP3, WAV, OGG (حداکثر 10MB)</small>
+                </div>
+                <div class="upload-progress" style="display: none;">
+                    <div class="progress-bar">
+                        <div class="progress-fill"></div>
+                    </div>
+                    <span class="progress-text">در حال آپلود...</span>
+                </div>
+            </div>
+            <div class="audio-preview" style="display: none;">
+                <audio controls class="preview-audio">
+                    <source src="" type="audio/mpeg">
+                </audio>
+                <button type="button" class="btn-change-audio" data-action="change-audio">
+                    <i class="fas fa-edit"></i>
+                    تغییر فایل صوتی
+                </button>
+            </div>
+            <div class="audio-recorder">
+                <div class="recorder-header">
+                    <h5>یا صدای خود را ضبط کنید:</h5>
+                </div>
+                <div class="recorder-controls">
+                    <button type="button" class="btn-record" data-action="start-recording">
+                        <i class="fas fa-microphone"></i>
+                        شروع ضبط
+                    </button>
+                    <button type="button" class="btn-stop" data-action="stop-recording" disabled>
+                        <i class="fas fa-stop"></i>
+                        توقف ضبط
+                    </button>
+                    <button type="button" class="btn-play" data-action="play-recording" disabled>
+                        <i class="fas fa-play"></i>
+                        پخش
+                    </button>
+                </div>
+                <div class="recorder-status">
+                    <span class="recording-status">آماده برای ضبط</span>
+                    <div class="recording-timer" style="display: none;">
+                        <span class="timer-display">00:00</span>
+                    </div>
+                </div>
+            </div>
+            <div class="audio-caption">
+                <textarea placeholder="توضیحات فایل صوتی (اختیاری)" rows="2" data-caption="true"></textarea>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Block Type Selection Modal -->
+<div class="modal fade" id="blockTypeModal" tabindex="-1" aria-labelledby="blockTypeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="blockTypeModalLabel">
+                    <i class="fas fa-plus"></i>
+                    انتخاب نوع بلاک
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="block-type-grid">
+                    <div class="block-type-item" data-type="text">
+                        <div class="type-icon">
+                            <i class="fas fa-font"></i>
+                        </div>
+                        <div class="type-info">
+                            <h6>متن</h6>
+                            <p>بلاک متنی با قابلیت فرمت‌بندی</p>
+                        </div>
+                    </div>
+                    
+                    <div class="block-type-item" data-type="image">
+                        <div class="type-icon">
+                            <i class="fas fa-image"></i>
+                        </div>
+                        <div class="type-info">
+                            <h6>تصویر</h6>
+                            <p>آپلود تصویر با تنظیمات اندازه و موقعیت</p>
+                        </div>
+                    </div>
+                    
+                    <div class="block-type-item" data-type="video">
+                        <div class="type-icon">
+                            <i class="fas fa-video"></i>
+                        </div>
+                        <div class="type-info">
+                            <h6>ویدیو</h6>
+                            <p>آپلود ویدیو آموزشی با تنظیمات</p>
+                        </div>
+                    </div>
+                    
+                    <div class="block-type-item" data-type="audio">
+                        <div class="type-icon">
+                            <i class="fas fa-microphone"></i>
+                        </div>
+                        <div class="type-info">
+                            <h6>صوت</h6>
+                            <p>آپلود فایل صوتی یا ضبط صدای خود</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Hidden field for content -->
+<input type="hidden" id="reminderContentJson" name="ReminderContentJson" value="@Model.ContentJson" />
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/areas/teacher/schedule-items/reminder-content-builder.css" />
+}
+
+@section Scripts {
+    <script src="~/js/areas/teacher/schedule-items/reminder-content-builder.js"></script>
+}

@@ -217,6 +217,47 @@ public class ReminderContent
     public string Message { get; set; } = string.Empty;
     public string Priority { get; set; } = "normal"; // low, normal, high
     public bool SendNotification { get; set; }
+    public List<ContentBlock> Blocks { get; set; } = new();
+}
+
+public class ContentBlock
+{
+    public string Id { get; set; } = Guid.NewGuid().ToString();
+    public ContentBlockType Type { get; set; }
+    public int Order { get; set; }
+    public ContentBlockData Data { get; set; } = new();
+}
+
+public class ContentBlockData
+{
+    // Text block data
+    public string? Content { get; set; }
+    public string? TextContent { get; set; }
+    
+    // Media block data (image, video, audio)
+    public string? FileId { get; set; }
+    public string? FileName { get; set; }
+    public string? FileUrl { get; set; }
+    public long? FileSize { get; set; }
+    public string? MimeType { get; set; }
+    
+    // Image/Video specific settings
+    public string? Size { get; set; } = "medium"; // small, medium, large, full
+    public string? Position { get; set; } = "center"; // left, center, right
+    public string? Caption { get; set; }
+    public string? CaptionPosition { get; set; } = "bottom"; // top, bottom, overlay
+    
+    // Audio specific settings
+    public bool IsRecorded { get; set; } = false;
+    public int? Duration { get; set; } // in seconds
+}
+
+public enum ContentBlockType
+{
+    Text = 0,
+    Image = 1,
+    Video = 2,
+    Audio = 3
 }
 
 // Stats DTO

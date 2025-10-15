@@ -786,7 +786,6 @@ class ContentBuilder {
                 this.updateBoxData(box, 'fileId', fileId);
             }
         } catch (error) {
-            console.error('Error loading file preview:', error);
         }
     }
 
@@ -911,7 +910,6 @@ class ContentBuilder {
 
     showSuccess(message) {
         // You can implement a toast notification system here
-        console.log(message);
         // Show a simple success message
         const successDiv = document.createElement('div');
         successDiv.className = 'alert alert-success alert-dismissible fade show';

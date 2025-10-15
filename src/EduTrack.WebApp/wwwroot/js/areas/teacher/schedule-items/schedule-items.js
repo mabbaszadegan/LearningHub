@@ -72,7 +72,6 @@ class ScheduleItemsManager {
                 this.showError('خطا در بارگذاری آیتم‌ها: ' + result.message);
             }
         } catch (error) {
-            console.error('Error loading schedule items:', error);
             this.showError('خطا در بارگذاری آیتم‌ها');
         }
     }
@@ -273,7 +272,6 @@ class ScheduleItemsManager {
                 this.showError('خطا در کپی آیتم: ' + result.message);
             }
         } catch (error) {
-            console.error('Error duplicating item:', error);
             this.showError('خطا در کپی آیتم');
         }
     }
@@ -301,7 +299,6 @@ class ScheduleItemsManager {
                 this.showError('خطا در حذف آیتم: ' + result.message);
             }
         } catch (error) {
-            console.error('Error deleting schedule item:', error);
             this.showError('خطا در حذف آیتم آموزشی');
         }
     }

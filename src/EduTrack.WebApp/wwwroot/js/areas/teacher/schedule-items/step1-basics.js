@@ -183,7 +183,6 @@ class Step1BasicsManager {
             const existingData = this.formManager.getExistingItemData();
             if (existingData) {
                 this.populateStep1Data(existingData);
-                console.log('Step 1 data loaded from existing item');
             }
         }
     }

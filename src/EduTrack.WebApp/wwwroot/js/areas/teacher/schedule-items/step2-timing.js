@@ -29,17 +29,14 @@ class Step2TimingManager {
         // فقط دکمه‌های تاریخ شروع را انتخاب کن (دکمه‌هایی که در بخش تاریخ شروع هستند)
         const startDateSection = document.querySelector('.required-item:has(#PersianStartDate)');
         if (!startDateSection) {
-            console.warn('Start date section not found');
             return;
         }
         
         const startDatePresets = startDateSection.querySelectorAll('.date-preset-btn[data-preset]');
-        console.log('Found start date presets:', startDatePresets.length);
         
         startDatePresets.forEach(btn => {
             btn.addEventListener('click', () => {
                 const preset = btn.dataset.preset;
-                console.log('Start date preset clicked:', preset);
                 const targetDate = this.calculateStartDate(preset);
                 
                 if (targetDate) {
@@ -59,17 +56,14 @@ class Step2TimingManager {
         // فقط دکمه‌های تاریخ مهلت را انتخاب کن (دکمه‌هایی که در بخش تاریخ مهلت هستند)
         const dueDateSection = document.querySelector('.required-item:has(#PersianDueDate)');
         if (!dueDateSection) {
-            console.warn('Due date section not found');
             return;
         }
         
         const dueDatePresets = dueDateSection.querySelectorAll('.date-preset-btn[data-preset]');
-        console.log('Found due date presets:', dueDatePresets.length);
         
         dueDatePresets.forEach(btn => {
             btn.addEventListener('click', () => {
                 const preset = btn.dataset.preset;
-                console.log('Due date preset clicked:', preset);
                 const targetDate = this.calculateDueDate(preset);
                 
                 if (targetDate) {
@@ -117,26 +111,19 @@ class Step2TimingManager {
         // Try to get start date from hidden field first
         if (startDateInput && startDateInput.value) {
             startDate = new Date(startDateInput.value);
-            console.log('Using start date from hidden field:', startDate);
-            console.log('Hidden field value:', startDateInput.value);
         } else if (persianStartDateInput && persianStartDateInput.value) {
             // Convert Persian date to Gregorian
             startDate = this.convertPersianToGregorian(persianStartDateInput.value);
-            console.log('Using start date from Persian field:', startDate);
-            console.log('Persian field value:', persianStartDateInput.value);
         } else {
             // Use current date as fallback
             startDate = new Date();
-            console.log('Using current date as fallback:', startDate);
         }
         
         // Validate the date
         if (!startDate || isNaN(startDate.getTime())) {
-            console.error('Invalid start date, using current date');
             startDate = new Date();
         }
         
-        console.log('Calculating due date from start date:', startDate);
         
         let dueDate;
         switch (preset) {
@@ -162,7 +149,6 @@ class Step2TimingManager {
                 return null;
         }
         
-        console.log('Calculated due date:', dueDate);
         return dueDate;
     }
 
@@ -172,24 +158,20 @@ class Step2TimingManager {
         const startTimeInput = document.getElementById('StartTime');
         
         if (persianStartDateInput && startDateInput) {
-            console.log('Setting start date:', date);
             
             // Validate the date
             if (!date || isNaN(date.getTime())) {
-                console.error('Invalid start date provided');
                 return;
             }
             
             // Convert to Persian date
             const persianDate = this.convertToPersianDate(date);
-            console.log('Converted to Persian:', persianDate);
             
             if (persianDate && persianDate !== '0000/00/00') {
                 persianStartDateInput.value = persianDate;
                 
                 // Set hidden field with date
                 startDateInput.value = date.toISOString();
-                console.log('Updated startDateInput with:', startDateInput.value);
                 
                 // Set time to current time
                 if (startTimeInput) {
@@ -203,7 +185,6 @@ class Step2TimingManager {
                 // Update duration calculator
                 this.updateDurationCalculator();
             } else {
-                console.error('Failed to convert start date to Persian');
             }
         }
     }
@@ -215,17 +196,14 @@ class Step2TimingManager {
         const startTimeInput = document.getElementById('StartTime');
         
         if (persianDueDateInput && dueDateInput) {
-            console.log('Setting due date:', date);
             
             // Validate the date
             if (!date || isNaN(date.getTime())) {
-                console.error('Invalid due date provided');
                 return;
             }
             
             // Convert to Persian date
             const persianDate = this.convertToPersianDate(date);
-            console.log('Converted to Persian:', persianDate);
             
             if (persianDate && persianDate !== '0000/00/00') {
                 persianDueDateInput.value = persianDate;
@@ -239,11 +217,9 @@ class Step2TimingManager {
                     if (startTimeInput && startTimeInput.value) {
                         // Use start time
                         timeString = startTimeInput.value;
-                        console.log('Using start time:', timeString);
                     } else {
                         // Use current time
                         timeString = `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
-                        console.log('Using current time:', timeString);
                     }
                     dueTimeInput.value = timeString;
                 }
@@ -254,7 +230,6 @@ class Step2TimingManager {
                 // Update duration calculator
                 this.updateDurationCalculator();
             } else {
-                console.error('Failed to convert due date to Persian');
             }
         }
     }
@@ -431,10 +406,8 @@ class Step2TimingManager {
                         const gregorianDate = this.convertPersianToGregorian(persianDate);
                         if (gregorianDate && startDateInput) {
                             startDateInput.value = gregorianDate.toISOString();
-                            console.log('Updated startDateInput with:', startDateInput.value);
                         }
                     } catch (error) {
-                        console.error('Error converting Persian date to Gregorian:', error);
                     }
                 }
                 this.updateDurationCalculator();
@@ -466,7 +439,6 @@ class Step2TimingManager {
                             dueDateInput.value = gregorianDate.toISOString();
                         }
                     } catch (error) {
-                        console.error('Error converting Persian date to Gregorian:', error);
                     }
                 }
                 this.updateDurationCalculator();
@@ -485,7 +457,6 @@ class Step2TimingManager {
             const [hours, minutes] = timeInput.value.split(':');
             date.setHours(parseInt(hours), parseInt(minutes));
             dateInput.value = date.toISOString();
-            console.log('Updated dateTimeField:', dateInput.id, 'with value:', dateInput.value);
         }
     }
 
@@ -493,7 +464,6 @@ class Step2TimingManager {
         try {
             // Validate input
             if (!date || !(date instanceof Date) || isNaN(date.getTime())) {
-                console.warn('Invalid date provided to convertToPersianDate');
                 return '0000/00/00';
             }
 
@@ -503,7 +473,6 @@ class Step2TimingManager {
                     const jalaali = window.jalaali.toJalaali(date);
                     return `${jalaali.jy}/${jalaali.jm.toString().padStart(2, '0')}/${jalaali.jd.toString().padStart(2, '0')}`;
                 } catch (jalaaliError) {
-                    console.warn('jalaali-js library error:', jalaaliError);
                     // Fall through to next method
                 }
             }
@@ -514,7 +483,6 @@ class Step2TimingManager {
                     const persianDate = PersianDate.fromDate(date);
                     return persianDate.format('YYYY/MM/DD');
                 } catch (persianError) {
-                    console.warn('PersianDate library error:', persianError);
                     // Fall through to next method
                 }
             }
@@ -524,13 +492,11 @@ class Step2TimingManager {
                 try {
                     return window.persianDateUtils.gregorianToPersian(date);
                 } catch (utilsError) {
-                    console.warn('persianDateUtils error:', utilsError);
                     // Fall through to next method
                 }
             }
             
             // Final fallback: simple approximation
-            console.warn('Using simple Persian date approximation');
             const gregorianYear = date.getFullYear();
             const gregorianMonth = date.getMonth() + 1;
             const gregorianDay = date.getDate();
@@ -560,11 +526,9 @@ class Step2TimingManager {
                 persianYear += 1;
             }
             
-            console.log(`Converting ${gregorianYear}/${gregorianMonth}/${gregorianDay} to ${persianYear}/${persianMonth}/${persianDay}`);
             return `${persianYear}/${persianMonth.toString().padStart(2, '0')}/${persianDay.toString().padStart(2, '0')}`;
             
         } catch (error) {
-            console.error('Error converting to Persian date:', error);
             
             // Return current date as fallback
             const now = new Date();
@@ -593,7 +557,6 @@ class Step2TimingManager {
                         return new Date(gregorian.gy, gregorian.gm - 1, gregorian.gd);
                     }
                 } catch (jalaaliError) {
-                    console.warn('jalaali-js library error:', jalaaliError);
                     // Fall through to next method
                 }
             }
@@ -604,7 +567,6 @@ class Step2TimingManager {
                     const persianDate = PersianDate.parse(persianDateString);
                     return persianDate.toDate();
                 } catch (persianError) {
-                    console.warn('PersianDate library error:', persianError);
                     // Fall through to next method
                 }
             }
@@ -614,13 +576,11 @@ class Step2TimingManager {
                 try {
                     return window.persianDateUtils.persianToGregorian(persianDateString);
                 } catch (utilsError) {
-                    console.warn('persianDateUtils error:', utilsError);
                     // Fall through to next method
                 }
             }
             
             // Final fallback: simple approximation
-            console.warn('Using simple Gregorian date approximation');
             const parts = persianDateString.split('/');
             if (parts.length === 3) {
                 const persianYear = parseInt(parts[0]);
@@ -646,31 +606,25 @@ class Step2TimingManager {
                     gregorianYear += 1;
                 }
                 
-                console.log(`Converting ${persianDateString} to ${gregorianYear}/${gregorianMonth}/${gregorianDay}`);
                 return new Date(gregorianYear, gregorianMonth - 1, gregorianDay);
             }
             
             return null;
             
         } catch (error) {
-            console.error('Error converting Persian date to Gregorian:', error);
             return null;
         }
     }
 
     updateDatePicker(inputElement, persianDate) {
         try {
-            console.log('Updating datepicker for:', inputElement.id, 'with date:', persianDate);
             
             // Try to update the datepicker if it exists
             if (inputElement._persianDatePicker && typeof inputElement._persianDatePicker.setDate === 'function') {
-                console.log('Using _persianDatePicker.setDate');
                 inputElement._persianDatePicker.setDate(persianDate);
             } else if (inputElement.datePicker && typeof inputElement.datePicker.setDate === 'function') {
-                console.log('Using datePicker.setDate');
                 inputElement.datePicker.setDate(persianDate);
             } else {
-                console.log('Triggering events to update calendar');
                 // Trigger change event to update the calendar
                 const changeEvent = new Event('change', { bubbles: true });
                 inputElement.dispatchEvent(changeEvent);
@@ -686,23 +640,19 @@ class Step2TimingManager {
                 }, 100);
             }
         } catch (error) {
-            console.error('Error updating datepicker:', error);
         }
     }
 
     updateDatePickers() {
-        console.log('step2-timing: Updating datepickers');
         
         // Update PersianStartDate datepicker
         const persianStartDateInput = document.getElementById('PersianStartDate');
         if (persianStartDateInput && persianStartDateInput.value) {
-            console.log('step2-timing: Updating PersianStartDate datepicker', persianStartDateInput.value);
             // Try different possible datepicker property names
             const datePicker = persianStartDateInput.datePicker || persianStartDateInput._persianDatePicker;
             if (datePicker && typeof datePicker.setDate === 'function') {
                 datePicker.setDate(persianStartDateInput.value);
             } else {
-                console.warn('step2-timing: PersianStartDate datepicker not found or setDate method not available');
                 // Try to trigger change event
                 const changeEvent = new Event('change', { bubbles: true });
                 persianStartDateInput.dispatchEvent(changeEvent);
@@ -712,13 +662,11 @@ class Step2TimingManager {
         // Update PersianDueDate datepicker
         const persianDueDateInput = document.getElementById('PersianDueDate');
         if (persianDueDateInput && persianDueDateInput.value) {
-            console.log('step2-timing: Updating PersianDueDate datepicker', persianDueDateInput.value);
             // Try different possible datepicker property names
             const datePicker = persianDueDateInput.datePicker || persianDueDateInput._persianDatePicker;
             if (datePicker && typeof datePicker.setDate === 'function') {
                 datePicker.setDate(persianDueDateInput.value);
             } else {
-                console.warn('step2-timing: PersianDueDate datepicker not found or setDate method not available');
                 // Try to trigger change event
                 const changeEvent = new Event('change', { bubbles: true });
                 persianDueDateInput.dispatchEvent(changeEvent);
@@ -740,7 +688,6 @@ class Step2TimingManager {
     }
 
     updateTimeInput(inputId, isoDate) {
-        console.log(`step2-timing: updateTimeInput called for ${inputId} with date:`, isoDate);
         if (isoDate) {
             try {
                 const date = new Date(isoDate);
@@ -749,15 +696,11 @@ class Step2TimingManager {
                     const timeInput = document.getElementById(inputId);
                     if (timeInput) {
                         timeInput.value = timeString;
-                        console.log(`step2-timing: Set ${inputId} to ${timeString}`);
                     } else {
-                        console.warn(`step2-timing: Time input ${inputId} not found`);
                     }
                 } else {
-                    console.warn(`step2-timing: Invalid date format: ${isoDate}`);
                 }
             } catch (error) {
-                console.error(`step2-timing: Error updating time input ${inputId}:`, error);
             }
         }
     }
@@ -779,20 +722,15 @@ class Step2TimingManager {
         if (this.formManager && typeof this.formManager.getExistingItemData === 'function') {
             const existingData = this.formManager.getExistingItemData();
             if (existingData) {
-                console.log('Loading Step 2 data:', existingData);
                 this.populateStep2Data(existingData);
-                console.log('Step 2 data loaded from existing item');
             } else {
-                console.log('No existing data found for Step 2');
             }
         } else {
-            console.log('FormManager or getExistingItemData not available');
         }
     }
 
     // Populate step 2 with existing data
     populateStep2Data(data) {
-        console.log('step2-timing: populateStep2Data called with data:', data);
         
         // Handle start date and time separately
         let startDateField = data.persianStartDate || data.PersianStartDate;
@@ -801,17 +739,14 @@ class Step2TimingManager {
         if (!startDateField) {
             const startDateTime = data.startDate || data.StartDate || data.startDateTime;
             if (startDateTime) {
-                console.log('step2-timing: Converting start date from Gregorian to Persian:', startDateTime);
                 const gregorianDate = new Date(startDateTime);
                 if (!isNaN(gregorianDate.getTime())) {
                     startDateField = this.convertToPersianDate(gregorianDate);
-                    console.log('step2-timing: Converted Persian start date:', startDateField);
                 }
             }
         }
         
         if (startDateField) {
-            console.log('step2-timing: Setting PersianStartDate', startDateField);
             const persianStartDate = document.getElementById('PersianStartDate');
             const startDateInput = document.getElementById('StartDate');
             if (persianStartDate) {
@@ -822,7 +757,6 @@ class Step2TimingManager {
                     const gregorianDate = this.convertPersianToGregorian(startDateField);
                     if (gregorianDate) {
                         startDateInput.value = gregorianDate.toISOString();
-                        console.log('Updated startDateInput with:', startDateInput.value);
                     }
                 }
             }
@@ -831,7 +765,6 @@ class Step2TimingManager {
         // Handle start time separately
         const startDateTime = data.startDate || data.StartDate || data.startDateTime;
         if (startDateTime) {
-            console.log('step2-timing: Setting StartTime from', startDateTime);
             this.updateTimeInput('StartTime', startDateTime);
         }
         
@@ -842,17 +775,14 @@ class Step2TimingManager {
         if (!dueDateField) {
             const dueDateTime = data.dueDate || data.DueDate || data.dueDateTime;
             if (dueDateTime) {
-                console.log('step2-timing: Converting due date from Gregorian to Persian:', dueDateTime);
                 const gregorianDate = new Date(dueDateTime);
                 if (!isNaN(gregorianDate.getTime())) {
                     dueDateField = this.convertToPersianDate(gregorianDate);
-                    console.log('step2-timing: Converted Persian due date:', dueDateField);
                 }
             }
         }
         
         if (dueDateField) {
-            console.log('step2-timing: Setting PersianDueDate', dueDateField);
             const persianDueDate = document.getElementById('PersianDueDate');
             const dueDateInput = document.getElementById('DueDate');
             if (persianDueDate) {
@@ -863,7 +793,6 @@ class Step2TimingManager {
                     const gregorianDate = this.convertPersianToGregorian(dueDateField);
                     if (gregorianDate) {
                         dueDateInput.value = gregorianDate.toISOString();
-                        console.log('Updated dueDateInput with:', dueDateInput.value);
                     }
                 }
             }
@@ -872,14 +801,12 @@ class Step2TimingManager {
         // Handle due time separately
         const dueDateTime = data.dueDate || data.DueDate || data.dueDateTime;
         if (dueDateTime) {
-            console.log('step2-timing: Setting DueTime from', dueDateTime);
             this.updateTimeInput('DueTime', dueDateTime);
         }
         
         // Try different possible field names for max score
         const maxScoreField = data.maxScore || data.MaxScore;
         if (maxScoreField) {
-            console.log('step2-timing: Setting MaxScore', maxScoreField);
             const maxScore = document.getElementById('maxScore');
             if (maxScore) {
                 maxScore.value = maxScoreField;
@@ -889,7 +816,6 @@ class Step2TimingManager {
         // Try different possible field names for mandatory
         const mandatoryField = data.isMandatory || data.IsMandatory;
         if (mandatoryField !== undefined) {
-            console.log('step2-timing: Setting IsMandatory', mandatoryField);
             const isMandatory = document.getElementById('isMandatory');
             if (isMandatory) {
                 isMandatory.checked = mandatoryField;
@@ -898,11 +824,9 @@ class Step2TimingManager {
 
         // Update datepickers and UI after form is populated
         setTimeout(() => {
-            console.log('step2-timing: Updating datepickers and UI...');
             this.updateDatePickers();
             this.updateDurationCalculator();
             this.toggleScoreDisplay(); // Update score display based on item type
-            console.log('step2-timing: UI updates completed');
         }, 200);
     }
 }

@@ -12,12 +12,17 @@
     </div>
     
     <div class="step-content">
-        <!-- Content Builder for Reminder Type -->
+        <!-- Reminder Content Builder -->
+        <div id="reminderContentBuilder" style="display: block;">
+            @await Html.PartialAsync("_Step4ReminderContent", Model)
+        </div>
+        
+        <!-- Content Builder for Other Types -->
         <div class="content-builder" id="contentBuilder" style="display: none;">
             <div class="builder-header">
                 <div class="builder-title">
                     <i class="fas fa-edit"></i>
-                    <span>سازنده محتوای یادآوری</span>
+                    <span>سازنده محتوای آموزشی</span>
                 </div>
                 <div class="builder-actions">
                     <button type="button" class="btn-action-modern" id="addContentBoxBtn">
