@@ -72,6 +72,10 @@ class StudentCourseDetails {
         const chapterContent = chapterHeader.nextElementSibling;
         const toggle = chapterHeader.querySelector('.chapter-toggle');
         
+        if (!chapterContent || !toggle) {
+            return;
+        }
+        
         if (chapterContent.classList.contains('expanded')) {
             // Collapse
             chapterContent.classList.remove('expanded');
@@ -325,6 +329,10 @@ function toggleDescription() {
 function toggleChapter(chapterId) {
     const content = document.getElementById('chapterContent' + chapterId);
     const toggle = document.getElementById('chapterToggle' + chapterId);
+    
+    if (!content || !toggle) {
+        return;
+    }
     
     if (content.classList.contains('expanded')) {
         content.classList.remove('expanded');
