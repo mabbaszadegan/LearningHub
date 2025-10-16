@@ -130,24 +130,6 @@
                         </div>
                     </form>
 
-                    <!-- Demo Accounts -->
-                    <div class="demo-section">
-                        <h3>حساب‌های آزمایشی</h3>
-                        <div class="demo-accounts">
-                            <div class="demo-account" data-username="admin" data-password="Passw0rd!">
-                                <i class="fas fa-user-shield"></i>
-                                <span>مدیر</span>
-                            </div>
-                            <div class="demo-account" data-username="teacher" data-password="Passw0rd!">
-                                <i class="fas fa-chalkboard-teacher"></i>
-                                <span>استاد</span>
-                            </div>
-                            <div class="demo-account" data-username="student1" data-password="Passw0rd!">
-                                <i class="fas fa-user-graduate"></i>
-                                <span>دانشجو</span>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
@@ -177,17 +159,6 @@
                 }
             });
             
-            // Demo account click handlers
-            $('.demo-account').on('click', function() {
-                const username = $(this).data('username');
-                const password = $(this).data('password');
-                
-                $('input[name="Email"]').val(username);
-                $('input[name="Password"]').val(password);
-                
-                $(this).addClass('selected');
-                setTimeout(() => $(this).removeClass('selected'), 1000);
-            });
         });
 
         function togglePassword() {
@@ -545,72 +516,6 @@
             text-decoration: underline;
         }
 
-        .demo-section {
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid #eee;
-        }
-
-        .demo-section h3 {
-            text-align: center;
-            color: #666;
-            font-size: 14px;
-            font-weight: 600;
-            margin-bottom: 15px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .demo-accounts {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-        }
-
-        .demo-account {
-            background: #f8f9fa;
-            border: 2px solid #e9ecef;
-            border-radius: 12px;
-            padding: 15px 10px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .demo-account:hover {
-            border-color: #667eea;
-            background: #fff;
-            transform: translateY(-2px);
-        }
-
-        .demo-account.selected {
-            background: #667eea;
-            border-color: #667eea;
-            color: white;
-        }
-
-        .demo-account i {
-            font-size: 20px;
-            color: #667eea;
-        }
-
-        .demo-account.selected i {
-            color: white;
-        }
-
-        .demo-account span {
-            font-size: 12px;
-            font-weight: 600;
-            color: #666;
-        }
-
-        .demo-account.selected span {
-            color: white;
-        }
 
         .alert-danger {
             background: #f8d7da;
@@ -699,8 +604,7 @@
             }
             
             .intro-section {
-                flex: 0 0 40%;
-                padding: 30px 20px;
+                display: none;
             }
             
             .intro-content {
@@ -773,11 +677,6 @@
             
             .login-card {
                 padding: 25px 15px;
-            }
-            
-            .demo-accounts {
-                grid-template-columns: 1fr;
-                gap: 8px;
             }
         }
     </style>
