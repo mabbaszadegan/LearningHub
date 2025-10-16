@@ -1094,10 +1094,7 @@ class ModernScheduleItemFormManager {
 
             if (result.success) {
                 this.showSuccessMessage('آیتم آموزشی با موفقیت تکمیل شد');
-                // Redirect to index page
-                setTimeout(() => {
-                    window.location.href = `/Teacher/ScheduleItem/Index?teachingPlanId=${formData.TeachingPlanId}`;
-                }, 2000);
+                // Stay on current step instead of redirecting
             } else {
                 throw new Error(result.message || 'خطا در تکمیل آیتم');
             }
