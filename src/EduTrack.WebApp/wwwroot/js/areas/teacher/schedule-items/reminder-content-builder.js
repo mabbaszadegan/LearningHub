@@ -668,36 +668,60 @@ class ReminderContentBlockManager {
                 }
                 break;
             case 'image':
-                if (block.data.previewUrl || block.data.fileUrl) {
+                if (block.data.previewUrl || block.data.fileUrl || block.data.fileId) {
                     const uploadArea = element.querySelector('.image-upload-area');
                     const preview = element.querySelector('.image-preview');
                     const img = element.querySelector('.preview-image');
                     
                     uploadArea.style.display = 'none';
                     preview.style.display = 'flex';
-                    img.src = block.data.previewUrl || block.data.fileUrl;
+                    
+                    // Use previewUrl if available, otherwise construct from fileId
+                    if (block.data.previewUrl) {
+                        img.src = block.data.previewUrl;
+                    } else if (block.data.fileUrl) {
+                        img.src = block.data.fileUrl;
+                    } else if (block.data.fileId) {
+                        img.src = `/FileUpload/GetFile/${block.data.fileId}`;
+                    }
                 }
                 break;
             case 'video':
-                if (block.data.previewUrl || block.data.fileUrl) {
+                if (block.data.previewUrl || block.data.fileUrl || block.data.fileId) {
                     const uploadArea = element.querySelector('.video-upload-area');
                     const preview = element.querySelector('.video-preview');
                     const video = element.querySelector('.preview-video source');
                     
                     uploadArea.style.display = 'none';
                     preview.style.display = 'flex';
-                    video.src = block.data.previewUrl || block.data.fileUrl;
+                    
+                    // Use previewUrl if available, otherwise construct from fileId
+                    if (block.data.previewUrl) {
+                        video.src = block.data.previewUrl;
+                    } else if (block.data.fileUrl) {
+                        video.src = block.data.fileUrl;
+                    } else if (block.data.fileId) {
+                        video.src = `/FileUpload/GetFile/${block.data.fileId}`;
+                    }
                 }
                 break;
             case 'audio':
-                if (block.data.previewUrl || block.data.fileUrl) {
+                if (block.data.previewUrl || block.data.fileUrl || block.data.fileId) {
                     const uploadArea = element.querySelector('.audio-upload-area');
                     const preview = element.querySelector('.audio-preview');
                     const audio = element.querySelector('.preview-audio source');
                     
                     uploadArea.style.display = 'none';
                     preview.style.display = 'flex';
-                    audio.src = block.data.previewUrl || block.data.fileUrl;
+                    
+                    // Use previewUrl if available, otherwise construct from fileId
+                    if (block.data.previewUrl) {
+                        audio.src = block.data.previewUrl;
+                    } else if (block.data.fileUrl) {
+                        audio.src = block.data.fileUrl;
+                    } else if (block.data.fileId) {
+                        audio.src = `/FileUpload/GetFile/${block.data.fileId}`;
+                    }
                 }
                 break;
         }
@@ -817,14 +841,10 @@ class ReminderContentBlockManager {
         block.data.fileSize = file.size;
         block.data.mimeType = file.type;
         
-        // Show preview using FileReader
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            block.data.previewUrl = e.target.result;
-            this.updateBlockContent(blockElement, block);
-            this.updateHiddenField();
-        };
-        reader.readAsDataURL(file);
+        // Create preview URL without storing base64 in JSON
+        block.data.previewUrl = URL.createObjectURL(file);
+        this.updateBlockContent(blockElement, block);
+        this.updateHiddenField();
         
         // Clear the input to allow selecting the same file again
         input.value = '';
@@ -844,14 +864,10 @@ class ReminderContentBlockManager {
         block.data.fileSize = file.size;
         block.data.mimeType = file.type;
         
-        // Show preview using FileReader
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            block.data.previewUrl = e.target.result;
-            this.updateBlockContent(blockElement, block);
-            this.updateHiddenField();
-        };
-        reader.readAsDataURL(file);
+        // Create preview URL without storing base64 in JSON
+        block.data.previewUrl = URL.createObjectURL(file);
+        this.updateBlockContent(blockElement, block);
+        this.updateHiddenField();
         
         // Clear the input to allow selecting the same file again
         input.value = '';
@@ -872,14 +888,10 @@ class ReminderContentBlockManager {
         block.data.mimeType = file.type;
         block.data.isRecorded = false;
         
-        // Show preview using FileReader
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            block.data.previewUrl = e.target.result;
-            this.updateBlockContent(blockElement, block);
-            this.updateHiddenField();
-        };
-        reader.readAsDataURL(file);
+        // Create preview URL without storing base64 in JSON
+        block.data.previewUrl = URL.createObjectURL(file);
+        this.updateBlockContent(blockElement, block);
+        this.updateHiddenField();
         
         // Clear the input to allow selecting the same file again
         input.value = '';
@@ -1683,11 +1695,12 @@ class ReminderContentBlockManager {
             case 'audio':
                 if (block.data.fileUrl || block.data.previewUrl) {
                     const audioUrl = block.data.fileUrl || block.data.previewUrl;
+                    const mimeType = block.data.mimeType || (block.data.isRecorded ? 'audio/mpeg' : 'audio/webm');
                     html += `<div class="audio-block">`;
                     if (block.data.caption) {
                         html += `<div class="caption">${block.data.caption}</div>`;
                     }
-                    html += `<audio controls><source src="${audioUrl}" type="audio/mpeg"></audio>`;
+                    html += `<audio controls><source src="${audioUrl}" type="${mimeType}"></audio>`;
                     html += '</div>';
                 }
                 break;
@@ -1726,9 +1739,23 @@ class ReminderContentBlockManager {
     }
     
     updateHiddenField() {
+        // Clean blocks data before saving - remove temporary data
+        const cleanBlocks = this.blocks.map(block => {
+            const cleanBlock = { ...block };
+            const cleanData = { ...block.data };
+            
+            // Remove temporary data that shouldn't be saved
+            delete cleanData.pendingFile;
+            delete cleanData.previewUrl;
+            delete cleanData.originalData;
+            
+            cleanBlock.data = cleanData;
+            return cleanBlock;
+        });
+        
         const content = {
             type: 'reminder',
-            blocks: this.blocks
+            blocks: cleanBlocks
         };
         
         const contentJson = JSON.stringify(content);
