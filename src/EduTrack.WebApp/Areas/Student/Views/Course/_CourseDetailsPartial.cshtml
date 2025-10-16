@@ -5,6 +5,25 @@
     var canEnroll = ViewBag.CanEnroll ?? false;
 }
 
+@functions {
+    string GetScheduleItemTypeName(EduTrack.Domain.Enums.ScheduleItemType type)
+    {
+        return type switch
+        {
+            EduTrack.Domain.Enums.ScheduleItemType.Reminder => "یادآوری",
+            EduTrack.Domain.Enums.ScheduleItemType.Writing => "نوشتاری",
+            EduTrack.Domain.Enums.ScheduleItemType.Audio => "صوتی",
+            EduTrack.Domain.Enums.ScheduleItemType.GapFill => "جای خالی",
+            EduTrack.Domain.Enums.ScheduleItemType.MultipleChoice => "چندگزینه‌ای",
+            EduTrack.Domain.Enums.ScheduleItemType.Match => "تطبیقی",
+            EduTrack.Domain.Enums.ScheduleItemType.ErrorFinding => "پیدا کردن خطا",
+            EduTrack.Domain.Enums.ScheduleItemType.CodeExercise => "کدنویسی",
+            EduTrack.Domain.Enums.ScheduleItemType.Quiz => "کوئیز",
+            _ => "نامشخص"
+        };
+    }
+}
+
 <div class="course-details-container">
     <!-- Course Header -->
     <div class="course-header">
@@ -93,29 +112,19 @@
                                         @chapter.Title
                                         <span class="chapter-subchapter-count">@(chapter.SubChapters?.Count ?? 0)</span>
                                     </h4>
-                                    <!-- Minimal Content Stats in Header -->
+                                    <!-- Minimal Schedule Item Stats in Header -->
                                     <div class="chapter-header-stats">
                                         @{
-                                            var totalContent = chapter.SubChapters?.Sum(sc => sc.EducationalContents?.Count ?? 0) ?? 0;
-                                            var textContent = chapter.SubChapters?.Sum(sc => sc.EducationalContents?.Count(ec => ec.Type == EduTrack.Domain.Enums.EducationalContentType.Text) ?? 0) ?? 0;
-                                            var fileContent = chapter.SubChapters?.Sum(sc => sc.EducationalContents?.Count(ec => ec.Type == EduTrack.Domain.Enums.EducationalContentType.File) ?? 0) ?? 0;
-                                            var videoContent = chapter.SubChapters?.Sum(sc => sc.EducationalContents?.Count(ec => ec.Type == EduTrack.Domain.Enums.EducationalContentType.Video) ?? 0) ?? 0;
+                                            var scheduleItemStats = chapter.SubChapters?
+                                                .SelectMany(sc => sc.ScheduleItemStats)
+                                                .GroupBy(kvp => kvp.Key)
+                                                .ToDictionary(g => g.Key, g => g.Sum(kvp => kvp.Value)) ?? new Dictionary<EduTrack.Domain.Enums.ScheduleItemType, int>();
                                         }
-                                        @if (totalContent > 0)
+                                        @foreach (var stat in scheduleItemStats.Where(s => s.Value > 0))
                                         {
-                                            <span class="chapter-stat-minimal">@totalContent محتوا</span>
-                                        }
-                                        @if (textContent > 0)
-                                        {
-                                            <span class="chapter-stat-minimal">@textContent متن</span>
-                                        }
-                                        @if (fileContent > 0)
-                                        {
-                                            <span class="chapter-stat-minimal">@fileContent فایل</span>
-                                        }
-                                        @if (videoContent > 0)
-                                        {
-                                            <span class="chapter-stat-minimal">@videoContent ویدیو</span>
+                                            <span class="chapter-stat-minimal">
+                                                @stat.Value @GetScheduleItemTypeName(stat.Key)
+                                            </span>
                                         }
                                     </div>
                                 </div>

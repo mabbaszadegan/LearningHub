@@ -29,6 +29,9 @@ public class GetCourseByIdQueryHandler : IRequestHandler<GetCourseByIdQuery, Res
                 .ThenInclude(ch => ch.SubChapters)
                     .ThenInclude(sc => sc.EducationalContents)
                         .ThenInclude(ec => ec.File)
+            .Include(c => c.TeachingPlans)
+                .ThenInclude(tp => tp.ScheduleItems)
+                    .ThenInclude(si => si.SubChapterAssignments)
             .Include(c => c.Classes)
             .FirstOrDefaultAsync(c => c.Id == request.Id, cancellationToken);
 
@@ -122,6 +125,11 @@ public class GetCourseByIdQueryHandler : IRequestHandler<GetCourseByIdQuery, Res
                     CreatedAt = sc.CreatedAt,
                     UpdatedAt = sc.UpdatedAt,
                     ContentCount = sc.EducationalContents.Count,
+                    ScheduleItemStats = course.TeachingPlans
+                        .SelectMany(tp => tp.ScheduleItems)
+                        .Where(si => si.SubChapterAssignments.Any(sia => sia.SubChapterId == sc.Id))
+                        .GroupBy(si => si.Type)
+                        .ToDictionary(g => g.Key, g => g.Count()),
                     EducationalContents = sc.EducationalContents.Select(ec => new EducationalContentDto
                     {
                         Id = ec.Id,
