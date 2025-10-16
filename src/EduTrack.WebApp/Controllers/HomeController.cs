@@ -9,8 +9,4 @@ public class HomeController : Controller
         // Redirect to Public area
         return RedirectToAction("Index", "Home", new { area = "Public" });
     }
-
-
-
-
 }

@@ -150,11 +150,16 @@ app.MapControllerRoute(
     name: "areas",
     pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
 
+// Configure non-area controllers (main controllers)
+app.MapControllerRoute(
+    name: "main",
+    pattern: "{controller=Home}/{action=Index}/{id?}");
+
 // Default route redirects to Public area
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}",
-    defaults: new { area = "Public" });
+    pattern: "",
+    defaults: new { area = "Public", controller = "Home", action = "Index" });
 
 // Seed database
 using (var scope = app.Services.CreateScope())

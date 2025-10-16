@@ -53,8 +53,9 @@ class ModernScheduleItemFormManager {
         setTimeout(async () => {
             await this.checkForExistingItem();
             
-            // If we're already on step 3, initialize step 3 content
-            if (this.currentStep === 3) {
+            // If we're already on step 3 or 4, initialize step 3 content
+            // Step 4 needs step 3 data for getSelectedSubChapters()
+            if (this.currentStep === 3 || this.currentStep === 4) {
                 // Delay to ensure DOM is ready
                 setTimeout(async () => {
                     await this.initializeStep3();
@@ -137,14 +138,17 @@ class ModernScheduleItemFormManager {
     // Step 2 datetime inputs handled by Step2TimingManager
     // Step 3 group/lesson selection handled by Step3AssignmentManager
 
-    updateAssignmentPreview() {
+    async updateAssignmentPreview() {
         if (!this.step3Manager) return;
         
         const targetGroupsElement = document.getElementById('targetGroups');
         const relatedSubChaptersElement = document.getElementById('relatedSubChapters');
         
-        const selectedGroups = this.step3Manager.getSelectedGroups();
-        const selectedSubChapters = this.step3Manager.getSelectedSubChapters();
+        // Ensure step 3 manager is ready before accessing its data
+        await this.ensureStep3ManagerReady();
+        
+        const selectedGroups = this.step3Manager ? this.step3Manager.getSelectedGroups() : [];
+        const selectedSubChapters = this.step3Manager ? this.step3Manager.getSelectedSubChapters() : [];
 
         if (targetGroupsElement) {
             if (selectedGroups.length === 0) {
@@ -344,6 +348,19 @@ class ModernScheduleItemFormManager {
         }
     }
 
+    // Ensure step 3 manager is ready and has data loaded
+    async ensureStep3ManagerReady() {
+        if (!this.step3Manager) {
+            this.initializeStep3Manager();
+        }
+        
+        if (this.step3Manager && !this.step3Initialized) {
+            await this.initializeStep3();
+        }
+        
+        return this.step3Manager;
+    }
+
     async initializeStep3() {
         // Prevent double initialization
         if (this.step3Initialized) {
@@ -474,7 +491,7 @@ class ModernScheduleItemFormManager {
         });
     }
 
-    updateStepIndicators() {
+    async updateStepIndicators() {
         // Update step progress indicators
         this.updateStepProgress();
     }
@@ -904,7 +921,7 @@ class ModernScheduleItemFormManager {
         }
     }
 
-    collectFormData() {
+    async collectFormData() {
         const form = document.getElementById('createItemForm');
         if (!form) return {};
 
@@ -917,8 +934,11 @@ class ModernScheduleItemFormManager {
 
         // Add selected groups and subchapters for badge-based selection
         if (this.step3Manager) {
-            const selectedGroups = this.step3Manager.getSelectedGroups();
-            const selectedSubChapters = this.step3Manager.getSelectedSubChapters();
+            // Ensure step 3 manager is ready before accessing its data
+            await this.ensureStep3ManagerReady();
+            
+            const selectedGroups = this.step3Manager ? this.step3Manager.getSelectedGroups() : [];
+            const selectedSubChapters = this.step3Manager ? this.step3Manager.getSelectedSubChapters() : [];
             
             if (selectedGroups.length > 0) {
                 data.GroupIds = selectedGroups.map(g => g.id);
@@ -1037,6 +1057,8 @@ class ModernScheduleItemFormManager {
     async submitForm(formData) {
         debugger
         // Validate subchapter selection before submission
+        // Ensure step 3 manager is ready before accessing its data
+        await this.ensureStep3ManagerReady();
         const selectedSubChapters = this.step3Manager ? this.step3Manager.getSelectedSubChapters() : [];
         if (selectedSubChapters.length === 0) {
             this.showErrorMessage('انتخاب حداقل یک زیرمبحث اجباری است');
@@ -1393,11 +1415,19 @@ class ModernScheduleItemFormManager {
                 }
                 break;
             case 4:
+                // Step 4 needs step 3 data, so load step 3 first
+                if (this.step3Manager && typeof this.step3Manager.loadStepData === 'function') {
+                    console.log('Loading step 3 data for step 4');
+                    setTimeout(() => {
+                        this.step3Manager.loadStepData();
+                    }, 100);
+                }
+                
                 if (window.step4Manager && typeof window.step4Manager.loadStepData === 'function') {
                     console.log('Notifying step4Manager to load data');
                     setTimeout(() => {
                         window.step4Manager.loadStepData();
-                    }, 100);
+                    }, 200); // Increased delay to ensure step 3 loads first
                 } else {
                     console.log('step4Manager not ready');
                 }
