@@ -545,7 +545,34 @@ $(document).ready(function() {
     });
 });
 
+// Student Authentication Functions
+class StudentAuth {
+    static logout() {
+        if (confirm('آیا مطمئن هستید که می‌خواهید از سیستم خارج شوید؟')) {
+            // Create a form dynamically and submit it
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '/Public/Account/Logout';
+            
+            // Add anti-forgery token if available
+            const token = document.querySelector('input[name="__RequestVerificationToken"]');
+            if (token) {
+                const tokenInput = document.createElement('input');
+                tokenInput.type = 'hidden';
+                tokenInput.name = '__RequestVerificationToken';
+                tokenInput.value = token.value;
+                form.appendChild(tokenInput);
+            }
+            
+            // Submit the form
+            document.body.appendChild(form);
+            form.submit();
+        }
+    }
+}
+
 // Export functions for global use
 window.StudentDashboard = StudentDashboard;
 window.StudentClassManagement = StudentClassManagement;
 window.StudentLearningTools = StudentLearningTools;
+window.StudentAuth = StudentAuth;

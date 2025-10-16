@@ -18,7 +18,7 @@
                 <span class="notification-badge">3</span>
             </button>
             
-            <button class="minimal-btn logout-btn" title="خروج" onclick="window.location.href='@Url.Action("Logout", "Account", new { area = "" })'">
+            <button class="minimal-btn logout-btn" title="خروج" onclick="StudentAuth.logout()">
                 <i class="fas fa-sign-out-alt"></i>
             </button>
         </div>
@@ -243,7 +243,7 @@
                             <span>راهنما</span>
                             <i class="fas fa-chevron-left"></i>
                         </div>
-                        <div class="menu-item">
+                        <div class="menu-item" onclick="StudentAuth.logout()">
                             <i class="fas fa-sign-out-alt"></i>
                             <span>خروج</span>
                             <i class="fas fa-chevron-left"></i>
@@ -313,6 +313,7 @@
 </div>
 
 @section Scripts {
+    <script src="~/js/areas/student/student.js" asp-append-version="true"></script>
     <script src="~/js/areas/student/course/course-details.js" asp-append-version="true"></script>
     <script>
         // Test if script is loading
