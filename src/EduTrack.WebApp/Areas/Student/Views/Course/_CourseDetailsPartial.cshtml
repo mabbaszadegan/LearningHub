@@ -8,32 +8,32 @@
 <div class="course-details-container">
     <!-- Course Header -->
     <div class="course-header">
+        @if (canEnroll && Model.IsActive)
+        {
+            <div class="enrollment-badge-sticker">قابل ثبت‌نام</div>
+        }
         <div class="course-header-content">
             <div class="course-title-row">
                 <h1 class="course-title-main">@Model.Title</h1>
-                @if (canEnroll && Model.IsActive)
-                {
-                    <span class="enrollment-badge-minimal">قابل ثبت‌نام</span>
-                }
             </div>
             
             <!-- Course Stats - Minimal One Line -->
             <div class="course-stats-minimal">
                 <span class="course-stat-minimal">
                     <i class="fas fa-layer-group"></i>
-                    @Model.ChapterCount مبحث
+                    @Model.ChapterCount.ToString("N0") مبحث
                 </span>
                 <span class="course-stat-minimal">
                     <i class="fas fa-play-circle"></i>
-                    @Model.ModuleCount زیرمبحث
+                    @Model.ModuleCount.ToString("N0") زیرمبحث
                 </span>
                 <span class="course-stat-minimal">
                     <i class="fas fa-bookmark"></i>
-                    @Model.LessonCount محتوا
+                    @Model.LessonCount.ToString("N0") محتوا
                 </span>
                 <span class="course-stat-minimal">
                     <i class="fas fa-users"></i>
-                    @Model.ClassCount کلاس
+                    @Model.ClassCount.ToString("N0") کلاس
                 </span>
             </div>
             
@@ -41,7 +41,13 @@
             <div class="course-meta-minimal">
                 <span class="course-meta-item">
                     <i class="fas fa-calendar-alt"></i>
-                    @Model.CreatedAt.ToString("yyyy/MM/dd")
+                    @{
+                        var persianDate = new System.Globalization.PersianCalendar();
+                        var year = persianDate.GetYear(Model.CreatedAt.DateTime);
+                        var month = persianDate.GetMonth(Model.CreatedAt.DateTime);
+                        var day = persianDate.GetDayOfMonth(Model.CreatedAt.DateTime);
+                    }
+                    @year/@month.ToString("00")/@day.ToString("00")
                 </span>
                 <span class="course-meta-item">
                     <i class="fas fa-user"></i>
@@ -60,7 +66,7 @@
 
     <div class="row">
         <div class="col-lg-8">
-            <!-- Course Description - Minimal with Expand/Collapse -->
+            <!-- Course Description - 3 Lines with Expand/Collapse -->
             @if (!string.IsNullOrEmpty(Model.Description))
             {
                 <div class="course-description-section">
@@ -92,7 +98,7 @@
                     @foreach (var chapter in Model.Chapters.OrderBy(c => c.Order))
                     {
                         <div class="chapter-item">
-                            <div class="chapter-header" onclick="toggleChapter(@chapter.Id)">
+                            <div class="chapter-header">
                                 <div class="chapter-title-section">
                                     <h4 class="chapter-title">
                                         <i class="fas fa-folder"></i>
@@ -109,37 +115,24 @@
                                         }
                                         @if (totalContent > 0)
                                         {
-                                            <span class="chapter-stat-minimal">
-                                                <i class="fas fa-book"></i>
-                                                @totalContent محتوا
-                                            </span>
+                                            <span class="chapter-stat-minimal">@totalContent محتوا</span>
                                         }
                                         @if (textContent > 0)
                                         {
-                                            <span class="chapter-stat-minimal">
-                                                <i class="fas fa-file-text"></i>
-                                                @textContent متن
-                                            </span>
+                                            <span class="chapter-stat-minimal">@textContent متن</span>
                                         }
                                         @if (fileContent > 0)
                                         {
-                                            <span class="chapter-stat-minimal">
-                                                <i class="fas fa-file"></i>
-                                                @fileContent فایل
-                                            </span>
+                                            <span class="chapter-stat-minimal">@fileContent فایل</span>
                                         }
                                         @if (videoContent > 0)
                                         {
-                                            <span class="chapter-stat-minimal">
-                                                <i class="fas fa-video"></i>
-                                                @videoContent ویدیو
-                                            </span>
+                                            <span class="chapter-stat-minimal">@videoContent ویدیو</span>
                                         }
                                     </div>
                                 </div>
-                                <i class="fas fa-chevron-down chapter-toggle" id="chapterToggle@(chapter.Id)"></i>
                             </div>
-                            <div class="chapter-content" id="chapterContent@(chapter.Id)">
+                            <div class="chapter-content">
                                 @if (!string.IsNullOrEmpty(chapter.Description))
                                 {
                                     <p class="mb-3">@chapter.Description</p>
@@ -252,34 +245,3 @@
         </div>
     </div>
 </div>
-
-<script>
-function toggleDescription() {
-    const preview = document.getElementById('descriptionPreview');
-    const full = document.getElementById('descriptionFull');
-    const toggle = document.getElementById('descriptionToggle');
-    
-    if (full.style.display === 'none') {
-        preview.style.display = 'none';
-        full.style.display = 'block';
-        toggle.innerHTML = '<i class="fas fa-chevron-up"></i>';
-    } else {
-        preview.style.display = 'block';
-        full.style.display = 'none';
-        toggle.innerHTML = '<i class="fas fa-chevron-down"></i>';
-    }
-}
-
-function toggleChapter(chapterId) {
-    const content = document.getElementById('chapterContent' + chapterId);
-    const toggle = document.getElementById('chapterToggle' + chapterId);
-    
-    if (content.classList.contains('expanded')) {
-        content.classList.remove('expanded');
-        toggle.classList.remove('expanded');
-    } else {
-        content.classList.add('expanded');
-        toggle.classList.add('expanded');
-    }
-}
-</script>

@@ -22,6 +22,45 @@
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+.enrollment-badge-sticker {
+    position: absolute;
+    top: 0px;
+    left: -5px;
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+    padding: 8px 16px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+    z-index: 10;
+}
+
+.enrollment-badge-sticker::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -8px;
+    width: 0;
+    height: 0;
+    border-right: 8px solid #1e7e34;
+    border-top: 8px solid transparent;
+}
+
+.enrollment-badge-sticker::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: -8px;
+    width: 0;
+    height: 0;
+    border-left: 8px solid #1e7e34;
+    border-top: 8px solid transparent;
+}
+
 .course-header::before {
     content: '';
     position: absolute;
@@ -39,11 +78,7 @@
 }
 
 .course-title-row {
-    display: flex;
-    align-items: center;
-    gap: 15px;
     margin-bottom: 15px;
-    flex-wrap: wrap;
 }
 
 .course-title-main {
@@ -52,19 +87,6 @@
     margin: 0;
     line-height: 1.2;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-    flex: 1;
-}
-
-.enrollment-badge-minimal {
-    background: rgba(255, 255, 255, 0.2);
-    color: white;
-    padding: 6px 12px;
-    border-radius: 16px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    white-space: nowrap;
 }
 
 .course-subtitle {
@@ -78,28 +100,30 @@
 .course-stats-minimal {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 8px;
     flex-wrap: wrap;
-    margin-bottom: 15px;
+    margin-bottom: 10px;
+    font-size: 0.75rem;
+    opacity: 0.9;
 }
 
 .course-stat-minimal {
     display: flex;
     align-items: center;
-    gap: 4px;
-    background: rgba(255, 255, 255, 0.15);
-    padding: 6px 10px;
-    border-radius: 16px;
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    font-size: 0.85rem;
-    font-weight: 600;
+    gap: 3px;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 2px 6px;
+    border-radius: 8px;
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    font-size: 0.7rem;
+    font-weight: 500;
     white-space: nowrap;
 }
 
 .course-stat-minimal i {
-    font-size: 0.8rem;
-    opacity: 0.9;
+    font-size: 0.6rem;
+    opacity: 0.8;
 }
 
 /* Enrollment Badge */
@@ -197,6 +221,7 @@
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
+    line-height: 1.5;
 }
 
 .course-description-full {
@@ -256,8 +281,6 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    cursor: pointer;
-    user-select: none;
     border-bottom: 1px solid #e9ecef;
 }
 
@@ -297,20 +320,13 @@
 }
 
 .chapter-stat-minimal {
-    display: flex;
-    align-items: center;
-    gap: 3px;
     background: rgba(102, 126, 234, 0.1);
     color: #667eea;
-    padding: 3px 6px;
-    border-radius: 8px;
-    font-size: 0.7rem;
+    padding: 2px 6px;
+    border-radius: 6px;
+    font-size: 0.65rem;
     font-weight: 500;
     white-space: nowrap;
-}
-
-.chapter-stat-minimal i {
-    font-size: 0.65rem;
 }
 
 .chapter-toggle {
@@ -324,14 +340,6 @@
 }
 
 .chapter-content {
-    padding: 0;
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.3s ease;
-}
-
-.chapter-content.expanded {
-    max-height: 500px;
     padding: 20px;
 }
 
@@ -567,22 +575,38 @@
         font-size: 1.5rem;
     }
     
-    .course-title-row {
-        gap: 10px;
+    .enrollment-badge-sticker {
+        top: 6px;
+        left: 15px;
+        padding: 6px 12px;
+        font-size: 0.7rem;
     }
     
-    .enrollment-badge-minimal {
-        font-size: 0.7rem;
-        padding: 4px 8px;
+    .enrollment-badge-sticker::before {
+        left: -6px;
+        border-right: 6px solid #1e7e34;
+        border-top: 6px solid transparent;
+    }
+    
+    .enrollment-badge-sticker::after {
+        right: -6px;
+        border-left: 6px solid #1e7e34;
+        border-top: 6px solid transparent;
     }
     
     .course-stats-minimal {
-        gap: 8px;
+        gap: 6px;
+        font-size: 0.7rem;
     }
     
     .course-stat-minimal {
-        padding: 4px 8px;
-        font-size: 0.75rem;
+        padding: 2px 5px;
+        font-size: 0.65rem;
+        gap: 2px;
+    }
+    
+    .course-stat-minimal i {
+        font-size: 0.55rem;
     }
     
     .course-meta-minimal {
@@ -632,20 +656,41 @@
 }
 
 @media (max-width: 576px) {
-    .course-title-row {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 8px;
+    .enrollment-badge-sticker {
+        top: 0px;
+        left: -5px;
+        padding: 5px 10px;
+        font-size: 0.65rem;
+    }
+    
+    .enrollment-badge-sticker::before {
+        left: -5px;
+        border-right: 5px solid #1e7e34;
+        border-top: 5px solid transparent;
+    }
+    
+    .enrollment-badge-sticker::after {
+        right: -5px;
+        border-left: 5px solid #1e7e34;
+        border-top: 5px solid transparent;
     }
     
     .course-stats-minimal {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 6px;
+        flex-direction: row;
+        align-items: center;
+        gap: 4px;
+        font-size: 0.65rem;
     }
     
     .course-stat-minimal {
         justify-content: center;
+        padding: 1px 4px;
+        font-size: 0.6rem;
+        gap: 2px;
+    }
+    
+    .course-stat-minimal i {
+        font-size: 0.5rem;
     }
     
     .course-meta-minimal {

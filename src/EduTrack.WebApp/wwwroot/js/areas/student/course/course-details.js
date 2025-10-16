@@ -300,3 +300,33 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Export for potential use in other scripts
 window.StudentCourseDetails = StudentCourseDetails;
+
+// Global functions for course details partial
+function toggleDescription() {
+    const preview = document.getElementById('descriptionPreview');
+    const full = document.getElementById('descriptionFull');
+    const toggle = document.getElementById('descriptionToggle');
+    
+    if (full.style.display === 'none') {
+        preview.style.display = 'none';
+        full.style.display = 'block';
+        toggle.innerHTML = '<i class="fas fa-chevron-up"></i>';
+    } else {
+        preview.style.display = 'block';
+        full.style.display = 'none';
+        toggle.innerHTML = '<i class="fas fa-chevron-down"></i>';
+    }
+}
+
+function toggleChapter(chapterId) {
+    const content = document.getElementById('chapterContent' + chapterId);
+    const toggle = document.getElementById('chapterToggle' + chapterId);
+    
+    if (content.classList.contains('expanded')) {
+        content.classList.remove('expanded');
+        toggle.classList.remove('expanded');
+    } else {
+        content.classList.add('expanded');
+        toggle.classList.add('expanded');
+    }
+}
