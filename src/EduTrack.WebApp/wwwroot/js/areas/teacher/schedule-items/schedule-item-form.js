@@ -1325,27 +1325,19 @@ class ModernScheduleItemFormManager {
                 this.existingItemData = result.data;
                 console.log('Stored existing item data:', this.existingItemData);
                 
-                // Update current step if available
-                if (result.data.currentStep) {
-                    this.currentStep = result.data.currentStep;
-                    this.updateStepVisibility();
-                    this.updateStepIndicators();
-                    this.updateProgress();
-                    this.updateNavigationButtons();
-                    
-                    // Initialize step content for the current step
-                    setTimeout(() => {
-                        this.initializeStepContent(this.currentStep);
-                    }, 300);
-                }
+                // Don't change current step after save - keep user in the same step
+                // Just update indicators and form state
+                this.updateStepIndicators();
+                this.updateProgress();
+                this.updateNavigationButtons();
+                
+                // Only notify step managers to load their data for the current step
+                setTimeout(() => {
+                    this.notifyStepManagersToLoadData();
+                }, 100);
 
                 // Update form state indicators
                 this.updateFormStateIndicators();
-                
-                // Notify step managers to load their data
-                setTimeout(() => {
-                    this.notifyStepManagersToLoadData();
-                }, 1000);
                 
             } else {
                 console.error('Server response failed:', result);
@@ -1366,36 +1358,45 @@ class ModernScheduleItemFormManager {
 
     // Notify step managers to load their data
     notifyStepManagersToLoadData() {
-        console.log('notifyStepManagersToLoadData called');
+        console.log('notifyStepManagersToLoadData called for step:', this.currentStep);
         console.log('Existing item data:', this.existingItemData);
         
-        // Notify step 4 manager to load data
-        if (window.step4Manager && typeof window.step4Manager.loadStepData === 'function') {
-            console.log('Notifying step4Manager to load data');
-            setTimeout(() => {
-                window.step4Manager.loadStepData();
-            }, 100);
-        } else {
-            console.log('step4Manager not ready');
-        }
-        
-        // Notify other step managers if needed
-        if (window.step1Manager && typeof window.step1Manager.loadStepData === 'function') {
-            setTimeout(() => {
-                window.step1Manager.loadStepData();
-            }, 100);
-        }
-        
-        if (window.step2Manager && typeof window.step2Manager.loadStepData === 'function') {
-            setTimeout(() => {
-                window.step2Manager.loadStepData();
-            }, 100);
-        }
-        
-        if (window.step3Manager && typeof window.step3Manager.loadStepData === 'function') {
-            setTimeout(() => {
-                window.step3Manager.loadStepData();
-            }, 100);
+        // Only notify the current step manager to load data
+        switch (this.currentStep) {
+            case 1:
+                if (window.step1Manager && typeof window.step1Manager.loadStepData === 'function') {
+                    console.log('Notifying step1Manager to load data');
+                    setTimeout(() => {
+                        window.step1Manager.loadStepData();
+                    }, 100);
+                }
+                break;
+            case 2:
+                if (window.step2Manager && typeof window.step2Manager.loadStepData === 'function') {
+                    console.log('Notifying step2Manager to load data');
+                    setTimeout(() => {
+                        window.step2Manager.loadStepData();
+                    }, 100);
+                }
+                break;
+            case 3:
+                if (window.step3Manager && typeof window.step3Manager.loadStepData === 'function') {
+                    console.log('Notifying step3Manager to load data');
+                    setTimeout(() => {
+                        window.step3Manager.loadStepData();
+                    }, 100);
+                }
+                break;
+            case 4:
+                if (window.step4Manager && typeof window.step4Manager.loadStepData === 'function') {
+                    console.log('Notifying step4Manager to load data');
+                    setTimeout(() => {
+                        window.step4Manager.loadStepData();
+                    }, 100);
+                } else {
+                    console.log('step4Manager not ready');
+                }
+                break;
         }
     }
 

@@ -6,6 +6,7 @@ using EduTrack.Application.Common.Interfaces;
 using EduTrack.Domain.Enums;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using System.Diagnostics;
 
 namespace EduTrack.WebApp.Controllers;
 
@@ -318,6 +319,210 @@ public class FileUploadController : Controller
             "video" => contentType.StartsWith("video/"),
             "audio" => contentType.StartsWith("audio/"),
             _ => false
+        };
+    }
+
+    // POST: Upload and transcode audio to MP3
+    [HttpPost("api/audio")]
+    public async Task<IActionResult> UploadAudio(IFormFile file)
+    {
+        if (file == null || file.Length == 0)
+        {
+            return Json(new { success = false, message = "فایل صوتی انتخاب نشده است" });
+        }
+
+        // Validate audio content type
+        var allowedTypes = new[] { "audio/webm", "audio/wav", "audio/mp4", "audio/ogg" };
+        if (!allowedTypes.Contains(file.ContentType.ToLowerInvariant()))
+        {
+            return Json(new { success = false, message = $"فرمت صوتی پشتیبانی نمی‌شود: {file.ContentType}" });
+        }
+
+        // Check file size (50MB limit)
+        if (file.Length > 50 * 1024 * 1024)
+        {
+            return Json(new { success = false, message = "حجم فایل بیش از 50 مگابایت است" });
+        }
+
+        var fileId = Guid.NewGuid().ToString("N");
+        var uploadsPath = Path.Combine(Directory.GetCurrentDirectory(), "uploads");
+        var tempPath = Path.Combine(uploadsPath, "tmp");
+        var finalPath = Path.Combine(uploadsPath, $"{fileId}.mp3");
+
+        try
+        {
+            // Ensure directories exist
+            Directory.CreateDirectory(uploadsPath);
+            Directory.CreateDirectory(tempPath);
+
+            // Get file extension from content type
+            var extension = GetAudioFileExtension(file.ContentType);
+            var tempFilePath = Path.Combine(tempPath, $"{fileId}.{extension}");
+
+            // Save uploaded file to temp location
+            using (var stream = new FileStream(tempFilePath, FileMode.Create))
+            {
+                await file.CopyToAsync(stream);
+            }
+
+            _logger.LogInformation("Saved uploaded file to: {TempPath}", tempFilePath);
+
+            // Transcode to MP3 using FFmpeg
+            var success = await TranscodeToMp3(tempFilePath, finalPath);
+            
+            if (!success)
+            {
+                // Clean up temp file
+                if (System.IO.File.Exists(tempFilePath))
+                {
+                    System.IO.File.Delete(tempFilePath);
+                }
+                return Json(new { success = false, message = "خطا در تبدیل فایل صوتی" });
+            }
+
+            // Clean up temp file
+            if (System.IO.File.Exists(tempFilePath))
+            {
+                System.IO.File.Delete(tempFilePath);
+            }
+
+            // Get final file size
+            var finalFileInfo = new FileInfo(finalPath);
+            var finalSize = finalFileInfo.Exists ? finalFileInfo.Length : 0;
+
+            _logger.LogInformation("Successfully transcoded audio file: {FinalPath}, Size: {Size} bytes", finalPath, finalSize);
+
+            return Json(new
+            {
+                success = true,
+                message = "فایل صوتی با موفقیت آپلود شد",
+                url = $"/uploads/{fileId}.mp3",
+                contentType = "audio/mpeg",
+                sizeBytes = finalSize,
+                originalSizeBytes = file.Length,
+                originalContentType = file.ContentType
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing audio upload: {FileName}", file.FileName);
+            
+            // Clean up any temp files
+            var tempFilePath = Path.Combine(tempPath, $"{fileId}.{GetAudioFileExtension(file.ContentType)}");
+            if (System.IO.File.Exists(tempFilePath))
+            {
+                System.IO.File.Delete(tempFilePath);
+            }
+            
+            if (System.IO.File.Exists(finalPath))
+            {
+                System.IO.File.Delete(finalPath);
+            }
+
+            return Json(new { success = false, message = "خطا در پردازش فایل صوتی" });
+        }
+    }
+
+    /// <summary>
+    /// Transcode audio file to MP3 using FFmpeg
+    /// </summary>
+    private async Task<bool> TranscodeToMp3(string inputPath, string outputPath)
+    {
+        try
+        {
+            // FFmpeg command: -y (overwrite), -i (input), -vn (no video), -ar 48000 (sample rate), -ac 2 (stereo), -b:a 160k (bitrate)
+            var ffmpegArgs = $"-y -i \"{inputPath}\" -vn -ar 48000 -ac 2 -b:a 160k \"{outputPath}\"";
+
+            _logger.LogInformation("Starting FFmpeg transcoding: ffmpeg {Args}", ffmpegArgs);
+
+            var startInfo = new ProcessStartInfo
+            {
+                FileName = "ffmpeg",
+                Arguments = ffmpegArgs,
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true
+            };
+
+            using var process = new Process { StartInfo = startInfo };
+            
+            var output = new List<string>();
+            var error = new List<string>();
+
+            process.OutputDataReceived += (sender, e) => {
+                if (!string.IsNullOrEmpty(e.Data))
+                {
+                    output.Add(e.Data);
+                    _logger.LogDebug("FFmpeg output: {Output}", e.Data);
+                }
+            };
+
+            process.ErrorDataReceived += (sender, e) => {
+                if (!string.IsNullOrEmpty(e.Data))
+                {
+                    error.Add(e.Data);
+                    _logger.LogDebug("FFmpeg error: {Error}", e.Data);
+                }
+            };
+
+            process.Start();
+            process.BeginOutputReadLine();
+            process.BeginErrorReadLine();
+
+            // Wait for completion with timeout (5 minutes)
+            var completed = await Task.Run(() => process.WaitForExit(300000));
+            
+            if (!completed)
+            {
+                _logger.LogError("FFmpeg process timed out");
+                process.Kill();
+                return false;
+            }
+
+            if (process.ExitCode != 0)
+            {
+                _logger.LogError("FFmpeg failed with exit code {ExitCode}. Error: {Error}", 
+                    process.ExitCode, string.Join(Environment.NewLine, error));
+                return false;
+            }
+
+            // Verify output file exists and has content
+            if (!System.IO.File.Exists(outputPath))
+            {
+                _logger.LogError("FFmpeg completed but output file does not exist: {OutputPath}", outputPath);
+                return false;
+            }
+
+            var outputFileInfo = new FileInfo(outputPath);
+            if (outputFileInfo.Length == 0)
+            {
+                _logger.LogError("FFmpeg output file is empty: {OutputPath}", outputPath);
+                return false;
+            }
+
+            _logger.LogInformation("FFmpeg transcoding completed successfully. Output size: {Size} bytes", outputFileInfo.Length);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Exception during FFmpeg transcoding");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Get file extension from audio content type
+    /// </summary>
+    private static string GetAudioFileExtension(string contentType)
+    {
+        return contentType.ToLowerInvariant() switch
+        {
+            "audio/webm" => "webm",
+            "audio/wav" => "wav",
+            "audio/mp4" => "mp4",
+            "audio/ogg" => "ogg",
+            _ => "webm" // default
         };
     }
 }

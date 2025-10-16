@@ -202,12 +202,23 @@ class ReminderContentBlockManager {
         
         // Audio recording
         document.addEventListener('click', (e) => {
-            if (e.target.matches('[data-action="start-recording"]')) {
-                this.startRecording(e.target);
-            } else if (e.target.matches('[data-action="stop-recording"]')) {
-                this.stopRecording(e.target);
-            } else if (e.target.matches('[data-action="play-recording"]')) {
-                this.playRecording(e.target);
+            // Find the button element (handle clicks on child elements like icons/text)
+            const startBtn = e.target.closest('[data-action="start-recording"]');
+            const stopBtn = e.target.closest('[data-action="stop-recording"]');
+            const playBtn = e.target.closest('[data-action="play-recording"]');
+            
+            if (startBtn) {
+                e.preventDefault();
+                e.stopPropagation();
+                this.startRecording(startBtn);
+            } else if (stopBtn) {
+                e.preventDefault();
+                e.stopPropagation();
+                this.stopRecording(stopBtn);
+            } else if (playBtn) {
+                e.preventDefault();
+                e.stopPropagation();
+                this.playRecording(playBtn);
             }
         });
         

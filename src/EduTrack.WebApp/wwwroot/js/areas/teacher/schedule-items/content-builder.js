@@ -232,17 +232,26 @@ class ContentBuilder {
     }
 
     setupAudioRecording() {
-        const recordBtn = document.getElementById('recordBtn');
-        const stopBtn = document.getElementById('stopRecordBtn');
+        // Try both possible IDs
+        const recordBtn = document.getElementById('recordBtn') || document.getElementById('startRecording');
+        const stopBtn = document.getElementById('stopRecordBtn') || document.getElementById('stopRecording');
         const timer = document.getElementById('recordingTimer');
         const controls = document.getElementById('recordingControls');
 
         if (recordBtn) {
-            recordBtn.addEventListener('click', () => this.startRecording());
+            recordBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.startRecording();
+            });
         }
 
         if (stopBtn) {
-            stopBtn.addEventListener('click', () => this.stopRecording());
+            stopBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.stopRecording();
+            });
         }
     }
 

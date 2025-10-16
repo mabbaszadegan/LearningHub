@@ -93,10 +93,14 @@ var app = builder.Build();
 var appDataPath = Path.Combine(app.Environment.ContentRootPath, "App_Data");
 var storagePath = Path.Combine(app.Environment.WebRootPath, "storage");
 var logsPath = Path.Combine(appDataPath, "logs");
+var uploadsPath = Path.Combine(app.Environment.ContentRootPath, "uploads");
+var uploadsTmpPath = Path.Combine(uploadsPath, "tmp");
 
 Directory.CreateDirectory(appDataPath);
 Directory.CreateDirectory(storagePath);
 Directory.CreateDirectory(logsPath);
+Directory.CreateDirectory(uploadsPath);
+Directory.CreateDirectory(uploadsTmpPath);
 
 // Configure SQLite pragmas
 var databaseProvider = builder.Configuration.GetValue<string>("Database:Provider", "SQLite");
@@ -117,6 +121,24 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
+
+// Configure static file serving for uploads
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(uploadsPath),
+    RequestPath = "/uploads",
+    ServeUnknownFileTypes = true, // Allow serving audio files
+    OnPrepareResponse = ctx =>
+    {
+        // Set appropriate headers for audio files
+        if (ctx.File.Name.EndsWith(".mp3", StringComparison.OrdinalIgnoreCase))
+        {
+            ctx.Context.Response.Headers.Append("Content-Type", "audio/mpeg");
+            ctx.Context.Response.Headers.Append("Accept-Ranges", "bytes");
+            ctx.Context.Response.Headers.Append("Cache-Control", "public, max-age=3600");
+        }
+    }
+});
 
 app.UseRouting();
 
