@@ -12,52 +12,45 @@
         {
             <div class="enrollment-badge-sticker">قابل ثبت‌نام</div>
         }
-        <div class="teacher-badge-sticker">@Model.CreatedByName</div>
+        <div class="teacher-badge-sticker">مدرس: @Model.CreatedByName</div>
         <div class="course-header-content">
             <div class="course-title-row">
                 <h1 class="course-title-main">@Model.Title</h1>
             </div>
-            
-            <!-- Course Stats - Minimal One Line -->
-            <div class="course-stats-minimal">
-                <span class="course-stat-minimal">
-                    <i class="fas fa-layer-group"></i>
-                    @Model.ChapterCount.ToString("N0") مبحث
-                </span>
-                <span class="course-stat-minimal">
-                    <i class="fas fa-play-circle"></i>
-                    @Model.ModuleCount.ToString("N0") زیرمبحث
-                </span>
-                <span class="course-stat-minimal">
-                    <i class="fas fa-bookmark"></i>
-                    @Model.LessonCount.ToString("N0") محتوا
-                </span>
-                <span class="course-stat-minimal">
-                    <i class="fas fa-users"></i>
-                    @Model.ClassCount.ToString("N0") کلاس
-                </span>
-            </div>
-            
-            <!-- Course Meta Info -->
-            <div class="course-meta-minimal">
-                <span class="course-meta-item">
-                    <i class="fas fa-calendar-alt"></i>
-                    @{
-                        var persianDate = new System.Globalization.PersianCalendar();
-                        var year = persianDate.GetYear(Model.CreatedAt.DateTime);
-                        var month = persianDate.GetMonth(Model.CreatedAt.DateTime);
-                        var day = persianDate.GetDayOfMonth(Model.CreatedAt.DateTime);
-                    }
-                    @year/@month.ToString("00")/@day.ToString("00")
-                </span>
-                @if (Model.DisciplineType != EduTrack.Domain.Enums.DisciplineType.Other)
-                {
-                    <span class="course-meta-item">
-                        <i class="fas fa-tag"></i>
-                        @Model.DisciplineType
-                    </span>
+        </div>
+        
+        <!-- Course Stats - Bottom Right -->
+        <div class="course-stats-bottom">
+            <span class="course-stat-minimal">
+                <i class="fas fa-layer-group"></i>
+                @Model.ChapterCount.ToString("N0") مبحث
+            </span>
+            <span class="course-stat-minimal">
+                <i class="fas fa-play-circle"></i>
+                @Model.ModuleCount.ToString("N0") زیرمبحث
+            </span>
+            <span class="course-stat-minimal">
+                <i class="fas fa-bookmark"></i>
+                @Model.LessonCount.ToString("N0") محتوا
+            </span>
+            <span class="course-stat-minimal">
+                <i class="fas fa-users"></i>
+                @Model.ClassCount.ToString("N0") کلاس
+            </span>
+        </div>
+        
+        <!-- Course Date - Bottom Right -->
+        <div class="course-date-bottom">
+            <span class="course-date-item">
+                <i class="fas fa-calendar-alt"></i>
+                @{
+                    var persianDate = new System.Globalization.PersianCalendar();
+                    var year = persianDate.GetYear(Model.CreatedAt.DateTime);
+                    var month = persianDate.GetMonth(Model.CreatedAt.DateTime);
+                    var day = persianDate.GetDayOfMonth(Model.CreatedAt.DateTime);
                 }
-            </div>
+                @year/@month.ToString("00")/@day.ToString("00")
+            </span>
         </div>
     </div>
 
@@ -69,9 +62,7 @@
                 <div class="course-description-section">
                     <div class="course-description-header" onclick="toggleDescription()">
                         <h3 class="course-description-title">درباره این دوره</h3>
-                        <span class="course-description-toggle" id="descriptionToggle">
-                            <i class="fas fa-chevron-down"></i>
-                        </span>
+                        <i class="fas fa-chevron-down course-description-toggle" id="descriptionToggle"></i>
                     </div>
                     <div class="course-description-content">
                         <div class="course-description-preview" id="descriptionPreview">

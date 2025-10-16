@@ -307,14 +307,18 @@ function toggleDescription() {
     const full = document.getElementById('descriptionFull');
     const toggle = document.getElementById('descriptionToggle');
     
-    if (full.style.display === 'none') {
+    if (full.style.display === 'none' || full.style.display === '') {
+        // Expand: hide preview, show full
         preview.style.display = 'none';
         full.style.display = 'block';
-        toggle.innerHTML = '<i class="fas fa-chevron-up"></i>';
+        toggle.classList.add('expanded');
+        toggle.parentElement.setAttribute('aria-expanded', 'true');
     } else {
+        // Collapse: show preview, hide full
         preview.style.display = 'block';
         full.style.display = 'none';
-        toggle.innerHTML = '<i class="fas fa-chevron-down"></i>';
+        toggle.classList.remove('expanded');
+        toggle.parentElement.setAttribute('aria-expanded', 'false');
     }
 }
 
