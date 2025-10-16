@@ -92,7 +92,7 @@ export class AudioRecorder {
         const formData = new FormData();
         formData.append('file', audioBlob, 'recording.webm');
 
-        const response = await fetch('/FileUpload/api/audio', {
+        const response = await fetch('/FileUpload/UploadAudio', {
             method: 'POST',
             body: formData
         });

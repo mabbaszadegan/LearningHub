@@ -5,11 +5,13 @@ using EduTrack.Application.Features.Files.Queries;
 using EduTrack.Application.Common.Interfaces;
 using EduTrack.Domain.Enums;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
 
 namespace EduTrack.WebApp.Controllers;
 
+[Authorize]
 public class FileUploadController : Controller
 {
     private readonly IFileStorageService _fileStorageService;
@@ -81,7 +83,7 @@ public class FileUploadController : Controller
     }
 
     // POST: Upload content file for schedule items
-    [HttpPost]
+    [HttpPost("UploadContentFile")]
     public async Task<IActionResult> UploadContentFile(IFormFile file, string type)
     {
         if (file == null || file.Length == 0)
@@ -175,7 +177,7 @@ public class FileUploadController : Controller
     }
 
     // GET: Get file by ID
-    [HttpGet]
+    [HttpGet("GetFile")]
     public async Task<IActionResult> GetFile(int id)
     {
         try
@@ -188,15 +190,21 @@ public class FileUploadController : Controller
 
             var file = fileResult.Value;
             
-            // Check if file exists
-            if (!await _fileStorageService.FileExistsAsync(file.FilePath))
+            // Check if file exists - handle both relative and absolute paths
+            var filePath = file.FilePath;
+            if (filePath.StartsWith("/uploads/"))
+            {
+                filePath = Path.Combine(Directory.GetCurrentDirectory(), "uploads", Path.GetFileName(filePath));
+            }
+            
+            if (!await _fileStorageService.FileExistsAsync(filePath))
             {
                 return NotFound("File not found on disk");
             }
 
             // Get file stream
-            var fileStream = await _fileStorageService.GetFileAsync(file.FilePath);
-            var fileName = Path.GetFileName(file.FilePath);
+            var fileStream = await _fileStorageService.GetFileAsync(filePath);
+            var fileName = Path.GetFileName(filePath);
 
             return File(fileStream, file.MimeType ?? "application/octet-stream", fileName);
         }
@@ -323,7 +331,7 @@ public class FileUploadController : Controller
     }
 
     // POST: Upload and transcode audio to MP3
-    [HttpPost("api/audio")]
+    [HttpPost("UploadAudio")]
     public async Task<IActionResult> UploadAudio(IFormFile file)
     {
         if (file == null || file.Length == 0)
@@ -392,16 +400,91 @@ public class FileUploadController : Controller
 
             _logger.LogInformation("Successfully transcoded audio file: {FinalPath}, Size: {Size} bytes", finalPath, finalSize);
 
-            return Json(new
+            // Save MP3 file to database using existing file management system
+            try
             {
-                success = true,
-                message = "فایل صوتی با موفقیت آپلود شد",
-                url = $"/uploads/{fileId}.mp3",
-                contentType = "audio/mpeg",
-                sizeBytes = finalSize,
-                originalSizeBytes = file.Length,
-                originalContentType = file.ContentType
-            });
+                using var mp3Stream = new FileStream(finalPath, FileMode.Open, FileAccess.Read);
+                var (_, md5Hash, _) = await _fileStorageService.SaveFileAsync(mp3Stream, $"{fileId}.mp3", "audio/mpeg");
+                
+                // Check if file already exists by MD5
+                var existingFileResult = await _mediator.Send(new GetFileByMD5Query(md5Hash));
+                
+                if (existingFileResult.IsSuccess && existingFileResult.Value != null)
+                {
+                    // File already exists, increment reference count
+                    var incrementCommand = new IncrementFileReferenceCountCommand(existingFileResult.Value.Id);
+                    await _mediator.Send(incrementCommand);
+                    
+                    return Json(new
+                    {
+                        success = true,
+                        message = "فایل صوتی با موفقیت آپلود و در دیتابیس ذخیره شد",
+                        url = $"/FileUpload/GetFile/{existingFileResult.Value.Id}",
+                        contentType = "audio/mpeg",
+                        sizeBytes = finalSize,
+                        originalSizeBytes = file.Length,
+                        originalContentType = file.ContentType,
+                        fileId = existingFileResult.Value.Id
+                    });
+                }
+                else
+                {
+                    // Create new file record
+                    var createFileCommand = new CreateFileCommand(
+                        $"{fileId}.mp3",
+                        $"recording_{DateTime.Now:yyyyMMdd_HHmmss}.mp3",
+                        finalPath,
+                        "audio/mpeg",
+                        finalSize,
+                        md5Hash
+                    );
+
+                    var result = await _mediator.Send(createFileCommand);
+                    
+                    if (result.IsSuccess)
+                    {
+                        return Json(new
+                        {
+                            success = true,
+                            message = "فایل صوتی با موفقیت آپلود و در دیتابیس ذخیره شد",
+                            url = $"/FileUpload/GetFile/{result.Value}",
+                            contentType = "audio/mpeg",
+                            sizeBytes = finalSize,
+                            originalSizeBytes = file.Length,
+                            originalContentType = file.ContentType,
+                            fileId = result.Value
+                        });
+                    }
+                    else
+                    {
+                        _logger.LogError("Failed to save audio file to database: {Error}", result.Error);
+                        return Json(new
+                        {
+                            success = true,
+                            message = "فایل صوتی آپلود شد اما در دیتابیس ذخیره نشد",
+                            url = $"/uploads/{fileId}.mp3",
+                            contentType = "audio/mpeg",
+                            sizeBytes = finalSize,
+                            originalSizeBytes = file.Length,
+                            originalContentType = file.ContentType
+                        });
+                    }
+                }
+            }
+            catch (Exception dbEx)
+            {
+                _logger.LogError(dbEx, "Error saving audio file to database");
+                return Json(new
+                {
+                    success = true,
+                    message = "فایل صوتی آپلود شد اما در دیتابیس ذخیره نشد",
+                    url = $"/uploads/{fileId}.mp3",
+                    contentType = "audio/mpeg",
+                    sizeBytes = finalSize,
+                    originalSizeBytes = file.Length,
+                    originalContentType = file.ContentType
+                });
+            }
         }
         catch (Exception ex)
         {
@@ -525,4 +608,6 @@ public class FileUploadController : Controller
             _ => "webm" // default
         };
     }
+
+
 }

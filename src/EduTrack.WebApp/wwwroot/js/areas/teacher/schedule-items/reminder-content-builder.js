@@ -1056,7 +1056,7 @@ class ReminderContentBlockManager {
             formData.append('file', file);
             formData.append('type', fileType);
             
-            const response = await fetch('/Teacher/FileUpload/UploadContentFile', {
+            const response = await fetch('/FileUpload/UploadContentFile', {
                 method: 'POST',
                 body: formData,
                 headers: {

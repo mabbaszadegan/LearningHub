@@ -566,7 +566,7 @@ class ContentBuilder {
             formData.append('file', file);
             formData.append('type', type);
 
-            const response = await fetch('/Teacher/FileUpload/UploadContentFile', {
+            const response = await fetch('/FileUpload/UploadContentFile', {
                 method: 'POST',
                 body: formData,
                 headers: {
@@ -786,17 +786,17 @@ class ContentBuilder {
         }
     }
 
-    async loadFilePreview(box, fileId, type) {
-        try {
-            const response = await fetch(`/FileUpload/GetFile/${fileId}`);
-            if (response.ok) {
-                const fileData = await response.json();
-                this.showFilePreview(box, fileData, type);
-                this.updateBoxData(box, 'fileId', fileId);
-            }
-        } catch (error) {
-        }
-    }
+    //async loadFilePreview(box, fileId, type) {
+    //    try {
+    //        const response = await fetch(`./FileUpload/GetFile/${fileId}`);
+    //        if (response.ok) {
+    //            const fileData = await response.json();
+    //            this.showFilePreview(box, fileData, type);
+    //            this.updateBoxData(box, 'fileId', fileId);
+    //        }
+    //    } catch (error) {
+    //    }
+    //}
 
     addQuickTemplate(template) {
         const emptyState = document.getElementById('emptyState');

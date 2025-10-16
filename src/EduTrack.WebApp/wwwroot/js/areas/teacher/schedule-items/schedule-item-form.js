@@ -1035,6 +1035,7 @@ class ModernScheduleItemFormManager {
     // Delegated to Step4ContentManager
 
     async submitForm(formData) {
+        debugger
         // Validate subchapter selection before submission
         const selectedSubChapters = this.step3Manager ? this.step3Manager.getSelectedSubChapters() : [];
         if (selectedSubChapters.length === 0) {
@@ -1208,14 +1209,12 @@ class ModernScheduleItemFormManager {
                 this.showSuccessMessage('مرحله با موفقیت ذخیره شد');
 
                 // Update URL to include ID for edit mode
-                if (!window.location.search.includes('id=')) {
-                    try {
-                        const url = new URL(window.location);
-                        url.searchParams.set('id', result.id);
-                        window.history.replaceState({}, '', url);
-                    } catch (error) {
-                        // Don't throw error here, just log it
-                    }
+                try {
+                    const url = new URL(window.location);
+                    url.searchParams.set('id', result.id);
+                    window.history.replaceState({}, '', url);
+                } catch (error) {
+                    // Don't throw error here, just log it
                 }
 
                 // Load existing data after save
@@ -1325,16 +1324,22 @@ class ModernScheduleItemFormManager {
                 this.existingItemData = result.data;
                 console.log('Stored existing item data:', this.existingItemData);
                 
-                // Don't change current step after save - keep user in the same step
-                // Just update indicators and form state
+                // Update current step from server data
+                if (result.data.currentStep) {
+                    console.log('Updating current step from server:', result.data.currentStep);
+                    this.currentStep = result.data.currentStep;
+                    this.updateStepVisibility();
+                }
+                
+                // Update indicators and form state
                 this.updateStepIndicators();
                 this.updateProgress();
                 this.updateNavigationButtons();
                 
-                // Only notify step managers to load their data for the current step
+                // Notify step managers to load their data
                 setTimeout(() => {
                     this.notifyStepManagersToLoadData();
-                }, 100);
+                }, 1000);
 
                 // Update form state indicators
                 this.updateFormStateIndicators();
