@@ -39,27 +39,27 @@
     z-index: 10;
 }
 
-.enrollment-badge-sticker::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -8px;
-    width: 0;
-    height: 0;
-    border-right: 8px solid #1e7e34;
-    border-top: 8px solid transparent;
-}
+    .enrollment-badge-sticker::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -8px;
+        width: 0;
+        height: 0;
+        border-right: 8px solid #1e7e34;
+        border-top: 8px solid transparent;
+    }
 
-.enrollment-badge-sticker::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    right: -8px;
-    width: 0;
-    height: 0;
-    border-left: 8px solid #1e7e34;
-    border-top: 8px solid transparent;
-}
+    .enrollment-badge-sticker::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: -8px;
+        width: 0;
+        height: 0;
+        border-left: 8px solid #1e7e34;
+        border-top: 8px solid transparent;
+    }
 
 .course-header::before {
     content: '';
@@ -75,6 +75,7 @@
 .course-header-content {
     position: relative;
     z-index: 2;
+    padding-top: 7px;
 }
 
 .course-title-row {
@@ -82,11 +83,12 @@
 }
 
 .course-title-main {
-    font-size: 2rem;
-    font-weight: 800;
+    font-size: 1.4rem;
+    font-weight: 600;
     margin: 0;
-    line-height: 1.2;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    line-height: 1.3;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    color: rgba(255, 255, 255, 0.95);
 }
 
 .course-subtitle {
@@ -121,10 +123,10 @@
     white-space: nowrap;
 }
 
-.course-stat-minimal i {
-    font-size: 0.6rem;
-    opacity: 0.8;
-}
+    .course-stat-minimal i {
+        font-size: 0.6rem;
+        opacity: 0.8;
+    }
 
 /* Enrollment Badge */
 .enrollment-badge {
@@ -134,16 +136,16 @@
     z-index: 3;
 }
 
-.enrollment-badge .badge {
-    font-size: 0.8rem;
-    padding: 8px 16px;
-    border-radius: 20px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-}
+    .enrollment-badge .badge {
+        font-size: 0.8rem;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
 
 /* Course Meta Info */
 .course-meta-minimal {
@@ -163,9 +165,9 @@
     white-space: nowrap;
 }
 
-.course-meta-item i {
-    font-size: 0.75rem;
-}
+    .course-meta-item i {
+        font-size: 0.75rem;
+    }
 
 /* Course Description - Collapsible */
 .course-description-section {
@@ -179,10 +181,10 @@
     transition: all 0.3s ease;
 }
 
-.course-description-section:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
-}
+    .course-description-section:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+    }
 
 .course-description-header {
     display: flex;
@@ -206,9 +208,9 @@
     transition: transform 0.3s ease;
 }
 
-.course-description-toggle.expanded {
-    transform: rotate(180deg);
-}
+    .course-description-toggle.expanded {
+        transform: rotate(180deg);
+    }
 
 .course-description-content {
     color: #495057;
@@ -228,9 +230,9 @@
     display: none;
 }
 
-.course-description-full.show {
-    display: block;
-}
+    .course-description-full.show {
+        display: block;
+    }
 
 /* Course Chapters */
 .course-chapters {
@@ -244,10 +246,10 @@
     transition: all 0.3s ease;
 }
 
-.course-chapters:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
-}
+    .course-chapters:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+    }
 
 .course-chapters-title {
     font-size: 1.2rem;
@@ -269,11 +271,11 @@
     backdrop-filter: blur(5px);
 }
 
-.chapter-item:hover {
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-    transform: translateY(-3px);
-    border-color: rgba(102, 126, 234, 0.3);
-}
+    .chapter-item:hover {
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        transform: translateY(-3px);
+        border-color: rgba(102, 126, 234, 0.3);
+    }
 
 .chapter-header {
     background: #f8f9fa;
@@ -335,9 +337,9 @@
     transition: transform 0.3s ease;
 }
 
-.chapter-toggle.expanded {
-    transform: rotate(180deg);
-}
+    .chapter-toggle.expanded {
+        transform: rotate(180deg);
+    }
 
 .chapter-content {
     padding: 20px;
@@ -364,14 +366,14 @@
     color: #495057;
 }
 
-.chapter-content-stat i {
-    color: #667eea;
-    font-size: 0.8rem;
-}
+    .chapter-content-stat i {
+        color: #667eea;
+        font-size: 0.8rem;
+    }
 
-.chapter-content-stat span {
-    font-weight: 500;
-}
+    .chapter-content-stat span {
+        font-weight: 500;
+    }
 
 /* Sub-chapters */
 .subchapter-list {
@@ -387,10 +389,10 @@
     transition: all 0.3s ease;
 }
 
-.subchapter-item:hover {
-    background: #f8f9fa;
-    border-color: #667eea;
-}
+    .subchapter-item:hover {
+        background: #f8f9fa;
+        border-color: #667eea;
+    }
 
 .subchapter-title {
     font-size: 0.95rem;
@@ -442,9 +444,9 @@
     gap: 8px;
 }
 
-.course-action-btn i {
-    font-size: 0.9rem;
-}
+    .course-action-btn i {
+        font-size: 0.9rem;
+    }
 
 .btn-enroll {
     background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
@@ -452,11 +454,11 @@
     box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
 }
 
-.btn-enroll:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(40, 167, 69, 0.4);
-    color: white;
-}
+    .btn-enroll:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(40, 167, 69, 0.4);
+        color: white;
+    }
 
 .btn-study {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -464,11 +466,11 @@
     box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
 }
 
-.btn-study:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
-    color: white;
-}
+    .btn-study:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        color: white;
+    }
 
 .btn-unenroll {
     background: transparent;
@@ -476,23 +478,23 @@
     border: 2px solid #dc3545;
 }
 
-.btn-unenroll:hover {
-    background: #dc3545;
-    color: white;
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(220, 53, 69, 0.3);
-}
+    .btn-unenroll:hover {
+        background: #dc3545;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(220, 53, 69, 0.3);
+    }
 
 .btn-secondary {
     background: #6c757d;
     color: white;
 }
 
-.btn-secondary:hover {
-    background: #5a6268;
-    color: white;
-    transform: translateY(-2px);
-}
+    .btn-secondary:hover {
+        background: #5a6268;
+        color: white;
+        transform: translateY(-2px);
+    }
 
 /* Progress Section */
 .progress-section {
@@ -506,10 +508,10 @@
     transition: all 0.3s ease;
 }
 
-.progress-section:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
-}
+    .progress-section:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+    }
 
 .progress-title {
     font-size: 1.1rem;
@@ -565,90 +567,90 @@
     .course-details-container {
         padding: 0 10px;
     }
-    
+
     .course-header {
         padding: 20px;
         margin-bottom: 20px;
     }
-    
+
     .course-title-main {
-        font-size: 1.5rem;
+        font-size: 1.2rem;
     }
-    
+
     .enrollment-badge-sticker {
         top: 6px;
         left: 15px;
         padding: 6px 12px;
         font-size: 0.7rem;
     }
-    
-    .enrollment-badge-sticker::before {
-        left: -6px;
-        border-right: 6px solid #1e7e34;
-        border-top: 6px solid transparent;
-    }
-    
-    .enrollment-badge-sticker::after {
-        right: -6px;
-        border-left: 6px solid #1e7e34;
-        border-top: 6px solid transparent;
-    }
-    
+
+        .enrollment-badge-sticker::before {
+            left: -6px;
+            border-right: 6px solid #1e7e34;
+            border-top: 6px solid transparent;
+        }
+
+        .enrollment-badge-sticker::after {
+            right: -6px;
+            border-left: 6px solid #1e7e34;
+            border-top: 6px solid transparent;
+        }
+
     .course-stats-minimal {
         gap: 6px;
         font-size: 0.7rem;
     }
-    
+
     .course-stat-minimal {
         padding: 2px 5px;
         font-size: 0.65rem;
         gap: 2px;
     }
-    
-    .course-stat-minimal i {
-        font-size: 0.55rem;
-    }
-    
+
+        .course-stat-minimal i {
+            font-size: 0.55rem;
+        }
+
     .course-meta-minimal {
         gap: 8px;
     }
-    
+
     .course-meta-item {
         font-size: 0.75rem;
     }
-    
+
     .course-description-section,
     .course-chapters,
     .course-actions-section {
         padding: 15px;
         margin-bottom: 20px;
     }
-    
+
     .chapter-header {
         padding: 10px 12px;
     }
-    
+
     .chapter-title-section {
         gap: 6px;
     }
-    
+
     .chapter-header-stats {
         gap: 6px;
     }
-    
+
     .chapter-stat-minimal {
         font-size: 0.65rem;
         padding: 2px 4px;
     }
-    
+
     .chapter-content.expanded {
         padding: 15px;
     }
-    
+
     .subchapter-item {
         padding: 10px 12px;
     }
-    
+
     .course-action-btn {
         padding: 10px 16px;
         font-size: 0.9rem;
@@ -656,59 +658,63 @@
 }
 
 @media (max-width: 576px) {
+    .course-title-main {
+        font-size: 1.1rem;
+    }
+
     .enrollment-badge-sticker {
         top: 0px;
         left: -5px;
         padding: 5px 10px;
         font-size: 0.65rem;
     }
-    
-    .enrollment-badge-sticker::before {
-        left: -5px;
-        border-right: 5px solid #1e7e34;
-        border-top: 5px solid transparent;
-    }
-    
-    .enrollment-badge-sticker::after {
-        right: -5px;
-        border-left: 5px solid #1e7e34;
-        border-top: 5px solid transparent;
-    }
-    
+
+        .enrollment-badge-sticker::before {
+            left: -5px;
+            border-right: 5px solid #1e7e34;
+            border-top: 5px solid transparent;
+        }
+
+        .enrollment-badge-sticker::after {
+            right: -5px;
+            border-left: 5px solid #1e7e34;
+            border-top: 5px solid transparent;
+        }
+
     .course-stats-minimal {
         flex-direction: row;
         align-items: center;
         gap: 4px;
         font-size: 0.65rem;
     }
-    
+
     .course-stat-minimal {
         justify-content: center;
         padding: 1px 4px;
         font-size: 0.6rem;
         gap: 2px;
     }
-    
-    .course-stat-minimal i {
-        font-size: 0.5rem;
-    }
-    
+
+        .course-stat-minimal i {
+            font-size: 0.5rem;
+        }
+
     .course-meta-minimal {
         flex-direction: column;
         align-items: flex-start;
         gap: 6px;
     }
-    
+
     .chapter-header-stats {
         flex-direction: column;
         align-items: flex-start;
         gap: 4px;
     }
-    
+
     .chapter-stat-minimal {
         justify-content: flex-start;
     }
-    
+
     .progress-stats {
         flex-direction: column;
         gap: 10px;
@@ -721,23 +727,28 @@
     pointer-events: none;
 }
 
-.loading::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 20px;
-    height: 20px;
-    margin: -10px 0 0 -10px;
-    border: 2px solid #f3f3f3;
-    border-top: 2px solid #667eea;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-}
+    .loading::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 20px;
+        height: 20px;
+        margin: -10px 0 0 -10px;
+        border: 2px solid #f3f3f3;
+        border-top: 2px solid #667eea;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
 
 @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
 /* Smooth Transitions */
@@ -799,73 +810,73 @@
     justify-content: center;
 }
 
-.course-footer-btn i {
-    font-size: 0.85rem;
-}
+    .course-footer-btn i {
+        font-size: 0.85rem;
+    }
 
-.course-footer-btn.btn-study {
-    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-    color: white;
-    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
-}
+    .course-footer-btn.btn-study {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+    }
 
-.course-footer-btn.btn-study:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(40, 167, 69, 0.4);
-    color: white;
-}
+        .course-footer-btn.btn-study:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(40, 167, 69, 0.4);
+            color: white;
+        }
 
-.course-footer-btn.btn-enroll {
-    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
-    color: white;
-    box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
-}
+    .course-footer-btn.btn-enroll {
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+    }
 
-.course-footer-btn.btn-enroll:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(0, 123, 255, 0.4);
-    color: white;
-}
+        .course-footer-btn.btn-enroll:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 123, 255, 0.4);
+            color: white;
+        }
 
-.course-footer-btn.btn-unenroll {
-    background: transparent;
-    color: #dc3545;
-    border: 2px solid #dc3545;
-}
+    .course-footer-btn.btn-unenroll {
+        background: transparent;
+        color: #dc3545;
+        border: 2px solid #dc3545;
+    }
 
-.course-footer-btn.btn-unenroll:hover {
-    background: #dc3545;
-    color: white;
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(220, 53, 69, 0.3);
-}
+        .course-footer-btn.btn-unenroll:hover {
+            background: #dc3545;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(220, 53, 69, 0.3);
+        }
 
-.course-footer-btn.btn-close {
-    background: rgba(255, 255, 255, 0.2);
-    color: white;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    backdrop-filter: blur(10px);
-}
+    .course-footer-btn.btn-close {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        backdrop-filter: blur(10px);
+    }
 
-.course-footer-btn.btn-close:hover {
-    background: rgba(255, 255, 255, 0.3);
-    color: white;
-    transform: translateY(-2px);
-}
+        .course-footer-btn.btn-close:hover {
+            background: rgba(255, 255, 255, 0.3);
+            color: white;
+            transform: translateY(-2px);
+        }
 
-.course-footer-btn.btn-secondary {
-    background: #6c757d;
-    color: white;
-    opacity: 0.7;
-    cursor: not-allowed;
-}
+    .course-footer-btn.btn-secondary {
+        background: #6c757d;
+        color: white;
+        opacity: 0.7;
+        cursor: not-allowed;
+    }
 
-.course-footer-btn.btn-secondary:hover {
-    background: #6c757d;
-    color: white;
-    transform: none;
-    box-shadow: none;
-}
+        .course-footer-btn.btn-secondary:hover {
+            background: #6c757d;
+            color: white;
+            transform: none;
+            box-shadow: none;
+        }
 
 /* Add bottom padding to body to prevent footer overlap */
 body {
@@ -878,13 +889,13 @@ body {
         gap: 10px;
         padding: 12px 0;
     }
-    
+
     .course-footer-btn {
         padding: 10px 16px;
         font-size: 0.85rem;
         min-width: 100px;
     }
-    
+
     body {
         padding-bottom: 70px;
     }
@@ -896,12 +907,12 @@ body {
         gap: 8px;
         padding: 10px 0;
     }
-    
+
     .course-footer-btn {
         width: 90%;
         min-width: auto;
     }
-    
+
     body {
         padding-bottom: 120px;
     }
@@ -912,23 +923,23 @@ body {
     .course-footer {
         display: none !important;
     }
-    
+
     .course-actions-section,
     .enrollment-badge {
         display: none !important;
     }
-    
+
     .course-header {
         background: #f8f9fa !important;
         color: #2c3e50 !important;
     }
-    
+
     .course-description-section,
     .course-chapters {
         box-shadow: none;
         border: 1px solid #ddd;
     }
-    
+
     body {
         padding-bottom: 0;
     }
