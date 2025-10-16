@@ -233,7 +233,7 @@ public class FileUploadController : Controller
     }
 
     // GET: Get file by ID
-    [HttpGet("GetFile")]
+    [HttpGet("GetFile/{id}")]
     public async Task<IActionResult> GetFile(int id)
     {
         try
