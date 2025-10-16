@@ -1059,13 +1059,29 @@ class ReminderContentBlockManager {
         return true;
     }
     
+    getFileExtension(mimeType) {
+        if (mimeType.includes('mp3') || mimeType.includes('mpeg')) return 'mp3';
+        if (mimeType.includes('mp4')) return 'm4a';
+        if (mimeType.includes('webm')) return 'webm';
+        if (mimeType.includes('wav')) return 'wav';
+        return 'mp3'; // default to MP3
+    }
+    
     async uploadBlockFile(block) {
         const file = block.data.pendingFile;
         const fileType = block.type;
         
         try {
             const formData = new FormData();
-            formData.append('file', file);
+            
+            // For audio files, ensure proper filename
+            if (fileType === 'audio' && file instanceof Blob) {
+                const fileName = block.data.originalFileName || `recording_${Date.now()}.${this.getFileExtension(file.type)}`;
+                formData.append('file', file, fileName);
+            } else {
+                formData.append('file', file);
+            }
+            
             formData.append('type', fileType);
             
             const response = await fetch('/FileUpload/UploadContentFile', {
@@ -1113,7 +1129,31 @@ class ReminderContentBlockManager {
     async startRecording(button) {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            this.mediaRecorder = new MediaRecorder(stream);
+            
+            // Try to use MP3 format first, then fallback to other formats
+            const mimeTypes = [
+                'audio/mpeg',                   // MP3 format (preferred)
+                'audio/mp4; codecs=mp4a.40.2', // MP4 audio (widely supported)
+                'audio/webm; codecs=opus',      // WebM with Opus (good quality)
+                'audio/webm',                   // Basic WebM
+                'audio/wav'                     // WAV fallback
+            ];
+            
+            let selectedMimeType = null;
+            for (const mimeType of mimeTypes) {
+                if (MediaRecorder.isTypeSupported(mimeType)) {
+                    selectedMimeType = mimeType;
+                    break;
+                }
+            }
+            
+            if (!selectedMimeType) {
+                throw new Error('No supported audio format found');
+            }
+            
+            this.mediaRecorder = new MediaRecorder(stream, {
+                mimeType: selectedMimeType
+            });
             this.recordedChunks = [];
             
             this.mediaRecorder.ondataavailable = (event) => {
@@ -1123,7 +1163,7 @@ class ReminderContentBlockManager {
             };
             
             this.mediaRecorder.onstop = () => {
-                const blob = new Blob(this.recordedChunks, { type: 'audio/wav' });
+                const blob = new Blob(this.recordedChunks, { type: this.mediaRecorder.mimeType });
                 const url = URL.createObjectURL(blob);
                 
                 const blockElement = button.closest('.content-block');
@@ -1187,16 +1227,27 @@ class ReminderContentBlockManager {
             
             // Handle recorded data
             this.mediaRecorder.onstop = () => {
-                const blob = new Blob(this.recordedChunks, { type: 'audio/webm' });
+                const blob = new Blob(this.recordedChunks, { type: this.mediaRecorder.mimeType });
                 const blockElement = button.closest('.content-block');
                 const blockId = blockElement.dataset.blockId;
                 const block = this.blocks.find(b => b.id === blockId);
                 
                 // Store recorded file for later upload
                 block.data.pendingFile = blob;
-                block.data.originalFileName = `recording_${Date.now()}.webm`;
+                
+                // Determine file extension based on MIME type
+                let extension = 'm4a';
+                if (this.mediaRecorder.mimeType.includes('webm')) {
+                    extension = 'webm';
+                } else if (this.mediaRecorder.mimeType.includes('wav')) {
+                    extension = 'wav';
+                } else if (this.mediaRecorder.mimeType.includes('mp3')) {
+                    extension = 'mp3';
+                }
+                
+                block.data.originalFileName = `recording_${Date.now()}.${extension}`;
                 block.data.fileSize = blob.size;
-                block.data.mimeType = 'audio/webm';
+                block.data.mimeType = this.mediaRecorder.mimeType;
                 block.data.isRecorded = true;
                 block.data.duration = Math.floor((Date.now() - this.recordingStartTime) / 1000);
                 
@@ -1695,7 +1746,7 @@ class ReminderContentBlockManager {
             case 'audio':
                 if (block.data.fileUrl || block.data.previewUrl) {
                     const audioUrl = block.data.fileUrl || block.data.previewUrl;
-                    const mimeType = block.data.mimeType || (block.data.isRecorded ? 'audio/mpeg' : 'audio/webm');
+                    const mimeType = block.data.mimeType || 'audio/mp4';
                     html += `<div class="audio-block">`;
                     if (block.data.caption) {
                         html += `<div class="caption">${block.data.caption}</div>`;

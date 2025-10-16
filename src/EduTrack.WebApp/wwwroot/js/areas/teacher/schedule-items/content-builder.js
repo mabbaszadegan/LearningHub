@@ -652,13 +652,37 @@ class ContentBuilder {
     async startRecording() {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            this.mediaRecorder = new MediaRecorder(stream);
+            
+            // Try to use MP3 format first, then fallback to other formats
+            const mimeTypes = [
+                'audio/mpeg',                   // MP3 format (preferred)
+                'audio/mp4; codecs=mp4a.40.2', // MP4 audio (widely supported)
+                'audio/webm; codecs=opus',      // WebM with Opus (good quality)
+                'audio/webm',                   // Basic WebM
+                'audio/wav'                     // WAV fallback
+            ];
+            
+            let selectedMimeType = null;
+            for (const mimeType of mimeTypes) {
+                if (MediaRecorder.isTypeSupported(mimeType)) {
+                    selectedMimeType = mimeType;
+                    break;
+                }
+            }
+            
+            if (!selectedMimeType) {
+                throw new Error('No supported audio format found');
+            }
+            
+            this.mediaRecorder = new MediaRecorder(stream, {
+                mimeType: selectedMimeType
+            });
             
             const chunks = [];
             this.mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
             
             this.mediaRecorder.onstop = () => {
-                const blob = new Blob(chunks, { type: 'audio/webm' });
+                const blob = new Blob(chunks, { type: this.mediaRecorder.mimeType });
                 this.handleRecordedAudio(blob);
                 stream.getTracks().forEach(track => track.stop());
             };
@@ -703,7 +727,19 @@ class ContentBuilder {
 
     async handleRecordedAudio(blob) {
         // Convert blob to file
-        const file = new File([blob], 'recording.webm', { type: 'audio/webm' });
+        // Determine file extension based on MIME type
+        let extension = 'mp3'; // default to MP3
+        if (blob.type.includes('mp3') || blob.type.includes('mpeg')) {
+            extension = 'mp3';
+        } else if (blob.type.includes('mp4')) {
+            extension = 'm4a';
+        } else if (blob.type.includes('webm')) {
+            extension = 'webm';
+        } else if (blob.type.includes('wav')) {
+            extension = 'wav';
+        }
+        
+        const file = new File([blob], `recording.${extension}`, { type: blob.type });
         
         // Find the current audio box
         const audioBox = document.querySelector('.content-box-template[data-type="audio"]:last-child');
@@ -895,7 +931,7 @@ class ContentBuilder {
                     if (box.data.audioUrl) {
                         previewHTML += `<div class="preview-audio-box">
                             <audio controls style="width: 100%;">
-                                <source src="${box.data.audioUrl}" type="audio/mpeg">
+                                <source src="${box.data.audioUrl}" type="${box.data.mimeType || 'audio/mp4'}">
                             </audio>
                             ${box.data.caption ? `<p class="audio-caption">${box.data.caption}</p>` : ''}
                         </div>`;

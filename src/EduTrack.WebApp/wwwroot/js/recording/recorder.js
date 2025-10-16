@@ -1,5 +1,5 @@
 /**
- * Simple Audio Recorder for MP3 Upload
+ * Simple Audio Recorder for MP3 Upload using Web Audio API
  */
 export class AudioRecorder {
     constructor() {
@@ -7,6 +7,10 @@ export class AudioRecorder {
         this.audioChunks = [];
         this.stream = null;
         this.isRecording = false;
+        this.audioContext = null;
+        this.mediaStreamSource = null;
+        this.scriptProcessor = null;
+        this.audioBuffer = [];
     }
 
     async initialize() {
@@ -14,8 +18,30 @@ export class AudioRecorder {
             // Get microphone access
             this.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             
-            // Create MediaRecorder
-            this.mediaRecorder = new MediaRecorder(this.stream);
+            // Try to use MP3-compatible MediaRecorder first
+            const mimeTypes = [
+                'audio/mp4; codecs=mp4a.40.2', // MP4 audio (widely supported)
+                'audio/webm; codecs=opus',      // WebM with Opus (good quality)
+                'audio/webm',                   // Basic WebM
+                'audio/wav'                     // WAV fallback
+            ];
+            
+            let selectedMimeType = null;
+            for (const mimeType of mimeTypes) {
+                if (MediaRecorder.isTypeSupported(mimeType)) {
+                    selectedMimeType = mimeType;
+                    break;
+                }
+            }
+            
+            if (!selectedMimeType) {
+                throw new Error('No supported audio format found');
+            }
+            
+            // Create MediaRecorder with the best available format
+            this.mediaRecorder = new MediaRecorder(this.stream, {
+                mimeType: selectedMimeType
+            });
             
             // Setup event handlers
             this.mediaRecorder.ondataavailable = (event) => {
@@ -90,9 +116,25 @@ export class AudioRecorder {
 
     async uploadAudio(audioBlob) {
         const formData = new FormData();
-        formData.append('file', audioBlob, 'recording.webm');
+        
+        // Determine the correct file extension based on the blob's MIME type
+        let fileName = 'recording.mp3';
+        let mimeType = 'audio/mpeg';
+        
+        if (audioBlob.type.includes('mp4')) {
+            fileName = 'recording.m4a';
+            mimeType = 'audio/mp4';
+        } else if (audioBlob.type.includes('webm')) {
+            fileName = 'recording.webm';
+            mimeType = 'audio/webm';
+        } else if (audioBlob.type.includes('wav')) {
+            fileName = 'recording.wav';
+            mimeType = 'audio/wav';
+        }
+        
+        formData.append('file', audioBlob, fileName);
 
-        const response = await fetch('/FileUpload/UploadAudio', {
+        const response = await fetch('/FileUpload/UploadContentFile?type=audio', {
             method: 'POST',
             body: formData
         });
