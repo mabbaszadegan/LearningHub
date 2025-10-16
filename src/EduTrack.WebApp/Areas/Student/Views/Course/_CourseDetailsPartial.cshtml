@@ -12,6 +12,7 @@
         {
             <div class="enrollment-badge-sticker">قابل ثبت‌نام</div>
         }
+        <div class="teacher-badge-sticker">@Model.CreatedByName</div>
         <div class="course-header-content">
             <div class="course-title-row">
                 <h1 class="course-title-main">@Model.Title</h1>
@@ -48,10 +49,6 @@
                         var day = persianDate.GetDayOfMonth(Model.CreatedAt.DateTime);
                     }
                     @year/@month.ToString("00")/@day.ToString("00")
-                </span>
-                <span class="course-meta-item">
-                    <i class="fas fa-user"></i>
-                    @Model.CreatedBy
                 </span>
                 @if (Model.DisciplineType != EduTrack.Domain.Enums.DisciplineType.Other)
                 {

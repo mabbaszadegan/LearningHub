@@ -11,10 +11,12 @@ namespace EduTrack.Application.Features.Courses.Queries;
 public class GetCourseByIdQueryHandler : IRequestHandler<GetCourseByIdQuery, Result<CourseDto>>
 {
     private readonly IRepository<Course> _courseRepository;
+    private readonly IRepository<User> _userRepository;
 
-    public GetCourseByIdQueryHandler(IRepository<Course> courseRepository)
+    public GetCourseByIdQueryHandler(IRepository<Course> courseRepository, IRepository<User> userRepository)
     {
         _courseRepository = courseRepository;
+        _userRepository = userRepository;
     }
 
     public async Task<Result<CourseDto>> Handle(GetCourseByIdQuery request, CancellationToken cancellationToken)
@@ -35,6 +37,11 @@ public class GetCourseByIdQueryHandler : IRequestHandler<GetCourseByIdQuery, Res
             return Result<CourseDto>.Failure("Course not found");
         }
 
+        // Get teacher's full name
+        var teacher = await _userRepository.GetAll()
+            .FirstOrDefaultAsync(u => u.Id == course.CreatedBy, cancellationToken);
+        var teacherName = teacher?.FullName ?? course.CreatedBy;
+
         var courseDto = new CourseDto
         {
             Id = course.Id,
@@ -46,6 +53,7 @@ public class GetCourseByIdQueryHandler : IRequestHandler<GetCourseByIdQuery, Res
             CreatedAt = course.CreatedAt,
             UpdatedAt = course.UpdatedAt,
             CreatedBy = course.CreatedBy,
+            CreatedByName = teacherName,
             ModuleCount = course.Chapters.Sum(ch => ch.SubChapters.Count), // تعداد زیرمبحث
             LessonCount = course.Chapters.Sum(ch => ch.SubChapters.Sum(sc => sc.EducationalContents.Count)), // تعداد محتوا
             ChapterCount = course.Chapters.Count, // تعداد مبحث

@@ -13,6 +13,7 @@ public class CourseDto
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
     public string CreatedBy { get; set; } = string.Empty;
+    public string CreatedByName { get; set; } = string.Empty;
     public DisciplineType DisciplineType { get; set; }
     public int ModuleCount { get; set; }
     public int LessonCount { get; set; }

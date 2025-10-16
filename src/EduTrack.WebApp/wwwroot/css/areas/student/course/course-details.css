@@ -50,16 +50,55 @@
         border-top: 8px solid transparent;
     }
 
-    .enrollment-badge-sticker::after {
-        content: '';
-        position: absolute;
-        top: 0;
-        right: -8px;
-        width: 0;
-        height: 0;
-        border-left: 8px solid #1e7e34;
-        border-top: 8px solid transparent;
-    }
+.enrollment-badge-sticker::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: -8px;
+    width: 0;
+    height: 0;
+    border-left: 8px solid #1e7e34;
+    border-top: 8px solid transparent;
+}
+
+.teacher-badge-sticker {
+    position: absolute;
+    top: 0;
+    right: 20px;
+    background: linear-gradient(135deg, #6f42c1 0%, #e83e8c 100%);
+    color: white;
+    padding: 8px 16px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 12px rgba(111, 66, 193, 0.4);
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+    z-index: 10;
+}
+
+.teacher-badge-sticker::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -8px;
+    width: 0;
+    height: 0;
+    border-right: 8px solid #5a2d91;
+    border-top: 8px solid transparent;
+}
+
+.teacher-badge-sticker::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: -8px;
+    width: 0;
+    height: 0;
+    border-left: 8px solid #5a2d91;
+    border-top: 8px solid transparent;
+}
 
 .course-header::before {
     content: '';
@@ -583,6 +622,12 @@
         padding: 6px 12px;
         font-size: 0.7rem;
     }
+    
+    .teacher-badge-sticker {
+        right: 15px;
+        padding: 6px 12px;
+        font-size: 0.7rem;
+    }
 
         .enrollment-badge-sticker::before {
             left: -6px;
@@ -665,6 +710,12 @@
     .enrollment-badge-sticker {
         top: 0px;
         left: -5px;
+        padding: 5px 10px;
+        font-size: 0.65rem;
+    }
+    
+    .teacher-badge-sticker {
+        right: -3px;
         padding: 5px 10px;
         font-size: 0.65rem;
     }
