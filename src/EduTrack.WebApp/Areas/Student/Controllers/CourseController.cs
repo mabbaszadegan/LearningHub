@@ -58,7 +58,7 @@ public class CourseController : Controller
     }
 
     /// <summary>
-    /// Display course catalog for enrollment
+    /// Display course catalog for enrollment with comprehensive statistics
     /// </summary>
     [HttpGet]
     public async Task<IActionResult> Catalog(int pageNumber = 1, int pageSize = 12)
@@ -69,16 +69,10 @@ public class CourseController : Controller
             return RedirectToAction("Login", "Account", new { area = "Public" });
         }
 
-        var result = await _mediator.Send(new GetAvailableCoursesForEnrollmentQuery(currentUser.Id, pageNumber, pageSize));
+        var result = await _mediator.Send(new GetStudentCourseCatalogQuery(currentUser.Id, pageNumber, pageSize));
         
-        if (result.IsSuccess)
-        {
-            ViewBag.CurrentUserId = currentUser.Id;
-            return View(result.Value);
-        }
-
-        TempData["Error"] = result.Error;
-        return View(new PaginatedList<CourseDto>(new List<CourseDto>(), 0, pageNumber, pageSize));
+        ViewBag.CurrentUserId = currentUser.Id;
+        return View(result);
     }
 
     /// <summary>

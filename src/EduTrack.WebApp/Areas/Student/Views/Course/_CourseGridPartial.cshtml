@@ -7,32 +7,50 @@
     {
         <div class="course-card" data-course-id="@course.Id">
             <div class="course-thumbnail">
-                <div class="course-thumbnail-content">
-                    <div class="course-thumbnail-icon">
+                @if (!string.IsNullOrEmpty(course.Thumbnail))
+                {
+                    <img src="@course.Thumbnail" alt="@course.Title" class="img-fluid">
+                }
+                else
+                {
+                    <div class="course-thumbnail-placeholder">
                         <i class="fas fa-graduation-cap"></i>
                     </div>
-                    <div class="course-thumbnail-title">@course.Title</div>
+                }
+                <div class="course-title-overlay">
+                    <h5 class="course-title">@course.Title</h5>
+                </div>
+                <div class="course-status">
+                    @if (course.IsActive)
+                    {
+                        <span class="badge bg-success">فعال</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-secondary">غیرفعال</span>
+                    }
                 </div>
             </div>
             
             <div class="course-content">
                 @if (!string.IsNullOrEmpty(course.Description))
                 {
-                    <div class="course-description">@course.Description</div>
+                    <p class="course-description">@course.Description</p>
                 }
                 
+                <!-- Course Statistics Grid -->
                 <div class="course-stats-grid">
                     <div class="course-stat-item">
                         <i class="fas fa-layer-group course-stat-icon"></i>
-                        <span class="course-stat-text">@course.ModuleCount مبحث</span>
+                        <span class="course-stat-text">@course.ChapterCount مبحث</span>
                     </div>
                     <div class="course-stat-item">
                         <i class="fas fa-play-circle course-stat-icon"></i>
-                        <span class="course-stat-text">@course.LessonCount درس</span>
+                        <span class="course-stat-text">@course.ModuleCount زیرمبحث</span>
                     </div>
                     <div class="course-stat-item">
                         <i class="fas fa-bookmark course-stat-icon"></i>
-                        <span class="course-stat-text">@course.ChapterCount فصل</span>
+                        <span class="course-stat-text">@course.LessonCount محتوا</span>
                     </div>
                     <div class="course-stat-item">
                         <i class="fas fa-users course-stat-icon"></i>

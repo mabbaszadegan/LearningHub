@@ -5,6 +5,7 @@
 
 @section Styles {
     <link rel="stylesheet" href="~/css/areas/student/course-details-modal.css" />
+    <link rel="stylesheet" href="~/css/areas/student/course-list.css" asp-append-version="true" />
 }
 
 <div class="mobile-app-container">
@@ -476,8 +477,13 @@
                     console.log('Data type:', typeof data);
                     console.log('Data length:', data ? data.length : 'null');
                     
-                    if (data && data.trim().length > 0) {
+                    // Check if data is a string and has content
+                    if (data && typeof data === 'string' && data.trim().length > 0) {
                         $('#coursesContainer').html(data);
+                    } else if (data && typeof data === 'object') {
+                        // If it's an object (JSON response), handle it differently
+                        console.log('Received object data:', data);
+                        $('#coursesContainer').html('<div class="empty-state"><i class="fas fa-search"></i><h3>دوره‌ای یافت نشد</h3><p>در حال حاضر دوره جدیدی برای ثبت‌نام وجود ندارد</p></div>');
                     } else {
                         $('#coursesContainer').html('<div class="empty-state"><i class="fas fa-search"></i><h3>دوره‌ای یافت نشد</h3><p>در حال حاضر دوره جدیدی برای ثبت‌نام وجود ندارد</p></div>');
                     }
@@ -497,13 +503,24 @@
                 url: '@Url.Action("GetMyCourses", "Course")',
                 type: 'GET',
                 success: function(data) {
-                    if (data && data.trim().length > 0) {
+                    console.log('My courses loaded:', data);
+                    console.log('Data type:', typeof data);
+                    
+                    // Check if data is a string and has content
+                    if (data && typeof data === 'string' && data.trim().length > 0) {
                         $('#myCoursesContainer').html(data);
+                    } else if (data && typeof data === 'object') {
+                        // If it's an object (JSON response), handle it differently
+                        console.log('Received object data for my courses:', data);
+                        $('#myCoursesContainer').html('<div class="empty-state"><i class="fas fa-book-open"></i><h3>دوره‌ای ندارید</h3><p>هنوز در هیچ دوره‌ای ثبت‌نام نکرده‌اید</p></div>');
                     } else {
                         $('#myCoursesContainer').html('<div class="empty-state"><i class="fas fa-book-open"></i><h3>دوره‌ای ندارید</h3><p>هنوز در هیچ دوره‌ای ثبت‌نام نکرده‌اید</p></div>');
                     }
                 },
-                error: function() {
+                error: function(xhr, status, error) {
+                    console.error('Error loading my courses:', error);
+                    console.error('Status:', status);
+                    console.error('Response:', xhr.responseText);
                     $('#myCoursesContainer').html('<div class="error-state"><i class="fas fa-exclamation-triangle"></i><h3>خطا در بارگذاری</h3><p>خطا در بارگذاری دوره‌های شما</p></div>');
                 }
             });

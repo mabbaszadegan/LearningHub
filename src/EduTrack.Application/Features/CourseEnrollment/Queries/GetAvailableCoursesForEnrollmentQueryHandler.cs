@@ -40,7 +40,10 @@ public class GetAvailableCoursesForEnrollmentQueryHandler : IRequestHandler<GetA
                 .Include(c => c.Modules)
                     .ThenInclude(m => m.Lessons)
                 .Include(c => c.Chapters)
-                .Include(c => c.Classes);
+                    .ThenInclude(ch => ch.SubChapters)
+                .Include(c => c.Classes)
+                .Include(c => c.TeachingPlans)
+                    .ThenInclude(tp => tp.ScheduleItems);
 
             // Get total count
             var totalCount = await coursesQuery.CountAsync(cancellationToken);
@@ -95,10 +98,10 @@ public class GetAvailableCoursesForEnrollmentQueryHandler : IRequestHandler<GetA
                 CreatedAt = c.CreatedAt,
                 UpdatedAt = c.UpdatedAt,
                 CreatedBy = c.CreatedBy,
-                ModuleCount = c.Modules?.Count ?? 0,
-                LessonCount = c.Modules?.Sum(m => m.Lessons?.Count ?? 0) ?? 0,
-                ChapterCount = c.Chapters?.Count ?? 0,
-                ClassCount = c.Classes?.Count ?? 0,
+                ModuleCount = c.Chapters?.Sum(ch => ch.SubChapters?.Count ?? 0) ?? 0, // تعداد زیرمبحث
+                LessonCount = c.TeachingPlans?.Sum(tp => tp.ScheduleItems?.Count ?? 0) ?? 0, // تعداد محتوا (ScheduleItems)
+                ChapterCount = c.Chapters?.Count ?? 0, // تعداد مبحث
+                ClassCount = c.Classes?.Count ?? 0, // تعداد کلاس
                 Modules = c.Modules?.Select(m => new ModuleDto
                 {
                     Id = m.Id,
