@@ -170,8 +170,8 @@ class Step4ContentManager {
             case 'audio':
                 if (box.data.fileId) {
                     html += `<div class="audio-content">
-                        <audio controls>
-                            <source src="/uploads/${box.data.fileId}" type="${box.data.mimeType || 'audio/mp4'}">
+                        <audio controls preload="none">
+                            <source data-src="/FileUpload/GetFile/${box.data.fileId}" type="${box.data.mimeType || 'audio/mpeg'}">
                         </audio>
                         ${box.data.caption ? `<div class="audio-caption">${box.data.caption}</div>` : ''}
                     </div>`;

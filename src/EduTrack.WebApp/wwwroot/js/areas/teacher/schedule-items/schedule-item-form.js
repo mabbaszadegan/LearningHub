@@ -1055,7 +1055,6 @@ class ModernScheduleItemFormManager {
     // Delegated to Step4ContentManager
 
     async submitForm(formData) {
-        debugger
         // Validate subchapter selection before submission
         // Ensure step 3 manager is ready before accessing its data
         await this.ensureStep3ManagerReady();

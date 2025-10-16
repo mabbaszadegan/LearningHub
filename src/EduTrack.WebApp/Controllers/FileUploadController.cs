@@ -164,7 +164,26 @@ public class FileUploadController : Controller
             var fileStream = await _fileStorageService.GetFileAsync(file.FilePath);
             var fileName = Path.GetFileName(file.FilePath);
 
-            return File(fileStream, file.MimeType ?? "application/octet-stream", fileName);
+            // For audio files, determine MIME type from file extension
+            string mimeType = file.MimeType ?? "application/octet-stream";
+            if (fileName.EndsWith(".mp3", StringComparison.OrdinalIgnoreCase))
+            {
+                mimeType = "audio/mpeg";
+            }
+            else if (fileName.EndsWith(".m4a", StringComparison.OrdinalIgnoreCase))
+            {
+                mimeType = "audio/mp4";
+            }
+            else if (fileName.EndsWith(".webm", StringComparison.OrdinalIgnoreCase))
+            {
+                mimeType = "audio/webm";
+            }
+            else if (fileName.EndsWith(".wav", StringComparison.OrdinalIgnoreCase))
+            {
+                mimeType = "audio/wav";
+            }
+
+            return File(fileStream, mimeType, fileName);
         }
         catch (Exception ex)
         {

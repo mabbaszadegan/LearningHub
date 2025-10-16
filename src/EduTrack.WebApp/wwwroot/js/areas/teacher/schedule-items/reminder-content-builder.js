@@ -110,7 +110,24 @@ class ReminderContentBlockManager {
         console.log('Hidden field found:', this.hiddenField);
         console.log('Preview element found:', this.preview);
         
+        // Setup global lazy loading for media elements
+        this.setupGlobalLazyLoading();
+        
         this.init();
+    }
+    
+    setupGlobalLazyLoading() {
+        // Setup global event delegation for lazy loading media elements
+        document.addEventListener('play', (e) => {
+            const target = e.target;
+            if (target.tagName === 'AUDIO' || target.tagName === 'VIDEO') {
+                const source = target.querySelector('source[data-src]');
+                if (source && source.dataset.src && !source.src) {
+                    source.src = source.dataset.src;
+                    target.load(); // Reload the media element
+                }
+            }
+        }, true); // Use capture phase to catch the event early
     }
     
     init() {
@@ -561,6 +578,9 @@ class ReminderContentBlockManager {
         // Initialize file change buttons
         this.initializeFileChangeButtons(blockElement);
         
+        // Setup lazy loading for audio/video elements
+        this.setupLazyLoading(blockElement);
+        
         // Insert at correct position
         const emptyState = this.blocksList.querySelector('.empty-state');
         if (emptyState) {
@@ -574,6 +594,38 @@ class ReminderContentBlockManager {
 
 
     
+    setupLazyLoading(blockElement) {
+        // Setup lazy loading for audio elements
+        const audioElements = blockElement.querySelectorAll('audio');
+        audioElements.forEach(audio => {
+            const source = audio.querySelector('source[data-src]');
+            if (source) {
+                // Add event listener for when user wants to play
+                audio.addEventListener('play', () => {
+                    if (source.dataset.src && !source.src) {
+                        source.src = source.dataset.src;
+                        audio.load(); // Reload the audio element
+                    }
+                }, { once: true }); // Only run once
+            }
+        });
+        
+        // Setup lazy loading for video elements
+        const videoElements = blockElement.querySelectorAll('video');
+        videoElements.forEach(video => {
+            const source = video.querySelector('source[data-src]');
+            if (source) {
+                // Add event listener for when user wants to play
+                video.addEventListener('play', () => {
+                    if (source.dataset.src && !source.src) {
+                        source.src = source.dataset.src;
+                        video.load(); // Reload the video element
+                    }
+                }, { once: true }); // Only run once
+            }
+        });
+    }
+
     setupBlockEventListeners(blockElement) {
         // Text editor events
         const textEditor = blockElement.querySelector('.rich-text-editor');
@@ -1129,11 +1181,6 @@ class ReminderContentBlockManager {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             
-            // Check what formats are actually supported
-            console.log('MP3 support:', MediaRecorder.isTypeSupported('audio/mpeg'));
-            console.log('M4A support:', MediaRecorder.isTypeSupported('audio/mp4; codecs=mp4a.40.2'));
-            console.log('WebM support:', MediaRecorder.isTypeSupported('audio/webm; codecs=opus'));
-            
             // Use the best available format for recording
             const mimeTypes = [
                 'audio/mp4; codecs=mp4a.40.2', // MP4 audio (widely supported)
@@ -1146,7 +1193,6 @@ class ReminderContentBlockManager {
             for (const mimeType of mimeTypes) {
                 if (MediaRecorder.isTypeSupported(mimeType)) {
                     selectedMimeType = mimeType;
-                    console.log('Selected MIME type for recording:', mimeType);
                     break;
                 }
             }
@@ -1731,7 +1777,7 @@ class ReminderContentBlockManager {
                     if (block.data.caption && block.data.captionPosition === 'top') {
                         html += `<div class="caption caption-top">${block.data.caption}</div>`;
                     }
-                    html += `<video controls class="${sizeClass}"><source src="${videoUrl}" type="video/mp4"></video>`;
+                    html += `<video controls preload="none" class="${sizeClass}"><source data-src="${videoUrl}" type="video/mp4"></video>`;
                     if (block.data.caption && block.data.captionPosition === 'bottom') {
                         html += `<div class="caption caption-bottom">${block.data.caption}</div>`;
                     }
@@ -1741,12 +1787,12 @@ class ReminderContentBlockManager {
             case 'audio':
                 if (block.data.fileUrl || block.data.previewUrl) {
                     const audioUrl = block.data.fileUrl || block.data.previewUrl;
-                    const mimeType = block.data.mimeType || 'audio/mp4';
+                    const mimeType = block.data.mimeType || 'audio/mpeg';
                     html += `<div class="audio-block">`;
                     if (block.data.caption) {
                         html += `<div class="caption">${block.data.caption}</div>`;
                     }
-                    html += `<audio controls><source src="${audioUrl}" type="${mimeType}"></audio>`;
+                    html += `<audio controls preload="none"><source data-src="${audioUrl}" type="${mimeType}"></audio>`;
                     html += '</div>';
                 }
                 break;

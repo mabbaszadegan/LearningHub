@@ -615,8 +615,12 @@ class ContentBuilder {
                 const audio = preview.querySelector('.preview-audio');
                 if (audio) {
                     const source = audio.querySelector('source');
-                    if (source) source.src = fileData.url || '/uploads/' + fileData.fileName;
-                    audio.load();
+                    if (source) {
+                        // Use the correct URL format for audio files
+                        const audioUrl = fileData.url || (fileData.fileId ? `/FileUpload/GetFile/${fileData.fileId}` : '/uploads/' + fileData.fileName);
+                        source.src = audioUrl;
+                        audio.load();
+                    }
                 }
             }
         }
@@ -653,11 +657,6 @@ class ContentBuilder {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             
-            // Check what formats are actually supported
-            console.log('MP3 support:', MediaRecorder.isTypeSupported('audio/mpeg'));
-            console.log('M4A support:', MediaRecorder.isTypeSupported('audio/mp4; codecs=mp4a.40.2'));
-            console.log('WebM support:', MediaRecorder.isTypeSupported('audio/webm; codecs=opus'));
-            
             // Use the best available format for recording
             const mimeTypes = [
                 'audio/mp4; codecs=mp4a.40.2', // MP4 audio (widely supported)
@@ -670,7 +669,6 @@ class ContentBuilder {
             for (const mimeType of mimeTypes) {
                 if (MediaRecorder.isTypeSupported(mimeType)) {
                     selectedMimeType = mimeType;
-                    console.log('Selected MIME type for recording:', mimeType);
                     break;
                 }
             }
@@ -923,8 +921,8 @@ class ContentBuilder {
                 case 'audio':
                     if (box.data.audioUrl) {
                         previewHTML += `<div class="preview-audio-box">
-                            <audio controls style="width: 100%;">
-                                <source src="${box.data.audioUrl}" type="${box.data.mimeType || 'audio/mp4'}">
+                            <audio controls preload="none" style="width: 100%;">
+                                <source data-src="${box.data.audioUrl}" type="${box.data.mimeType || 'audio/mpeg'}">
                             </audio>
                             ${box.data.caption ? `<p class="audio-caption">${box.data.caption}</p>` : ''}
                         </div>`;
