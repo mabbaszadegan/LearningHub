@@ -306,12 +306,10 @@ public class CourseController : Controller
         var canEnrollResult = await _mediator.Send(new CanEnrollInCourseQuery(id, currentUser.Id));
         var canEnroll = canEnrollResult.IsSuccess && canEnrollResult.Value;
 
-        var model = new {
-            Course = courseResult.Value,
-            IsEnrolled = isEnrolled,
-            CanEnroll = canEnroll
-        };
+        ViewBag.IsEnrolled = isEnrolled;
+        ViewBag.CanEnroll = canEnroll;
+        ViewBag.CurrentUserId = currentUser.Id;
 
-        return PartialView("_CourseDetailsPartial", model);
+        return PartialView("_CourseDetailsPartial", courseResult.Value);
     }
 }

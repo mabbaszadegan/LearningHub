@@ -46,10 +46,10 @@ public class GetCourseByIdQueryHandler : IRequestHandler<GetCourseByIdQuery, Res
             CreatedAt = course.CreatedAt,
             UpdatedAt = course.UpdatedAt,
             CreatedBy = course.CreatedBy,
-            ModuleCount = course.Modules.Count,
-            LessonCount = course.Modules.SelectMany(m => m.Lessons).Count(),
-            ChapterCount = course.Chapters.Count,
-            ClassCount = course.Classes.Count,
+            ModuleCount = course.Chapters.Sum(ch => ch.SubChapters.Count), // تعداد زیرمبحث
+            LessonCount = course.Chapters.Sum(ch => ch.SubChapters.Sum(sc => sc.EducationalContents.Count)), // تعداد محتوا
+            ChapterCount = course.Chapters.Count, // تعداد مبحث
+            ClassCount = course.Classes.Count, // تعداد کلاس
             Modules = course.Modules.Select(m => new ModuleDto
             {
                 Id = m.Id,
