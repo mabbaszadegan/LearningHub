@@ -1060,11 +1060,8 @@ class ReminderContentBlockManager {
     }
     
     getFileExtension(mimeType) {
-        if (mimeType.includes('mp3') || mimeType.includes('mpeg')) return 'mp3';
-        if (mimeType.includes('mp4')) return 'm4a';
-        if (mimeType.includes('webm')) return 'webm';
-        if (mimeType.includes('wav')) return 'wav';
-        return 'mp3'; // default to MP3
+        // Always return MP3 for recorded audio files
+        return 'mp3';
     }
     
     async uploadBlockFile(block) {
@@ -1074,10 +1071,12 @@ class ReminderContentBlockManager {
         try {
             const formData = new FormData();
             
-            // For audio files, ensure proper filename
+            // For audio files, ensure proper filename and MIME type
             if (fileType === 'audio' && file instanceof Blob) {
-                const fileName = block.data.originalFileName || `recording_${Date.now()}.${this.getFileExtension(file.type)}`;
-                formData.append('file', file, fileName);
+                const fileName = block.data.originalFileName || `recording_${Date.now()}.mp3`;
+                // Create a new File object with MP3 MIME type
+                const mp3File = new File([file], fileName, { type: 'audio/mpeg' });
+                formData.append('file', mp3File);
             } else {
                 formData.append('file', file);
             }
@@ -1130,9 +1129,13 @@ class ReminderContentBlockManager {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             
-            // Try to use MP3 format first, then fallback to other formats
+            // Check what formats are actually supported
+            console.log('MP3 support:', MediaRecorder.isTypeSupported('audio/mpeg'));
+            console.log('M4A support:', MediaRecorder.isTypeSupported('audio/mp4; codecs=mp4a.40.2'));
+            console.log('WebM support:', MediaRecorder.isTypeSupported('audio/webm; codecs=opus'));
+            
+            // Use the best available format for recording
             const mimeTypes = [
-                'audio/mpeg',                   // MP3 format (preferred)
                 'audio/mp4; codecs=mp4a.40.2', // MP4 audio (widely supported)
                 'audio/webm; codecs=opus',      // WebM with Opus (good quality)
                 'audio/webm',                   // Basic WebM
@@ -1143,6 +1146,7 @@ class ReminderContentBlockManager {
             for (const mimeType of mimeTypes) {
                 if (MediaRecorder.isTypeSupported(mimeType)) {
                     selectedMimeType = mimeType;
+                    console.log('Selected MIME type for recording:', mimeType);
                     break;
                 }
             }
@@ -1235,19 +1239,10 @@ class ReminderContentBlockManager {
                 // Store recorded file for later upload
                 block.data.pendingFile = blob;
                 
-                // Determine file extension based on MIME type
-                let extension = 'm4a';
-                if (this.mediaRecorder.mimeType.includes('webm')) {
-                    extension = 'webm';
-                } else if (this.mediaRecorder.mimeType.includes('wav')) {
-                    extension = 'wav';
-                } else if (this.mediaRecorder.mimeType.includes('mp3')) {
-                    extension = 'mp3';
-                }
-                
-                block.data.originalFileName = `recording_${Date.now()}.${extension}`;
+                // Force MP3 format for all recordings
+                block.data.originalFileName = `recording_${Date.now()}.mp3`;
                 block.data.fileSize = blob.size;
-                block.data.mimeType = this.mediaRecorder.mimeType;
+                block.data.mimeType = 'audio/mpeg'; // Force MP3 MIME type
                 block.data.isRecorded = true;
                 block.data.duration = Math.floor((Date.now() - this.recordingStartTime) / 1000);
                 

@@ -653,9 +653,13 @@ class ContentBuilder {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             
-            // Try to use MP3 format first, then fallback to other formats
+            // Check what formats are actually supported
+            console.log('MP3 support:', MediaRecorder.isTypeSupported('audio/mpeg'));
+            console.log('M4A support:', MediaRecorder.isTypeSupported('audio/mp4; codecs=mp4a.40.2'));
+            console.log('WebM support:', MediaRecorder.isTypeSupported('audio/webm; codecs=opus'));
+            
+            // Use the best available format for recording
             const mimeTypes = [
-                'audio/mpeg',                   // MP3 format (preferred)
                 'audio/mp4; codecs=mp4a.40.2', // MP4 audio (widely supported)
                 'audio/webm; codecs=opus',      // WebM with Opus (good quality)
                 'audio/webm',                   // Basic WebM
@@ -666,6 +670,7 @@ class ContentBuilder {
             for (const mimeType of mimeTypes) {
                 if (MediaRecorder.isTypeSupported(mimeType)) {
                     selectedMimeType = mimeType;
+                    console.log('Selected MIME type for recording:', mimeType);
                     break;
                 }
             }
@@ -726,20 +731,8 @@ class ContentBuilder {
     }
 
     async handleRecordedAudio(blob) {
-        // Convert blob to file
-        // Determine file extension based on MIME type
-        let extension = 'mp3'; // default to MP3
-        if (blob.type.includes('mp3') || blob.type.includes('mpeg')) {
-            extension = 'mp3';
-        } else if (blob.type.includes('mp4')) {
-            extension = 'm4a';
-        } else if (blob.type.includes('webm')) {
-            extension = 'webm';
-        } else if (blob.type.includes('wav')) {
-            extension = 'wav';
-        }
-        
-        const file = new File([blob], `recording.${extension}`, { type: blob.type });
+        // Force MP3 format for all recordings
+        const file = new File([blob], `recording.mp3`, { type: 'audio/mpeg' });
         
         // Find the current audio box
         const audioBox = document.querySelector('.content-box-template[data-type="audio"]:last-child');
