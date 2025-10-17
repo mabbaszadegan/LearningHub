@@ -132,6 +132,9 @@ public class EducationalContentController : BaseTeacherController
             ViewBag.ChapterId = subChapterResult.Value.ChapterId;
             ViewBag.CourseTitle = courseResult.Value?.Title;
 
+            // Setup page title section for edit
+            await SetPageTitleSectionAsync(PageType.EducationalContentEdit, id);
+
             var command = new CreateEducationalContentCommand(
                 content.SubChapterId,
                 content.Title,
@@ -158,6 +161,9 @@ public class EducationalContentController : BaseTeacherController
             ViewBag.ChapterTitle = chapterResult.Value.Title;
             ViewBag.ChapterId = subChapterResult.Value.ChapterId;
             ViewBag.CourseTitle = courseResult.Value?.Title;
+
+            // Setup page title section for create
+            await SetPageTitleSectionAsync(PageType.EducationalContentCreate, subChapterId);
 
             return View(new CreateEducationalContentCommand(subChapterId, string.Empty, string.Empty, EduTrack.Domain.Enums.EducationalContentType.Text, string.Empty, null, string.Empty, true, 0));
         }
@@ -288,6 +294,9 @@ public class EducationalContentController : BaseTeacherController
         ViewBag.ChapterTitle = chapterResult.Value.Title;
         ViewBag.ChapterId = subChapterResult.Value.ChapterId;
         ViewBag.CourseTitle = courseResult.Value?.Title;
+
+        // Setup page title section
+        await SetPageTitleSectionAsync(PageType.EducationalContentEdit, id);
 
         var command = new UpdateEducationalContentCommand(
             content.Id,

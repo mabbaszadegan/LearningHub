@@ -99,6 +99,10 @@ public class TeachingSessionsController : BaseTeacherController
         ViewBag.TeachingPlanTitle = teachingPlanResult.Value.Title;
         ViewBag.CourseId = teachingPlanResult.Value.CourseId;
         ViewBag.CourseTitle = teachingPlanResult.Value.CourseTitle;
+        
+        // Setup page title section
+        await SetPageTitleSectionAsync(PageType.TeachingSessionsIndex, planId);
+        
         return View(sessionReportsResult.Value);
     }
 
@@ -122,6 +126,9 @@ public class TeachingSessionsController : BaseTeacherController
         ViewBag.CourseId = teachingPlanResult.Value.CourseId;
         ViewBag.CourseTitle = teachingPlanResult.Value.CourseTitle;
         ViewBag.SessionModes = new SelectList(Enum.GetValues(typeof(SessionMode)));
+
+        // Setup page title section
+        await SetPageTitleSectionAsync(PageType.TeachingSessionCreate, planId);
 
         return View();
     }
@@ -179,6 +186,9 @@ public class TeachingSessionsController : BaseTeacherController
             ViewBag.CourseTitle = teachingPlanResult.Value.CourseTitle;
         }
 
+        // Setup page title section
+        await SetPageTitleSectionAsync(PageType.TeachingSessionDetails, id);
+
         return View(sessionReportResult.Value);
     }
 
@@ -192,6 +202,10 @@ public class TeachingSessionsController : BaseTeacherController
         }
 
         ViewBag.SessionModes = new SelectList(Enum.GetValues(typeof(SessionMode)), sessionReportResult.Value.Mode);
+        
+        // Setup page title section
+        await SetPageTitleSectionAsync(PageType.TeachingSessionEdit, id);
+        
         return View(sessionReportResult.Value);
     }
 

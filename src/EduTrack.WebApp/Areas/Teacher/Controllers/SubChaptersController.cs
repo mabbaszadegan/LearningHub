@@ -95,6 +95,9 @@ public class SubChaptersController : BaseTeacherController
         ViewBag.CourseId = chapter.CourseId;
         ViewBag.CourseTitle = courseResult.Value?.Title;
 
+        // Setup page title section
+        await SetPageTitleSectionAsync(PageType.SubChapterCreate, chapterId);
+
         return View(new CreateSubChapterCommand(chapterId, string.Empty, string.Empty, string.Empty, 0));
     }
 
@@ -176,6 +179,9 @@ public class SubChaptersController : BaseTeacherController
         ViewBag.ChapterTitle = chapter.Title;
         ViewBag.CourseId = chapter.CourseId;
         ViewBag.CourseTitle = courseResult.Value?.Title;
+
+        // Setup page title section
+        await SetPageTitleSectionAsync(PageType.SubChapterEdit, id);
 
         var command = new UpdateSubChapterCommand(
             subChapter.Id,

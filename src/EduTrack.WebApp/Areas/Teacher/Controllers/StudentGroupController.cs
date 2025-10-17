@@ -93,6 +93,10 @@ public class StudentGroupController : BaseTeacherController
         ViewBag.TeachingPlanTitle = teachingPlan.Value.Title;
         ViewBag.CourseTitle = teachingPlan.Value.CourseTitle;
         ViewBag.CourseId = teachingPlan.Value.CourseId;
+        
+        // Setup page title section
+        await SetPageTitleSectionAsync(PageType.StudentGroupCreate, planId);
+        
         return View();
     }
 
@@ -154,6 +158,10 @@ public class StudentGroupController : BaseTeacherController
         ViewBag.CourseTitle = teachingPlan.Value.CourseTitle;
         ViewBag.CourseId = teachingPlan.Value.CourseId;
         ViewBag.AvailableStudents = availableStudents;
+        
+        // Setup page title section
+        await SetPageTitleSectionAsync(PageType.StudentGroupManageMembers, groupId);
+        
         return View(group.Value);
     }
 
@@ -306,6 +314,10 @@ public class StudentGroupController : BaseTeacherController
         ViewBag.TeachingPlanTitle = teachingPlan.Value.Title;
         ViewBag.CourseTitle = teachingPlan.Value.CourseTitle;
         ViewBag.CourseId = teachingPlan.Value.CourseId;
+        
+        // Setup page title section
+        await SetPageTitleSectionAsync(PageType.StudentGroupEdit, id);
+        
         return View(command);
     }
 
