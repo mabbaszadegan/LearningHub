@@ -5,6 +5,8 @@ using EduTrack.Application.Common.Models.ScheduleItems;
 using EduTrack.Domain.Entities;
 using EduTrack.Domain.Enums;
 using EduTrack.Domain.Extensions;
+using EduTrack.WebApp.Extensions;
+using EduTrack.WebApp.Areas.Teacher.Views.Shared;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -55,13 +57,36 @@ public class ScheduleItemController : Controller
 
         // Get stats
         var stats = await _mediator.Send(new GetScheduleItemStatsQuery(teachingPlanId));
-        
+
         ViewBag.TeachingPlanId = teachingPlanId;
         ViewBag.TeachingPlanTitle = teachingPlan.Value.Title;
         ViewBag.CourseTitle = teachingPlan.Value.CourseTitle ?? "دوره";
         ViewBag.CourseId = teachingPlan.Value.CourseId;
         ViewBag.Stats = stats.IsSuccess ? stats.Value : new ScheduleItemStatsDto();
-        
+
+        // Setup page title section
+        var breadcrumbItems = new List<PageTitleBreadcrumbItem>
+        {
+            PageTitleSectionHelper.CreateBreadcrumbItem("خانه", Url.Action("Index", "Home"), "fas fa-home"),
+            PageTitleSectionHelper.CreateBreadcrumbItem("دوره‌ها", Url.Action("Index", "Courses"), "fas fa-book"),
+            PageTitleSectionHelper.CreateBreadcrumbItem(teachingPlan.Value.CourseTitle ?? "دوره", Url.Action("Index", "TeachingPlan", new { courseId = teachingPlan.Value.CourseId }), "fas fa-graduation-cap"),
+            PageTitleSectionHelper.CreateBreadcrumbItem(teachingPlan.Value.Title,null, "fas fa-calendar-alt"),
+            PageTitleSectionHelper.CreateBreadcrumbItem("مدیریت آیتم‌های آموزشی", null, "fas fa-tasks", true)
+        };
+
+        var actions = new List<PageTitleAction>
+        {
+            PageTitleSectionHelper.CreatePageAction("آیتم جدید", Url.Action("CreateOrEdit", new { teachingPlanId }) ?? "#", "btn-primary", "fas fa-plus")
+        };
+
+        this.SetPageTitleSection(
+            title: "مدیریت آیتم‌های آموزشی",
+            titleIcon: "fas fa-tasks",
+            description: $"مدیریت و سازماندهی آیتم‌های آموزشی برای برنامه \"{teachingPlan.Value.Title}\"",
+            breadcrumbItems: breadcrumbItems,
+            actions: actions
+        );
+
         return View(scheduleItems.Value);
     }
 
@@ -82,14 +107,40 @@ public class ScheduleItemController : Controller
         ViewBag.ScheduleItemTypes = Enum.GetValues<ScheduleItemType>()
             .Select(type => new { Value = (int)type, Text = type.GetDisplayName(), Description = type.GetDescription() })
             .ToList();
-        
+
         // Check if we're in edit mode
         bool isEditMode = id > 0;
         ViewBag.IsEditMode = isEditMode;
         ViewBag.ScheduleItemId = id;
-        
+
+        // Setup page title section
+        var breadcrumbItems = new List<PageTitleBreadcrumbItem>
+        {
+            PageTitleSectionHelper.CreateBreadcrumbItem("خانه", Url.Action("Index", "Home"), "fas fa-home"),
+            PageTitleSectionHelper.CreateBreadcrumbItem("دوره‌ها", Url.Action("Index", "Courses"), "fas fa-book"),
+            PageTitleSectionHelper.CreateBreadcrumbItem(teachingPlan.Value.CourseTitle ?? "دوره", Url.Action("Index", "TeachingPlan", new { courseId = teachingPlan.Value.CourseId }), "fas fa-graduation-cap"),
+            PageTitleSectionHelper.CreateBreadcrumbItem(teachingPlan.Value.Title, Url.Action("Index", "TeachingPlan", new { id = teachingPlanId }), "fas fa-calendar-alt"),
+            PageTitleSectionHelper.CreateBreadcrumbItem("آیتم‌های آموزشی", Url.Action("Index", "ScheduleItem", new { teachingPlanId }), "fas fa-tasks"),
+            PageTitleSectionHelper.CreateBreadcrumbItem(isEditMode ? "ویرایش آیتم آموزشی" : "ایجاد آیتم آموزشی جدید", null, isEditMode ? "fas fa-edit" : "fas fa-plus", true)
+        };
+
+        var actions = new List<PageTitleAction>
+        {
+            PageTitleSectionHelper.CreatePageAction("بازگشت", Url.Action("Index", "ScheduleItem", new { teachingPlanId }) ?? "#", "btn-secondary", "fas fa-arrow-right")
+        };
+
+        this.SetPageTitleSection(
+            title: isEditMode ? "ویرایش آیتم آموزشی" : "ایجاد آیتم آموزشی جدید",
+            titleIcon: isEditMode ? "fas fa-edit" : "fas fa-plus-circle",
+            description: isEditMode
+                ? $"ویرایش آیتم آموزشی برای برنامه \"{teachingPlan.Value.Title}\""
+                : $"ایجاد آیتم آموزشی جدید برای برنامه \"{teachingPlan.Value.Title}\"",
+            breadcrumbItems: breadcrumbItems,
+            actions: actions
+        );
+
         CreateScheduleItemRequest model;
-        
+
         if (isEditMode)
         {
             // Load existing item for editing
@@ -98,7 +149,7 @@ public class ScheduleItemController : Controller
             {
                 return NotFound("آیتم آموزشی یافت نشد.");
             }
-            
+
             model = new CreateScheduleItemRequest
             {
                 TeachingPlanId = teachingPlanId,
@@ -122,7 +173,7 @@ public class ScheduleItemController : Controller
                 ContentJson = string.Empty
             };
         }
-        
+
         return View(model);
     }
 
@@ -422,7 +473,7 @@ public class ScheduleItemController : Controller
         {
             _logger.LogInformation("SaveStep called with request: {@Request}", request);
             Console.WriteLine($"SaveStep called - Step: {request.Step}, TeachingPlanId: {request.TeachingPlanId}");
-            
+
             var currentUser = await _userManager.GetUserAsync(User);
             if (currentUser == null)
             {
@@ -430,32 +481,32 @@ public class ScheduleItemController : Controller
                 return Json(new { success = false, message = "کاربر یافت نشد." });
             }
 
-        // Parse comma-separated IDs if they come as strings
-        List<int>? groupIds = request.GroupIds;
-        List<int>? subChapterIds = request.SubChapterIds;
-        List<string>? studentIds = request.StudentIds;
+            // Parse comma-separated IDs if they come as strings
+            List<int>? groupIds = request.GroupIds;
+            List<int>? subChapterIds = request.SubChapterIds;
+            List<string>? studentIds = request.StudentIds;
 
-        var command = new SaveScheduleItemStepCommand(
-            request.Id,
-            request.TeachingPlanId,
-            request.Step,
-            request.Type,
-            request.Title,
-            request.Description,
-            request.StartDate,
-            request.DueDate,
-            request.IsMandatory,
-            request.ContentJson,
-            request.MaxScore,
-            request.GroupId,
-            request.PersianStartDate,
-            request.PersianDueDate,
-            request.StartTime,
-            request.DueTime,
-            groupIds,
-            subChapterIds,
-            studentIds
-        );
+            var command = new SaveScheduleItemStepCommand(
+                request.Id,
+                request.TeachingPlanId,
+                request.Step,
+                request.Type,
+                request.Title,
+                request.Description,
+                request.StartDate,
+                request.DueDate,
+                request.IsMandatory,
+                request.ContentJson,
+                request.MaxScore,
+                request.GroupId,
+                request.PersianStartDate,
+                request.PersianDueDate,
+                request.StartTime,
+                request.DueTime,
+                groupIds,
+                subChapterIds,
+                studentIds
+            );
 
             var result = await _mediator.Send(command);
 
@@ -484,7 +535,7 @@ public class ScheduleItemController : Controller
         try
         {
             _logger.LogInformation("GetById called with ID: {Id}", id);
-            
+
             var currentUser = await _userManager.GetUserAsync(User);
             if (currentUser == null)
             {
@@ -525,7 +576,7 @@ public class ScheduleItemController : Controller
 
         var command = new CompleteScheduleItemCommand(request.Id);
         var result = await _mediator.Send(command);
-        
+
         if (result.IsSuccess)
         {
             return Json(new { success = true, message = "آیتم آموزشی با موفقیت تکمیل شد." });

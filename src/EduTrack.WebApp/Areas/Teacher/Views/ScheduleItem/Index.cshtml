@@ -8,30 +8,6 @@
     var stats = ViewBag.Stats as EduTrack.Application.Common.Models.ScheduleItems.ScheduleItemStatsDto ?? new EduTrack.Application.Common.Models.ScheduleItems.ScheduleItemStatsDto();
 }
 
-<!-- Page Header -->
-<div class="page-header-minimal mb-3">
-    <div class="d-flex justify-content-between align-items-center">
-        <div>
-            <h1 class="page-title">مدیریت آیتم‌های آموزشی</h1>
-            <p class="page-subtitle mb-0">
-                <a asp-controller="Courses" asp-action="Index" class="breadcrumb-link">
-                    <i class="fas fa-chevron-right"></i> دوره‌ها
-                </a>
-                <span class="mx-2">/</span>
-                <a asp-controller="TeachingPlan" asp-action="Index" asp-route-courseId="@courseId" class="breadcrumb-link">
-                    @courseTitle
-                </a>
-                <span class="mx-2">/</span>
-                <span>@teachingPlanTitle</span>
-            </p>
-        </div>
-        <a asp-action="CreateOrEdit" asp-route-teachingPlanId="@teachingPlanId" class="btn-action-primary">
-            <i class="fas fa-plus"></i>
-            <span>آیتم جدید</span>
-        </a>
-    </div>
-</div>
-
 <div class="schedule-items-container">
 
     <!-- Stats Cards -->

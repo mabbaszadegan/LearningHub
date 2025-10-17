@@ -19,6 +19,7 @@
     <link rel="stylesheet" href="~/css/areas/teacher/teacher.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/areas/teacher/teacher-sidebar-collapse.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/areas/teacher/interactive-lesson-creator.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/areas/teacher/page-title-section.css" asp-append-version="true" />
     
     <!-- Persian Date Picker CSS -->
     <link rel="stylesheet" href="~/css/persian-datepicker.css" asp-append-version="true" />
@@ -166,6 +167,15 @@
                         </div>
                     }
                     
+                    <!-- Page Title Section -->
+                    @{
+                        var pageTitleSection = ViewData.GetPageTitleSection();
+                    }
+                    @if (pageTitleSection != null)
+                    {
+                        @await Html.PartialAsync("_PageTitleSection", pageTitleSection)
+                    }
+                    
                     @RenderBody()
                 </div>
             </div>
@@ -198,6 +208,7 @@
     
     <!-- Teacher Area JS -->
     <script src="~/js/areas/teacher/teacher.js" asp-append-version="true"></script>
+    <script src="~/js/areas/teacher/page-title-section.js" asp-append-version="true"></script>
     
     <!-- Modern Navigation Script -->
     <script>

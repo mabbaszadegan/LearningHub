@@ -2,6 +2,8 @@ using EduTrack.Application.Features.Courses.Commands;
 using EduTrack.Application.Features.Courses.Queries;
 using EduTrack.Application.Common.Models;
 using EduTrack.Domain.Entities;
+using EduTrack.WebApp.Extensions;
+using EduTrack.WebApp.Areas.Teacher.Views.Shared;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -43,6 +45,26 @@ public class CoursesController : Controller
             .Where(c => c.CreatedBy == currentUser.Id)
             .Distinct()
             .ToList();
+
+        // Setup page title section
+        var breadcrumbItems = new List<PageTitleBreadcrumbItem>
+        {
+            PageTitleSectionHelper.CreateBreadcrumbItem("خانه", Url.Action("Index", "Home"), "fas fa-home"),
+            PageTitleSectionHelper.CreateBreadcrumbItem("دوره‌ها", null, "fas fa-book", true)
+        };
+
+        var actions = new List<PageTitleAction>
+        {
+            PageTitleSectionHelper.CreatePageAction("دوره جدید", Url.Action("Create") ?? "#", "btn-primary", "fas fa-plus")
+        };
+
+        this.SetPageTitleSection(
+            title: "مدیریت دوره‌ها",
+            titleIcon: "fas fa-book",
+            description: "مدیریت و سازماندهی دوره‌های آموزشی شما",
+            breadcrumbItems: breadcrumbItems,
+            actions: actions
+        );
 
         return View(allCourses);
     }

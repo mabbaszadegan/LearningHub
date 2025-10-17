@@ -1,0 +1,85 @@
+@model EduTrack.WebApp.Areas.Teacher.Views.Shared.PageTitleSectionViewModel
+
+<!-- Modern Page Title Section -->
+<div class="page-title-section" id="pageTitleSection">
+    <div class="container-fluid">
+        <div class="row align-items-center">
+            <div class="col-12">
+                <!-- Breadcrumb Navigation -->
+                @if (Model.BreadcrumbItems?.Any() == true)
+                {
+                    <nav class="breadcrumb-modern" aria-label="breadcrumb">
+                        <ol class="breadcrumb-list">
+                            @for (int i = 0; i < Model.BreadcrumbItems.Count; i++)
+                            {
+                                var item = Model.BreadcrumbItems[i];
+                                <li class="breadcrumb-item @(item.IsActive ? "active" : "")">
+                                    @if (!string.IsNullOrEmpty(item.Url) && !item.IsActive)
+                                    {
+                                        <a href="@item.Url" class="breadcrumb-link" data-breadcrumb-index="@i">
+                                            @if (!string.IsNullOrEmpty(item.Icon))
+                                            {
+                                                <i class="@item.Icon"></i>
+                                            }
+                                            <span class="breadcrumb-text">@item.Text</span>
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <span class="breadcrumb-current">
+                                            @if (!string.IsNullOrEmpty(item.Icon))
+                                            {
+                                                <i class="@item.Icon"></i>
+                                            }
+                                            <span class="breadcrumb-text">@item.Text</span>
+                                        </span>
+                                    }
+                                </li>
+                                @if (i < Model.BreadcrumbItems.Count - 1)
+                                {
+                                    <li class="breadcrumb-separator">
+                                        <i class="fas fa-chevron-left"></i>
+                                    </li>
+                                }
+                            }
+                        </ol>
+                    </nav>
+                }
+
+                <!-- Page Title and Description -->
+                <div class="page-title-content">
+                    <div class="title-row">
+                        <h1 class="page-title">
+                            @if (!string.IsNullOrEmpty(Model.TitleIcon))
+                            {
+                                <i class="@Model.TitleIcon"></i>
+                            }
+                            <span class="title-text">@Model.Title</span>
+                        </h1>
+                        
+                        @if (Model.Actions?.Any() == true)
+                        {
+                            <div class="title-actions">
+                                @foreach (var action in Model.Actions)
+                                {
+                                    <a href="@action.Url" class="action-btn @action.CssClass" @(action.IsModal ? "data-bs-toggle=\"modal\" data-bs-target=\"" + action.ModalTarget + "\"" : "")>
+                                        @if (!string.IsNullOrEmpty(action.Icon))
+                                        {
+                                            <i class="@action.Icon"></i>
+                                        }
+                                        <span class="action-text">@action.Text</span>
+                                    </a>
+                                }
+                            </div>
+                        }
+                    </div>
+                    
+                    @if (!string.IsNullOrEmpty(Model.Description))
+                    {
+                        <p class="page-description">@Model.Description</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
