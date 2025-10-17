@@ -45,6 +45,20 @@ class ModernScheduleItemFormManager {
         if (idInput && parseInt(idInput.value) > 0) {
             this.isEditMode = true;
             this.currentItemId = parseInt(idInput.value);
+            return;
+        }
+        
+        // Also check URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const idFromUrl = urlParams.get('id');
+        if (idFromUrl && parseInt(idFromUrl) > 0) {
+            this.isEditMode = true;
+            this.currentItemId = parseInt(idFromUrl);
+            
+            // Update hidden input field if it exists
+            if (idInput) {
+                idInput.value = this.currentItemId;
+            }
         }
     }
 
@@ -503,6 +517,15 @@ class ModernScheduleItemFormManager {
                     const idInput = document.querySelector('input[name="id"]');
                     if (idInput) {
                         idInput.value = this.currentItemId;
+                    }
+                    
+                    // Update URL to include ID for edit mode
+                    try {
+                        const url = new URL(window.location);
+                        url.searchParams.set('id', this.currentItemId);
+                        window.history.replaceState({}, '', url);
+                    } catch (error) {
+                        console.error('Error updating URL:', error);
                     }
                     
                     // Now proceed to next step

@@ -12,11 +12,36 @@ class Step2TimingManager {
     init() {
         this.setupDatetimeHelpers();
         this.setupPersianDatePicker();
+
+        // Set current date as default start date for new items - with delay to ensure DOM is ready
+        setTimeout(() => {
+            this.setDefaultStartDate();
+        }, 500);
+    }
+
+    setDefaultStartDate() {
+        // Only set default date for new items, not when editing existing items
+        const persianStartDateInput = document.getElementById('PersianStartDate');
+        const startDateInput = document.getElementById('StartDate');
+
+        // Check if we're in edit mode by looking for existing data
+        const isEditMode = this.formManager && this.formManager.isEditMode;
+
+        // Also check URL parameters for edit mode
+        const urlParams = new URLSearchParams(window.location.search);
+        const idFromUrl = urlParams.get('id');
+        const isEditModeFromUrl = idFromUrl && parseInt(idFromUrl) > 0;
+
+        // Only set default if no date is already set and we're not in edit mode
+        if (persianStartDateInput && startDateInput && !persianStartDateInput.value && !isEditMode && !isEditModeFromUrl) {
+            const currentDate = new Date();
+            this.setStartDate(currentDate);
+        }
     }
 
     validateStep2() {
         let isValid = true;
-        
+
         // Validate Start Date
         const startDateInput = document.querySelector('input[name="StartDate"]');
         if (!startDateInput || !startDateInput.value) {
@@ -25,7 +50,7 @@ class Step2TimingManager {
         } else {
             this.clearFieldError('StartDate');
         }
-        
+
         // Validate Max Score if provided
         const maxScoreInput = document.querySelector('input[name="MaxScore"]');
         if (maxScoreInput && maxScoreInput.value) {
@@ -37,7 +62,7 @@ class Step2TimingManager {
                 this.clearFieldError('MaxScore');
             }
         }
-        
+
         return isValid;
     }
 
@@ -45,13 +70,13 @@ class Step2TimingManager {
         const field = document.querySelector(`[name="${fieldName}"]`);
         if (field) {
             field.classList.add('is-invalid');
-            
+
             // Remove existing error message
             const existingError = field.parentNode.querySelector('.field-error');
             if (existingError) {
                 existingError.remove();
             }
-            
+
             // Add new error message
             const errorDiv = document.createElement('div');
             errorDiv.className = 'field-error text-danger mt-1';
@@ -64,7 +89,7 @@ class Step2TimingManager {
         const field = document.querySelector(`[name="${fieldName}"]`);
         if (field) {
             field.classList.remove('is-invalid');
-            
+
             const existingError = field.parentNode.querySelector('.field-error');
             if (existingError) {
                 existingError.remove();
@@ -75,10 +100,10 @@ class Step2TimingManager {
     setupDatetimeHelpers() {
         // Setup start date preset buttons
         this.setupStartDatePresets();
-        
+
         // Setup due date preset buttons
         this.setupDueDatePresets();
-        
+
         // Setup conditional score display
         this.setupConditionalScoreDisplay();
     }
@@ -89,18 +114,18 @@ class Step2TimingManager {
         if (!startDateSection) {
             return;
         }
-        
+
         const startDatePresets = startDateSection.querySelectorAll('.date-preset-btn[data-preset]');
-        
+
         startDatePresets.forEach(btn => {
             btn.addEventListener('click', () => {
                 const preset = btn.dataset.preset;
                 const targetDate = this.calculateStartDate(preset);
-                
+
                 if (targetDate) {
                     this.setStartDate(targetDate);
                     this.updatePresetButtonState(btn, startDatePresets);
-                    
+
                     // Dispatch timing changed event
                     document.dispatchEvent(new CustomEvent('timingChanged', {
                         detail: { type: 'startDatePreset', preset: preset, date: targetDate }
@@ -116,18 +141,18 @@ class Step2TimingManager {
         if (!dueDateSection) {
             return;
         }
-        
+
         const dueDatePresets = dueDateSection.querySelectorAll('.date-preset-btn[data-preset]');
-        
+
         dueDatePresets.forEach(btn => {
             btn.addEventListener('click', () => {
                 const preset = btn.dataset.preset;
                 const targetDate = this.calculateDueDate(preset);
-                
+
                 if (targetDate) {
                     this.setDueDate(targetDate);
                     this.updatePresetButtonState(btn, dueDatePresets);
-                    
+
                     // Dispatch timing changed event
                     document.dispatchEvent(new CustomEvent('timingChanged', {
                         detail: { type: 'dueDatePreset', preset: preset, date: targetDate }
@@ -139,7 +164,7 @@ class Step2TimingManager {
 
     calculateStartDate(preset) {
         const now = new Date();
-        
+
         switch (preset) {
             case 'now':
                 return now;
@@ -163,9 +188,9 @@ class Step2TimingManager {
     calculateDueDate(preset) {
         const startDateInput = document.getElementById('StartDate');
         const persianStartDateInput = document.getElementById('PersianStartDate');
-        
+
         let startDate;
-        
+
         // Try to get start date from hidden field first
         if (startDateInput && startDateInput.value) {
             startDate = new Date(startDateInput.value);
@@ -176,13 +201,13 @@ class Step2TimingManager {
             // Use current date as fallback
             startDate = new Date();
         }
-        
+
         // Validate the date
         if (!startDate || isNaN(startDate.getTime())) {
             startDate = new Date();
         }
-        
-        
+
+
         let dueDate;
         switch (preset) {
             case '1day':
@@ -206,7 +231,7 @@ class Step2TimingManager {
             default:
                 return null;
         }
-        
+
         return dueDate;
     }
 
@@ -214,35 +239,37 @@ class Step2TimingManager {
         const persianStartDateInput = document.getElementById('PersianStartDate');
         const startDateInput = document.getElementById('StartDate');
         const startTimeInput = document.getElementById('StartTime');
-        
+
         if (persianStartDateInput && startDateInput) {
-            
             // Validate the date
             if (!date || isNaN(date.getTime())) {
                 return;
             }
-            
+
             // Convert to Persian date
             const persianDate = this.convertToPersianDate(date);
-            
+
             if (persianDate && persianDate !== '0000/00/00') {
                 persianStartDateInput.value = persianDate;
-                
-                // Set hidden field with date
-                startDateInput.value = date.toISOString();
-                
+
+                // Create a proper date object with timezone handling
+                const properDate = new Date(date.getFullYear(), date.getMonth(), date.getDate(),
+                    date.getHours(), date.getMinutes(), 0, 0);
+
+                // Set hidden field with proper ISO string
+                startDateInput.value = properDate.toISOString();
+
                 // Set time to current time
                 if (startTimeInput) {
                     const timeString = `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
                     startTimeInput.value = timeString;
                 }
-                
+
                 // Trigger datepicker update
                 this.updateDatePicker(persianStartDateInput, persianDate);
-                
+
                 // Update duration calculator
                 this.updateDurationCalculator();
-            } else {
             }
         }
     }
@@ -252,23 +279,23 @@ class Step2TimingManager {
         const dueDateInput = document.getElementById('DueDate');
         const dueTimeInput = document.getElementById('DueTime');
         const startTimeInput = document.getElementById('StartTime');
-        
+
         if (persianDueDateInput && dueDateInput) {
-            
+
             // Validate the date
             if (!date || isNaN(date.getTime())) {
                 return;
             }
-            
+
             // Convert to Persian date
             const persianDate = this.convertToPersianDate(date);
-            
+
             if (persianDate && persianDate !== '0000/00/00') {
                 persianDueDateInput.value = persianDate;
-                
+
                 // Set hidden field with date
                 dueDateInput.value = date.toISOString();
-                
+
                 // Set time to start time if available, otherwise current time
                 if (dueTimeInput) {
                     let timeString;
@@ -281,10 +308,10 @@ class Step2TimingManager {
                     }
                     dueTimeInput.value = timeString;
                 }
-                
+
                 // Trigger datepicker update
                 this.updateDatePicker(persianDueDateInput, persianDate);
-                
+
                 // Update duration calculator
                 this.updateDurationCalculator();
             } else {
@@ -299,7 +326,7 @@ class Step2TimingManager {
                 btn.classList.remove('active');
             }
         });
-        
+
         // Add active class to clicked button
         activeBtn.classList.add('active');
     }
@@ -308,11 +335,11 @@ class Step2TimingManager {
         // Check if we're in step 2 and hide score for reminder items
         const itemTypeSelect = document.getElementById('itemType');
         const maxScoreSection = document.getElementById('maxScoreSection');
-        
+
         if (itemTypeSelect && maxScoreSection) {
             // Initial check
             this.toggleScoreDisplay();
-            
+
             // Listen for type changes
             itemTypeSelect.addEventListener('change', () => {
                 this.toggleScoreDisplay();
@@ -323,13 +350,13 @@ class Step2TimingManager {
     toggleScoreDisplay() {
         const itemTypeSelect = document.getElementById('itemType');
         const maxScoreSection = document.getElementById('maxScoreSection');
-        
+
         if (itemTypeSelect && maxScoreSection) {
             const selectedType = parseInt(itemTypeSelect.value);
-            
+
             // Hide score section for reminder items (Reminder = 0 in ScheduleItemType enum)
             const isReminderType = selectedType === 0;
-            
+
             if (isReminderType) {
                 maxScoreSection.style.display = 'none';
             } else {
@@ -407,7 +434,7 @@ class Step2TimingManager {
     setupDatePickerEvents() {
         // Setup events for Persian date pickers
         const persianDateInputs = document.querySelectorAll('.persian-datepicker');
-        
+
         persianDateInputs.forEach(input => {
             input.addEventListener('click', () => {
                 // Ensure datepicker is properly initialized
@@ -433,7 +460,7 @@ class Step2TimingManager {
             startTimeInput.addEventListener('change', () => {
                 this.updateDateTimeField(startDateInput, startTimeInput);
                 this.updateDurationCalculator();
-                
+
                 // Dispatch timing changed event
                 document.dispatchEvent(new CustomEvent('timingChanged', {
                     detail: { type: 'startTime', value: startTimeInput.value }
@@ -445,7 +472,7 @@ class Step2TimingManager {
             dueTimeInput.addEventListener('change', () => {
                 this.updateDateTimeField(dueDateInput, dueTimeInput);
                 this.updateDurationCalculator();
-                
+
                 // Dispatch timing changed event
                 document.dispatchEvent(new CustomEvent('timingChanged', {
                     detail: { type: 'dueTime', value: dueTimeInput.value }
@@ -469,7 +496,7 @@ class Step2TimingManager {
                     }
                 }
                 this.updateDurationCalculator();
-                
+
                 // Dispatch timing changed event
                 document.dispatchEvent(new CustomEvent('timingChanged', {
                     detail: { type: 'startDate', value: persianStartDateInput.value }
@@ -500,7 +527,7 @@ class Step2TimingManager {
                     }
                 }
                 this.updateDurationCalculator();
-                
+
                 // Dispatch timing changed event
                 document.dispatchEvent(new CustomEvent('timingChanged', {
                     detail: { type: 'dueDate', value: persianDueDateInput.value }
@@ -534,7 +561,7 @@ class Step2TimingManager {
                     // Fall through to next method
                 }
             }
-            
+
             // Fallback to old PersianDate library if available
             if (typeof PersianDate !== 'undefined') {
                 try {
@@ -544,7 +571,7 @@ class Step2TimingManager {
                     // Fall through to next method
                 }
             }
-            
+
             // Fallback to persianDateUtils if available
             if (typeof window.persianDateUtils !== 'undefined' && window.persianDateUtils.gregorianToPersian) {
                 try {
@@ -553,17 +580,17 @@ class Step2TimingManager {
                     // Fall through to next method
                 }
             }
-            
+
             // Final fallback: simple approximation
             const gregorianYear = date.getFullYear();
             const gregorianMonth = date.getMonth() + 1;
             const gregorianDay = date.getDate();
-            
+
             // More accurate Gregorian to Persian conversion
             let persianYear = gregorianYear - 621;
             let persianMonth = gregorianMonth;
             let persianDay = gregorianDay;
-            
+
             // Adjust for Persian calendar differences
             if (gregorianMonth >= 3 && gregorianMonth <= 5) {
                 persianMonth = gregorianMonth - 2;
@@ -577,17 +604,17 @@ class Step2TimingManager {
                     persianYear -= 1;
                 }
             }
-            
+
             // Handle month boundaries
             if (persianMonth > 12) {
                 persianMonth -= 12;
                 persianYear += 1;
             }
-            
+
             return `${persianYear}/${persianMonth.toString().padStart(2, '0')}/${persianDay.toString().padStart(2, '0')}`;
-            
+
         } catch (error) {
-            
+
             // Return current date as fallback
             const now = new Date();
             const year = now.getFullYear() - 621;
@@ -618,7 +645,7 @@ class Step2TimingManager {
                     // Fall through to next method
                 }
             }
-            
+
             // Fallback to old PersianDate library if available
             if (typeof PersianDate !== 'undefined') {
                 try {
@@ -628,7 +655,7 @@ class Step2TimingManager {
                     // Fall through to next method
                 }
             }
-            
+
             // Fallback to persianDateUtils if available
             if (typeof window.persianDateUtils !== 'undefined' && window.persianDateUtils.persianToGregorian) {
                 try {
@@ -637,19 +664,19 @@ class Step2TimingManager {
                     // Fall through to next method
                 }
             }
-            
+
             // Final fallback: simple approximation
             const parts = persianDateString.split('/');
             if (parts.length === 3) {
                 const persianYear = parseInt(parts[0]);
                 const persianMonth = parseInt(parts[1]);
                 const persianDay = parseInt(parts[2]);
-                
+
                 // More accurate Persian to Gregorian conversion
                 let gregorianYear = persianYear + 621;
                 let gregorianMonth = persianMonth;
                 let gregorianDay = persianDay;
-                
+
                 // Adjust for Persian calendar differences
                 if (persianMonth <= 6) {
                     gregorianMonth = persianMonth + 3;
@@ -657,18 +684,18 @@ class Step2TimingManager {
                     gregorianMonth = persianMonth - 9;
                     gregorianYear += 1;
                 }
-                
+
                 // Handle month boundaries
                 if (gregorianMonth > 12) {
                     gregorianMonth -= 12;
                     gregorianYear += 1;
                 }
-                
+
                 return new Date(gregorianYear, gregorianMonth - 1, gregorianDay);
             }
-            
+
             return null;
-            
+
         } catch (error) {
             return null;
         }
@@ -676,7 +703,7 @@ class Step2TimingManager {
 
     updateDatePicker(inputElement, persianDate) {
         try {
-            
+
             // Try to update the datepicker if it exists
             if (inputElement._persianDatePicker && typeof inputElement._persianDatePicker.setDate === 'function') {
                 inputElement._persianDatePicker.setDate(persianDate);
@@ -686,11 +713,11 @@ class Step2TimingManager {
                 // Trigger change event to update the calendar
                 const changeEvent = new Event('change', { bubbles: true });
                 inputElement.dispatchEvent(changeEvent);
-                
+
                 // Also trigger input event
                 const inputEvent = new Event('input', { bubbles: true });
                 inputElement.dispatchEvent(inputEvent);
-                
+
                 // Try to trigger focus and blur to refresh the datepicker
                 inputElement.focus();
                 setTimeout(() => {
@@ -702,7 +729,7 @@ class Step2TimingManager {
     }
 
     updateDatePickers() {
-        
+
         // Update PersianStartDate datepicker
         const persianStartDateInput = document.getElementById('PersianStartDate');
         if (persianStartDateInput && persianStartDateInput.value) {
@@ -716,7 +743,7 @@ class Step2TimingManager {
                 persianStartDateInput.dispatchEvent(changeEvent);
             }
         }
-        
+
         // Update PersianDueDate datepicker
         const persianDueDateInput = document.getElementById('PersianDueDate');
         if (persianDueDateInput && persianDueDateInput.value) {
@@ -789,10 +816,10 @@ class Step2TimingManager {
 
     // Populate step 2 with existing data
     populateStep2Data(data) {
-        
+
         // Handle start date and time separately
         let startDateField = data.persianStartDate || data.PersianStartDate;
-        
+
         // If Persian date is not available, convert from Gregorian date
         if (!startDateField) {
             const startDateTime = data.startDate || data.StartDate || data.startDateTime;
@@ -803,13 +830,13 @@ class Step2TimingManager {
                 }
             }
         }
-        
+
         if (startDateField) {
             const persianStartDate = document.getElementById('PersianStartDate');
             const startDateInput = document.getElementById('StartDate');
             if (persianStartDate) {
                 persianStartDate.value = startDateField;
-                
+
                 // Update hidden field
                 if (startDateInput) {
                     const gregorianDate = this.convertPersianToGregorian(startDateField);
@@ -819,16 +846,16 @@ class Step2TimingManager {
                 }
             }
         }
-        
+
         // Handle start time separately
         const startDateTime = data.startDate || data.StartDate || data.startDateTime;
         if (startDateTime) {
             this.updateTimeInput('StartTime', startDateTime);
         }
-        
+
         // Handle due date and time separately
         let dueDateField = data.persianDueDate || data.PersianDueDate;
-        
+
         // If Persian date is not available, convert from Gregorian date
         if (!dueDateField) {
             const dueDateTime = data.dueDate || data.DueDate || data.dueDateTime;
@@ -839,13 +866,13 @@ class Step2TimingManager {
                 }
             }
         }
-        
+
         if (dueDateField) {
             const persianDueDate = document.getElementById('PersianDueDate');
             const dueDateInput = document.getElementById('DueDate');
             if (persianDueDate) {
                 persianDueDate.value = dueDateField;
-                
+
                 // Update hidden field
                 if (dueDateInput) {
                     const gregorianDate = this.convertPersianToGregorian(dueDateField);
@@ -855,13 +882,13 @@ class Step2TimingManager {
                 }
             }
         }
-        
+
         // Handle due time separately
         const dueDateTime = data.dueDate || data.DueDate || data.dueDateTime;
         if (dueDateTime) {
             this.updateTimeInput('DueTime', dueDateTime);
         }
-        
+
         // Try different possible field names for max score
         const maxScoreField = data.maxScore || data.MaxScore;
         if (maxScoreField) {
@@ -870,7 +897,7 @@ class Step2TimingManager {
                 maxScore.value = maxScoreField;
             }
         }
-        
+
         // Try different possible field names for mandatory
         const mandatoryField = data.isMandatory || data.IsMandatory;
         if (mandatoryField !== undefined) {
