@@ -33,11 +33,8 @@ public class CreateScheduleItemCommandHandler : IRequestHandler<CreateScheduleIt
                 return Result<int>.Failure("برنامه آموزشی یافت نشد.");
             }
 
-            // Validate subchapter selection (mandatory)
-            if (request.SubChapterIds == null || !request.SubChapterIds.Any())
-            {
-                return Result<int>.Failure("انتخاب حداقل یک زیرمبحث اجباری است.");
-            }
+            // Note: SubChapter validation is handled in step 3, not during initial creation
+            // This allows creating a basic item first and then adding assignments later
 
             // Create schedule item
             var scheduleItem = ScheduleItem.Create(

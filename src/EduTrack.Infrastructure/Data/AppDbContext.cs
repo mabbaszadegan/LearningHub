@@ -647,8 +647,7 @@ public class AppDbContext : IdentityDbContext<User>
             
             // Configure UpdatedAt as concurrency token
             entity.Property(e => e.UpdatedAt)
-                .IsConcurrencyToken()
-                .ValueGeneratedOnAddOrUpdate();
+                .IsConcurrencyToken();
             
             entity.HasOne(e => e.TeachingPlan)
                 .WithMany(e => e.ScheduleItems)
@@ -668,6 +667,12 @@ public class AppDbContext : IdentityDbContext<User>
             entity.HasIndex(e => e.IsMandatory);
             entity.HasIndex(e => e.StartDate);
             entity.HasIndex(e => e.DueDate);
+            
+            // Add SessionReport relationship
+            entity.HasOne(x => x.SessionReport)
+                .WithMany()
+                .HasForeignKey(x => x.SessionReportId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
 
         // Configure ScheduleItemGroupAssignment entity
@@ -810,15 +815,6 @@ public class AppDbContext : IdentityDbContext<User>
             entity.HasIndex(x => new { x.ScheduleItemId, x.StudentId, x.GroupId }).IsUnique();
             entity.HasIndex(x => x.StudentId);
             entity.HasIndex(x => x.GroupId);
-        });
-
-        // Update ScheduleItem entity to include SessionReport relationship
-        builder.Entity<ScheduleItem>(entity =>
-        {
-            entity.HasOne(x => x.SessionReport)
-                .WithMany()
-                .HasForeignKey(x => x.SessionReportId)
-                .OnDelete(DeleteBehavior.SetNull);
         });
 
         // Configure TeachingSessionPlan entity

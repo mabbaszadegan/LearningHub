@@ -249,7 +249,7 @@ class ScheduleItemsManager {
         const teachingPlanId = urlParams.get('teachingPlanId') || window.teachingPlanId || 1;
         
         // Redirect to create page with edit parameters
-        window.location.href = `/Teacher/ScheduleItem/Create?teachingPlanId=${teachingPlanId}&id=${itemId}`;
+        window.location.href = `/Teacher/ScheduleItem/CreateOrEdit?teachingPlanId=${teachingPlanId}&id=${itemId}`;
     }
 
     async duplicateItem(itemId) {

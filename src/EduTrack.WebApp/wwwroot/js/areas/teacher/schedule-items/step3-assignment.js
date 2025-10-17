@@ -28,6 +28,36 @@ class Step3AssignmentManager {
     async init() {
     }
 
+    validateStep3() {
+        let isValid = true;
+        
+        // Validate SubChapter selection (mandatory)
+        const selectedSubChapters = this.getSelectedSubChapters();
+        if (selectedSubChapters.length === 0) {
+            this.showErrorMessage('انتخاب حداقل یک زیرمبحث اجباری است');
+            isValid = false;
+        }
+        
+        return isValid;
+    }
+
+    showErrorMessage(message) {
+        // Remove existing error messages
+        const existingErrors = document.querySelectorAll('.step3-error');
+        existingErrors.forEach(error => error.remove());
+        
+        // Add new error message
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'step3-error alert alert-danger mt-3';
+        errorDiv.textContent = message;
+        
+        // Insert error message at the top of step 3 content
+        const step3Content = document.querySelector('.step-content');
+        if (step3Content) {
+            step3Content.insertBefore(errorDiv, step3Content.firstChild);
+        }
+    }
+
     // Initialize step 3 content when entering step 3
     async initializeStep3Content() {
 

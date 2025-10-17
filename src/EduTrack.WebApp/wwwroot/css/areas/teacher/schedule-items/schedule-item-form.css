@@ -3644,3 +3644,32 @@
     margin-top: 0.25rem;
     display: block;
 }
+
+/* Disabled step items in create mode */
+.step-item.disabled {
+    opacity: 0.5;
+    pointer-events: none;
+    cursor: not-allowed;
+}
+
+.step-item.disabled .step-indicator-icon {
+    background-color: #e9ecef;
+    color: #6c757d;
+}
+
+.step-item.disabled .step-indicator-text {
+    color: #6c757d;
+}
+
+/* Field validation styles */
+.is-invalid {
+    border-color: #dc3545 !important;
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+}
+
+.field-error {
+    font-size: 0.875rem;
+    color: #dc3545;
+    margin-top: 0.25rem;
+    display: block;
+}

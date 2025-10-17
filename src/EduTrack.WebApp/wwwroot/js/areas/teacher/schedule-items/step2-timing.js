@@ -14,6 +14,64 @@ class Step2TimingManager {
         this.setupPersianDatePicker();
     }
 
+    validateStep2() {
+        let isValid = true;
+        
+        // Validate Start Date
+        const startDateInput = document.querySelector('input[name="StartDate"]');
+        if (!startDateInput || !startDateInput.value) {
+            this.showFieldError('StartDate', 'تاریخ شروع الزامی است');
+            isValid = false;
+        } else {
+            this.clearFieldError('StartDate');
+        }
+        
+        // Validate Max Score if provided
+        const maxScoreInput = document.querySelector('input[name="MaxScore"]');
+        if (maxScoreInput && maxScoreInput.value) {
+            const score = parseFloat(maxScoreInput.value);
+            if (isNaN(score) || score < 0 || score > 100) {
+                this.showFieldError('MaxScore', 'امتیاز باید بین 0 تا 100 باشد');
+                isValid = false;
+            } else {
+                this.clearFieldError('MaxScore');
+            }
+        }
+        
+        return isValid;
+    }
+
+    showFieldError(fieldName, message) {
+        const field = document.querySelector(`[name="${fieldName}"]`);
+        if (field) {
+            field.classList.add('is-invalid');
+            
+            // Remove existing error message
+            const existingError = field.parentNode.querySelector('.field-error');
+            if (existingError) {
+                existingError.remove();
+            }
+            
+            // Add new error message
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'field-error text-danger mt-1';
+            errorDiv.textContent = message;
+            field.parentNode.appendChild(errorDiv);
+        }
+    }
+
+    clearFieldError(fieldName) {
+        const field = document.querySelector(`[name="${fieldName}"]`);
+        if (field) {
+            field.classList.remove('is-invalid');
+            
+            const existingError = field.parentNode.querySelector('.field-error');
+            if (existingError) {
+                existingError.remove();
+            }
+        }
+    }
+
     setupDatetimeHelpers() {
         // Setup start date preset buttons
         this.setupStartDatePresets();

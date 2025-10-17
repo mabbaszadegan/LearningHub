@@ -13,6 +13,7 @@ class ModernScheduleItemFormManager {
         this.validationErrors = {};
         this.currentItemId = null;
         this.isEditMode = false;
+        this.lastCreatedItemId = null;
         this.handleBadgeClick = null; // Initialize badge click handler
         this.isNavigating = false; // Prevent rapid step changes
         this.isSaving = false; // Prevent multiple save operations
@@ -38,7 +39,19 @@ class ModernScheduleItemFormManager {
         this.init();
     }
 
+    detectEditMode() {
+        // Check if we're in edit mode by looking at the hidden input field
+        const idInput = document.querySelector('input[name="id"]');
+        if (idInput && parseInt(idInput.value) > 0) {
+            this.isEditMode = true;
+            this.currentItemId = parseInt(idInput.value);
+        }
+    }
+
     async init() {
+        // Check if we're in edit mode
+        this.detectEditMode();
+        
         this.setupEventListeners();
         // Step 1 basics handled by Step1BasicsManager
         this.setupStepNavigation();
@@ -252,6 +265,11 @@ class ModernScheduleItemFormManager {
             return;
         }
 
+        // In create mode, only allow step 1
+        if (!this.isEditMode && step > 1) {
+            return;
+        }
+
         // Prevent rapid step changes
         if (this.isNavigating) {
             return;
@@ -390,11 +408,115 @@ class ModernScheduleItemFormManager {
         
     }
 
+    async createItem() {
+        try {
+            // Collect form data from step 1
+            const formData = this.collectStep1Data();
+            
+            console.log('Sending request:', formData);
+            
+            // Create the item via API
+            const response = await fetch('/Teacher/ScheduleItem/CreateScheduleItem', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                },
+                body: JSON.stringify(formData)
+            });
+            
+            console.log('Response status:', response.status);
+            const result = await response.json();
+            console.log('Response result:', result);
+            
+            if (result.success) {
+                this.lastCreatedItemId = result.id;
+                this.showSuccessMessage('آیتم آموزشی با موفقیت ایجاد شد');
+                return true;
+            } else {
+                this.showErrorMessage(result.message || 'خطا در ایجاد آیتم آموزشی');
+                return false;
+            }
+        } catch (error) {
+            console.error('Error creating item:', error);
+            this.showErrorMessage('خطا در ایجاد آیتم آموزشی');
+            return false;
+        }
+    }
+
+    collectStep1Data() {
+        const form = document.getElementById('createItemForm');
+        const formData = new FormData(form);
+        
+        // Get values directly from form elements using correct names
+        const titleInput = form.querySelector('input[name="Title"]');
+        const descriptionInput = form.querySelector('textarea[name="Description"]');
+        const typeSelect = form.querySelector('select[name="Type"]');
+        
+        // Debug: log the form data
+        console.log('Form data collected:', {
+            TeachingPlanId: formData.get('TeachingPlanId'),
+            Title: titleInput ? titleInput.value : 'not found',
+            Description: descriptionInput ? descriptionInput.value : 'not found',
+            Type: typeSelect ? typeSelect.value : 'not found'
+        });
+        
+        return {
+            TeachingPlanId: parseInt(formData.get('TeachingPlanId')) || 0,
+            GroupId: null, // Legacy single group assignment
+            Title: titleInput ? titleInput.value : '',
+            Description: descriptionInput ? descriptionInput.value : '',
+            Type: typeSelect ? parseInt(typeSelect.value) : 1,
+            StartDate: new Date().toISOString(), // Default start date
+            DueDate: null, // No due date initially
+            IsMandatory: false, // Default to false
+            DisciplineHint: null, // No discipline hint initially
+            ContentJson: '{}', // Empty content initially
+            MaxScore: null, // No max score initially
+            GroupIds: [],
+            SubChapterIds: []
+        };
+    }
+
     async goToNextStep() {
         if (this.currentStep < this.totalSteps) {
             const nextBtn = document.getElementById('nextStepBtn');
             
             try {
+                // In create mode, if we're on step 1, create the item first
+                if (!this.isEditMode && this.currentStep === 1) {
+                    // Disable next button and show loading state
+                    this.setButtonLoadingState(nextBtn, true, 'در حال ایجاد آیتم...');
+                    
+                    // Create the item
+                    const success = await this.createItem();
+                    if (!success) {
+                        this.setButtonLoadingState(nextBtn, false, 'ادامه');
+                        return false;
+                    }
+                    
+                    // After successful creation, switch to edit mode
+                    this.isEditMode = true;
+                    this.currentItemId = this.lastCreatedItemId;
+                    
+                    // Update the hidden input field
+                    const idInput = document.querySelector('input[name="id"]');
+                    if (idInput) {
+                        idInput.value = this.currentItemId;
+                    }
+                    
+                    // Now proceed to next step
+                    this.goToStep(this.currentStep + 1);
+                    this.setButtonLoadingState(nextBtn, false, 'ادامه');
+                    return true;
+                }
+                
+                // Validate current step before proceeding
+                if (!this.validateCurrentStep()) {
+                    this.setButtonLoadingState(nextBtn, false, 'ادامه');
+                    return false;
+                }
+                
                 // Only show confirmation dialog if there are changes
                 if (this.shouldShowConfirmation()) {
                     const result = await this.showSaveConfirmation();
@@ -476,17 +598,31 @@ class ModernScheduleItemFormManager {
 
     updateStepVisibility() {
         document.querySelectorAll('.form-step').forEach((step, index) => {
-            step.classList.toggle('active', index + 1 === this.currentStep);
+            const stepNumber = index + 1;
+            // In create mode, only show step 1
+            if (!this.isEditMode && stepNumber > 1) {
+                step.style.display = 'none';
+                step.classList.remove('active');
+            } else {
+                step.style.display = '';
+                step.classList.toggle('active', stepNumber === this.currentStep);
+            }
         });
 
         document.querySelectorAll('.step-item').forEach((item, index) => {
             const stepNumber = index + 1;
             item.classList.remove('active', 'completed');
 
-            if (stepNumber === this.currentStep) {
-                item.classList.add('active');
-            } else if (stepNumber < this.currentStep) {
-                item.classList.add('completed');
+            // In create mode, only allow step 1
+            if (!this.isEditMode && stepNumber > 1) {
+                item.classList.add('disabled');
+            } else {
+                item.classList.remove('disabled');
+                if (stepNumber === this.currentStep) {
+                    item.classList.add('active');
+                } else if (stepNumber < this.currentStep) {
+                    item.classList.add('completed');
+                }
             }
         });
     }
@@ -539,10 +675,19 @@ class ModernScheduleItemFormManager {
                 const currentStepName = stepNames[this.currentStep] || 'مرحله';
                 
                 nextBtn.style.display = 'flex';
-                nextBtn.innerHTML = `
-                    <span>ثبت ${currentStepName} و ادامه</span>
-                    <i class="fas fa-chevron-left"></i>
-                `;
+                
+                // In create mode, change button text for step 1
+                if (!this.isEditMode && this.currentStep === 1) {
+                    nextBtn.innerHTML = `
+                        <span>ایجاد آیتم و ادامه</span>
+                        <i class="fas fa-chevron-left"></i>
+                    `;
+                } else {
+                    nextBtn.innerHTML = `
+                        <span>ثبت ${currentStepName} و ادامه</span>
+                        <i class="fas fa-chevron-left"></i>
+                    `;
+                }
             }
         }
 
@@ -801,18 +946,38 @@ class ModernScheduleItemFormManager {
 
     // Form Validation Methods
     validateCurrentStep() {
-        const stepElement = document.querySelector(`.form-step[data-step="${this.currentStep}"]`);
-        if (!stepElement) return true;
-
         let isValid = true;
-        const requiredFields = stepElement.querySelectorAll('[required]');
-
-        requiredFields.forEach(field => {
-            if (!this.validateField(field.name, field.value)) {
-                isValid = false;
-            }
-        });
-
+        
+        // Step-specific validation using step managers
+        switch (this.currentStep) {
+            case 1:
+                // Use Step1BasicsManager validation
+                if (window.step1BasicsManager && typeof window.step1BasicsManager.validateStep1 === 'function') {
+                    isValid = window.step1BasicsManager.validateStep1();
+                }
+                break;
+            case 2:
+                // Use Step2TimingManager validation
+                if (window.step2TimingManager && typeof window.step2TimingManager.validateStep2 === 'function') {
+                    isValid = window.step2TimingManager.validateStep2();
+                }
+                break;
+            case 3:
+                // Use Step3AssignmentManager validation
+                if (this.step3Manager && typeof this.step3Manager.validateStep3 === 'function') {
+                    isValid = this.step3Manager.validateStep3();
+                }
+                break;
+            case 4:
+                // Use Step4ContentManager validation
+                if (window.step4ContentManager && typeof window.step4ContentManager.validateStep4 === 'function') {
+                    isValid = window.step4ContentManager.validateStep4();
+                }
+                break;
+            default:
+                isValid = true;
+        }
+        
         return isValid;
     }
 

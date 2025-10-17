@@ -25,7 +25,7 @@
                 <span>@teachingPlanTitle</span>
             </p>
         </div>
-        <a asp-action="Create" asp-route-teachingPlanId="@teachingPlanId" class="btn-action-primary">
+        <a asp-action="CreateOrEdit" asp-route-teachingPlanId="@teachingPlanId" class="btn-action-primary">
             <i class="fas fa-plus"></i>
             <span>آیتم جدید</span>
         </a>
@@ -211,7 +211,7 @@
                 </div>
                 <h3>هیچ آیتم آموزشی وجود ندارد</h3>
                 <p>برای شروع، اولین آیتم آموزشی خود را ایجاد کنید.</p>
-                <a asp-action="Create" asp-route-teachingPlanId="@teachingPlanId" class="btn-action-primary">
+                <a asp-action="CreateOrEdit" asp-route-teachingPlanId="@teachingPlanId" class="btn-action-primary">
                     <i class="fas fa-plus"></i>
                     <span>افزودن آیتم جدید</span>
                 </a>

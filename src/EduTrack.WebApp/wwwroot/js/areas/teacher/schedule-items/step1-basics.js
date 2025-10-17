@@ -16,6 +16,70 @@ class Step1BasicsManager {
         this.setupFormInputListeners();
     }
 
+    validateStep1() {
+        let isValid = true;
+        
+        // Validate Title
+        const titleInput = document.querySelector('input[name="Title"]');
+        if (!titleInput || !titleInput.value || titleInput.value.trim() === '') {
+            this.showFieldError('Title', 'عنوان آیتم آموزشی الزامی است');
+            isValid = false;
+        } else {
+            this.clearFieldError('Title');
+        }
+        
+        // Validate Type
+        const typeSelect = document.querySelector('select[name="Type"]');
+        if (!typeSelect || !typeSelect.value) {
+            this.showFieldError('Type', 'نوع آیتم آموزشی الزامی است');
+            isValid = false;
+        } else {
+            this.clearFieldError('Type');
+        }
+        
+        // Validate Description (optional but if provided, check length)
+        const descriptionInput = document.querySelector('textarea[name="Description"]');
+        if (descriptionInput && descriptionInput.value && descriptionInput.value.length > 1000) {
+            this.showFieldError('Description', 'توضیحات نمی‌تواند بیش از 1000 کاراکتر باشد');
+            isValid = false;
+        } else {
+            this.clearFieldError('Description');
+        }
+        
+        return isValid;
+    }
+
+    showFieldError(fieldName, message) {
+        const field = document.querySelector(`[name="${fieldName}"]`);
+        if (field) {
+            field.classList.add('is-invalid');
+            
+            // Remove existing error message
+            const existingError = field.parentNode.querySelector('.field-error');
+            if (existingError) {
+                existingError.remove();
+            }
+            
+            // Add new error message
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'field-error text-danger mt-1';
+            errorDiv.textContent = message;
+            field.parentNode.appendChild(errorDiv);
+        }
+    }
+
+    clearFieldError(fieldName) {
+        const field = document.querySelector(`[name="${fieldName}"]`);
+        if (field) {
+            field.classList.remove('is-invalid');
+            
+            const existingError = field.parentNode.querySelector('.field-error');
+            if (existingError) {
+                existingError.remove();
+            }
+        }
+    }
+
     setupFormInputListeners() {
         // Title character count
         const titleInput = document.getElementById('itemTitle');

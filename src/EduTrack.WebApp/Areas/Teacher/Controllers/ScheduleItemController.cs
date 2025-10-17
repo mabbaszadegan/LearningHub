@@ -65,8 +65,8 @@ public class ScheduleItemController : Controller
         return View(scheduleItems.Value);
     }
 
-    // GET: ScheduleItem/Create
-    public async Task<IActionResult> Create(int teachingPlanId, int id = 0)
+    // GET: ScheduleItem/CreateOrEdit
+    public async Task<IActionResult> CreateOrEdit(int teachingPlanId, int id = 0)
     {
         // Get teaching plan details for navigation
         var teachingPlan = await _mediator.Send(new GetTeachingPlanByIdQuery(teachingPlanId));
@@ -83,20 +83,53 @@ public class ScheduleItemController : Controller
             .Select(type => new { Value = (int)type, Text = type.GetDisplayName(), Description = type.GetDescription() })
             .ToList();
         
-        // Create a new model instance for the view
-        var model = new CreateScheduleItemRequest
+        // Check if we're in edit mode
+        bool isEditMode = id > 0;
+        ViewBag.IsEditMode = isEditMode;
+        ViewBag.ScheduleItemId = id;
+        
+        CreateScheduleItemRequest model;
+        
+        if (isEditMode)
         {
-            TeachingPlanId = teachingPlanId,
-            ContentJson = string.Empty
-        };
+            // Load existing item for editing
+            var scheduleItem = await _mediator.Send(new EduTrack.Application.Features.ScheduleItems.Queries.GetScheduleItemByIdQuery(id));
+            if (!scheduleItem.IsSuccess || scheduleItem.Value == null)
+            {
+                return NotFound("آیتم آموزشی یافت نشد.");
+            }
+            
+            model = new CreateScheduleItemRequest
+            {
+                TeachingPlanId = teachingPlanId,
+                Title = scheduleItem.Value.Title,
+                Description = scheduleItem.Value.Description,
+                StartDate = scheduleItem.Value.StartDate,
+                DueDate = scheduleItem.Value.DueDate,
+                IsMandatory = scheduleItem.Value.IsMandatory,
+                ContentJson = scheduleItem.Value.ContentJson,
+                MaxScore = scheduleItem.Value.MaxScore,
+                Type = scheduleItem.Value.Type,
+                DisciplineHint = scheduleItem.Value.DisciplineHint
+            };
+        }
+        else
+        {
+            // Create a new model instance for the view
+            model = new CreateScheduleItemRequest
+            {
+                TeachingPlanId = teachingPlanId,
+                ContentJson = string.Empty
+            };
+        }
         
         return View(model);
     }
 
-    // POST: ScheduleItem/Create
+    // POST: ScheduleItem/CreateOrEdit
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(CreateScheduleItemRequest request, int id = 0)
+    public async Task<IActionResult> CreateOrEdit(CreateScheduleItemRequest request, int id = 0)
     {
         if (!ModelState.IsValid)
         {
@@ -104,7 +137,7 @@ public class ScheduleItemController : Controller
             ViewBag.ScheduleItemTypes = Enum.GetValues<ScheduleItemType>()
                 .Select(type => new { Value = (int)type, Text = type.GetDisplayName(), Description = type.GetDescription() })
                 .ToList();
-            return View(id > 0 ? "Edit" : "Create", request);
+            return View(id > 0 ? "Edit" : "CreateOrEdit", request);
         }
 
         if (id > 0)
@@ -297,20 +330,28 @@ public class ScheduleItemController : Controller
     [HttpPost]
     public async Task<IActionResult> CreateScheduleItem([FromBody] CreateScheduleItemRequest request)
     {
+        if (request == null)
+        {
+            return Json(new { success = false, message = "درخواست نامعتبر است" });
+        }
+
+        // Log the request for debugging
+        Console.WriteLine($"CreateScheduleItem request: TeachingPlanId={request.TeachingPlanId}, Title={request.Title}, Type={request.Type}");
+
         var command = new CreateScheduleItemCommand(
             request.TeachingPlanId,
-            request.GroupId,
+            request.GroupId ?? null,
             request.Type,
-            request.Title,
-            request.Description,
+            request.Title ?? "",
+            request.Description ?? "",
             request.StartDate,
             request.DueDate,
             request.IsMandatory,
-            request.DisciplineHint,
-            request.ContentJson,
+            request.DisciplineHint ?? null,
+            request.ContentJson ?? "{}",
             request.MaxScore,
-            request.GroupIds,
-            request.SubChapterIds
+            request.GroupIds ?? new List<int>(),
+            request.SubChapterIds ?? new List<int>()
         );
 
         var result = await _mediator.Send(command);

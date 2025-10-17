@@ -1,6 +1,8 @@
 @model EduTrack.Application.Common.Models.ScheduleItems.CreateScheduleItemRequest
 @{
-    ViewData["Title"] = "ایجاد آیتم آموزشی جدید";
+    var isEditMode = ViewBag.IsEditMode as bool? ?? false;
+    var scheduleItemId = ViewBag.ScheduleItemId as int? ?? 0;
+    ViewData["Title"] = isEditMode ? "ویرایش آیتم آموزشی" : "ایجاد آیتم آموزشی جدید";
     var teachingPlanId = ViewBag.TeachingPlanId as int? ?? 0;
     var teachingPlanTitle = ViewBag.TeachingPlanTitle as string ?? "برنامه آموزشی";
     var courseTitle = ViewBag.CourseTitle as string ?? "دوره";
@@ -102,10 +104,10 @@
             <!-- Main Form -->
             <div class="col-12">
                 <div class="modern-form-container">
-                    <form asp-action="Create" method="post" id="createItemForm" class="modern-form">
+                    <form asp-action="CreateOrEdit" method="post" id="createItemForm" class="modern-form">
                         @Html.AntiForgeryToken()
                         <input asp-for="TeachingPlanId" type="hidden" />
-                        <input name="id" value="0" type="hidden" />
+                        <input name="id" value="@scheduleItemId" type="hidden" />
                         <!-- Hidden fields for multi-select values -->
                         <input type="hidden" id="selectedGroupIds" name="GroupIds" />
                         <input type="hidden" id="selectedSubChapterIds" name="SubChapterIds" />

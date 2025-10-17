@@ -23,6 +23,52 @@ class Step4ContentManager {
         }, 100);
     }
 
+    validateStep4() {
+        let isValid = true;
+        
+        // Validate Content JSON
+        const contentJsonInput = document.querySelector('input[name="ContentJson"]');
+        if (!contentJsonInput || !contentJsonInput.value || contentJsonInput.value === '{}') {
+            this.showFieldError('ContentJson', 'محتوای آموزشی الزامی است');
+            isValid = false;
+        } else {
+            this.clearFieldError('ContentJson');
+        }
+        
+        return isValid;
+    }
+
+    showFieldError(fieldName, message) {
+        const field = document.querySelector(`[name="${fieldName}"]`);
+        if (field) {
+            field.classList.add('is-invalid');
+            
+            // Remove existing error message
+            const existingError = field.parentNode.querySelector('.field-error');
+            if (existingError) {
+                existingError.remove();
+            }
+            
+            // Add new error message
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'field-error text-danger mt-1';
+            errorDiv.textContent = message;
+            field.parentNode.appendChild(errorDiv);
+        }
+    }
+
+    clearFieldError(fieldName) {
+        const field = document.querySelector(`[name="${fieldName}"]`);
+        if (field) {
+            field.classList.remove('is-invalid');
+            
+            const existingError = field.parentNode.querySelector('.field-error');
+            if (existingError) {
+                existingError.remove();
+            }
+        }
+    }
+
     setupContentTypeListeners() {
         const typeSelect = document.getElementById('itemType');
         if (typeSelect) {
