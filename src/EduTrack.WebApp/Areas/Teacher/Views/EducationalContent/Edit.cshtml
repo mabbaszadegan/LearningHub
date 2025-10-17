@@ -3,14 +3,7 @@
     ViewData["Title"] = "ویرایش محتوای آموزشی";
 }
 
-<!-- Minimal Page Header -->
-<div class="page-header-minimal">
-    <div class="header-content-minimal">
-        <div>
-            <h1 class="page-title-minimal">ویرایش محتوای آموزشی</h1>
-            <p class="page-subtitle-minimal">@ViewBag.SubChapterTitle</p>
-        </div>
-        <div class="header-actions-minimal">
+<div class="header-actions-minimal">
             <a asp-action="Index" asp-route-subChapterId="@ViewBag.SubChapterId" class="btn-minimal btn-secondary-minimal">
                 <i class="fas fa-arrow-right"></i>
                 <span>بازگشت</span>
@@ -123,33 +116,13 @@
 
 <style>
     /* Page Header Minimal */
-    .page-header-minimal {
-        background: white;
-        border-radius: 8px;
-        padding: 1.5rem;
-        margin-bottom: 1.5rem;
-        border: 1px solid #e9ecef;
-    }
+    
 
-    .header-content-minimal {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 1rem;
-    }
+    
 
-    .page-title-minimal {
-        font-size: 1.5rem;
-        font-weight: 600;
-        color: #2d3748;
-        margin: 0;
-    }
+    
 
-    .page-subtitle-minimal {
-        font-size: 0.875rem;
-        color: #718096;
-        margin: 0.25rem 0 0 0;
-    }
+    
 
     .header-actions-minimal {
         display: flex;

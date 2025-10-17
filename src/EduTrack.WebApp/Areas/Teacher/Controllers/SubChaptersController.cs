@@ -1,6 +1,7 @@
 using EduTrack.Application.Features.Chapters.Commands;
 using EduTrack.Application.Features.Chapters.Queries;
 using EduTrack.Application.Features.Courses.Queries;
+using EduTrack.Application.Common.Interfaces;
 using EduTrack.Domain.Entities;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -11,7 +12,7 @@ namespace EduTrack.WebApp.Areas.Teacher.Controllers;
 
 [Area("Teacher")]
 [Authorize(Roles = "Teacher")]
-public class SubChaptersController : Controller
+public class SubChaptersController : BaseTeacherController
 {
     private readonly ILogger<SubChaptersController> _logger;
     private readonly UserManager<User> _userManager;
@@ -20,7 +21,8 @@ public class SubChaptersController : Controller
     public SubChaptersController(
         ILogger<SubChaptersController> logger,
         UserManager<User> userManager,
-        IMediator mediator)
+        IMediator mediator,
+        IPageTitleSectionService pageTitleSectionService) : base(pageTitleSectionService)
     {
         _logger = logger;
         _userManager = userManager;
@@ -59,6 +61,9 @@ public class SubChaptersController : Controller
         ViewBag.ChapterTitle = chapter.Title;
         ViewBag.CourseId = chapter.CourseId;
         ViewBag.CourseTitle = courseResult.Value?.Title;
+
+        // Setup page title section
+        await SetPageTitleSectionAsync(PageType.SubChaptersIndex, chapterId);
 
         return View(subChaptersResult.Value);
     }

@@ -1,3 +1,4 @@
+using EduTrack.Application.Common.Interfaces;
 using EduTrack.Application.Features.Courses.Commands;
 using EduTrack.Application.Features.Courses.Queries;
 using EduTrack.Application.Common.Models;
@@ -13,7 +14,7 @@ namespace EduTrack.WebApp.Areas.Teacher.Controllers;
 
 [Area("Teacher")]
 [Authorize(Roles = "Teacher")]
-public class CoursesController : Controller
+public class CoursesController : BaseTeacherController
 {
     private readonly ILogger<CoursesController> _logger;
     private readonly UserManager<User> _userManager;
@@ -22,7 +23,8 @@ public class CoursesController : Controller
     public CoursesController(
         ILogger<CoursesController> logger, 
         UserManager<User> userManager,
-        IMediator mediator)
+        IMediator mediator,
+        IPageTitleSectionService pageTitleSectionService) : base(pageTitleSectionService)
     {
         _logger = logger;
         _userManager = userManager;
@@ -47,30 +49,16 @@ public class CoursesController : Controller
             .ToList();
 
         // Setup page title section
-        var breadcrumbItems = new List<PageTitleBreadcrumbItem>
-        {
-            PageTitleSectionHelper.CreateBreadcrumbItem("خانه", Url.Action("Index", "Home"), "fas fa-home"),
-            PageTitleSectionHelper.CreateBreadcrumbItem("دوره‌ها", null, "fas fa-book", true)
-        };
-
-        var actions = new List<PageTitleAction>
-        {
-            PageTitleSectionHelper.CreatePageAction("دوره جدید", Url.Action("Create") ?? "#", "btn-primary", "fas fa-plus")
-        };
-
-        this.SetPageTitleSection(
-            title: "مدیریت دوره‌ها",
-            titleIcon: "fas fa-book",
-            description: "مدیریت و سازماندهی دوره‌های آموزشی شما",
-            breadcrumbItems: breadcrumbItems,
-            actions: actions
-        );
+        await SetPageTitleSectionAsync(PageType.CoursesIndex);
 
         return View(allCourses);
     }
 
     public IActionResult Create()
     {
+        // Setup page title section
+        SetPageTitleSection(PageType.CourseCreate);
+        
         return View();
     }
 

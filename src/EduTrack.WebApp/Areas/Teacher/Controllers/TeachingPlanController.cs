@@ -1,3 +1,4 @@
+using EduTrack.Application.Common.Interfaces;
 using EduTrack.Application.Features.TeachingPlan.Commands;
 using EduTrack.Application.Features.TeachingPlan.Queries;
 using EduTrack.Application.Features.Courses.Queries;
@@ -13,7 +14,7 @@ namespace EduTrack.WebApp.Areas.Teacher.Controllers;
 
 [Area("Teacher")]
 [Authorize(Roles = "Teacher")]
-public class TeachingPlanController : Controller
+public class TeachingPlanController : BaseTeacherController
 {
     private readonly ILogger<TeachingPlanController> _logger;
     private readonly UserManager<User> _userManager;
@@ -22,7 +23,8 @@ public class TeachingPlanController : Controller
     public TeachingPlanController(
         ILogger<TeachingPlanController> logger,
         UserManager<User> userManager,
-        IMediator mediator)
+        IMediator mediator,
+        IPageTitleSectionService pageTitleSectionService) : base(pageTitleSectionService)
     {
         _logger = logger;
         _userManager = userManager;
@@ -57,6 +59,10 @@ public class TeachingPlanController : Controller
 
         ViewBag.CourseId = courseId;
         ViewBag.CourseTitle = course.Value.Title;
+        
+        // Setup page title section
+        await SetPageTitleSectionAsync(PageType.TeachingPlansIndex, courseId);
+        
         return View(teachingPlans.Value);
     }
 
@@ -82,6 +88,10 @@ public class TeachingPlanController : Controller
 
         ViewBag.CourseId = courseId;
         ViewBag.CourseTitle = course.Value.Title;
+        
+        // Setup page title section
+        await SetPageTitleSectionAsync(PageType.TeachingPlanCreate, courseId);
+        
         return View();
     }
 
@@ -94,6 +104,10 @@ public class TeachingPlanController : Controller
             var course = await _mediator.Send(new GetCourseByIdQuery(command.CourseId));
             ViewBag.CourseId = command.CourseId;
             ViewBag.CourseTitle = course.Value?.Title ?? "Unknown Course";
+            
+            // Setup page title section
+            await SetPageTitleSectionAsync(PageType.TeachingPlanCreate, command.CourseId);
+            
             return View(command);
         }
 
@@ -104,6 +118,10 @@ public class TeachingPlanController : Controller
             var course = await _mediator.Send(new GetCourseByIdQuery(command.CourseId));
             ViewBag.CourseId = command.CourseId;
             ViewBag.CourseTitle = course.Value?.Title ?? "Unknown Course";
+            
+            // Setup page title section
+            await SetPageTitleSectionAsync(PageType.TeachingPlanCreate, command.CourseId);
+            
             return View(command);
         }
 
@@ -128,6 +146,9 @@ public class TeachingPlanController : Controller
         {
             return Forbid("You don't have permission to view this teaching plan");
         }
+
+        // Setup page title section
+        await SetPageTitleSectionAsync(PageType.TeachingPlanDetails, id);
 
         return View(teachingPlan.Value);
     }
@@ -159,6 +180,10 @@ public class TeachingPlanController : Controller
 
         ViewBag.CourseId = teachingPlan.Value.CourseId;
         ViewBag.CourseTitle = teachingPlan.Value.CourseTitle;
+        
+        // Setup page title section
+        await SetPageTitleSectionAsync(PageType.TeachingPlanEdit, id);
+        
         return View(command);
     }
 
@@ -171,6 +196,10 @@ public class TeachingPlanController : Controller
             var teachingPlan = await _mediator.Send(new GetTeachingPlanByIdQuery(command.Id));
             ViewBag.CourseId = teachingPlan.Value?.CourseId ?? 0;
             ViewBag.CourseTitle = teachingPlan.Value?.CourseTitle ?? "Unknown Course";
+            
+            // Setup page title section
+            await SetPageTitleSectionAsync(PageType.TeachingPlanEdit, command.Id);
+            
             return View(command);
         }
 
@@ -181,6 +210,10 @@ public class TeachingPlanController : Controller
             var teachingPlan = await _mediator.Send(new GetTeachingPlanByIdQuery(command.Id));
             ViewBag.CourseId = teachingPlan.Value?.CourseId ?? 0;
             ViewBag.CourseTitle = teachingPlan.Value?.CourseTitle ?? "Unknown Course";
+            
+            // Setup page title section
+            await SetPageTitleSectionAsync(PageType.TeachingPlanEdit, command.Id);
+            
             return View(command);
         }
 

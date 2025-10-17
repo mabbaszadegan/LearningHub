@@ -1,5 +1,8 @@
-namespace EduTrack.WebApp.Areas.Teacher.Views.Shared;
+namespace EduTrack.Application.Common.Models;
 
+/// <summary>
+/// View model for page title section
+/// </summary>
 public class PageTitleSectionViewModel
 {
     public string Title { get; set; } = string.Empty;
@@ -9,6 +12,9 @@ public class PageTitleSectionViewModel
     public List<PageTitleAction>? Actions { get; set; }
 }
 
+/// <summary>
+/// Breadcrumb item for page title section
+/// </summary>
 public class PageTitleBreadcrumbItem
 {
     public string Text { get; set; } = string.Empty;
@@ -17,6 +23,9 @@ public class PageTitleBreadcrumbItem
     public bool IsActive { get; set; } = false;
 }
 
+/// <summary>
+/// Action button for page title section
+/// </summary>
 public class PageTitleAction
 {
     public string Text { get; set; } = string.Empty;

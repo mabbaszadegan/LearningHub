@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using EduTrack.WebApp.Areas.Teacher.Views.Shared;
+using EduTrack.Application.Common.Models;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 
 namespace EduTrack.WebApp.Extensions;

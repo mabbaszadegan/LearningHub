@@ -1,53 +1,6 @@
+@* This component is deprecated - PageTitleSection is now used instead *@
 @model EduTrack.WebApp.Areas.Teacher.Views.Shared.Components.PageNavigation.PageNavigationViewModel
 
-<!-- Page Header -->
-<div class="page-header-minimal mb-3">
-    <div class="d-flex justify-content-between align-items-center">
-        <div>
-            <h1 class="page-title">@Model.Title</h1>
-            @if (Model.BreadcrumbItems.Any())
-            {
-                <p class="page-subtitle mb-0">
-                    @for (int i = 0; i < Model.BreadcrumbItems.Count; i++)
-                    {
-                        var item = Model.BreadcrumbItems[i];
-                        @if (!string.IsNullOrEmpty(item.Url) && !item.IsActive)
-                        {
-                            <a href="@item.Url" class="breadcrumb-link">
-                                @if (!string.IsNullOrEmpty(item.Icon))
-                                {
-                                    <i class="@item.Icon"></i>
-                                }
-                                @item.Text
-                            </a>
-                        }
-                        else
-                        {
-                            <span>@item.Text</span>
-                        }
-                        
-                        @if (i < Model.BreadcrumbItems.Count - 1)
-                        {
-                            <span class="mx-2">/</span>
-                        }
-                    }
-                </p>
-            }
-        </div>
-        @if (Model.Actions.Any())
-        {
-            <div class="header-actions">
-                @foreach (var action in Model.Actions)
-                {
-                    <a href="@action.Url" class="@action.CssClass">
-                        @if (!string.IsNullOrEmpty(action.Icon))
-                        {
-                            <i class="@action.Icon"></i>
-                        }
-                        <span>@action.Text</span>
-                    </a>
-                }
-            </div>
-        }
-    </div>
-</div>
+@* Page Navigation Component - DEPRECATED
+   Use PageTitleSection in layout instead
+*@

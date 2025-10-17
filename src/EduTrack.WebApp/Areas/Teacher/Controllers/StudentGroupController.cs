@@ -2,6 +2,7 @@ using EduTrack.Application.Features.TeachingPlan.Commands;
 using EduTrack.Application.Features.TeachingPlan.Queries;
 using EduTrack.Application.Features.Courses.Queries;
 using EduTrack.Application.Common.Models;
+using EduTrack.Application.Common.Interfaces;
 using EduTrack.Domain.Entities;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -14,7 +15,7 @@ namespace EduTrack.WebApp.Areas.Teacher.Controllers;
 
 [Area("Teacher")]
 [Authorize(Roles = "Teacher")]
-public class StudentGroupController : Controller
+public class StudentGroupController : BaseTeacherController
 {
     private readonly ILogger<StudentGroupController> _logger;
     private readonly UserManager<User> _userManager;
@@ -23,7 +24,8 @@ public class StudentGroupController : Controller
     public StudentGroupController(
         ILogger<StudentGroupController> logger,
         UserManager<User> userManager,
-        IMediator mediator)
+        IMediator mediator,
+        IPageTitleSectionService pageTitleSectionService) : base(pageTitleSectionService)
     {
         _logger = logger;
         _userManager = userManager;
@@ -60,6 +62,10 @@ public class StudentGroupController : Controller
         ViewBag.TeachingPlanTitle = teachingPlan.Value.Title;
         ViewBag.CourseTitle = teachingPlan.Value.CourseTitle;
         ViewBag.CourseId = teachingPlan.Value.CourseId;
+        
+        // Setup page title section
+        await SetPageTitleSectionAsync(PageType.StudentGroupsIndex, planId);
+        
         return View(groups.Value);
     }
 

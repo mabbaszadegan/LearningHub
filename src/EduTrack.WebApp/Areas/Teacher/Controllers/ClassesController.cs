@@ -2,6 +2,7 @@ using EduTrack.Application.Features.Classroom.Commands;
 using EduTrack.Application.Features.Classroom.Queries;
 using EduTrack.Application.Features.Courses.Queries;
 using EduTrack.Application.Common.Models;
+using EduTrack.Application.Common.Interfaces;
 using EduTrack.Domain.Entities;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -13,7 +14,7 @@ namespace EduTrack.WebApp.Areas.Teacher.Controllers;
 
 [Area("Teacher")]
 [Authorize(Roles = "Teacher")]
-public class ClassesController : Controller
+public class ClassesController : BaseTeacherController
 {
     private readonly ILogger<ClassesController> _logger;
     private readonly UserManager<User> _userManager;
@@ -22,7 +23,8 @@ public class ClassesController : Controller
     public ClassesController(
         ILogger<ClassesController> logger, 
         UserManager<User> userManager,
-        IMediator mediator)
+        IMediator mediator,
+        IPageTitleSectionService pageTitleSectionService) : base(pageTitleSectionService)
     {
         _logger = logger;
         _userManager = userManager;
@@ -40,6 +42,9 @@ public class ClassesController : Controller
         // Get teacher's classes
         var classes = await _mediator.Send(new GetClassesQuery(1, 50, true));
         var teacherClasses = classes.Items.Where(c => c.TeacherId == currentUser.Id).ToList();
+
+        // Setup page title section
+        await SetPageTitleSectionAsync(PageType.ClassesIndex);
 
         return View(teacherClasses);
     }

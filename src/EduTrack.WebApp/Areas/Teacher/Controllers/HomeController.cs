@@ -1,6 +1,7 @@
 using EduTrack.Application.Features.Courses.Queries;
 using EduTrack.Application.Features.Exams.Queries;
 using EduTrack.Application.Common.Models;
+using EduTrack.Application.Common.Interfaces;
 using EduTrack.Domain.Entities;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -13,7 +14,7 @@ namespace EduTrack.WebApp.Areas.Teacher.Controllers;
 
 [Area("Teacher")]
 [Authorize(Roles = "Teacher")]
-public class HomeController : Controller
+public class HomeController : BaseTeacherController
 {
     private readonly ILogger<HomeController> _logger;
     private readonly UserManager<User> _userManager;
@@ -22,7 +23,8 @@ public class HomeController : Controller
     public HomeController(
         ILogger<HomeController> logger, 
         UserManager<User> userManager,
-        IMediator mediator)
+        IMediator mediator,
+        IPageTitleSectionService pageTitleSectionService) : base(pageTitleSectionService)
     {
         _logger = logger;
         _userManager = userManager;
@@ -44,6 +46,9 @@ public class HomeController : Controller
             Courses = await GetTeacherCourses(currentUser.Id),
             RecentExams = await GetTeacherExams(currentUser.Id)
         };
+
+        // Setup page title section
+        await SetPageTitleSectionAsync(PageType.TeacherDashboard);
 
         return View("TeacherDashboard", dashboardData);
     }

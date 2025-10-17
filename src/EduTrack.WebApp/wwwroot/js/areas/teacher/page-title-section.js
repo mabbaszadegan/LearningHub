@@ -361,8 +361,8 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Add CSS animations
-const style = document.createElement('style');
-style.textContent = `
+const pageTitleStyle = document.createElement('style');
+pageTitleStyle.textContent = `
     @keyframes ripple {
         to {
             transform: scale(4);
@@ -399,4 +399,9 @@ style.textContent = `
         outline-offset: 2px;
     }
 `;
-document.head.appendChild(style);
+
+// Check if style already exists before adding
+if (!document.querySelector('#page-title-section-styles')) {
+    pageTitleStyle.id = 'page-title-section-styles';
+    document.head.appendChild(pageTitleStyle);
+}

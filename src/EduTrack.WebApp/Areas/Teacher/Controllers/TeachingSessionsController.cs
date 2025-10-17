@@ -2,6 +2,7 @@ using EduTrack.Application.Common.Models;
 using EduTrack.Application.Common.Models.Courses;
 using EduTrack.Application.Common.Models.TeachingPlans;
 using EduTrack.Application.Common.Models.TeachingSessions;
+using EduTrack.Application.Common.Interfaces;
 using EduTrack.Application.Features.TeachingPlan.Queries;
 using EduTrack.Application.Features.TeachingSessions.Commands;
 using EduTrack.Application.Features.TeachingSessions.Queries;
@@ -19,7 +20,7 @@ namespace EduTrack.WebApp.Areas.Teacher.Controllers;
 
 [Area("Teacher")]
 [Authorize(Roles = "Teacher,Admin")]
-public class TeachingSessionsController : Controller
+public class TeachingSessionsController : BaseTeacherController
 {
     private readonly ILogger<TeachingSessionsController> _logger;
     private readonly UserManager<User> _userManager;
@@ -28,7 +29,8 @@ public class TeachingSessionsController : Controller
     public TeachingSessionsController(
         ILogger<TeachingSessionsController> logger,
         UserManager<User> userManager,
-        IMediator mediator)
+        IMediator mediator,
+        IPageTitleSectionService pageTitleSectionService) : base(pageTitleSectionService)
     {
         _logger = logger;
         _userManager = userManager;
@@ -64,6 +66,9 @@ public class TeachingSessionsController : Controller
                 }
             }
         }
+
+        // Setup page title section
+        await SetPageTitleSectionAsync(PageType.TeachingSessionDashboard);
 
         return View(allSessions);
     }

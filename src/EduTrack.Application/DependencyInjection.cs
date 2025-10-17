@@ -1,4 +1,5 @@
 using EduTrack.Application.Common.Interfaces;
+using EduTrack.Application.Common.Services;
 using EduTrack.Domain.Services;
 using FluentValidation;
 using MediatR;
@@ -21,6 +22,10 @@ public static class DependencyInjection
         services.AddScoped<IUserDomainService, UserDomainService>();
         services.AddScoped<ICourseDomainService, CourseDomainService>();
         services.AddScoped<IProgressDomainService, ProgressDomainService>();
+
+        // Register Page Title Section Services
+        services.AddScoped<IPageTitleSectionService, PageTitleSectionService>();
+        services.AddScoped<IPageTitleSectionFactory, PageTitleSectionFactory>();
 
         return services;
     }

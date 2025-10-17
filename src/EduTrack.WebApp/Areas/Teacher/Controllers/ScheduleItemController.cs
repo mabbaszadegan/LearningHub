@@ -1,3 +1,4 @@
+using EduTrack.Application.Common.Interfaces;
 using EduTrack.Application.Features.ScheduleItems.Commands;
 using EduTrack.Application.Features.ScheduleItems.Queries;
 using EduTrack.Application.Features.TeachingPlan.Queries;
@@ -16,7 +17,7 @@ namespace EduTrack.WebApp.Areas.Teacher.Controllers;
 
 [Area("Teacher")]
 [Authorize(Roles = "Teacher")]
-public class ScheduleItemController : Controller
+public class ScheduleItemController : BaseTeacherController
 {
     private readonly ILogger<ScheduleItemController> _logger;
     private readonly UserManager<User> _userManager;
@@ -25,7 +26,8 @@ public class ScheduleItemController : Controller
     public ScheduleItemController(
         ILogger<ScheduleItemController> logger,
         UserManager<User> userManager,
-        IMediator mediator)
+        IMediator mediator,
+        IPageTitleSectionService pageTitleSectionService) : base(pageTitleSectionService)
     {
         _logger = logger;
         _userManager = userManager;
@@ -65,27 +67,7 @@ public class ScheduleItemController : Controller
         ViewBag.Stats = stats.IsSuccess ? stats.Value : new ScheduleItemStatsDto();
 
         // Setup page title section
-        var breadcrumbItems = new List<PageTitleBreadcrumbItem>
-        {
-            PageTitleSectionHelper.CreateBreadcrumbItem("خانه", Url.Action("Index", "Home"), "fas fa-home"),
-            PageTitleSectionHelper.CreateBreadcrumbItem("دوره‌ها", Url.Action("Index", "Courses"), "fas fa-book"),
-            PageTitleSectionHelper.CreateBreadcrumbItem(teachingPlan.Value.CourseTitle ?? "دوره", Url.Action("Index", "TeachingPlan", new { courseId = teachingPlan.Value.CourseId }), "fas fa-graduation-cap"),
-            PageTitleSectionHelper.CreateBreadcrumbItem(teachingPlan.Value.Title,null, "fas fa-calendar-alt"),
-            PageTitleSectionHelper.CreateBreadcrumbItem("مدیریت آیتم‌های آموزشی", null, "fas fa-tasks", true)
-        };
-
-        var actions = new List<PageTitleAction>
-        {
-            PageTitleSectionHelper.CreatePageAction("آیتم جدید", Url.Action("CreateOrEdit", new { teachingPlanId }) ?? "#", "btn-primary", "fas fa-plus")
-        };
-
-        this.SetPageTitleSection(
-            title: "مدیریت آیتم‌های آموزشی",
-            titleIcon: "fas fa-tasks",
-            description: $"مدیریت و سازماندهی آیتم‌های آموزشی برای برنامه \"{teachingPlan.Value.Title}\"",
-            breadcrumbItems: breadcrumbItems,
-            actions: actions
-        );
+        await SetPageTitleSectionAsync(PageType.ScheduleItemsIndex, teachingPlanId);
 
         return View(scheduleItems.Value);
     }
@@ -114,30 +96,14 @@ public class ScheduleItemController : Controller
         ViewBag.ScheduleItemId = id;
 
         // Setup page title section
-        var breadcrumbItems = new List<PageTitleBreadcrumbItem>
+        if (isEditMode)
         {
-            PageTitleSectionHelper.CreateBreadcrumbItem("خانه", Url.Action("Index", "Home"), "fas fa-home"),
-            PageTitleSectionHelper.CreateBreadcrumbItem("دوره‌ها", Url.Action("Index", "Courses"), "fas fa-book"),
-            PageTitleSectionHelper.CreateBreadcrumbItem(teachingPlan.Value.CourseTitle ?? "دوره", Url.Action("Index", "TeachingPlan", new { courseId = teachingPlan.Value.CourseId }), "fas fa-graduation-cap"),
-            PageTitleSectionHelper.CreateBreadcrumbItem(teachingPlan.Value.Title, Url.Action("Index", "TeachingPlan", new { id = teachingPlanId }), "fas fa-calendar-alt"),
-            PageTitleSectionHelper.CreateBreadcrumbItem("آیتم‌های آموزشی", Url.Action("Index", "ScheduleItem", new { teachingPlanId }), "fas fa-tasks"),
-            PageTitleSectionHelper.CreateBreadcrumbItem(isEditMode ? "ویرایش آیتم آموزشی" : "ایجاد آیتم آموزشی جدید", null, isEditMode ? "fas fa-edit" : "fas fa-plus", true)
-        };
-
-        var actions = new List<PageTitleAction>
+            await SetPageTitleSectionAsync(PageType.ScheduleItemEdit, (teachingPlanId, id));
+        }
+        else
         {
-            PageTitleSectionHelper.CreatePageAction("بازگشت", Url.Action("Index", "ScheduleItem", new { teachingPlanId }) ?? "#", "btn-secondary", "fas fa-arrow-right")
-        };
-
-        this.SetPageTitleSection(
-            title: isEditMode ? "ویرایش آیتم آموزشی" : "ایجاد آیتم آموزشی جدید",
-            titleIcon: isEditMode ? "fas fa-edit" : "fas fa-plus-circle",
-            description: isEditMode
-                ? $"ویرایش آیتم آموزشی برای برنامه \"{teachingPlan.Value.Title}\""
-                : $"ایجاد آیتم آموزشی جدید برای برنامه \"{teachingPlan.Value.Title}\"",
-            breadcrumbItems: breadcrumbItems,
-            actions: actions
-        );
+            await SetPageTitleSectionAsync(PageType.ScheduleItemCreate, teachingPlanId);
+        }
 
         CreateScheduleItemRequest model;
 

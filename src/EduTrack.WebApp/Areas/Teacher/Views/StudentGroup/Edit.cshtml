@@ -6,28 +6,7 @@
     var courseTitle = ViewBag.CourseTitle as string;
 }
 
-<!-- Page Header -->
-<div class="page-header-minimal mb-3">
-    <div class="d-flex justify-content-between align-items-center">
-        <div>
-            <h1 class="page-title">ویرایش گروه دانش‌آموزی</h1>
-            <p class="page-subtitle mb-0">
-                <a asp-controller="Courses" asp-action="Index" class="breadcrumb-link">
-                    <i class="fas fa-chevron-right"></i> دوره‌ها
-                </a>
-                <span class="mx-2">/</span>
-                <a asp-controller="TeachingPlan" asp-action="Index" asp-route-courseId="@ViewBag.CourseId" class="breadcrumb-link">
-                    @courseTitle
-                </a>
-                <span class="mx-2">/</span>
-                <a asp-controller="StudentGroup" asp-action="Index" asp-route-planId="@teachingPlanId" class="breadcrumb-link">
-                    @teachingPlanTitle
-                </a>
-                <span class="mx-2">/</span>
-                <span>ویرایش گروه</span>
-            </p>
-        </div>
-        <a asp-action="Index" asp-route-planId="@teachingPlanId" class="btn-action-primary">
+<a asp-action="Index" asp-route-planId="@teachingPlanId" class="btn-action-primary">
             <i class="fas fa-arrow-right"></i>
             <span>بازگشت به گروه‌ها</span>
         </a>
