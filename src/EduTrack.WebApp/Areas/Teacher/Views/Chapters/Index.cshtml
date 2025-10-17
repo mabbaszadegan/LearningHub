@@ -4,13 +4,6 @@
     ViewData["Title"] = "مدیریت مباحث";
 }
 
-<a asp-action="Create" asp-route-courseId="@ViewBag.CourseId" class="btn-action-primary">
-            <i class="fas fa-plus"></i>
-            <span>مبحث جدید</span>
-        </a>
-    </div>
-</div>
-
 <!-- Filter/Sort Info Bar -->
 @if (Model.Any())
 {

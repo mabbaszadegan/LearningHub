@@ -5,56 +5,6 @@
 @{
     ViewData["Title"] = "پوشش زیرمباحث";
     var courseTitle = ViewBag.CourseTitle as string;
-
-    // Prepare navigation actions
-    var navigationActions = new List<NavigationAction>
-    {
-        new NavigationAction
-        {
-            Text = "مشاهده جزئیات",
-            Url = Url.Action("Details", new { id = Model.SessionId }) ?? "#",
-            CssClass = "btn-action-secondary",
-            Icon = "fas fa-eye"
-        },
-        new NavigationAction
-        {
-            Text = "بازگشت",
-            Url = Url.Action("Index", new { planId = Model.TeachingPlanId }) ?? "#",
-            CssClass = "btn-action-primary",
-            Icon = "fas fa-arrow-right"
-        }
-    };
-
-    // Prepare breadcrumb items
-    var breadcrumbItems = new List<BreadcrumbItem>
-    {
-        new BreadcrumbItem
-        {
-            Text = "دوره‌ها",
-            Url = Url.Action("Index", "Courses"),
-            Icon = "fas fa-chevron-right"
-        },
-        new BreadcrumbItem
-        {
-            Text = courseTitle ?? "دوره",
-            Url = Url.Action("Index", "TeachingPlan", new { courseId = ViewBag.CourseId })
-        },
-        new BreadcrumbItem
-        {
-            Text = "جلسات آموزشی",
-            Url = Url.Action("Index", new { planId = Model.TeachingPlanId })
-        },
-        new BreadcrumbItem
-        {
-            Text = Model.SessionTitle,
-            Url = Url.Action("Details", new { id = Model.SessionId })
-        },
-        new BreadcrumbItem
-        {
-            Text = "پوشش زیرمباحث",
-            IsActive = true
-        }
-    };
 }
 
 @section Styles {
@@ -62,13 +12,6 @@
 }
 
 <div class="subchapter-coverage-container">
-    @await Component.InvokeAsync("PageNavigation", new { 
-        Title = "پوشش زیرمباحث", 
-        Subtitle = Model.SessionTitle,
-        Actions = navigationActions,
-        BreadcrumbItems = breadcrumbItems
-    })
-
     <div class="coverage-content">
         <div class="coverage-layout">
             <!-- Groups List -->

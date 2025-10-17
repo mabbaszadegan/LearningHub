@@ -4,13 +4,6 @@
     ViewData["Title"] = "مدیریت زیرمباحث";
 }
 
-<a asp-action="Create" asp-route-chapterId="@ViewBag.ChapterId" class="btn-action-primary">
-            <i class="fas fa-plus"></i>
-            <span>زیرمبحث جدید</span>
-        </a>
-    </div>
-</div>
-
 <!-- Filter/Sort Info Bar -->
 @if (Model.Any())
 {

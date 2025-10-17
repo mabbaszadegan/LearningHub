@@ -50,7 +50,7 @@ class PageTitleSection {
      * Setup action buttons functionality
      */
     setupActionButtons() {
-        const actionButtons = document.querySelectorAll('.action-btn');
+        const actionButtons = document.querySelectorAll('.title-actions .btn-teacher');
         
         actionButtons.forEach(button => {
             // Add ripple effect on click
@@ -186,15 +186,15 @@ class PageTitleSection {
      * Handle async actions with loading state
      */
     handleAsyncAction(event, button) {
-        const originalText = button.querySelector('.action-text')?.textContent;
+        const originalText = button.querySelector('span')?.textContent;
         const originalIcon = button.querySelector('i')?.className;
         
-        // Show loading state
+        // Show loading state using the standardized loading class
         button.classList.add('loading');
         button.disabled = true;
         
-        if (button.querySelector('.action-text')) {
-            button.querySelector('.action-text').textContent = 'در حال بارگذاری...';
+        if (button.querySelector('span')) {
+            button.querySelector('span').textContent = 'در حال بارگذاری...';
         }
         
         if (button.querySelector('i')) {
@@ -206,8 +206,8 @@ class PageTitleSection {
             button.classList.remove('loading');
             button.disabled = false;
             
-            if (button.querySelector('.action-text') && originalText) {
-                button.querySelector('.action-text').textContent = originalText;
+            if (button.querySelector('span') && originalText) {
+                button.querySelector('span').textContent = originalText;
             }
             
             if (button.querySelector('i') && originalIcon) {
@@ -373,11 +373,6 @@ pageTitleStyle.textContent = `
     .breadcrumb-item.highlighted {
         background: rgba(0, 0, 0, 0.05);
         border-radius: 0.25rem;
-    }
-    
-    .action-btn.loading {
-        opacity: 0.7;
-        cursor: not-allowed;
     }
     
     .mobile-breadcrumb-toggle {

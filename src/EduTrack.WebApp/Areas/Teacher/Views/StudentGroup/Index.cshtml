@@ -9,12 +9,6 @@
 
 @Html.AntiForgeryToken()
 
-<a asp-action="Create" asp-route-planId="@teachingPlanId" class="btn-action-primary">
-            <i class="fas fa-plus"></i>
-            <span>گروه جدید</span>
-        </a>
-    </div>
-</div>
 
 <!-- Filter/Sort Info Bar -->
 @if (Model.Any())

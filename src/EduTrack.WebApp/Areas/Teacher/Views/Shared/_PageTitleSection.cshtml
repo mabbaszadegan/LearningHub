@@ -62,12 +62,12 @@
                             <div class="title-actions">
                                 @foreach (var action in Model.Actions)
                                 {
-                                    <a href="@action.Url" class="action-btn @action.CssClass" @(action.IsModal ? "data-bs-toggle=\"modal\" data-bs-target=\"" + action.ModalTarget + "\"" : "")>
+                                    <a href="@action.Url" class="btn-teacher @action.CssClass" @(action.IsModal ? "data-bs-toggle=\"modal\" data-bs-target=\"" + action.ModalTarget + "\"" : "")>
                                         @if (!string.IsNullOrEmpty(action.Icon))
                                         {
                                             <i class="@action.Icon"></i>
                                         }
-                                        <span class="action-text">@action.Text</span>
+                                        <span>@action.Text</span>
                                     </a>
                                 }
                             </div>

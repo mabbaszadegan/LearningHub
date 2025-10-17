@@ -5,53 +5,7 @@
     var planId = ViewBag.TeachingPlanId as int?;
     var planTitle = ViewBag.TeachingPlanTitle as string;
     var courseTitle = ViewBag.CourseTitle as string;
-    
-    // Prepare navigation actions
-    var navigationActions = new List<NavigationAction>
-    {
-        new NavigationAction
-        {
-            Text = "جلسه جدید",
-            Url = Url.Action("Create", new { planId = planId }) ?? "#",
-            CssClass = "btn-action-primary",
-            Icon = "fas fa-plus"
-        },
-        new NavigationAction
-        {
-            Text = "آیتم‌های آموزشی",
-            Url = Url.Action("Index", "ScheduleItem", new { teachingPlanId = planId }) ?? "#",
-            CssClass = "btn-action-info",
-            Icon = "fas fa-tasks"
-        }
-    };
-    
-    // Prepare breadcrumb items
-    var breadcrumbItems = new List<BreadcrumbItem>
-    {
-        new BreadcrumbItem
-        {
-            Text = "دوره‌ها",
-            Url = Url.Action("Index", "Courses"),
-            Icon = "fas fa-chevron-right"
-        },
-        new BreadcrumbItem
-        {
-            Text = courseTitle ?? "دوره",
-            Url = Url.Action("Index", "TeachingPlan", new { courseId = ViewBag.CourseId })
-        },
-        new BreadcrumbItem
-        {
-            Text = planTitle ?? "پلن آموزشی",
-            IsActive = true
-        }
-    };
 }
-
-@await Component.InvokeAsync("PageNavigation", new { 
-    title = "جلسات آموزشی", 
-    breadcrumbItems = breadcrumbItems, 
-    actions = navigationActions 
-})
 
 <!-- Filter Bar -->
 @if (Model.Any())

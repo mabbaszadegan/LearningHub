@@ -4,66 +4,7 @@
 @{
     ViewData["Title"] = "تکمیل گزارش جلسه آموزشی";
     var courseTitle = ViewBag.CourseTitle as string;
-
-    // Prepare navigation actions
-    var navigationActions = new List<NavigationAction>
-    {
-        new NavigationAction
-        {
-            Text = "مشاهده جزئیات",
-            Url = Url.Action("Details", new { id = Model.SessionId }) ?? "#",
-            CssClass = "btn-action-secondary",
-            Icon = "fas fa-eye"
-        },
-        new NavigationAction
-        {
-            Text = "آیتم‌های آموزشی",
-            Url = Url.Action("Index", "ScheduleItem", new { teachingPlanId = Model.TeachingPlanId }) ?? "#",
-            CssClass = "btn-action-info",
-            Icon = "fas fa-tasks"
-        },
-        new NavigationAction
-        {
-            Text = "بازگشت",
-            Url = Url.Action("Index", new { planId = Model.TeachingPlanId }) ?? "#",
-            CssClass = "btn-action-primary",
-            Icon = "fas fa-arrow-right"
-        }
-    };
-
-    // Prepare breadcrumb items
-    var breadcrumbItems = new List<BreadcrumbItem>
-    {
-        new BreadcrumbItem
-        {
-            Text = "دوره‌ها",
-            Url = Url.Action("Index", "Courses"),
-            Icon = "fas fa-chevron-right"
-        },
-        new BreadcrumbItem
-        {
-            Text = courseTitle ?? "دوره",
-            Url = Url.Action("Index", "TeachingPlan", new { courseId = ViewBag.CourseId })
-        },
-        new BreadcrumbItem
-        {
-            Text = "جلسات آموزشی",
-            Url = Url.Action("Index", new { planId = Model.TeachingPlanId })
-        },
-        new BreadcrumbItem
-        {
-            Text = Model.SessionTitle,
-            IsActive = true
-        }
-    };
-
 }
-
-@await Component.InvokeAsync("PageNavigation", new {
-    title = "تکمیل گزارش جلسه آموزشی",
-    breadcrumbItems = breadcrumbItems,
-    actions = navigationActions
-})
 
 <!-- Session Overview Cards -->
 <div class="session-overview mb-4">

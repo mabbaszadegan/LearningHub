@@ -6,12 +6,6 @@
     var courseTitle = ViewBag.CourseTitle as string;
 }
 
-<a asp-action="Index" asp-route-planId="@teachingPlanId" class="btn-action-primary">
-            <i class="fas fa-arrow-right"></i>
-            <span>بازگشت به گروه‌ها</span>
-        </a>
-    </div>
-</div>
 
 <!-- Create Group Form -->
 <div class="row justify-content-center">
@@ -20,9 +14,9 @@
             <div class="card-body-minimal">
                 <form asp-action="Create" method="post">
                     <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
-                    
+
                     <input asp-for="TeachingPlanId" type="hidden" value="@teachingPlanId" />
-                    
+
                     <div class="form-group-minimal">
                         <label asp-for="Name" class="form-label-minimal">نام گروه</label>
                         <input asp-for="Name" class="form-control-minimal" placeholder="نام گروه را وارد کنید (مثال: گروه A، تیم پروژه، ...)" />
@@ -79,59 +73,59 @@
         </div>
     </div>
 
-        <!-- Info Sidebar -->
-        <div class="col-lg-4">
-            <div class="info-sidebar">
-                <div class="info-card">
-                    <div class="info-header">
-                        <i class="fas fa-info-circle"></i>
-                        <h4>راهنمای ایجاد گروه</h4>
-                    </div>
-                    <div class="info-content">
-                        <ul class="info-list">
-                            <li>
-                                <i class="fas fa-check"></i>
-                                نام گروه باید منحصر به فرد باشد
-                            </li>
-                            <li>
-                                <i class="fas fa-check"></i>
-                                بعد از ایجاد گروه می‌توانید اعضا را اضافه کنید
-                            </li>
-                            <li>
-                                <i class="fas fa-check"></i>
-                                می‌توانید گروه‌ها را بعداً ویرایش یا حذف کنید
-                            </li>
-                            <li>
-                                <i class="fas fa-check"></i>
-                                هر گروه می‌تواند برای فعالیت‌های مختلف استفاده شود
-                            </li>
-                        </ul>
-                    </div>
+    <!-- Info Sidebar -->
+    <div class="col-lg-4">
+        <div class="info-sidebar">
+            <div class="info-card">
+                <div class="info-header">
+                    <i class="fas fa-info-circle"></i>
+                    <h4>راهنمای ایجاد گروه</h4>
                 </div>
+                <div class="info-content">
+                    <ul class="info-list">
+                        <li>
+                            <i class="fas fa-check"></i>
+                            نام گروه باید منحصر به فرد باشد
+                        </li>
+                        <li>
+                            <i class="fas fa-check"></i>
+                            بعد از ایجاد گروه می‌توانید اعضا را اضافه کنید
+                        </li>
+                        <li>
+                            <i class="fas fa-check"></i>
+                            می‌توانید گروه‌ها را بعداً ویرایش یا حذف کنید
+                        </li>
+                        <li>
+                            <i class="fas fa-check"></i>
+                            هر گروه می‌تواند برای فعالیت‌های مختلف استفاده شود
+                        </li>
+                    </ul>
+                </div>
+            </div>
 
-                <div class="info-card">
-                    <div class="info-header">
-                        <i class="fas fa-lightbulb"></i>
-                        <h4>نکات مفید</h4>
+            <div class="info-card">
+                <div class="info-header">
+                    <i class="fas fa-lightbulb"></i>
+                    <h4>نکات مفید</h4>
+                </div>
+                <div class="info-content">
+                    <div class="tip-item">
+                        <strong>تعداد اعضا:</strong>
+                        <p>بهتر است هر گروه 3-6 عضو داشته باشد</p>
                     </div>
-                    <div class="info-content">
-                        <div class="tip-item">
-                            <strong>تعداد اعضا:</strong>
-                            <p>بهتر است هر گروه 3-6 عضو داشته باشد</p>
-                        </div>
-                        <div class="tip-item">
-                            <strong>تنوع مهارت:</strong>
-                            <p>سعی کنید دانش‌آموزان با مهارت‌های مختلف را در یک گروه قرار دهید</p>
-                        </div>
-                        <div class="tip-item">
-                            <strong>مدیریت:</strong>
-                            <p>برای هر گروه یک سرگروه انتخاب کنید</p>
-                        </div>
+                    <div class="tip-item">
+                        <strong>تنوع مهارت:</strong>
+                        <p>سعی کنید دانش‌آموزان با مهارت‌های مختلف را در یک گروه قرار دهید</p>
+                    </div>
+                    <div class="tip-item">
+                        <strong>مدیریت:</strong>
+                        <p>برای هر گروه یک سرگروه انتخاب کنید</p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+</div>
 </div>
 
 @section Styles {
@@ -144,10 +138,10 @@
             transition: all 0.2s;
         }
 
-        .breadcrumb-link:hover {
-            color: #5a6fd8;
-            text-decoration: underline;
-        }
+            .breadcrumb-link:hover {
+                color: #5a6fd8;
+                text-decoration: underline;
+            }
 
         /* Action Button */
         .btn-action-primary {
@@ -165,11 +159,11 @@
             border: none;
         }
 
-        .btn-action-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-            color: white;
-        }
+            .btn-action-primary:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+                color: white;
+            }
 
         /* Card Minimal */
         .card-minimal {
@@ -205,11 +199,11 @@
             transition: all 0.2s;
         }
 
-        .form-control-minimal:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
+            .form-control-minimal:focus {
+                outline: none;
+                border-color: #667eea;
+                box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            }
 
         /* Suggestions Section */
         .suggestions-section-minimal {
@@ -247,11 +241,11 @@
             transition: all 0.2s;
         }
 
-        .suggestion-btn-minimal:hover {
-            border-color: #667eea;
-            color: #667eea;
-            background: rgba(102, 126, 234, 0.05);
-        }
+            .suggestion-btn-minimal:hover {
+                border-color: #667eea;
+                color: #667eea;
+                background: rgba(102, 126, 234, 0.05);
+            }
 
         /* Form Actions */
         .form-actions-minimal {
@@ -283,11 +277,11 @@
             color: white;
         }
 
-        .btn-primary-minimal:hover {
-            background: #5568d3;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-        }
+            .btn-primary-minimal:hover {
+                background: #5568d3;
+                transform: translateY(-1px);
+                box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            }
 
         .btn-secondary-minimal {
             background: white;
@@ -295,11 +289,11 @@
             border: 1px solid #e2e8f0;
         }
 
-        .btn-secondary-minimal:hover {
-            background: #f7fafc;
-            color: #2d3748;
-            border-color: #cbd5e0;
-        }
+            .btn-secondary-minimal:hover {
+                background: #f7fafc;
+                color: #2d3748;
+                border-color: #cbd5e0;
+            }
 
         /* Responsive */
         @@media (max-width: 767.98px) {
@@ -315,8 +309,10 @@
 }
 
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
-    
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
     <script>
         function setGroupName(name) {
             document.getElementById('Name').value = name;
