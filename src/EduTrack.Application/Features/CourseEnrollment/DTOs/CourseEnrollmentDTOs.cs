@@ -65,6 +65,30 @@ public class StudentCourseEnrollmentSummaryDto
     public int TotalExams { get; set; }
     public int CompletedExams { get; set; }
     public double AverageScore { get; set; }
+    
+    // Course Structure Statistics
+    public int TotalChapters { get; set; }
+    public int TotalSubChapters { get; set; }
+    public int TotalTeachingPlans { get; set; }
+    
+    // Schedule Items Statistics
+    public List<ScheduleItemTypeStatsDto> ScheduleItemStats { get; set; } = new();
+    public int TotalScheduleItems { get; set; }
+    public int CompletedScheduleItems { get; set; }
+}
+
+/// <summary>
+/// DTO for schedule item type statistics
+/// </summary>
+public class ScheduleItemTypeStatsDto
+{
+    public ScheduleItemType Type { get; set; }
+    public string TypeName { get; set; } = string.Empty;
+    public int TotalCount { get; set; }
+    public int CompletedCount { get; set; }
+    public double CompletionPercentage { get; set; }
+    public string IconClass { get; set; } = string.Empty;
+    public string ColorClass { get; set; } = string.Empty;
 }
 
 /// <summary>

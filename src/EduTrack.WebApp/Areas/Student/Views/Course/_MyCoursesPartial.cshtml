@@ -13,7 +13,7 @@
             </div>
             
             <div class="progress">
-                <div class="progress-bar" style="width: @enrollment.ProgressPercentage%"></div>
+                <div class="progress-bar" style="width: @(enrollment.ProgressPercentage)%"></div>
             </div>
             
             <div class="course-meta">
@@ -21,14 +21,44 @@
                 <small><i class="fas fa-clock"></i> آخرین دسترسی: @(enrollment.LastAccessedAt?.ToPersianDateWithMonthName() ?? "هیچ‌گاه")</small>
             </div>
             
-            <div class="course-stats">
-                <span><i class="fas fa-check-circle"></i> @enrollment.CompletedLessons درس تکمیل شده</span>
-                <span><i class="fas fa-play-circle"></i> @enrollment.TotalLessons درس کل</span>
+            <div class="course-stats-minimal">
+                @if (enrollment.ScheduleItemStats.Any())
+                {
+                    <div class="stats-row">
+                        @foreach (var stat in enrollment.ScheduleItemStats.OrderByDescending(s => s.TotalCount))
+                        {
+                            <span class="stat-item @stat.ColorClass">
+                                <i class="@stat.IconClass"></i>
+                                <span class="stat-number">@stat.TotalCount</span>
+                                <span class="stat-text">@stat.TypeName</span>
+                            </span>
+                        }
+                    </div>
+                }
+                
+                <div class="stats-row">
+                    <span class="stat-item stat-chapter">
+                        <i class="fas fa-book"></i>
+                        <span class="stat-number">@enrollment.TotalChapters</span>
+                        <span class="stat-text">فصل</span>
+                    </span>
+                    <span class="stat-item stat-subchapter">
+                        <i class="fas fa-list"></i>
+                        <span class="stat-number">@enrollment.TotalSubChapters</span>
+                        <span class="stat-text">زیرفصل</span>
+                    </span>
+                    <span class="stat-item stat-plan">
+                        <i class="fas fa-calendar-alt"></i>
+                        <span class="stat-number">@enrollment.TotalTeachingPlans</span>
+                        <span class="stat-text">پلن</span>
+                    </span>
+                </div>
             </div>
             
-            <div class="mt-3">
-                <a href="@Url.Action("Study", "Course", new { id = enrollment.CourseId })" class="btn btn-primary btn-sm">
-                    <i class="fas fa-play"></i> ادامه یادگیری
+            <div class="course-action">
+                <a href="@Url.Action("Study", "Course", new { id = enrollment.CourseId })" class="btn-continue">
+                    <i class="fas fa-play"></i>
+                    <span>ادامه یادگیری</span>
                 </a>
             </div>
         </div>
