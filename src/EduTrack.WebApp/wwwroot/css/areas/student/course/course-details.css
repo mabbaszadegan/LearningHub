@@ -970,16 +970,21 @@
         }
 
     .course-footer-btn.btn-unenroll {
-        background: transparent;
-        color: #dc3545;
-        border: 2px solid #dc3545;
+        background: rgba(255, 255, 255, 0.1);
+        color: rgba(255, 255, 255, 0.8);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(10px);
+        font-size: 0.8rem;
+        padding: 8px 16px;
+        min-width: auto;
     }
 
         .course-footer-btn.btn-unenroll:hover {
-            background: #dc3545;
-            color: white;
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(220, 53, 69, 0.3);
+            background: rgba(220, 53, 69, 0.2);
+            color: #ff6b6b;
+            border-color: rgba(255, 107, 107, 0.3);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.2);
         }
 
     .course-footer-btn.btn-close {
@@ -1025,6 +1030,12 @@ body {
         padding: 10px 16px;
         font-size: 0.85rem;
         min-width: 100px;
+    }
+
+    .course-footer-btn.btn-unenroll {
+        font-size: 0.75rem;
+        padding: 6px 12px;
+        min-width: auto;
     }
 
     body {

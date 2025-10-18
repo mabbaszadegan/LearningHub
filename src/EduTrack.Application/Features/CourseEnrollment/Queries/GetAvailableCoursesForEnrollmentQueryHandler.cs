@@ -171,7 +171,11 @@ public class GetCourseEnrollmentQueryHandler : IRequestHandler<GetCourseEnrollme
             var enrollment = await _enrollmentRepository.GetAll()
                 .Include(e => e.Course)
                 .Include(e => e.Student)
-                .FirstOrDefaultAsync(e => e.CourseId == request.CourseId && e.StudentId == request.StudentId, cancellationToken);
+                .FirstOrDefaultAsync(e =>
+                                        e.CourseId == request.CourseId &&
+                                        e.StudentId == request.StudentId &&
+                                        e.IsActive,
+                                        cancellationToken);
 
             if (enrollment == null)
             {
@@ -224,16 +228,17 @@ public class CanEnrollInCourseQueryHandler : IRequestHandler<CanEnrollInCourseQu
     {
         // Check if course exists and is active
         var course = await _courseRepository.GetByIdAsync(request.CourseId, cancellationToken);
-        if (course == null || !course.IsActive)
+        if (course == null)
         {
             return Result<bool>.Success(false);
         }
 
-        // Check if student is already enrolled
+        // Check if student has any enrollment record (active or inactive)
+        // Once a student unenrolls, they cannot re-enroll to maintain restriction
         var existingEnrollment = await _enrollmentRepository.GetAll()
-            .FirstOrDefaultAsync(e => e.CourseId == request.CourseId && e.StudentId == request.StudentId, cancellationToken);
+            .FirstOrDefaultAsync(e => e.CourseId == request.CourseId && e.StudentId == request.StudentId && e.IsActive, cancellationToken);
 
-        if (existingEnrollment != null && existingEnrollment.IsActive)
+        if (existingEnrollment != null)
         {
             return Result<bool>.Success(false);
         }
@@ -287,7 +292,7 @@ public class GetStudentCourseProgressQueryHandler : IRequestHandler<GetStudentCo
 
         // Get student's progress for lessons in this course
         var lessonIds = course.Modules?.SelectMany(m => m.Lessons?.Select(l => l.Id) ?? new List<int>()) ?? new List<int>();
-        
+
         var progresses = await _progressRepository.GetAll()
             .Where(p => p.StudentId == request.StudentId && lessonIds.Contains(p.LessonId ?? 0))
             .ToListAsync(cancellationToken);
