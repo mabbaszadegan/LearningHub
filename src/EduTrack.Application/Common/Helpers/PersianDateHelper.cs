@@ -21,6 +21,26 @@ public static class DateTimeOffsetExtensions
     }
 
     /// <summary>
+    /// Converts DateTimeOffset to Persian date with month name (e.g., "5 مهر 1404")
+    /// </summary>
+    public static string ToPersianDateWithMonthName(this DateTimeOffset dateTime)
+    {
+        var persianDateString = PersianDateHelper.DateTimeOffsetToPersian(dateTime, false);
+        var parts = persianDateString.Split('/');
+        
+        if (parts.Length == 3 && 
+            int.TryParse(parts[0], out int year) &&
+            int.TryParse(parts[1], out int month) &&
+            int.TryParse(parts[2], out int day))
+        {
+            var monthName = PersianDateHelper.GetPersianMonthName(month);
+            return $"{day} {monthName} {year}";
+        }
+        
+        return persianDateString; // Fallback to original format
+    }
+
+    /// <summary>
     /// Converts DateTimeOffset to Persian date with day name
     /// </summary>
     public static string ToPersianDateWithDayName(this DateTimeOffset dateTime)
@@ -154,5 +174,30 @@ public static class PersianDateHelper
     public static DateTimeOffset FromPersianDateString(string persianDate, string? timeString = null)
     {
         return PersianToDateTimeOffset(persianDate, timeString);
+    }
+
+    /// <summary>
+    /// Gets Persian month name by month number
+    /// </summary>
+    /// <param name="month">Month number (1-12)</param>
+    /// <returns>Persian month name</returns>
+    public static string GetPersianMonthName(int month)
+    {
+        return month switch
+        {
+            1 => "فروردین",
+            2 => "اردیبهشت",
+            3 => "خرداد",
+            4 => "تیر",
+            5 => "مرداد",
+            6 => "شهریور",
+            7 => "مهر",
+            8 => "آبان",
+            9 => "آذر",
+            10 => "دی",
+            11 => "بهمن",
+            12 => "اسفند",
+            _ => ""
+        };
     }
 }
