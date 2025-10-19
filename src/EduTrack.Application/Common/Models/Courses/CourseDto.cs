@@ -21,4 +21,5 @@ public class CourseDto
     public int ClassCount { get; set; }
     public List<ModuleDto> Modules { get; set; } = new();
     public List<ChapterDto> Chapters { get; set; } = new();
+    public int StudentCount { get; set; }
 }

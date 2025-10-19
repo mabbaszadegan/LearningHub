@@ -1,610 +1,137 @@
-﻿@{
+﻿@model EduTrack.WebApp.Models.StudentDashboardViewModel
+@{
     ViewData["Title"] = "داشبورد دانش‌آموز";
-    Layout = "~/Views/Shared/_StudentLayout.cshtml";
 }
 
 @section Styles {
-    <link rel="stylesheet" href="~/css/areas/student/mobile-app.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/areas/student/buttons.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/areas/student/course-details-modal.css" />
-    <link rel="stylesheet" href="~/css/areas/student/course/course-list-v2.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/areas/student/course/course-details.css" asp-append-version="true" />
 }
 
-<div class="mobile-app-container">
-    <!-- Minimal Header -->
-    <div class="minimal-header">
-        <div class="header-left">
-            <button class="minimal-btn notifications-btn" title="اعلانات">
-                <i class="fas fa-bell"></i>
-                <span class="notification-badge">3</span>
-            </button>
-            
-            <button class="minimal-btn logout-btn" title="خروج" onclick="StudentAuth.logout()">
-                <i class="fas fa-sign-out-alt"></i>
-            </button>
+<div class="content-container">
+    <!-- Welcome Section -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-home me-2"></i>
+            خوش آمدید، @Model.StudentName!
         </div>
-        
-        <div class="header-right">
-            <span class="welcome-text">@(User.Identity?.Name?.Split(' ').FirstOrDefault() ?? "کاربر") جان، خوش آمدی</span>
+        <div class="card-body">
+            <p class="mb-3">آماده یادگیری و کسب دانش جدید هستید؟</p>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <div class="stat-item">
+                        <i class="fas fa-book-open text-primary"></i>
+                        <div>
+                            <div class="stat-number">@Model.CompletedLessons</div>
+                            <div class="stat-label">درس تکمیل شده</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <div class="stat-item">
+                        <i class="fas fa-graduation-cap text-success"></i>
+                        <div>
+                            <div class="stat-number">@Model.TotalClasses</div>
+                            <div class="stat-label">کل کلاس‌ها</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- App Content -->
-    <div class="app-content">
-        <!-- Navigation Tiles (Desktop Only) -->
-        <div class="navigation-tiles d-none d-md-block">
-            <div class="tile-grid">
-                <div class="nav-tile" data-page="courses">
-                    <div class="tile-icon">
+    <!-- Quick Actions -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-bolt me-2"></i>
+            دسترسی سریع
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <a href="@Url.Action("Index", "Catalog")" class="btn-continue w-100">
                         <i class="fas fa-graduation-cap"></i>
-                    </div>
-                    <div class="tile-title">دوره‌ها</div>
-                    <div class="tile-subtitle">مشاهده و ثبت‌نام</div>
+                        مشاهده دوره‌ها
+                    </a>
                 </div>
-                
-                <div class="nav-tile" data-page="my-courses">
-                    <div class="tile-icon">
+                <div class="col-md-6 mb-3">
+                    <a href="@Url.Action("Index", "Course")" class="btn-secondary-action w-100">
                         <i class="fas fa-book-open"></i>
-                    </div>
-                    <div class="tile-title">دوره‌های من</div>
-                    <div class="tile-subtitle">ادامه یادگیری</div>
+                        دوره‌های من
+                    </a>
                 </div>
-                
-                <div class="nav-tile" data-page="progress">
-                    <div class="tile-icon">
+                <div class="col-md-6 mb-3">
+                    <a href="@Url.Action("MyProgress", "Home")" class="btn-success-action w-100">
                         <i class="fas fa-chart-line"></i>
-                    </div>
-                    <div class="tile-title">پیشرفت</div>
-                    <div class="tile-subtitle">آمار و گزارش</div>
+                        پیشرفت من
+                    </a>
                 </div>
-                
-                <div class="nav-tile" data-page="profile">
-                    <div class="tile-icon">
+                <div class="col-md-6 mb-3">
+                    <a href="@Url.Action("Index", "Profile")" class="btn-warning-action w-100">
                         <i class="fas fa-user-circle"></i>
-                    </div>
-                    <div class="tile-title">پروفایل</div>
-                    <div class="tile-subtitle">تنظیمات شخصی</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Page Content -->
-        <div class="page-content">
-            <!-- Home Page -->
-            <div class="page" id="home-page">
-                <div class="page-header">
-                    <h2>خانه</h2>
-                    <p>به داشبورد یادگیری خود خوش آمدید</p>
-                </div>
-                
-                <div class="home-content">
-                    <div class="welcome-card">
-                        <div class="welcome-icon">
-                            <i class="fas fa-graduation-cap"></i>
-                        </div>
-                        <h3>آماده یادگیری هستید؟</h3>
-                        <p>دوره‌های جدید منتظر شما هستند. شروع کنید!</p>
-                        <button class="btn btn-primary" onclick="showPage('courses')">
-                            <i class="fas fa-play me-2"></i>شروع یادگیری
-                        </button>
-                    </div>
-                    
-                    <div class="quick-actions">
-                        <div class="action-item" onclick="showPage('my-courses')">
-                            <div class="action-icon">
-                                <i class="fas fa-book-open"></i>
-                            </div>
-                            <div class="action-text">
-                                <h4>دوره‌های من</h4>
-                                <p>ادامه یادگیری</p>
-                            </div>
-                        </div>
-                        
-                        <div class="action-item" onclick="showPage('progress')">
-                            <div class="action-icon">
-                                <i class="fas fa-chart-line"></i>
-                            </div>
-                            <div class="action-text">
-                                <h4>پیشرفت</h4>
-                                <p>مشاهده آمار</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Courses Page -->
-            <div class="page" id="courses-page" style="display: none;">
-                <div class="page-header">
-                    <h2>دوره‌های موجود</h2>
-                    <p>دوره‌های جدید برای ثبت‌نام و یادگیری</p>
-                </div>
-                
-                <div class="courses-container" id="coursesContainer">
-                    <div class="loading-placeholder">
-                        <div class="spinner"></div>
-                        <p>در حال بارگذاری دوره‌ها...</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- My Courses Page -->
-            <div class="page" id="my-courses-page" style="display: none;">
-                <div class="page-header">
-                    <h2>دوره‌های من</h2>
-                    <p>دوره‌هایی که در آن‌ها ثبت‌نام کرده‌اید</p>
-                </div>
-                
-                <div class="my-courses-container" id="myCoursesContainer">
-                    <div class="loading-placeholder">
-                        <div class="spinner"></div>
-                        <p>در حال بارگذاری دوره‌های شما...</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Progress Page -->
-            <div class="page" id="progress-page" style="display: none;">
-                <div class="page-header">
-                    <h2>پیشرفت یادگیری</h2>
-                    <p>آمار و گزارش پیشرفت شما در دوره‌ها</p>
-                </div>
-                
-                <div class="progress-container">
-                    <div class="progress-card">
-                        <div class="progress-header">
-                            <h3>پیشرفت کلی</h3>
-                            <div class="progress-percentage">0%</div>
-                        </div>
-                        <div class="progress-bar">
-                            <div class="progress-fill" style="width: 0%"></div>
-                        </div>
-                    </div>
-                    
-                    <div class="stats-grid">
-                        <div class="stat-card">
-                            <div class="stat-icon">
-                                <i class="fas fa-book"></i>
-                            </div>
-                            <div class="stat-content">
-                                <div class="stat-number">0</div>
-                                <div class="stat-label">درس‌های تکمیل شده</div>
-                            </div>
-                        </div>
-                        
-                        <div class="stat-card">
-                            <div class="stat-icon">
-                                <i class="fas fa-clock"></i>
-                            </div>
-                            <div class="stat-content">
-                                <div class="stat-number">0</div>
-                                <div class="stat-label">ساعت مطالعه</div>
-                            </div>
-                        </div>
-                        
-                        <div class="stat-card">
-                            <div class="stat-icon">
-                                <i class="fas fa-trophy"></i>
-                            </div>
-                            <div class="stat-content">
-                                <div class="stat-number">0</div>
-                                <div class="stat-label">نشان‌ها</div>
-                            </div>
-                        </div>
-                        
-                        <div class="stat-card">
-                            <div class="stat-icon">
-                                <i class="fas fa-star"></i>
-                            </div>
-                            <div class="stat-content">
-                                <div class="stat-number">0</div>
-                                <div class="stat-label">امتیاز کل</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Profile Page -->
-            <div class="page" id="profile-page" style="display: none;">
-                <div class="page-header">
-                    <h2>پروفایل من</h2>
-                    <p>اطلاعات شخصی و تنظیمات</p>
-                </div>
-                
-                <div class="profile-container">
-                    <div class="profile-card">
-                        <div class="profile-avatar">
-                            <i class="fas fa-user"></i>
-                        </div>
-                        <div class="profile-info">
-                            <h3>@User.Identity?.Name</h3>
-                            <p>دانش‌آموز</p>
-                        </div>
-                    </div>
-                    
-                    <div class="profile-menu">
-                        <div class="menu-item">
-                            <i class="fas fa-user-edit"></i>
-                            <span>ویرایش پروفایل</span>
-                            <i class="fas fa-chevron-left"></i>
-                        </div>
-                        <div class="menu-item">
-                            <i class="fas fa-bell"></i>
-                            <span>اعلان‌ها</span>
-                            <i class="fas fa-chevron-left"></i>
-                        </div>
-                        <div class="menu-item">
-                            <i class="fas fa-cog"></i>
-                            <span>تنظیمات</span>
-                            <i class="fas fa-chevron-left"></i>
-                        </div>
-                        <div class="menu-item">
-                            <i class="fas fa-question-circle"></i>
-                            <span>راهنما</span>
-                            <i class="fas fa-chevron-left"></i>
-                        </div>
-                        <div class="menu-item" onclick="StudentAuth.logout()">
-                            <i class="fas fa-sign-out-alt"></i>
-                            <span>خروج</span>
-                            <i class="fas fa-chevron-left"></i>
-                        </div>
-                    </div>
+                        پروفایل
+                    </a>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Bottom Navigation (Mobile) -->
-    <div class="bottom-nav">
-        <div class="nav-item" data-page="courses">
-            <div class="nav-icon">
-                <i class="fas fa-graduation-cap"></i>
-            </div>
-            <div class="nav-label">دوره‌ها</div>
+    <!-- Recent Classes -->
+    <div class="card">
+        <div class="card-header">
+            <i class="fas fa-book-open me-2"></i>
+            کلاس‌های اخیر
         </div>
-        
-        <div class="nav-item" data-page="my-courses">
-            <div class="nav-icon">
-                <i class="fas fa-book-open"></i>
-            </div>
-            <div class="nav-label">دوره‌های من</div>
-        </div>
-        
-        <div class="nav-item active" data-page="home">
-            <div class="nav-icon">
-                <i class="fas fa-home"></i>
-            </div>
-            <div class="nav-label">خانه</div>
-        </div>
-        
-        <div class="nav-item" data-page="progress">
-            <div class="nav-icon">
-                <i class="fas fa-chart-line"></i>
-            </div>
-            <div class="nav-label">پیشرفت</div>
-        </div>
-        
-        <div class="nav-item" data-page="profile">
-            <div class="nav-icon">
-                <i class="fas fa-user-circle"></i>
-            </div>
-            <div class="nav-label">پروفایل</div>
-        </div>
-    </div>
-</div>
-
-<!-- Course Details Modal -->
-<div class="modal fade course-details-modal" id="courseDetailsModal" tabindex="-1" aria-labelledby="courseDetailsModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="courseDetailsModalLabel">جزئیات دوره</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body" id="courseDetailsContent">
-                <!-- Course details will be loaded here -->
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">بستن</button>
-                <button type="button" class="btn btn-primary" id="enrollBtn" style="display: none;">ثبت‌نام در دوره</button>
-            </div>
+        <div class="card-body">
+            @if (Model.RecentClasses != null && Model.RecentClasses.Any())
+            {
+                @foreach (var enrollment in Model.RecentClasses.Take(3))
+                {
+                    <div class="course-item mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1">کلاس اخیر</h6>
+                                <small class="text-muted">آخرین فعالیت</small>
+                            </div>
+                            <div>
+                                <a href="@Url.Action("Index", "Course")" class="btn-continue btn-sm">
+                                    <i class="fas fa-play"></i>
+                                    ادامه
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                }
+                
+                <div class="text-center mt-3">
+                    <a href="@Url.Action("Index", "Course")" class="btn-secondary-action">
+                        <i class="fas fa-list"></i>
+                        مشاهده همه کلاس‌ها
+                    </a>
+                </div>
+            }
+            else
+            {
+                <div class="empty-state">
+                    <i class="fas fa-book-open"></i>
+                    <h5>کلاسی ندارید</h5>
+                    <p>هنوز در هیچ کلاسی ثبت‌نام نکرده‌اید</p>
+                    <a href="@Url.Action("Index", "Catalog")" class="btn-continue">
+                        <i class="fas fa-graduation-cap"></i>
+                        مشاهده دوره‌ها
+                    </a>
+                </div>
+            }
         </div>
     </div>
 </div>
 
 @section Scripts {
-    <script src="~/js/areas/student/student.js" asp-append-version="true"></script>
-    <script src="~/js/areas/student/course/course-details.js" asp-append-version="true"></script>
     <script>
-        // Test if script is loading
-        console.log('Script section loaded!');
-        
-        // Test if jQuery is available
-        if (typeof $ === 'undefined') {
-            console.error('jQuery is not loaded!');
-        } else {
-            console.log('jQuery is available:', $.fn.jquery);
-        }
-        
         $(document).ready(function() {
-            console.log('Document ready - JavaScript is working!');
-            console.log('Current URL:', window.location.href);
-            console.log('Base URL:', window.location.origin);
-            
-            // Initialize Toastr if available
-            if (typeof toastr !== 'undefined') {
-                toastr.options = {
-                    "closeButton": true,
-                    "debug": false,
-                    "newestOnTop": true,
-                    "progressBar": true,
-                    "positionClass": "toast-top-right",
-                    "preventDuplicates": false,
-                    "onclick": null,
-                    "showDuration": "300",
-                    "hideDuration": "1000",
-                    "timeOut": "5000",
-                    "extendedTimeOut": "1000",
-                    "showEasing": "swing",
-                    "hideEasing": "linear",
-                    "showMethod": "fadeIn",
-                    "hideMethod": "fadeOut",
-                    "rtl": true
-                };
+            // Initialize bottom navigation
+            if (window.bottomNavigation) {
+                window.bottomNavigation.setActivePage('home');
             }
-
-            // Navigation functionality
-            $('.nav-tile, .nav-item').on('click', function() {
-                const page = $(this).data('page');
-                console.log('Navigation clicked:', page);
-                showPage(page);
-                updateActiveNav($(this));
-            });
-
-            // Test controller first with absolute URL
-            console.log('Testing controller...');
-            console.log('Test URL:', '@Url.Action("Test", "Course")');
-            
-            // Try direct URL first
-            $.ajax({
-                url: '/Student/Course/Test',
-                type: 'GET',
-                success: function(data) {
-                    console.log('Direct URL test successful:', data);
-                },
-                error: function(xhr, status, error) {
-                    console.error('Direct URL test failed:', error);
-                    console.error('Status:', xhr.status);
-                    console.error('Response:', xhr.responseText);
-                }
-            });
-            
-            // Try with Url.Action
-            $.ajax({
-                url: '@Url.Action("Test", "Course")',
-                type: 'GET',
-                success: function(data) {
-                    console.log('Url.Action test successful:', data);
-                },
-                error: function(xhr, status, error) {
-                    console.error('Url.Action test failed:', error);
-                    console.error('Status:', xhr.status);
-                    console.error('Response:', xhr.responseText);
-                }
-            });
-
-            // Load initial content
-            console.log('Loading initial content...');
-            
-            // Test if elements exist
-            console.log('Courses container exists:', $('#coursesContainer').length > 0);
-            console.log('Courses container HTML:', $('#coursesContainer').html());
-            
-            loadCourses();
-            loadMyCourses();
-            loadStats();
-
-            // Course card click handlers
-            $(document).on('click', '.course-card', function() {
-                const courseId = $(this).data('course-id');
-                showCourseDetails(courseId);
-            });
-
-            // Enroll button click handler
-            $(document).on('click', '#enrollBtn', function() {
-                const courseId = $(this).data('course-id');
-                enrollInCourse(courseId);
-            });
         });
-
-        function showPage(pageName) {
-            // Hide all pages
-            $('.page').hide();
-            
-            // Show selected page
-            $(`#${pageName}-page`).show();
-            
-            // Update active navigation
-            $('.nav-tile, .nav-item').removeClass('active');
-            $(`.nav-tile[data-page="${pageName}"], .nav-item[data-page="${pageName}"]`).addClass('active');
-            
-            // Load content if needed
-            if (pageName === 'courses') {
-                loadCourses();
-            } else if (pageName === 'my-courses') {
-                loadMyCourses();
-            } else if (pageName === 'progress') {
-                loadStats();
-            } else if (pageName === 'home') {
-                // Home page doesn't need additional loading
-                console.log('Showing home page');
-            }
-        }
-        
-        // Toggle module content
-        function toggleModule(moduleId) {
-            const moduleCard = document.querySelector(`[onclick="toggleModule(${moduleId})"]`).closest('.module-card');
-            const moduleContent = document.getElementById(`module-${moduleId}`);
-            
-            if (moduleCard.classList.contains('active')) {
-                moduleCard.classList.remove('active');
-                moduleContent.style.maxHeight = '0';
-            } else {
-                moduleCard.classList.add('active');
-                moduleContent.style.maxHeight = moduleContent.scrollHeight + 'px';
-            }
-        }
-
-        function updateActiveNav(activeItem) {
-            $('.nav-tile, .nav-item').removeClass('active');
-            activeItem.addClass('active');
-        }
-
-        function loadCourses() {
-            console.log('Loading courses...');
-            console.log('URL:', '@Url.Action("GetAvailableCourses", "Course")');
-            
-            // Test if jQuery is working
-            console.log('jQuery version:', $.fn.jquery);
-            
-            // Try direct URL first
-            $.ajax({
-                url: '/Student/Course/GetAvailableCourses',
-                type: 'GET',
-                data: { pageNumber: 1, pageSize: 10 },
-                beforeSend: function() {
-                    console.log('AJAX request started');
-                },
-                success: function(data) {
-                    console.log('Courses loaded successfully:', data);
-                    console.log('Data type:', typeof data);
-                    console.log('Data length:', data ? data.length : 'null');
-                    
-                    // Check if data is a string and has content
-                    if (data && typeof data === 'string' && data.trim().length > 0) {
-                        $('#coursesContainer').html(data);
-                    } else if (data && typeof data === 'object') {
-                        // If it's an object (JSON response), handle it differently
-                        console.log('Received object data:', data);
-                        $('#coursesContainer').html('<div class="empty-state"><i class="fas fa-search"></i><h3>دوره‌ای یافت نشد</h3><p>در حال حاضر دوره جدیدی برای ثبت‌نام وجود ندارد</p></div>');
-                    } else {
-                        $('#coursesContainer').html('<div class="empty-state"><i class="fas fa-search"></i><h3>دوره‌ای یافت نشد</h3><p>در حال حاضر دوره جدیدی برای ثبت‌نام وجود ندارد</p></div>');
-                    }
-                },
-                error: function(xhr, status, error) {
-                    console.error('Error loading courses:', error);
-                    console.error('Status:', status);
-                    console.error('Response:', xhr.responseText);
-                    console.error('Status Code:', xhr.status);
-                    $('#coursesContainer').html('<div class="error-state"><i class="fas fa-exclamation-triangle"></i><h3>خطا در بارگذاری</h3><p>خطا در بارگذاری دوره‌ها: ' + error + '</p></div>');
-                }
-            });
-        }
-
-        function loadMyCourses() {
-            $.ajax({
-                url: '@Url.Action("GetMyCourses", "Course")',
-                type: 'GET',
-                success: function(data) {
-                    console.log('My courses loaded:', data);
-                    console.log('Data type:', typeof data);
-                    
-                    // Check if data is a string and has content
-                    if (data && typeof data === 'string' && data.trim().length > 0) {
-                        $('#myCoursesContainer').html(data);
-                    } else if (data && typeof data === 'object') {
-                        // If it's an object (JSON response), handle it differently
-                        console.log('Received object data for my courses:', data);
-                        $('#myCoursesContainer').html('<div class="empty-state"><i class="fas fa-book-open"></i><h3>دوره‌ای ندارید</h3><p>هنوز در هیچ دوره‌ای ثبت‌نام نکرده‌اید</p></div>');
-                    } else {
-                        $('#myCoursesContainer').html('<div class="empty-state"><i class="fas fa-book-open"></i><h3>دوره‌ای ندارید</h3><p>هنوز در هیچ دوره‌ای ثبت‌نام نکرده‌اید</p></div>');
-                    }
-                },
-                error: function(xhr, status, error) {
-                    console.error('Error loading my courses:', error);
-                    console.error('Status:', status);
-                    console.error('Response:', xhr.responseText);
-                    $('#myCoursesContainer').html('<div class="error-state"><i class="fas fa-exclamation-triangle"></i><h3>خطا در بارگذاری</h3><p>خطا در بارگذاری دوره‌های شما</p></div>');
-                }
-            });
-        }
-
-        function loadStats() {
-            // TODO: Implement stats loading
-            // For now, show placeholder data
-            $('#totalCourses').text('0');
-            $('#completedLessons').text('0');
-            $('#totalPoints').text('0');
-        }
-
-        function showCourseDetails(courseId) {
-            $.ajax({
-                url: '@Url.Action("GetCourseDetails", "Course")',
-                type: 'GET',
-                data: { id: courseId },
-                success: function(data) {
-                    $('#courseDetailsContent').html(data);
-
-                    // Determine enroll eligibility from injected content
-                    const wrapper = $('#courseDetailsContent').find('.course-details-container');
-                    const canEnrollAttr = (wrapper.data('can-enroll') ?? '').toString();
-                    const isEnrolledAttr = (wrapper.data('is-enrolled') ?? '').toString();
-                    const canEnroll = canEnrollAttr === 'true' || canEnrollAttr === '1';
-                    const isEnrolled = isEnrolledAttr === 'true' || isEnrolledAttr === '1';
-
-                    const $enrollBtn = $('#enrollBtn').data('course-id', courseId);
-                    if (canEnroll && !isEnrolled) {
-                        $enrollBtn.show();
-                    } else {
-                        $enrollBtn.hide();
-                    }
-
-                    $('#courseDetailsModal').modal('show');
-                },
-                error: function() {
-                    if (typeof toastr !== 'undefined') {
-                        toastr.error('خطا در بارگذاری جزئیات دوره');
-                    } else {
-                        alert('خطا در بارگذاری جزئیات دوره');
-                    }
-                }
-            });
-        }
-
-        function enrollInCourse(courseId) {
-            $.ajax({
-                url: '@Url.Action("Enroll", "Course")',
-                type: 'POST',
-                data: { courseId: courseId },
-                success: function(response) {
-                    if (response.success) {
-                        if (typeof toastr !== 'undefined') {
-                            toastr.success('با موفقیت در دوره ثبت‌نام کردید');
-                        } else {
-                            alert('با موفقیت در دوره ثبت‌نام کردید');
-                        }
-                        $('#courseDetailsModal').modal('hide');
-                        loadCourses();
-                        loadMyCourses();
-                        loadStats();
-                    } else {
-                        if (typeof toastr !== 'undefined') {
-                            toastr.error(response.error || 'خطا در ثبت‌نام');
-                        } else {
-                            alert(response.error || 'خطا در ثبت‌نام');
-                        }
-                    }
-                },
-                error: function() {
-                    if (typeof toastr !== 'undefined') {
-                        toastr.error('خطا در ثبت‌نام در دوره');
-                    } else {
-                        alert('خطا در ثبت‌نام در دوره');
-                    }
-                }
-            });
-        }
     </script>
 }

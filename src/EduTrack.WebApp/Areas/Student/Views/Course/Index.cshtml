@@ -2,132 +2,124 @@
 @model List<EduTrack.Application.Features.CourseEnrollment.DTOs.StudentCourseEnrollmentSummaryDto>
 @{
     ViewData["Title"] = "دوره‌های من";
-    Layout = "_StudentLayout.cshtml";
 }
 
-<!-- Page Header -->
-<div class="page-header">
-    <div class="d-flex justify-content-between align-items-center">
-        <div>
-            <h2>دوره‌های من</h2>
-            <p>دوره‌هایی که در آن‌ها ثبت‌نام کرده‌اید</p>
-        </div>
-        <div>
-            <a asp-action="Catalog" class="btn btn-sm">
-                <i class="fas fa-plus me-1"></i>ثبت‌نام در دوره جدید
-            </a>
-        </div>
-    </div>
-</div>
+@section Styles {
+    <link rel="stylesheet" href="~/css/areas/student/buttons.css" asp-append-version="true" />
+}
 
-<!-- Course List Container -->
-<div class="course-list-container">
-
-    @if (Model.Any())
-    {
-        <div class="row">
-            @foreach (var enrollment in Model)
-            {
-                <div class="col-lg-4 col-md-6 mb-4">
-                    <div class="course-card" data-course-id="@enrollment.CourseId">
-                        <div class="course-thumbnail">
-                            @if (!string.IsNullOrEmpty(enrollment.CourseThumbnail))
-                            {
-                                <img src="@enrollment.CourseThumbnail" alt="@enrollment.CourseTitle" class="img-fluid">
-                            }
-                            else
-                            {
-                                <div class="course-thumbnail-placeholder">
-                                    <i class="fas fa-book"></i>
-                                    <span>دوره آموزشی</span>
-                                </div>
-                            }
-                            <div class="course-status">
-                                @if (enrollment.IsCompleted)
+<div class="content-container">
+    <!-- Course List Container -->
+    <div class="course-list-container">
+        @if (Model.Any())
+        {
+            <div class="row">
+                @foreach (var enrollment in Model)
+                {
+                    <div class="col-lg-4 col-md-6 mb-4">
+                        <div class="course-card" data-course-id="@enrollment.CourseId">
+                            <div class="course-thumbnail">
+                                @if (!string.IsNullOrEmpty(enrollment.CourseThumbnail))
                                 {
-                                    <span class="badge bg-success">تکمیل شده</span>
+                                    <img src="@enrollment.CourseThumbnail" alt="@enrollment.CourseTitle" class="img-fluid">
                                 }
                                 else
                                 {
-                                    <span class="badge bg-primary">در حال انجام</span>
+                                    <div class="course-thumbnail-placeholder">
+                                        <i class="fas fa-book"></i>
+                                        <span>دوره آموزشی</span>
+                                    </div>
                                 }
-                            </div>
-                        </div>
-                        <div class="course-content">
-                            <h5 class="course-title">@enrollment.CourseTitle</h5>
-                            @if (!string.IsNullOrEmpty(enrollment.CourseDescription))
-                            {
-                                <p class="course-description">@enrollment.CourseDescription</p>
-                            }
-                            
-                            <div class="course-progress">
-                                <div class="d-flex justify-content-between align-items-center mb-1">
-                                    <span class="progress-label">پیشرفت</span>
-                                    <span class="progress-percentage">@enrollment.ProgressPercentage%</span>
+                                <div class="course-status">
+                                    @if (enrollment.IsCompleted)
+                                    {
+                                        <span class="badge bg-success">تکمیل شده</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-primary">در حال انجام</span>
+                                    }
                                 </div>
-                                <div class="progress">
-                                    <div class="progress-bar" role="progressbar" style="width: @enrollment.ProgressPercentage%" 
-                                         aria-valuenow="@enrollment.ProgressPercentage" aria-valuemin="0" aria-valuemax="100">
+                            </div>
+                            <div class="course-content">
+                                <h5 class="course-title">@enrollment.CourseTitle</h5>
+                                @if (!string.IsNullOrEmpty(enrollment.CourseDescription))
+                                {
+                                    <p class="course-description">@enrollment.CourseDescription</p>
+                                }
+                                
+                                <div class="course-progress">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <span class="progress-label">پیشرفت</span>
+                                        <span class="progress-percentage">@enrollment.ProgressPercentage%</span>
+                                    </div>
+                                    <div class="progress">
+                                        <div class="progress-bar" role="progressbar" style="width: @enrollment.ProgressPercentage%" 
+                                             aria-valuenow="@enrollment.ProgressPercentage" aria-valuemin="0" aria-valuemax="100">
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
 
-                            <div class="course-stats">
-                                <div class="row text-center">
-                                    <div class="col-4">
-                                        <div class="stat-number">@enrollment.CompletedLessons</div>
-                                        <div class="stat-label">درس تکمیل شده</div>
-                                    </div>
-                                    <div class="col-4">
-                                        <div class="stat-number">@enrollment.CompletedExams</div>
-                                        <div class="stat-label">آزمون انجام شده</div>
-                                    </div>
-                                    <div class="col-4">
-                                        <div class="stat-number">@enrollment.AverageScore.ToString("F1")</div>
-                                        <div class="stat-label">میانگین نمره</div>
+                                <div class="course-stats">
+                                    <div class="row text-center">
+                                        <div class="col-4">
+                                            <div class="stat-number">@enrollment.CompletedLessons</div>
+                                            <div class="stat-label">درس تکمیل شده</div>
+                                        </div>
+                                        <div class="col-4">
+                                            <div class="stat-number">@enrollment.CompletedExams</div>
+                                            <div class="stat-label">آزمون انجام شده</div>
+                                        </div>
+                                        <div class="col-4">
+                                            <div class="stat-number">@enrollment.AverageScore.ToString("F1")</div>
+                                            <div class="stat-label">میانگین نمره</div>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
 
-                            <div class="course-actions">
-                                <a asp-action="Study" asp-route-id="@enrollment.CourseId" class="btn btn-modern-primary btn-sm w-100 mb-2">
-                                    <i class="fas fa-play"></i>ادامه مطالعه
-                                </a>
-                                <div class="d-flex gap-2">
-                                    <a asp-action="Details" asp-route-id="@enrollment.CourseId" class="btn btn-modern-secondary btn-sm flex-fill">
-                                        <i class="fas fa-info-circle"></i>جزئیات
+                                <div class="course-actions">
+                                    <a asp-action="ScheduleItems" asp-route-id="@enrollment.CourseId" class="btn-continue w-100 mb-2">
+                                        <i class="fas fa-play"></i>ادامه یادگیری
                                     </a>
-                                    <button type="button" class="btn btn-modern-outline-danger btn-sm flex-fill" 
-                                            data-action="unenroll" data-course-id="@enrollment.CourseId">
-                                        <i class="fas fa-sign-out-alt"></i>خروج
-                                    </button>
+                                    <div class="d-flex gap-2">
+                                        <button type="button" class="btn-secondary-action flex-fill" onclick="showCourseDetails(@enrollment.CourseId)">
+                                            <i class="fas fa-info-circle"></i>جزئیات
+                                        </button>
+                                        <button type="button" class="btn-danger-action flex-fill" 
+                                                data-action="unenroll" data-course-id="@enrollment.CourseId">
+                                            <i class="fas fa-sign-out-alt"></i>خروج
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            }
-        </div>
-    }
-    else
-    {
-        <div class="text-center py-5">
-            <div class="empty-state">
-                <i class="fas fa-book"></i>
-                <h4>هنوز در دوره‌ای ثبت‌نام نکرده‌اید</h4>
-                <p>برای شروع یادگیری، در یکی از دوره‌های موجود ثبت‌نام کنید</p>
-                <a asp-action="Catalog" class="btn btn-modern-primary">
-                    <i class="fas fa-search me-2"></i>مشاهده کاتالوگ دوره‌ها
-                </a>
+                }
             </div>
-        </div>
-    }
+        }
+        else
+        {
+            <div class="text-center py-5">
+                <div class="empty-state">
+                    <i class="fas fa-book"></i>
+                    <h4>هنوز در دوره‌ای ثبت‌نام نکرده‌اید</h4>
+                    <p>برای شروع یادگیری، در یکی از دوره‌های موجود ثبت‌نام کنید</p>
+                    <a asp-action="Catalog" class="btn-continue">
+                        <i class="fas fa-search me-2"></i>مشاهده کاتالوگ دوره‌ها
+                    </a>
+                </div>
+            </div>
+        }
+    </div>
 </div>
 
-@section Styles {
-    <link rel="stylesheet" href="~/css/areas/student/course/course-list-v2.css" asp-append-version="true" />
-}
-
 @section Scripts {
-    <script src="~/js/areas/student/course/course-list.js" asp-append-version="true"></script>
+    <script>
+        $(document).ready(function() {
+            // Initialize bottom navigation
+            if (window.bottomNavigation) {
+                window.bottomNavigation.setActivePage('my-courses');
+            }
+        });
+    </script>
 }

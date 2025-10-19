@@ -69,7 +69,7 @@ public class CourseController : Controller
             return RedirectToAction("Login", "Account", new { area = "Public" });
         }
 
-        var result = await _mediator.Send(new GetStudentCourseCatalogQuery(currentUser.Id, pageNumber, pageSize));
+        var result = await _mediator.Send(new GetCoursesQuery(pageNumber, pageSize, true));
         
         ViewBag.CurrentUserId = currentUser.Id;
         return View(result);
@@ -311,5 +311,47 @@ public class CourseController : Controller
         ViewBag.CurrentUserId = currentUser.Id;
 
         return PartialView("_CourseDetailsPartial", courseResult.Value);
+    }
+
+    /// <summary>
+    /// Display course schedule items for enrolled students
+    /// </summary>
+    [HttpGet]
+    public async Task<IActionResult> ScheduleItems(int id)
+    {
+        var currentUser = await _userManager.GetUserAsync(User);
+        if (currentUser == null)
+        {
+            return RedirectToAction("Login", "Account", new { area = "Public" });
+        }
+
+        // Check if student is enrolled
+        var enrollmentResult = await _mediator.Send(new GetCourseEnrollmentQuery(id, currentUser.Id));
+        if (!enrollmentResult.IsSuccess)
+        {
+            TempData["Error"] = "شما در این دوره ثبت‌نام نکرده‌اید";
+            return RedirectToAction("Details", new { id });
+        }
+
+        // Get course details
+        var courseResult = await _mediator.Send(new GetCourseByIdQuery(id));
+        if (!courseResult.IsSuccess)
+        {
+            TempData["Error"] = "دوره یافت نشد";
+            return RedirectToAction("Index");
+        }
+
+        // Get schedule items for the course
+        var scheduleItemsResult = await _mediator.Send(new GetCourseScheduleItemsQuery(id, currentUser.Id));
+        if (!scheduleItemsResult.IsSuccess)
+        {
+            TempData["Error"] = scheduleItemsResult.Error;
+            return RedirectToAction("Study", new { id });
+        }
+
+        ViewBag.Course = courseResult.Value;
+        ViewBag.Enrollment = enrollmentResult.Value;
+
+        return View(scheduleItemsResult.Value);
     }
 }

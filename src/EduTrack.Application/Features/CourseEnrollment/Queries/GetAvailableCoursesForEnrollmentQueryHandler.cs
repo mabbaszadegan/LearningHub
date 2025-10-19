@@ -48,36 +48,6 @@ public class GetAvailableCoursesForEnrollmentQueryHandler : IRequestHandler<GetA
             // Get total count
             var totalCount = await coursesQuery.CountAsync(cancellationToken);
 
-            // If no courses found, create a sample course for testing
-            if (totalCount == 0)
-            {
-                var sampleCourseDto = new CourseDto
-                {
-                    Id = 1,
-                    Title = "دوره نمونه",
-                    Description = "این یک دوره نمونه برای تست است",
-                    Thumbnail = null,
-                    IsActive = true,
-                    Order = 1,
-                    CreatedAt = DateTimeOffset.Now,
-                    UpdatedAt = DateTimeOffset.Now,
-                    CreatedBy = "System",
-                    ModuleCount = 0,
-                    LessonCount = 0,
-                    ChapterCount = 0,
-                    ClassCount = 0,
-                    Modules = new List<ModuleDto>()
-                };
-
-                var samplePaginatedResult = new PaginatedList<CourseDto>(
-                    new List<CourseDto> { sampleCourseDto },
-                    1,
-                    request.PageNumber,
-                    request.PageSize);
-
-                return Result<PaginatedList<CourseDto>>.Success(samplePaginatedResult);
-            }
-
             // Apply pagination
             var courses = await coursesQuery
                 .OrderBy(c => c.Order)

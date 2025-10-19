@@ -27,135 +27,68 @@
         <i class="fas fa-wifi"></i> شما در حالت آفلاین هستید
     </div>
 
-    <header>
-        <nav class="navbar navbar-expand-lg navbar-dark">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">
-                    <i class="fas fa-graduation-cap me-2"></i>EduTrack
-                </a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
+    <!-- Fixed Header -->
+    <header class="fixed-header">
+        <div class="header-content">
+            <div class="header-left">
+                <button class="header-btn notifications-btn" title="اعلانات">
+                    <i class="fas fa-bell"></i>
+                    <span class="notification-badge">3</span>
                 </button>
-                <div class="navbar-collapse collapse d-lg-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Index">
-                                <i class="fas fa-home me-1"></i>خانه
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-area="" asp-controller="Catalog" asp-action="Index">
-                                <i class="fas fa-book me-1"></i>دوره‌ها
-                            </a>
-                        </li>
-                        @if (User.IsInRole("Admin"))
-                        {
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                    <i class="fas fa-cog me-1"></i>پنل مدیریت
-                                </a>
-                                <ul class="dropdown-menu" aria-labelledby="adminDropdown">
-                                    <li>
-                                        <a class="dropdown-item" asp-controller="Admin" asp-action="Index">
-                                            <i class="fas fa-tachometer-alt me-2"></i>داشبورد
-                                        </a>
-                                    </li>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li>
-                                        <a class="dropdown-item" asp-controller="Admin" asp-action="Users">
-                                            <i class="fas fa-users me-2"></i>مدیریت کاربران
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item" asp-controller="Admin" asp-action="Courses">
-                                            <i class="fas fa-book me-2"></i>مدیریت دوره‌ها
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item" asp-controller="Admin" asp-action="Classes">
-                                            <i class="fas fa-school me-2"></i>مدیریت کلاس‌ها
-                                        </a>
-                                    </li>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li>
-                                        <a class="dropdown-item" asp-controller="Admin" asp-action="Sessions">
-                                            <i class="fas fa-user-clock me-2"></i>نشست‌های فعال
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item" asp-controller="Admin" asp-action="Analytics">
-                                            <i class="fas fa-chart-bar me-2"></i>آمار و تحلیل
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item" asp-controller="Admin" asp-action="ActivityLogs">
-                                            <i class="fas fa-history me-2"></i>لاگ فعالیت‌ها
-                                        </a>
-                                    </li>
-                                </ul>
-                            </li>
-                        }
-                        @if (User.IsInRole("Admin") || User.IsInRole("Teacher"))
-                        {
-                            <li class="nav-item">
-                                <a class="nav-link" asp-area="" asp-controller="Exam" asp-action="Index">
-                                    <i class="fas fa-clipboard-list me-1"></i>آزمون‌ها
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" asp-area="" asp-controller="Classroom" asp-action="Index">
-                                    <i class="fas fa-users me-1"></i>کلاس‌ها
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" asp-area="Teacher" asp-controller="InteractiveLesson" asp-action="Index">
-                                    <i class="fas fa-play-circle me-1"></i>درس‌های تعاملی
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" asp-area="Teacher" asp-controller="TeachingSessions" asp-action="Dashboard">
-                                    <i class="fas fa-chalkboard-teacher me-1"></i>جلسات آموزشی
-                                </a>
-                            </li>
-                        }
-                        <li class="nav-item">
-                            <a class="nav-link" asp-area="" asp-controller="Progress" asp-action="Index">
-                                <i class="fas fa-chart-line me-1"></i>پیشرفت
-                            </a>
-                        </li>
-                    </ul>
-                    <div class="d-flex align-items-center">
-                        <button id="install-button" class="btn btn-outline-light btn-sm me-2" style="display: none;">
-                            <i class="fas fa-download me-1"></i>نصب برنامه
-                        </button>
-                        <partial name="_LoginPartial" />
-                    </div>
-                </div>
+                
+                <button class="header-btn logout-btn" title="خروج" onclick="StudentAuth.logout()">
+                    <i class="fas fa-sign-out-alt"></i>
+                </button>
             </div>
-        </nav>
+            
+            <div class="header-center">
+                <span class="welcome-text">@(User.Identity?.Name?.Split(' ').FirstOrDefault() ?? "کاربر") جان، خوش آمدی</span>
+            </div>
+        </div>
     </header>
 
-    <div class="container-fluid">
-        <main role="main" class="pb-3">
-            <partial name="_Toast" />
-            @RenderBody()
-        </main>
-    </div>
+    <!-- Main Content Area -->
+    <main class="main-content">
+        <partial name="_Toast" />
+        @RenderBody()
+    </main>
 
-    <footer class="footer">
-        <div class="container">
-            <div class="row">
-                <div class="col-md-6">
-                    <h5 class="text-gradient">EduTrack</h5>
-                    <p class="text-muted">سیستم مدیریت یادگیری هوشمند و مدرن</p>
+    <!-- Fixed Footer (Bottom Navigation) -->
+    <footer class="fixed-footer">
+        <div class="bottom-nav">
+            <div class="nav-item" data-page="courses">
+                <div class="nav-icon">
+                    <i class="fas fa-graduation-cap"></i>
                 </div>
-                <div class="col-md-6 text-md-end">
-                    <p class="text-muted mb-0">
-                        &copy; 2024 - EduTrack -
-                        <a asp-area="" asp-controller="Home" asp-action="Privacy">حریم خصوصی</a>
-                    </p>
+                <div class="nav-label">دوره‌ها</div>
+            </div>
+            
+            <div class="nav-item" data-page="my-courses">
+                <div class="nav-icon">
+                    <i class="fas fa-book-open"></i>
                 </div>
+                <div class="nav-label">دوره‌های من</div>
+            </div>
+            
+            <div class="nav-item" data-page="home">
+                <div class="nav-icon">
+                    <i class="fas fa-home"></i>
+                </div>
+                <div class="nav-label">خانه</div>
+            </div>
+            
+            <div class="nav-item" data-page="progress">
+                <div class="nav-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="nav-label">پیشرفت</div>
+            </div>
+            
+            <div class="nav-item" data-page="profile">
+                <div class="nav-icon">
+                    <i class="fas fa-user-circle"></i>
+                </div>
+                <div class="nav-label">پروفایل</div>
             </div>
         </div>
     </footer>
@@ -168,6 +101,7 @@
     <script src="~/lib/toastr/toastr.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     <script src="~/js/pwa.js" asp-append-version="true"></script>
+    <script src="~/js/areas/student/bottom-navigation.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

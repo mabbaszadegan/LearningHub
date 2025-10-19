@@ -54,10 +54,14 @@
             </div>
             
             <div class="course-action">
-                <a href="@Url.Action("Study", "Course", new { id = enrollment.CourseId })" class="btn-continue">
+                <a href="@Url.Action("ScheduleItems", "Course", new { id = enrollment.CourseId })" class="btn-continue">
                     <i class="fas fa-play"></i>
                     <span>ادامه یادگیری</span>
                 </a>
+                <button type="button" class="btn-secondary-action btn-sm mt-2" onclick="showCourseDetails(@enrollment.CourseId)">
+                    <i class="fas fa-info-circle"></i>
+                    <span>جزئیات</span>
+                </button>
             </div>
         </div>
     }

@@ -1,0 +1,334 @@
+@using EduTrack.Application.Common.Models.Courses
+@model CourseDto
+@{
+    ViewData["Title"] = "جزئیات دوره";
+    var isEnrolled = ViewBag.IsEnrolled ?? false;
+    var canEnroll = ViewBag.CanEnroll ?? false;
+}
+
+@functions {
+    string GetScheduleItemTypeName(EduTrack.Domain.Enums.ScheduleItemType type)
+    {
+        return type switch
+        {
+            EduTrack.Domain.Enums.ScheduleItemType.Reminder => "یادآوری",
+            EduTrack.Domain.Enums.ScheduleItemType.Writing => "نوشتاری",
+            EduTrack.Domain.Enums.ScheduleItemType.Audio => "صوتی",
+            EduTrack.Domain.Enums.ScheduleItemType.GapFill => "جای خالی",
+            EduTrack.Domain.Enums.ScheduleItemType.MultipleChoice => "چندگزینه‌ای",
+            EduTrack.Domain.Enums.ScheduleItemType.Match => "تطبیقی",
+            EduTrack.Domain.Enums.ScheduleItemType.ErrorFinding => "پیدا کردن خطا",
+            EduTrack.Domain.Enums.ScheduleItemType.CodeExercise => "کدنویسی",
+            EduTrack.Domain.Enums.ScheduleItemType.Quiz => "کوئیز",
+            _ => "نامشخص"
+        };
+    }
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/areas/student/buttons.css" asp-append-version="true" />
+}
+
+<div class="content-container">
+    <div class="course-details-container">
+        <!-- Course Header -->
+        <div class="course-header">
+            @if (canEnroll && Model.IsActive)
+            {
+                <div class="enrollment-badge-sticker">قابل ثبت‌نام</div>
+            }
+            <div class="teacher-badge-sticker">مدرس: @Model.CreatedByName</div>
+            <div class="course-header-content">
+                <div class="course-title-row">
+                    <h1 class="course-title-main">@Model.Title</h1>
+                </div>
+            </div>
+            
+            <!-- Course Stats - Bottom Right -->
+            <div class="course-stats-bottom">
+                <span class="course-stat-minimal">
+                    <i class="fas fa-layer-group"></i>
+                    @Model.ChapterCount.ToString("N0") مبحث
+                </span>
+                <span class="course-stat-minimal">
+                    <i class="fas fa-play-circle"></i>
+                    @Model.ModuleCount.ToString("N0") زیرمبحث
+                </span>
+                <span class="course-stat-minimal">
+                    <i class="fas fa-users"></i>
+                    @Model.ClassCount.ToString("N0") دانش‌آموز
+                </span>
+                <span class="course-stat-minimal">
+                    <i class="fas fa-bookmark"></i>
+                    @Model.LessonCount.ToString("N0") محتوا
+                </span>
+            </div>
+            
+            <!-- Course Date - Bottom Right -->
+            <div class="course-date-bottom">
+                <span class="course-date-item">
+                    <i class="fas fa-calendar-alt"></i>
+                    @{
+                        var persianDate = new System.Globalization.PersianCalendar();
+                        var year = persianDate.GetYear(Model.CreatedAt.DateTime);
+                        var month = persianDate.GetMonth(Model.CreatedAt.DateTime);
+                        var day = persianDate.GetDayOfMonth(Model.CreatedAt.DateTime);
+                    }
+                    @year/@month.ToString("00")/@day.ToString("00")
+                </span>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-8">
+                <!-- Course Description - 3 Lines with Expand/Collapse -->
+                @if (!string.IsNullOrEmpty(Model.Description))
+                {
+                    <div class="course-description-section">
+                        <div class="course-description-header" onclick="toggleDescription()">
+                            <h3 class="course-description-title">درباره این دوره</h3>
+                            <i class="fas fa-chevron-down course-description-toggle" id="descriptionToggle"></i>
+                        </div>
+                        <div class="course-description-content">
+                            <div class="course-description-preview" id="descriptionPreview">
+                                @Model.Description
+                            </div>
+                            <div class="course-description-full" id="descriptionFull" style="display: none;">
+                                @Model.Description
+                            </div>
+                        </div>
+                    </div>
+                }
+                <!-- Course Chapters -->
+                @if (Model.Chapters != null && Model.Chapters.Any())
+                {
+                    <div class="course-chapters">
+                        <h3 class="course-chapters-title">
+                            <i class="fas fa-list"></i>
+                            مباحث دوره
+                        </h3>
+                        
+                        @foreach (var chapter in Model.Chapters.OrderBy(c => c.Order))
+                        {
+                            <div class="chapter-item">
+                                <div class="chapter-header">
+                                    <div class="chapter-title-section">
+                                        <h4 class="chapter-title">
+                                            <i class="fas fa-folder"></i>
+                                            @chapter.Title
+                                            <span class="chapter-subchapter-count">@(chapter.SubChapters?.Count ?? 0)</span>
+                                        </h4>
+                                        <!-- Minimal Schedule Item Stats in Header -->
+                                        <div class="chapter-header-stats">
+                                            @{
+                                                var scheduleItemStats = chapter.SubChapters?
+                                                    .SelectMany(sc => sc.ScheduleItemStats)
+                                                    .GroupBy(kvp => kvp.Key)
+                                                    .ToDictionary(g => g.Key, g => g.Sum(kvp => kvp.Value)) ?? new Dictionary<EduTrack.Domain.Enums.ScheduleItemType, int>();
+                                            }
+                                            @foreach (var stat in scheduleItemStats.Where(s => s.Value > 0))
+                                            {
+                                                <span class="chapter-stat-minimal">
+                                                    @stat.Value @GetScheduleItemTypeName(stat.Key)
+                                                </span>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="chapter-content">
+                                    @if (!string.IsNullOrEmpty(chapter.Description))
+                                    {
+                                        <p class="mb-3">@chapter.Description</p>
+                                    }
+                                    
+                                    <!-- Sub-chapters -->
+                                    @if (chapter.SubChapters != null && chapter.SubChapters.Any())
+                                    {
+                                        <div class="subchapter-list">
+                                            @foreach (var subChapter in chapter.SubChapters.OrderBy(sc => sc.Order))
+                                            {
+                                                <div class="subchapter-item">
+                                                    <h5 class="subchapter-title">@subChapter.Title</h5>
+                                                    @if (!string.IsNullOrEmpty(subChapter.Description))
+                                                    {
+                                                        <p class="subchapter-description">@subChapter.Description</p>
+                                                    }
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+
+            <div class="col-lg-4">
+                <!-- Progress Section -->
+                @if (isEnrolled)
+                {
+                    <div class="progress-section">
+                        <h3 class="progress-title">
+                            <i class="fas fa-chart-line"></i>
+                            پیشرفت شما
+                        </h3>
+                        
+                        <div class="progress-bar-container">
+                            <div class="progress-bar-fill" 
+                                 style="width: @(ViewBag.Enrollment?.ProgressPercentage ?? 0)%"
+                                 data-width="@(ViewBag.Enrollment?.ProgressPercentage ?? 0)%">
+                            </div>
+                        </div>
+                        
+                        <div class="progress-stats">
+                            <div class="progress-stat">
+                                <div class="progress-stat-number">@(ViewBag.Enrollment?.ProgressPercentage ?? 0)%</div>
+                                <div class="progress-stat-label">پیشرفت</div>
+                            </div>
+                            <div class="progress-stat">
+                                <div class="progress-stat-number">@(ViewBag.Enrollment?.EnrolledAt.ToString("yyyy/MM/dd") ?? "")</div>
+                                <div class="progress-stat-label">تاریخ ثبت‌نام</div>
+                            </div>
+                            <div class="progress-stat">
+                                <div class="progress-stat-number">@(ViewBag.Enrollment?.LastAccessedAt?.ToString("yyyy/MM/dd") ?? "هیچ‌گاه")</div>
+                                <div class="progress-stat-label">آخرین بازدید</div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Course Footer with Actions -->
+    <div class="course-footer">
+        <div class="course-footer-content">
+            <div class="course-footer-actions">
+                @if (isEnrolled)
+                {
+                    <button type="button" class="course-footer-btn btn-study" 
+                            onclick="window.location.href='@Url.Action("ScheduleItems", new { id = Model.Id })'">
+                        <i class="fas fa-play"></i>
+                        شروع مطالعه
+                    </button>
+                    <button type="button" class="course-footer-btn btn-unenroll" 
+                            data-action="unenroll" data-course-id="@Model.Id">
+                        <i class="fas fa-sign-out-alt"></i>
+                        خروج
+                    </button>
+                }
+                else if (canEnroll && Model.IsActive)
+                {
+                    <button type="button" class="course-footer-btn btn-enroll" 
+                            data-action="enroll" data-course-id="@Model.Id">
+                        <i class="fas fa-plus"></i>
+                        ثبت‌نام در دوره
+                    </button>
+                }
+                else if (!Model.IsActive)
+                {
+                    <button type="button" class="course-footer-btn btn-secondary" disabled>
+                        <i class="fas fa-lock"></i>
+                        دوره غیرفعال
+                    </button>
+                }
+                else
+                {
+                    <button type="button" class="course-footer-btn btn-secondary" disabled>
+                        <i class="fas fa-ban"></i>
+                        غیرقابل ثبت‌نام
+                    </button>
+                }
+                
+                <button type="button" class="course-footer-btn btn-close" onclick="window.history.back()">
+                    <i class="fas fa-times"></i>
+                    بستن
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Initialize bottom navigation
+            if (window.bottomNavigation) {
+                window.bottomNavigation.setActivePage('courses');
+            }
+            
+            // Handle enrollment actions
+            $('[data-action="enroll"]').click(function() {
+                const courseId = $(this).data('course-id');
+                enrollInCourse(courseId);
+            });
+            
+            // Handle unenrollment actions
+            $('[data-action="unenroll"]').click(function() {
+                const courseId = $(this).data('course-id');
+                unenrollFromCourse(courseId);
+            });
+        });
+        
+        function toggleDescription() {
+            const preview = document.getElementById('descriptionPreview');
+            const full = document.getElementById('descriptionFull');
+            const toggle = document.getElementById('descriptionToggle');
+            
+            if (full.style.display === 'none') {
+                preview.style.display = 'none';
+                full.style.display = 'block';
+                toggle.classList.remove('fa-chevron-down');
+                toggle.classList.add('fa-chevron-up');
+            } else {
+                preview.style.display = 'block';
+                full.style.display = 'none';
+                toggle.classList.remove('fa-chevron-up');
+                toggle.classList.add('fa-chevron-down');
+            }
+        }
+        
+        function enrollInCourse(courseId) {
+            if (confirm('آیا می‌خواهید در این دوره ثبت‌نام کنید؟')) {
+                $.ajax({
+                    url: '@Url.Action("Enroll", "Course")',
+                    type: 'POST',
+                    data: { courseId: courseId },
+                    success: function(response) {
+                        if (response.success) {
+                            toastr.success('با موفقیت در دوره ثبت‌نام کردید');
+                            location.reload();
+                        } else {
+                            toastr.error(response.error || 'خطا در ثبت‌نام');
+                        }
+                    },
+                    error: function() {
+                        toastr.error('خطا در ثبت‌نام');
+                    }
+                });
+            }
+        }
+        
+        function unenrollFromCourse(courseId) {
+            if (confirm('آیا می‌خواهید از این دوره خارج شوید؟')) {
+                $.ajax({
+                    url: '@Url.Action("Unenroll", "Course")',
+                    type: 'POST',
+                    data: { courseId: courseId },
+                    success: function(response) {
+                        if (response.success) {
+                            toastr.success('با موفقیت از دوره خارج شدید');
+                            location.reload();
+                        } else {
+                            toastr.error(response.error || 'خطا در خروج از دوره');
+                        }
+                    },
+                    error: function() {
+                        toastr.error('خطا در خروج از دوره');
+                    }
+                });
+            }
+        }
+    </script>
+}

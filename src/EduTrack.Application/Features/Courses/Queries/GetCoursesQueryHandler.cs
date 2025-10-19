@@ -19,14 +19,21 @@ public class GetCoursesQueryHandler : IRequestHandler<GetCoursesQuery, Paginated
 
     public async Task<PaginatedList<CourseDto>> Handle(GetCoursesQuery request, CancellationToken cancellationToken)
     {
-        var query = _courseRepository.GetAll();
+        var baseQuery = _courseRepository.GetAll();
 
         if (request.IsActive.HasValue)
         {
-            query = query.Where(c => c.IsActive == request.IsActive.Value);
+            baseQuery = baseQuery.Where(c => c.IsActive == request.IsActive.Value);
         }
 
-        query = query.OrderBy(c => c.Order).ThenBy(c => c.Title);
+        var query = baseQuery
+            .Include(c => c.Chapters)
+                .ThenInclude(ch => ch.SubChapters)
+            .Include(c => c.TeachingPlans)
+                .ThenInclude(tp => tp.ScheduleItems)
+            .Include(c => c.Enrollments)
+            .OrderBy(c => c.Order)
+            .ThenBy(c => c.Title);
 
         var coursesQuery = query
             .Select(c => new CourseDto
@@ -40,8 +47,12 @@ public class GetCoursesQueryHandler : IRequestHandler<GetCoursesQuery, Paginated
                 CreatedAt = c.CreatedAt,
                 UpdatedAt = c.UpdatedAt,
                 CreatedBy = c.CreatedBy,
-                ModuleCount = 0, // Will be calculated separately if needed
-                LessonCount = 0  // Will be calculated separately if needed
+                CreatedByName = c.CreatedBy, // Will be updated with actual teacher name if needed
+                DisciplineType = c.DisciplineType,
+                ChapterCount = c.Chapters.Count, // تعداد مبحث
+                ModuleCount = c.Chapters.Sum(ch => ch.SubChapters.Count), // تعداد زیرمبحث
+                LessonCount = c.TeachingPlans.Sum(tp => tp.ScheduleItems.Count), // تعداد محتوا (ScheduleItems)
+                ClassCount = c.Enrollments.Count(e => e.IsActive) // تعداد دانش‌آموز (تعداد ثبت‌نام‌های فعال)
             });
 
         return await PaginatedList<CourseDto>.CreateAsync(

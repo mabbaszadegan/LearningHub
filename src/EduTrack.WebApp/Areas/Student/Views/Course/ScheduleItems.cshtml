@@ -1,0 +1,284 @@
+@using EduTrack.Application.Common.Models.TeachingPlans
+@using EduTrack.Domain.Enums
+@model List<ScheduleItemDto>
+@{
+    ViewData["Title"] = "آیتم‌های آموزشی";
+    var course = ViewBag.Course as EduTrack.Application.Common.Models.Courses.CourseDto;
+    var enrollment = ViewBag.Enrollment as EduTrack.Application.Features.CourseEnrollment.DTOs.CourseEnrollmentDto;
+}
+
+<!-- Page Header -->
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2>آیتم‌های آموزشی</h2>
+            <p>@course?.Title</p>
+        </div>
+        <div>
+            <a asp-action="Study" asp-route-id="@course?.Id" class="btn-secondary-action btn-sm">
+                <i class="fas fa-arrow-right"></i>بازگشت به دوره
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Filters Section -->
+<div class="filters-section">
+    <div class="filters-container">
+        <div class="filter-group">
+            <label for="typeFilter" class="filter-label">نوع آیتم:</label>
+            <select id="typeFilter" class="filter-select">
+                <option value="">همه انواع</option>
+                <option value="Reminder">یادآوری</option>
+                <option value="Writing">نوشتاری</option>
+                <option value="Audio">صوتی</option>
+                <option value="GapFill">جای خالی</option>
+                <option value="MultipleChoice">چند گزینه‌ای</option>
+                <option value="Match">تطبیق</option>
+                <option value="ErrorFinding">پیدا کردن خطا</option>
+                <option value="CodeExercise">تمرین کد</option>
+                <option value="Quiz">کوییز</option>
+            </select>
+        </div>
+        
+        <div class="filter-group">
+            <label for="statusFilter" class="filter-label">وضعیت:</label>
+            <select id="statusFilter" class="filter-select">
+                <option value="">همه وضعیت‌ها</option>
+                <option value="Active">فعال</option>
+                <option value="Upcoming">آینده</option>
+                <option value="Overdue">تأخیر</option>
+                <option value="Completed">تکمیل شده</option>
+            </select>
+        </div>
+        
+        <div class="filter-group">
+            <label for="searchInput" class="filter-label">جستجو:</label>
+            <input type="text" id="searchInput" class="filter-input" placeholder="جستجو در عنوان و توضیحات...">
+        </div>
+        
+        <div class="filter-actions">
+            <button type="button" id="clearFilters" class="btn-danger-action btn-sm">
+                <i class="fas fa-times"></i>پاک کردن فیلترها
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Schedule Items Container -->
+<div class="schedule-items-container">
+    @if (Model.Any())
+    {
+        <div class="schedule-items-grid" id="scheduleItemsGrid">
+            @foreach (var item in Model)
+            {
+                <div class="schedule-item-card" 
+                     data-type="@item.Type" 
+                     data-status="@GetItemStatus(item)"
+                     data-title="@item.Title.ToLower()"
+                     data-description="@(item.Description?.ToLower() ?? "")">
+                    
+                    <!-- Item Header -->
+                    <div class="item-header">
+                        <div class="item-type-badge item-type-@item.Type.ToString().ToLower()">
+                            <i class="@GetItemTypeIcon(item.Type)"></i>
+                            <span>@item.TypeName</span>
+                        </div>
+                        <div class="item-status-badge item-status-@GetItemStatus(item).ToLower()">
+                            @item.StatusText
+                        </div>
+                    </div>
+                    
+                    <!-- Item Content -->
+                    <div class="item-content">
+                        <h4 class="item-title">@item.Title</h4>
+                        @if (!string.IsNullOrEmpty(item.Description))
+                        {
+                            <p class="item-description">@item.Description</p>
+                        }
+                        
+                        <!-- Item Details -->
+                        <div class="item-details">
+                            <div class="detail-item">
+                                <i class="fas fa-calendar-alt"></i>
+                                <span>شروع: @item.StartDate.ToString("yyyy/MM/dd")</span>
+                            </div>
+                            @if (item.DueDate.HasValue)
+                            {
+                                <div class="detail-item">
+                                    <i class="fas fa-clock"></i>
+                                    <span>مهلت: @item.DueDate.Value.ToString("yyyy/MM/dd")</span>
+                                </div>
+                            }
+                            @if (item.MaxScore.HasValue)
+                            {
+                                <div class="detail-item">
+                                    <i class="fas fa-star"></i>
+                                    <span>حداکثر نمره: @item.MaxScore</span>
+                                </div>
+                            }
+                            @if (item.IsMandatory)
+                            {
+                                <div class="detail-item mandatory">
+                                    <i class="fas fa-exclamation-circle"></i>
+                                    <span>اجباری</span>
+                                </div>
+                            }
+                        </div>
+                        
+                        <!-- Progress Indicator -->
+                        @if (item.Status == ScheduleItemStatus.Completed)
+                        {
+                            <div class="progress-indicator completed">
+                                <i class="fas fa-check-circle"></i>
+                                <span>تکمیل شده</span>
+                            </div>
+                        }
+                        else if (item.IsOverdue)
+                        {
+                            <div class="progress-indicator overdue">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <span>تأخیر در انجام</span>
+                            </div>
+                        }
+                        else if (item.IsUpcoming)
+                        {
+                            <div class="progress-indicator upcoming">
+                                <i class="fas fa-clock"></i>
+                                <span>شروع در آینده</span>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="progress-indicator active">
+                                <i class="fas fa-play-circle"></i>
+                                <span>آماده برای انجام</span>
+                            </div>
+                        }
+                    </div>
+                    
+                    <!-- Item Actions -->
+                    <div class="item-actions">
+                        @if (item.Status == ScheduleItemStatus.Completed)
+                        {
+                            <button type="button" class="btn-success-action" disabled>
+                                <i class="fas fa-check"></i>تکمیل شده
+                            </button>
+                        }
+                        else if (item.IsUpcoming)
+                        {
+                            <button type="button" class="btn-warning-action" disabled>
+                                <i class="fas fa-clock"></i>شروع در آینده
+                            </button>
+                        }
+                        else
+                        {
+                            <button type="button" class="btn-continue" onclick="startScheduleItem(@item.Id)">
+                                <i class="fas fa-play"></i>شروع
+                            </button>
+                        }
+                        
+                        <button type="button" class="btn-secondary-action" onclick="showItemDetails(@item.Id)">
+                            <i class="fas fa-info-circle"></i>جزئیات
+                        </button>
+                    </div>
+                </div>
+            }
+        </div>
+        
+        <!-- Statistics -->
+        <div class="items-statistics">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-list"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number" id="totalItems">@Model.Count</div>
+                    <div class="stat-label">کل آیتم‌ها</div>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number" id="completedItems">@Model.Count(i => i.Status == ScheduleItemStatus.Completed)</div>
+                    <div class="stat-label">تکمیل شده</div>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-play-circle"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number" id="activeItems">@Model.Count(i => i.IsActive && i.Status != ScheduleItemStatus.Completed)</div>
+                    <div class="stat-label">فعال</div>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number" id="overdueItems">@Model.Count(i => i.IsOverdue)</div>
+                    <div class="stat-label">تأخیر</div>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="text-center py-5">
+            <div class="empty-state">
+                <i class="fas fa-calendar-check"></i>
+                <h4>آیتم آموزشی یافت نشد</h4>
+                <p>هنوز آیتم آموزشی برای این دوره تعریف نشده است</p>
+                <a asp-action="Study" asp-route-id="@course?.Id" class="btn-continue">
+                    <i class="fas fa-arrow-right"></i>بازگشت به دوره
+                </a>
+            </div>
+        </div>
+    }
+</div>
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/areas/student/buttons.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/areas/student/course/schedule-items.css" asp-append-version="true" />
+}
+
+@section Scripts {
+    <script src="~/js/areas/student/course/schedule-items.js" asp-append-version="true"></script>
+}
+
+@functions {
+    string GetItemStatus(ScheduleItemDto item)
+    {
+        if (item.Status == ScheduleItemStatus.Completed)
+            return "Completed";
+        if (item.IsOverdue)
+            return "Overdue";
+        if (item.IsUpcoming)
+            return "Upcoming";
+        return "Active";
+    }
+    
+    string GetItemTypeIcon(ScheduleItemType type)
+    {
+        return type switch
+        {
+            ScheduleItemType.Reminder => "fas fa-bell",
+            ScheduleItemType.Writing => "fas fa-pen",
+            ScheduleItemType.Audio => "fas fa-microphone",
+            ScheduleItemType.GapFill => "fas fa-edit",
+            ScheduleItemType.MultipleChoice => "fas fa-list-ul",
+            ScheduleItemType.Match => "fas fa-link",
+            ScheduleItemType.ErrorFinding => "fas fa-search",
+            ScheduleItemType.CodeExercise => "fas fa-code",
+            ScheduleItemType.Quiz => "fas fa-question-circle",
+            _ => "fas fa-file"
+        };
+    }
+}
