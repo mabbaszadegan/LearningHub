@@ -4,12 +4,10 @@
 
 /_ReSharper.Caches
 /.vs
-/dist
 /tmp
 /out-tsc
 /bin
 /obj
-dist/*
 obj/*
 bin/*
 /log
@@ -17,11 +15,6 @@ logs/*
 */logs/*
 errors/
 /errors
-
-
-
-# dependencies
-/node_modules
 
 # IDEs and editors
 /.idea
@@ -401,19 +394,13 @@ healthchecksdb
 Altrabo-Next-Logs*.txt
 Altrabo-Next-Logs*.json
 /legacy/PinkSolution/API/logs/
-dist
-/oms/Oms.Ui/Oms.Ui/CompanyLogoImages
-/club/Club.Api/Club.Admin.Api/.config/dotnet-tools.json
-/oms/OmsCore/OmsCore/RequestFiles
-/.angular/
-.angular/
 */logs/*
 /src/EduTrack.WebApp/App_Data/logs
 /src/EduTrack.WebApp/wwwroot/storage
 
 # Uploaded files and user content
 uploads/
-files/
+
 content/
 media/
 temp/
