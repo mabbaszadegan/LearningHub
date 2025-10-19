@@ -24,35 +24,33 @@
             <div class="course-stats-minimal">
                 @if (enrollment.ScheduleItemStats.Any())
                 {
-                    <div class="stats-row">
-                        @foreach (var stat in enrollment.ScheduleItemStats.OrderByDescending(s => s.TotalCount))
-                        {
-                            <span class="stat-item @stat.ColorClass">
-                                <i class="@stat.IconClass"></i>
-                                <span class="stat-number">@stat.TotalCount</span>
-                                <span class="stat-text">@stat.TypeName</span>
-                            </span>
-                        }
-                    </div>
+                    @foreach (var stat in enrollment.ScheduleItemStats.OrderByDescending(s => s.TotalCount))
+                    {
+                        <span class="stat-item @stat.ColorClass">
+                            <i class="@stat.IconClass"></i>
+                            <span class="stat-number">@stat.TotalCount</span>
+                            <span class="stat-text">@stat.TypeName</span>
+                        </span>
+                    }
                 }
-                
-                <div class="stats-row">
-                    <span class="stat-item stat-chapter">
-                        <i class="fas fa-book"></i>
-                        <span class="stat-number">@enrollment.TotalChapters</span>
-                        <span class="stat-text">فصل</span>
-                    </span>
-                    <span class="stat-item stat-subchapter">
-                        <i class="fas fa-list"></i>
-                        <span class="stat-number">@enrollment.TotalSubChapters</span>
-                        <span class="stat-text">زیرفصل</span>
-                    </span>
-                    <span class="stat-item stat-plan">
-                        <i class="fas fa-calendar-alt"></i>
-                        <span class="stat-number">@enrollment.TotalTeachingPlans</span>
-                        <span class="stat-text">پلن</span>
-                    </span>
-                </div>
+            </div>
+            
+            <div class="course-stats-minimal course-structure-stats">
+                <span class="stat-item stat-chapter">
+                    <i class="fas fa-book"></i>
+                    <span class="stat-number">@enrollment.TotalChapters</span>
+                    <span class="stat-text">فصل</span>
+                </span>
+                <span class="stat-item stat-subchapter">
+                    <i class="fas fa-list"></i>
+                    <span class="stat-number">@enrollment.TotalSubChapters</span>
+                    <span class="stat-text">زیرفصل</span>
+                </span>
+                <span class="stat-item stat-plan">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span class="stat-number">@enrollment.TotalTeachingPlans</span>
+                    <span class="stat-text">پلن</span>
+                </span>
             </div>
             
             <div class="course-action">

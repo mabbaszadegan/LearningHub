@@ -35,10 +35,6 @@
         gap: 1rem;
     }
 
-    .stat-item {
-        text-align: center;
-        flex: 1;
-    }
 
     .stat-number {
         font-size: 1.5rem;
@@ -224,22 +220,6 @@
         margin-bottom: 0.75rem;
     }
 
-    .stat-item {
-        display: flex;
-        align-items: center;
-        gap: 0.4rem;
-        padding: 0.4rem 0.6rem;
-        background: rgba(255, 255, 255, 0.9);
-        border-radius: 6px;
-        font-size: 0.8rem;
-        font-weight: 500;
-        flex: 1;
-        justify-content: center;
-    }
-
-    .stat-item i {
-        font-size: 0.9rem;
-    }
 
     /* Minimal Schedule Items */
     .schedule-items-minimal {
@@ -277,175 +257,214 @@
         text-align: center;
     }
     
-    /* Course Stats - Minimal Box Design */
+    /* Course Stats - Minimal Box Design - Match course-stats-bottom style */
     .course-stats-minimal {
         margin-top: 0.75rem;
         padding-top: 0.75rem;
-        border-top: 1px solid #e9ecef;
+        border-top: 1px solid rgba(0, 0, 0, 0.08);
         display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-    }
-    
-    .stats-row {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
         align-items: center;
+        gap: 6px;
+        flex-wrap: wrap;
+        font-size: 0.7rem;
+        opacity: 0.9;
     }
     
-    .stat-item {
-        display: inline-flex !important;
+    .course-stats-minimal .stat-item {
+        display: flex !important;
         align-items: center !important;
-        gap: 0.3rem !important;
-        padding: 6px 10px !important;
+        gap: 6px !important;
+        background: rgba(0, 0, 0, 0.1) !important;
+        padding: 8px 12px !important;
         border-radius: 16px !important;
-        font-size: 0.7rem !important;
-        font-weight: 500 !important;
-        transition: all 0.2s ease !important;
-        background-color: rgba(255, 255, 255, 0.8) !important;
-        border: 1px solid rgba(0, 0, 0, 0.08) !important;
-        margin-left: 6px !important;
-        color: #555 !important;
-        backdrop-filter: blur(4px) !important;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
-    }
-    
-    .stat-item:hover {
-        transform: translateY(-1px) !important;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
-        background-color: rgba(255, 255, 255, 0.95) !important;
-    }
-    
-    .stat-item i {
-        font-size: 0.65rem !important;
-        opacity: 0.7 !important;
-    }
-    
-    .stat-number {
-        font-weight: 600 !important;
+        backdrop-filter: blur(10px) !important;
+        border: 1px solid rgba(0, 0, 0, 0.15) !important;
         font-size: 0.75rem !important;
+        font-weight: 500 !important;
+        white-space: nowrap !important;
+        transition: all 0.3s ease !important;
+        color: #333 !important;
+        margin: 0 !important;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12) !important;
+        width: auto !important;
+        height: auto !important;
+        min-width: auto !important;
+        min-height: auto !important;
+        max-width: none !important;
+        max-height: none !important;
+        position: relative !important;
+        z-index: 1 !important;
     }
     
-    .stat-text {
+    .course-stats-minimal .stat-item:hover {
+        background: rgba(0, 0, 0, 0.15) !important;
+        border-color: rgba(0, 0, 0, 0.25) !important;
+        transform: translateY(-3px) !important;
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.18) !important;
+    }
+    
+    .course-stats-minimal .stat-item i {
+        font-size: 0.7rem !important;
+        opacity: 0.95 !important;
+        color: inherit !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        width: auto !important;
+        height: auto !important;
+        display: inline-block !important;
+    }
+    
+    .course-stats-minimal .stat-number {
+        font-weight: 600 !important;
+        font-size: 0.7rem !important;
+        line-height: 1 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        color: inherit !important;
+        display: inline-block !important;
+    }
+    
+    .course-stats-minimal .stat-text {
         font-weight: 400 !important;
-        font-size: 0.65rem !important;
+        font-size: 0.7rem !important;
+        opacity: 0.95 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        color: inherit !important;
+        display: inline-block !important;
     }
     
-    /* Color Themes - Schedule Items */
-    .stat-item.text-info {
-        background-color: rgba(33, 150, 243, 0.08) !important;
-        color: #1976d2 !important;
-        border-color: rgba(33, 150, 243, 0.15) !important;
+    /* Color Themes - Schedule Items - Minimal Style */
+    .course-stats-minimal .stat-item.text-info {
+        background: rgba(13, 202, 240, 0.15) !important;
+        color: #0d6efd !important;
+        border-color: rgba(13, 202, 240, 0.3) !important;
     }
     
-    .stat-item.text-info .stat-number {
-        color: #1565c0 !important;
+    .course-stats-minimal .stat-item.text-primary {
+        background: rgba(63, 81, 181, 0.15) !important;
+        color: #6366f1 !important;
+        border-color: rgba(63, 81, 181, 0.3) !important;
     }
     
-    .stat-item.text-primary {
-        background-color: rgba(63, 81, 181, 0.08) !important;
-        color: #3f51b5 !important;
-        border-color: rgba(63, 81, 181, 0.15) !important;
+    .course-stats-minimal .stat-item.text-success {
+        background: rgba(76, 175, 80, 0.15) !important;
+        color: #198754 !important;
+        border-color: rgba(76, 175, 80, 0.3) !important;
     }
     
-    .stat-item.text-primary .stat-number {
-        color: #303f9f !important;
+    .course-stats-minimal .stat-item.text-warning {
+        background: rgba(255, 193, 7, 0.15) !important;
+        color: #fd7e14 !important;
+        border-color: rgba(255, 193, 7, 0.3) !important;
     }
     
-    .stat-item.text-success {
-        background-color: rgba(76, 175, 80, 0.08) !important;
-        color: #388e3c !important;
-        border-color: rgba(76, 175, 80, 0.15) !important;
+    .course-stats-minimal .stat-item.text-danger {
+        background: rgba(244, 67, 54, 0.15) !important;
+        color: #dc3545 !important;
+        border-color: rgba(244, 67, 54, 0.3) !important;
     }
     
-    .stat-item.text-success .stat-number {
-        color: #2e7d32 !important;
+    .course-stats-minimal .stat-item.text-secondary {
+        background: rgba(108, 117, 125, 0.15) !important;
+        color: #6c757d !important;
+        border-color: rgba(108, 117, 125, 0.3) !important;
     }
     
-    .stat-item.text-warning {
-        background-color: rgba(255, 193, 7, 0.08) !important;
-        color: #f57c00 !important;
-        border-color: rgba(255, 193, 7, 0.15) !important;
+    .course-stats-minimal .stat-item.text-dark {
+        background: rgba(66, 66, 66, 0.15) !important;
+        color: #212529 !important;
+        border-color: rgba(66, 66, 66, 0.3) !important;
     }
     
-    .stat-item.text-warning .stat-number {
-        color: #ef6c00 !important;
+    /* Color Themes - Course Structure - Minimal Style */
+    .course-stats-minimal .stat-item.stat-chapter {
+        background: rgba(33, 150, 243, 0.15) !important;
+        color: #2196f3 !important;
+        border-color: rgba(33, 150, 243, 0.3) !important;
     }
     
-    .stat-item.text-danger {
-        background-color: rgba(244, 67, 54, 0.08) !important;
-        color: #d32f2f !important;
-        border-color: rgba(244, 67, 54, 0.15) !important;
+    .course-stats-minimal .stat-item.stat-subchapter {
+        background: rgba(156, 39, 176, 0.15) !important;
+        color: #9c27b0 !important;
+        border-color: rgba(156, 39, 176, 0.3) !important;
     }
     
-    .stat-item.text-danger .stat-number {
-        color: #c62828 !important;
-    }
-    
-    .stat-item.text-secondary {
-        background-color: rgba(158, 158, 158, 0.08) !important;
-        color: #616161 !important;
-        border-color: rgba(158, 158, 158, 0.15) !important;
-    }
-    
-    .stat-item.text-secondary .stat-number {
-        color: #424242 !important;
-    }
-    
-    .stat-item.text-dark {
-        background-color: rgba(66, 66, 66, 0.08) !important;
-        color: #424242 !important;
-        border-color: rgba(66, 66, 66, 0.15) !important;
-    }
-    
-    .stat-item.text-dark .stat-number {
-        color: #212121 !important;
-    }
-    
-    /* Color Themes - Course Structure */
-    .stat-item.stat-chapter {
-        background-color: rgba(33, 150, 243, 0.08) !important;
-        color: #1976d2 !important;
-        border-color: rgba(33, 150, 243, 0.15) !important;
-    }
-    
-    .stat-item.stat-chapter .stat-number {
-        color: #1565c0 !important;
-    }
-    
-    .stat-item.stat-subchapter {
-        background-color: rgba(156, 39, 176, 0.08) !important;
-        color: #7b1fa2 !important;
-        border-color: rgba(156, 39, 176, 0.15) !important;
-    }
-    
-    .stat-item.stat-subchapter .stat-number {
-        color: #4a148c !important;
-    }
-    
-    .stat-item.stat-plan {
-        background-color: rgba(76, 175, 80, 0.08) !important;
-        color: #388e3c !important;
-        border-color: rgba(76, 175, 80, 0.15) !important;
-    }
-    
-    .stat-item.stat-plan .stat-number {
-        color: #2e7d32 !important;
+    .course-stats-minimal .stat-item.stat-plan {
+        background: rgba(76, 175, 80, 0.15) !important;
+        color: #4caf50 !important;
+        border-color: rgba(76, 175, 80, 0.3) !important;
     }
 
-    /* Ensure stat-item elements maintain inline-flex display */
-    .stat-item.text-info,
-    .stat-item.text-primary,
-    .stat-item.text-success,
-    .stat-item.text-warning,
-    .stat-item.text-danger,
-    .stat-item.text-purple,
-    .stat-item.text-orange,
-    .stat-item.text-dark,
-    .stat-item.text-indigo,
-    .stat-item.text-secondary {
-        display: inline-flex !important;
+
+    /* Force Override for Course Stats Minimal */
+    .enrolled-course-item .course-stats-minimal .stat-item {
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        background: rgba(0, 0, 0, 0.1) !important;
+        padding: 8px 12px !important;
+        border-radius: 16px !important;
+        backdrop-filter: blur(10px) !important;
+        border: 1px solid rgba(0, 0, 0, 0.15) !important;
+        font-size: 0.75rem !important;
+        font-weight: 500 !important;
+        white-space: nowrap !important;
+        transition: all 0.3s ease !important;
+        color: #333 !important;
+        margin: 0 !important;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12) !important;
+        width: auto !important;
+        height: auto !important;
+        min-width: auto !important;
+        min-height: auto !important;
+        max-width: none !important;
+        max-height: none !important;
+        position: relative !important;
+        z-index: 1 !important;
+    }
+
+    .enrolled-course-item .course-stats-minimal .stat-item:hover {
+        background: rgba(0, 0, 0, 0.15) !important;
+        border-color: rgba(0, 0, 0, 0.25) !important;
+        transform: translateY(-3px) !important;
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.18) !important;
+    }
+
+    .enrolled-course-item .course-stats-minimal .stat-item i {
+        font-size: 0.7rem !important;
+        opacity: 0.95 !important;
+        color: inherit !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        width: auto !important;
+        height: auto !important;
+        display: inline-block !important;
+    }
+
+    .enrolled-course-item .course-stats-minimal .stat-number {
+        font-weight: 600 !important;
+        font-size: 0.7rem !important;
+        line-height: 1 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        color: inherit !important;
+        display: inline-block !important;
+    }
+
+    .enrolled-course-item .course-stats-minimal .stat-text {
+        font-weight: 400 !important;
+        font-size: 0.7rem !important;
+        opacity: 0.95 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        color: inherit !important;
+        display: inline-block !important;
+    }
+
+    /* Course Structure Stats - Second Row */
+    .course-structure-stats {
+        margin-top: 8px !important;
     }
 
     /* Color Classes for Schedule Items - Override Bootstrap */
@@ -895,10 +914,6 @@
         gap: 3rem;
     }
     
-    .stat-item {
-        min-width: 150px;
-        padding: 2rem;
-    }
     
     .stat-number {
         font-size: 2.5rem;
@@ -1666,173 +1681,145 @@
         height: 100%;
     }
     
-    /* Desktop Course Stats - Minimal Box Design */
+    /* Desktop Course Stats - Minimal Box Design - Match course-stats-bottom style */
     .course-stats-minimal {
         margin-top: 0.75rem !important;
         padding-top: 0.75rem !important;
-        border-top: 1px solid #e9ecef !important;
+        border-top: 1px solid rgba(0, 0, 0, 0.08) !important;
         display: flex !important;
-        flex-direction: column !important;
-        gap: 0.75rem !important;
-    }
-    
-    .stats-row {
-        display: flex !important;
+        align-items: center !important;
+        gap: 8px !important;
         flex-wrap: wrap !important;
-        gap: 0.75rem !important;
-        align-items: center !important;
-    }
-    
-    .stat-item {
-        display: inline-flex !important;
-        align-items: center !important;
-        gap: 0.3rem !important;
-        padding: 6px 10px !important;
-        border-radius: 16px !important;
         font-size: 0.7rem !important;
-        font-weight: 500 !important;
-        transition: all 0.2s ease !important;
-        background-color: rgba(255, 255, 255, 0.8) !important;
-        border: 1px solid rgba(0, 0, 0, 0.08) !important;
-        margin-left: 6px !important;
-        color: #555 !important;
-        backdrop-filter: blur(4px) !important;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+        opacity: 0.9 !important;
     }
     
-    .stat-item:hover {
-        transform: translateY(-1px) !important;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
-        background-color: rgba(255, 255, 255, 0.95) !important;
-    }
-    
-    .stat-item i {
-        font-size: 0.65rem !important;
-        opacity: 0.7 !important;
-    }
-    
-    .stat-number {
-        font-weight: 600 !important;
+    .course-stats-minimal .stat-item {
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        background: rgba(0, 0, 0, 0.1) !important;
+        padding: 8px 12px !important;
+        border-radius: 16px !important;
+        backdrop-filter: blur(10px) !important;
+        border: 1px solid rgba(0, 0, 0, 0.15) !important;
         font-size: 0.75rem !important;
+        font-weight: 500 !important;
+        white-space: nowrap !important;
+        transition: all 0.3s ease !important;
+        color: #333 !important;
+        margin: 0 !important;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12) !important;
+        width: auto !important;
+        height: auto !important;
+        min-width: auto !important;
+        min-height: auto !important;
+        max-width: none !important;
+        max-height: none !important;
+        position: relative !important;
+        z-index: 1 !important;
     }
     
-    .stat-text {
+    .course-stats-minimal .stat-item:hover {
+        background: rgba(0, 0, 0, 0.15) !important;
+        border-color: rgba(0, 0, 0, 0.25) !important;
+        transform: translateY(-3px) !important;
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.18) !important;
+    }
+    
+    .course-stats-minimal .stat-item i {
+        font-size: 0.7rem !important;
+        opacity: 0.95 !important;
+        color: inherit !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        width: auto !important;
+        height: auto !important;
+        display: inline-block !important;
+    }
+    
+    .course-stats-minimal .stat-number {
+        font-weight: 600 !important;
+        font-size: 0.7rem !important;
+        line-height: 1 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        color: inherit !important;
+        display: inline-block !important;
+    }
+    
+    .course-stats-minimal .stat-text {
         font-weight: 400 !important;
-        font-size: 0.65rem !important;
+        font-size: 0.7rem !important;
+        opacity: 0.95 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        color: inherit !important;
+        display: inline-block !important;
     }
     
-    /* Desktop Color Themes - Schedule Items */
-    .stat-item.text-info {
-        background-color: rgba(33, 150, 243, 0.08) !important;
-        color: #1976d2 !important;
-        border-color: rgba(33, 150, 243, 0.15) !important;
+    /* Desktop Color Themes - Schedule Items - Minimal Style */
+    .course-stats-minimal .stat-item.text-info {
+        background: rgba(33, 150, 243, 0.15) !important;
+        color: rgba(255, 255, 255, 0.95) !important;
+        border-color: rgba(33, 150, 243, 0.3) !important;
     }
     
-    .stat-item.text-info .stat-number {
-        color: #1565c0 !important;
+    .course-stats-minimal .stat-item.text-primary {
+        background: rgba(63, 81, 181, 0.15) !important;
+        color: rgba(255, 255, 255, 0.95) !important;
+        border-color: rgba(63, 81, 181, 0.3) !important;
     }
     
-    .stat-item.text-primary {
-        background-color: rgba(63, 81, 181, 0.08) !important;
-        color: #3f51b5 !important;
-        border-color: rgba(63, 81, 181, 0.15) !important;
+    .course-stats-minimal .stat-item.text-success {
+        background: rgba(76, 175, 80, 0.15) !important;
+        color: rgba(255, 255, 255, 0.95) !important;
+        border-color: rgba(76, 175, 80, 0.3) !important;
     }
     
-    .stat-item.text-primary .stat-number {
-        color: #303f9f !important;
+    .course-stats-minimal .stat-item.text-warning {
+        background: rgba(255, 193, 7, 0.15) !important;
+        color: rgba(255, 255, 255, 0.95) !important;
+        border-color: rgba(255, 193, 7, 0.3) !important;
     }
     
-    .stat-item.text-success {
-        background-color: rgba(76, 175, 80, 0.08) !important;
-        color: #388e3c !important;
-        border-color: rgba(76, 175, 80, 0.15) !important;
+    .course-stats-minimal .stat-item.text-danger {
+        background: rgba(244, 67, 54, 0.15) !important;
+        color: rgba(255, 255, 255, 0.95) !important;
+        border-color: rgba(244, 67, 54, 0.3) !important;
     }
     
-    .stat-item.text-success .stat-number {
-        color: #2e7d32 !important;
+    .course-stats-minimal .stat-item.text-secondary {
+        background: rgba(158, 158, 158, 0.15) !important;
+        color: rgba(255, 255, 255, 0.95) !important;
+        border-color: rgba(158, 158, 158, 0.3) !important;
     }
     
-    .stat-item.text-warning {
-        background-color: rgba(255, 193, 7, 0.08) !important;
-        color: #f57c00 !important;
-        border-color: rgba(255, 193, 7, 0.15) !important;
+    .course-stats-minimal .stat-item.text-dark {
+        background: rgba(66, 66, 66, 0.15) !important;
+        color: rgba(255, 255, 255, 0.95) !important;
+        border-color: rgba(66, 66, 66, 0.3) !important;
     }
     
-    .stat-item.text-warning .stat-number {
-        color: #ef6c00 !important;
+    /* Desktop Color Themes - Course Structure - Minimal Style */
+    .course-stats-minimal .stat-item.stat-chapter {
+        background: rgba(33, 150, 243, 0.15) !important;
+        color: rgba(255, 255, 255, 0.95) !important;
+        border-color: rgba(33, 150, 243, 0.3) !important;
     }
     
-    .stat-item.text-danger {
-        background-color: rgba(244, 67, 54, 0.08) !important;
-        color: #d32f2f !important;
-        border-color: rgba(244, 67, 54, 0.15) !important;
+    .course-stats-minimal .stat-item.stat-subchapter {
+        background: rgba(156, 39, 176, 0.15) !important;
+        color: rgba(255, 255, 255, 0.95) !important;
+        border-color: rgba(156, 39, 176, 0.3) !important;
     }
     
-    .stat-item.text-danger .stat-number {
-        color: #c62828 !important;
-    }
-    
-    .stat-item.text-secondary {
-        background-color: rgba(158, 158, 158, 0.08) !important;
-        color: #616161 !important;
-        border-color: rgba(158, 158, 158, 0.15) !important;
-    }
-    
-    .stat-item.text-secondary .stat-number {
-        color: #424242 !important;
-    }
-    
-    .stat-item.text-dark {
-        background-color: rgba(66, 66, 66, 0.08) !important;
-        color: #424242 !important;
-        border-color: rgba(66, 66, 66, 0.15) !important;
-    }
-    
-    .stat-item.text-dark .stat-number {
-        color: #212121 !important;
-    }
-    
-    /* Desktop Color Themes - Course Structure */
-    .stat-item.stat-chapter {
-        background-color: #e3f2fd !important;
-        color: #1565c0 !important;
-    }
-    
-    .stat-item.stat-chapter .stat-number {
-        color: #0d47a1 !important;
-    }
-    
-    .stat-item.stat-subchapter {
-        background-color: #f3e5f5 !important;
-        color: #7b1fa2 !important;
-    }
-    
-    .stat-item.stat-subchapter .stat-number {
-        color: #4a148c !important;
-    }
-    
-    .stat-item.stat-plan {
-        background-color: #e8f5e8 !important;
-        color: #388e3c !important;
-    }
-    
-    .stat-item.stat-plan .stat-number {
-        color: #1b5e20 !important;
+    .course-stats-minimal .stat-item.stat-plan {
+        background: rgba(76, 175, 80, 0.15) !important;
+        color: rgba(255, 255, 255, 0.95) !important;
+        border-color: rgba(76, 175, 80, 0.3) !important;
     }
 
-    /* Desktop: Ensure stat-item elements maintain inline-flex display */
-    .stat-item.text-info,
-    .stat-item.text-primary,
-    .stat-item.text-success,
-    .stat-item.text-warning,
-    .stat-item.text-danger,
-    .stat-item.text-purple,
-    .stat-item.text-orange,
-    .stat-item.text-dark,
-    .stat-item.text-indigo,
-    .stat-item.text-secondary {
-        display: inline-flex !important;
-    }
 }
 
 /* Mobile Design - Keep Existing */

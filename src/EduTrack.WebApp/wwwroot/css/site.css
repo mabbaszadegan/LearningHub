@@ -423,115 +423,8 @@ p {
     box-shadow: var(--shadow-lg);
 }
 
-.dashboard-card-icon {
-    width: 60px;
-    height: 60px;
-    border-radius: var(--radius-lg);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.5rem;
-    color: white;
-    margin-bottom: var(--spacing-md);
-}
 
-.dashboard-card-icon.primary {
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
-}
 
-.dashboard-card-icon.success {
-    background: linear-gradient(135deg, var(--success-color) 0%, var(--success-dark) 100%);
-}
-
-.dashboard-card-icon.warning {
-    background: linear-gradient(135deg, var(--warning-color) 0%, var(--warning-dark) 100%);
-}
-
-.dashboard-card-icon.danger {
-    background: linear-gradient(135deg, var(--error-color) 0%, var(--error-dark) 100%);
-}
-
-/* Course Cards */
-.course-card {
-    background: white;
-    border-radius: var(--radius-lg);
-    overflow: hidden;
-    box-shadow: var(--shadow-md);
-    transition: var(--transition-normal);
-    position: relative;
-}
-
-.course-card:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-xl);
-}
-
-.course-card-image {
-    height: 200px;
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 3rem;
-    position: relative;
-    overflow: hidden;
-}
-
-.course-card-image::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="dots" width="20" height="20" patternUnits="userSpaceOnUse"><circle cx="10" cy="10" r="1" fill="rgba(255,255,255,0.1)"/></pattern></defs><rect width="100" height="100" fill="url(%23dots)"/></svg>');
-    opacity: 0.3;
-}
-
-.course-card-content {
-    padding: var(--spacing-lg);
-}
-
-.course-title {
-    font-weight: 600;
-    color: var(--gray-900);
-    margin-bottom: var(--spacing-sm);
-    font-size: 1.25rem;
-}
-
-.course-description {
-    color: var(--gray-600);
-    font-size: 0.9rem;
-    line-height: 1.5;
-    margin-bottom: var(--spacing-md);
-}
-
-.course-stats {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: var(--spacing-md);
-    padding-top: var(--spacing-md);
-    border-top: 1px solid var(--gray-200);
-}
-
-.course-stat {
-    text-align: center;
-}
-
-.course-stat-number {
-    font-weight: 600;
-    color: var(--primary-color);
-    font-size: 1.1rem;
-}
-
-.course-stat-label {
-    font-size: 0.8rem;
-    color: var(--gray-500);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
 
 /* Exam Timer */
 .exam-timer {
@@ -552,37 +445,6 @@ p {
     50% { transform: scale(1.05); }
 }
 
-/* Progress Items */
-.progress-item {
-    background: white;
-    border-radius: var(--radius-md);
-    padding: var(--spacing-lg);
-    margin-bottom: var(--spacing-md);
-    box-shadow: var(--shadow-sm);
-    transition: var(--transition-fast);
-    cursor: pointer;
-    border-left: 4px solid var(--gray-200);
-}
-
-.progress-item:hover {
-    transform: translateX(4px);
-    box-shadow: var(--shadow-md);
-}
-
-.progress-item.started {
-    border-left-color: var(--warning-color);
-    background: linear-gradient(135deg, rgba(245, 158, 11, 0.05) 0%, rgba(245, 158, 11, 0.1) 100%);
-}
-
-.progress-item.completed {
-    border-left-color: var(--success-color);
-    background: linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(16, 185, 129, 0.1) 100%);
-}
-
-.progress-item.mastered {
-    border-left-color: var(--primary-color);
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(99, 102, 241, 0.1) 100%);
-}
 
 /* Resource Items */
 .resource-item {
@@ -718,50 +580,6 @@ p {
     border-color: var(--error-dark);
 }
 
-/* Stats Cards */
-.stats-card {
-    background: white;
-    border-radius: var(--radius-lg);
-    padding: var(--spacing-xl);
-    text-align: center;
-    box-shadow: var(--shadow-md);
-    transition: var(--transition-normal);
-    position: relative;
-    overflow: hidden;
-}
-
-.stats-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
-}
-
-.stats-card:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-lg);
-}
-
-.stats-number {
-    font-size: 2.5rem;
-    font-weight: 700;
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    margin-bottom: var(--spacing-sm);
-}
-
-.stats-label {
-    color: var(--gray-600);
-    font-size: 0.9rem;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
 
 /* Offline Indicator */
 .offline-indicator {
@@ -831,9 +649,6 @@ p {
         padding: var(--spacing-lg);
     }
     
-    .stats-number {
-        font-size: 2rem;
-    }
     
     h1 { font-size: 2rem; }
     h2 { font-size: 1.75rem; }
@@ -854,9 +669,6 @@ p {
         padding: var(--spacing-md);
     }
     
-    .stats-number {
-        font-size: 1.75rem;
-    }
 }
 
 /* Dark Mode Support */
@@ -1397,45 +1209,6 @@ p {
     overflow: hidden;
 }
 
-.course-card-image {
-    height: 180px;
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 50%, var(--success-color) 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 3.5rem;
-    position: relative;
-    overflow: hidden;
-    transition: var(--transition-normal);
-}
-
-.course-card-image::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="dots" width="20" height="20" patternUnits="userSpaceOnUse"><circle cx="10" cy="10" r="1" fill="rgba(255,255,255,0.1)"/></pattern></defs><rect width="100" height="100" fill="url(%23dots)"/></svg>');
-    opacity: 0.3;
-}
-
-.course-card-image::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: radial-gradient(circle at center, rgba(255,255,255,0.1) 0%, transparent 70%);
-    opacity: 0;
-    transition: var(--transition-normal);
-}
-
-.course-card.enhanced:hover .course-card-image::after {
-    opacity: 1;
-}
 
 .course-status-badge {
     position: absolute;
@@ -1453,29 +1226,7 @@ p {
     border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-.course-card-content {
-    padding: var(--spacing-xl);
-    position: relative;
-}
 
-.course-title {
-    font-weight: 700;
-    color: var(--gray-900);
-    margin-bottom: var(--spacing-sm);
-    font-size: 1.3rem;
-    line-height: 1.3;
-}
-
-.course-description {
-    color: var(--gray-600);
-    font-size: 0.95rem;
-    line-height: 1.6;
-    margin-bottom: var(--spacing-lg);
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-}
 
 .course-progress {
     margin: var(--spacing-lg) 0;
@@ -1489,55 +1240,7 @@ p {
     box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.course-progress .progress-bar {
-    background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
-    border-radius: var(--radius-md);
-    transition: width var(--transition-slow);
-}
 
-.course-stats {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: var(--spacing-lg);
-    padding-top: var(--spacing-lg);
-    border-top: 1px solid var(--gray-200);
-}
-
-.course-stat {
-    text-align: center;
-    flex: 1;
-}
-
-.course-stat-number {
-    font-weight: 700;
-    color: var(--primary-color);
-    font-size: 1.2rem;
-    margin-bottom: var(--spacing-xs);
-}
-
-.course-stat-label {
-    font-size: 0.8rem;
-    color: var(--gray-500);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    font-weight: 600;
-}
-
-.course-stats .btn {
-    margin-top: var(--spacing-sm);
-    padding: var(--spacing-sm) var(--spacing-md);
-    font-size: 0.9rem;
-    font-weight: 600;
-    border-radius: var(--radius-md);
-    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
-    transition: var(--transition-normal);
-}
-
-.course-stats .btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
-}
 
 /* Empty State */
 .empty-state {
@@ -1598,38 +1301,6 @@ p {
     space-y: var(--spacing-md);
 }
 
-.progress-summary .progress-item {
-    margin-bottom: var(--spacing-xl);
-    background: white;
-    border-radius: var(--radius-lg);
-    padding: var(--spacing-lg);
-    box-shadow: var(--shadow-sm);
-    transition: var(--transition-normal);
-    border-left: 4px solid var(--gray-200);
-    position: relative;
-    overflow: hidden;
-}
-
-.progress-summary .progress-item::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 4px;
-    height: 100%;
-    background: var(--primary-color);
-    transition: var(--transition-normal);
-    opacity: 0;
-}
-
-.progress-summary .progress-item:hover {
-    transform: translateX(4px);
-    box-shadow: var(--shadow-md);
-}
-
-.progress-summary .progress-item:hover::before {
-    opacity: 1;
-}
 
 .progress-info {
     display: flex;
@@ -1658,11 +1329,6 @@ p {
     box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.progress-bar-container .progress-bar {
-    background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
-    border-radius: var(--radius-md);
-    transition: width var(--transition-slow);
-}
 
 /* Status List */
 .status-list {
@@ -1928,10 +1594,6 @@ p {
 .animate-delay-4 { animation-delay: 0.4s; }
 .animate-delay-5 { animation-delay: 0.5s; }
 
-/* Dashboard Card Icon Info */
-.dashboard-card-icon.info {
-    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-}
 
 /* Utility Classes */
 .text-gradient {
@@ -2289,20 +1951,7 @@ p {
     space-y: var(--spacing-md);
 }
 
-.progress-item {
-    height: 8px;
-    background: var(--gray-200);
-    border-radius: var(--radius-md);
-    overflow: hidden;
-    position: relative;
-}
 
-.progress-bar {
-    height: 100%;
-    background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
-    border-radius: var(--radius-md);
-    width: 0;
-}
 
 @keyframes progressFill {
     0% { width: 0; }
