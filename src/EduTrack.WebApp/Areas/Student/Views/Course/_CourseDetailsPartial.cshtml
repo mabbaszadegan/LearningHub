@@ -81,7 +81,7 @@
             @if (!string.IsNullOrEmpty(Model.Description))
             {
                 <div class="course-description-section-minimal">
-                    <div class="course-description-header-minimal" onclick="toggleDescriptionMinimal()">
+                    <div class="course-description-header-minimal" onclick="window.toggleDescriptionMinimal && window.toggleDescriptionMinimal()">
                         <h3 class="course-description-title-minimal">درباره این دوره</h3>
                         <i class="fas fa-chevron-down course-description-toggle-minimal" id="descriptionToggleMinimal"></i>
                     </div>

@@ -2059,10 +2059,15 @@
     background: #f8f9fa;
     cursor: pointer;
     transition: background-color 0.2s ease;
+    user-select: none;
 }
 
 .course-description-header-minimal:hover {
     background: #e9ecef;
+}
+
+.course-description-header-minimal:active {
+    background: #dee2e6;
 }
 
 .course-description-title-minimal {
@@ -2120,8 +2125,109 @@
     gap: 1rem;
 }
 
+/* Course Modal Loading and Error States */
+.course-loading-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 1rem;
+    text-align: center;
+    min-height: 200px;
+}
+
+.course-loading-spinner {
+    margin-bottom: 1rem;
+}
+
+.course-loading-spinner .spinner-border {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-width: 0.25rem;
+}
+
+.course-loading-text p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.course-error-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+    text-align: center;
+    min-height: 200px;
+}
+
+.course-error-icon {
+    margin-bottom: 1rem;
+}
+
+.course-error-icon i {
+    font-size: 3rem;
+    color: #ffc107;
+}
+
+.course-error-content h5 {
+    margin-bottom: 0.5rem;
+    color: #495057;
+    font-size: 1.1rem;
+}
+
+.course-error-content p {
+    margin-bottom: 1rem;
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+.course-error-content .btn {
+    font-size: 0.85rem;
+    padding: 0.5rem 1rem;
+}
+
 /* Mobile Responsive */
 @media (max-width: 767px) {
+    .course-loading-state {
+        padding: 2rem 0.75rem;
+        min-height: 150px;
+    }
+    
+    .course-loading-spinner .spinner-border {
+        width: 2rem;
+        height: 2rem;
+        border-width: 0.2rem;
+    }
+    
+    .course-loading-text p {
+        font-size: 0.85rem;
+    }
+    
+    .course-error-state {
+        padding: 1.5rem 0.75rem;
+        min-height: 150px;
+    }
+    
+    .course-error-icon i {
+        font-size: 2.5rem;
+    }
+    
+    .course-error-content h5 {
+        font-size: 1rem;
+    }
+    
+    .course-error-content p {
+        font-size: 0.85rem;
+    }
+    
+    .course-error-content .btn {
+        font-size: 0.8rem;
+        padding: 0.4rem 0.8rem;
+    }
+    
     /* Minimal Header Mobile */
     .course-header-minimal {
         padding: 0.75rem;

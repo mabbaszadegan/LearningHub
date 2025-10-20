@@ -142,11 +142,15 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
                             <div class="modal-body">
-                                <div class="text-center py-4">
-                                    <div class="spinner-border text-primary" role="status">
-                                        <span class="visually-hidden">در حال بارگذاری...</span>
+                                <div class="course-loading-state">
+                                    <div class="course-loading-spinner">
+                                        <div class="spinner-border text-primary" role="status">
+                                            <span class="visually-hidden">در حال بارگذاری...</span>
+                                        </div>
                                     </div>
-                                    <p class="mt-2">در حال بارگذاری جزئیات دوره...</p>
+                                    <div class="course-loading-text">
+                                        <p>در حال بارگذاری جزئیات دوره...</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -187,13 +191,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.error('Error loading course details:', error);
                     const modalBody = document.querySelector('#courseDetailsModal .modal-body');
                     modalBody.innerHTML = `
-                        <div class="text-center py-4">
-                            <i class="fas fa-exclamation-triangle text-warning fa-3x mb-3"></i>
-                            <h5>خطا در بارگذاری</h5>
-                            <p>متأسفانه خطایی در بارگذاری جزئیات دوره رخ داد.</p>
-                            <button type="button" class="btn btn-primary" onclick="showCourseDetails(${courseId})">
-                                تلاش مجدد
-                            </button>
+                        <div class="course-error-state">
+                            <div class="course-error-icon">
+                                <i class="fas fa-exclamation-triangle text-warning"></i>
+                            </div>
+                            <div class="course-error-content">
+                                <h5>خطا در بارگذاری</h5>
+                                <p>متأسفانه خطایی در بارگذاری جزئیات دوره رخ داد.</p>
+                                <button type="button" class="btn btn-primary btn-sm" onclick="showCourseDetails(${courseId})">
+                                    تلاش مجدد
+                                </button>
+                            </div>
                         </div>
                     `;
                 });
@@ -213,14 +221,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 unenrollFromCourse(courseId);
             });
             
-            // Handle description toggle
-            if (typeof toggleDescriptionMinimal === 'function') {
-                // Re-bind the toggle function if it exists
-                const toggleBtn = document.getElementById('descriptionToggleMinimal');
-                if (toggleBtn) {
-                    toggleBtn.onclick = toggleDescriptionMinimal;
-                }
-            }
+            // Handle description toggle - bind directly to the header click
+            $('.course-description-header-minimal').off('click').on('click', function() {
+                toggleDescriptionMinimal();
+            });
         }
         
         // Course enrollment functions
@@ -278,22 +282,48 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Description toggle function
         function toggleDescriptionMinimal() {
+            console.log('toggleDescriptionMinimal called'); // Debug log
+            
             const preview = document.getElementById('descriptionPreviewMinimal');
             const full = document.getElementById('descriptionFullMinimal');
             const toggle = document.getElementById('descriptionToggleMinimal');
             
-            if (full.style.display === 'none') {
-                preview.style.display = 'none';
-                full.style.display = 'block';
-                toggle.classList.remove('fa-chevron-down');
-                toggle.classList.add('fa-chevron-up');
-            } else {
+            console.log('Elements found:', { preview, full, toggle }); // Debug log
+            
+            if (!preview || !full || !toggle) {
+                console.error('Required elements not found');
+                return;
+            }
+            
+            // Check if full description is currently visible
+            const isFullVisible = full.style.display === 'block' || 
+                                 window.getComputedStyle(full).display === 'block';
+            
+            console.log('Current state:', { 
+                fullStyleDisplay: full.style.display, 
+                computedDisplay: window.getComputedStyle(full).display,
+                isFullVisible 
+            });
+            
+            if (isFullVisible) {
+                // Currently showing full, switch to preview
                 preview.style.display = 'block';
                 full.style.display = 'none';
                 toggle.classList.remove('fa-chevron-up');
                 toggle.classList.add('fa-chevron-down');
+                console.log('Switched to preview (collapsed)');
+            } else {
+                // Currently showing preview, switch to full
+                preview.style.display = 'none';
+                full.style.display = 'block';
+                toggle.classList.remove('fa-chevron-down');
+                toggle.classList.add('fa-chevron-up');
+                console.log('Switched to full (expanded)');
             }
         }
+        
+        // Make function globally available
+        window.toggleDescriptionMinimal = toggleDescriptionMinimal;
 });
 
 // Export for potential use in other scripts
