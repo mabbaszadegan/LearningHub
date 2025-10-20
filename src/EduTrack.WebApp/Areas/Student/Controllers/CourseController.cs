@@ -1,5 +1,6 @@
 using EduTrack.Application.Common.Models;
 using EduTrack.Application.Common.Models.Courses;
+using EduTrack.Application.Common.Models.TeachingPlans;
 using EduTrack.Application.Features.CourseEnrollment.Commands;
 using EduTrack.Application.Features.CourseEnrollment.DTOs;
 using EduTrack.Application.Features.CourseEnrollment.Queries;
@@ -359,5 +360,65 @@ public class CourseController : Controller
         ViewBag.Enrollment = enrollmentResult.Value;
 
         return View(scheduleItemsResult.Value);
+    }
+
+    /// <summary>
+    /// Get course schedule items as JSON for AJAX requests with filtering and sorting
+    /// </summary>
+    [HttpGet]
+    public async Task<IActionResult> GetScheduleItems(int id, string filter = "all")
+    {
+        var currentUser = await _userManager.GetUserAsync(User);
+        if (currentUser == null)
+        {
+            return Json(new { success = false, error = "کاربر یافت نشد" });
+        }
+
+        // Check if student is enrolled
+        var enrollmentResult = await _mediator.Send(new GetCourseEnrollmentQuery(id, currentUser.Id));
+        if (!enrollmentResult.IsSuccess)
+        {
+            return Json(new { success = false, error = "شما در این دوره ثبت‌نام نکرده‌اید" });
+        }
+
+        // Get schedule items for the course
+        var scheduleItemsResult = await _mediator.Send(new GetCourseScheduleItemsQuery(id, currentUser.Id));
+        if (!scheduleItemsResult.IsSuccess)
+        {
+            return Json(new { success = false, error = scheduleItemsResult.Error });
+        }
+
+        // Apply filtering
+        var filteredItems = scheduleItemsResult.Value ?? new List<ScheduleItemDto>();
+        if (filter != "all" && filteredItems.Any())
+        {
+            filteredItems = filteredItems.Where(item => item.Type.ToString() == filter).ToList();
+        }
+
+        // Sort by due date: items with due dates first (descending), then items without due dates
+        var sortedItems = filteredItems
+            .OrderByDescending(item => item.DueDate.HasValue)
+            .ThenByDescending(item => item.DueDate)
+            .ToList();
+
+        // Get available content types (types that have data)
+        var availableTypes = new List<object>();
+        if (scheduleItemsResult.Value != null)
+        {
+            availableTypes = scheduleItemsResult.Value
+                .Where(item => item != null)
+                .GroupBy(item => item.Type)
+                .Select(g => new { Type = g.Key.ToString(), Count = g.Count() })
+                .OrderBy(x => x.Type)
+                .Cast<object>()
+                .ToList();
+        }
+
+        return Json(new { 
+            success = true, 
+            data = sortedItems,
+            totalCount = sortedItems.Count,
+            availableTypes = availableTypes
+        });
     }
 }
