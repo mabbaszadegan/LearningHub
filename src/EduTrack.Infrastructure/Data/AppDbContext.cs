@@ -92,6 +92,9 @@ public class AppDbContext : IdentityDbContext<User>
     public DbSet<TeachingSessionExecution> TeachingSessionExecutions { get; set; }
     public DbSet<TeachingSessionTopicCoverage> TeachingSessionTopicCoverages { get; set; }
     public DbSet<TeachingPlanProgress> TeachingPlanProgresses { get; set; }
+    
+    // Study Session System
+    public DbSet<StudySession> StudySessions { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

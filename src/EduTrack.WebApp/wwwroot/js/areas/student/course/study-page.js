@@ -280,8 +280,9 @@ function formatDate(date) {
 }
 
 function openScheduleItem(itemId) {
-    // Placeholder for opening schedule item
-    showToast('شروع تمرین...', 'info');
+    // Navigate to schedule item study page
+    const studyUrl = `/Student/ScheduleItem/Study/${itemId}`;
+    window.location.href = studyUrl;
 }
 
 function viewScheduleItemDetails(itemId) {
