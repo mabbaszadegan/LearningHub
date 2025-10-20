@@ -11,6 +11,12 @@ using EduTrack.Domain.Entities;
 
 namespace EduTrack.WebApp.Areas.Student.Controllers;
 
+public class CompleteStudySessionRequest
+{
+    public int SessionId { get; set; }
+    public int DurationSeconds { get; set; }
+}
+
 [Area("Student")]
 [Authorize(Roles = "Student")]
 public class ScheduleItemController : Controller
@@ -112,7 +118,7 @@ public class ScheduleItemController : Controller
     /// Complete a study session for schedule item
     /// </summary>
     [HttpPost]
-    public async Task<IActionResult> CompleteStudySession(int sessionId, int durationSeconds)
+    public async Task<IActionResult> CompleteStudySession([FromBody] CompleteStudySessionRequest request)
     {
         var currentUser = await _userManager.GetUserAsync(User);
         if (currentUser == null)
@@ -120,7 +126,7 @@ public class ScheduleItemController : Controller
             return Json(new { success = false, error = "کاربر یافت نشد" });
         }
 
-        var result = await _mediator.Send(new CompleteStudySessionCommand(sessionId, durationSeconds));
+        var result = await _mediator.Send(new CompleteStudySessionCommand(request.SessionId, request.DurationSeconds));
         if (!result.IsSuccess)
         {
             return Json(new { success = false, error = result.Error });

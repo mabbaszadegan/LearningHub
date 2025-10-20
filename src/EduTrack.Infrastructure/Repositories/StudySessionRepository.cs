@@ -58,7 +58,7 @@ public class StudySessionRepository : IStudySessionRepository
             .Include(s => s.EducationalContent)
             .FirstOrDefaultAsync(s => s.StudentId == studentId && 
                                      s.EducationalContentId == educationalContentId && 
-                                     s.IsActive);
+                                     !s.IsCompleted && s.EndedAt == null);
     }
 
     public async Task<IEnumerable<StudySession>> GetCompletedSessionsByStudentAsync(string studentId)
