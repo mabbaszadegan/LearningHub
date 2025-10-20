@@ -5,7 +5,7 @@
 }
 
 @section Styles {
-    <link rel="stylesheet" href="~/css/areas/student/buttons.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/areas/student/course/course-list.css" asp-append-version="true" />
 }
 
 <div class="content-container">
@@ -39,6 +39,25 @@
                                     {
                                         <span class="badge bg-primary">در حال انجام</span>
                                     }
+                                </div>
+                                
+                                <!-- Course Action Buttons in Header -->
+                                <div class="course-header-actions">
+                                    <button type="button" class="course-header-btn btn-study-header" 
+                                            onclick="window.location.href='@Url.Action("Study", new { id = enrollment.CourseId })'"
+                                            title="شروع مطالعه">
+                                        <i class="fas fa-play"></i>
+                                    </button>
+                                    <button type="button" class="course-header-btn btn-details-header" 
+                                            onclick="showCourseDetails(@enrollment.CourseId)"
+                                            title="جزئیات دوره">
+                                        <i class="fas fa-info-circle"></i>
+                                    </button>
+                                    <button type="button" class="course-header-btn btn-unenroll-header" 
+                                            data-action="unenroll" data-course-id="@enrollment.CourseId"
+                                            title="خروج از دوره">
+                                        <i class="fas fa-sign-out-alt"></i>
+                                    </button>
                                 </div>
                             </div>
                             <div class="course-content">
@@ -77,20 +96,6 @@
                                     </div>
                                 </div>
 
-                                <div class="course-actions">
-                                    <a asp-action="ScheduleItems" asp-route-id="@enrollment.CourseId" class="btn-continue w-100 mb-2">
-                                        <i class="fas fa-play"></i>ادامه یادگیری
-                                    </a>
-                                    <div class="d-flex gap-2">
-                                        <button type="button" class="btn-secondary-action flex-fill" onclick="showCourseDetails(@enrollment.CourseId)">
-                                            <i class="fas fa-info-circle"></i>جزئیات
-                                        </button>
-                                        <button type="button" class="btn-danger-action flex-fill" 
-                                                data-action="unenroll" data-course-id="@enrollment.CourseId">
-                                            <i class="fas fa-sign-out-alt"></i>خروج
-                                        </button>
-                                    </div>
-                                </div>
                             </div>
                         </div>
                     </div>

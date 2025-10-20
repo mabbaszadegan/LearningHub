@@ -24,7 +24,10 @@ class BottomNavigation {
         if (path.includes('/student/course/catalog')) {
             return 'courses';
         }
-        if (path.includes('/student/course') && !path.includes('/catalog')) {
+        if (path.includes('/student/course/study')) {
+            return 'my-courses';
+        }
+        if (path.includes('/student/course') && !path.includes('/catalog') && !path.includes('/study')) {
             return 'my-courses';
         }
         if (path.includes('/student/home') || path.includes('/student')) {
