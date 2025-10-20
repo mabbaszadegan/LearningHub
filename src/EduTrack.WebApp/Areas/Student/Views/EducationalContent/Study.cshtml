@@ -8,72 +8,38 @@
     <link rel="stylesheet" href="~/css/areas/student/educational-content/study-content.css" asp-append-version="true" />
 }
 
-<!-- Ultra Minimal Study Header -->
-<div class="study-content-header-ultra-minimal">
-    <div class="study-header-container">
-        <!-- Breadcrumb -->
-        <nav aria-label="breadcrumb" class="study-breadcrumb-minimal">
-            <ol class="breadcrumb">
-                <li class="breadcrumb-item">
-                    <a asp-area="Student" asp-controller="Home" asp-action="Index" class="breadcrumb-link">
-                        <i class="fas fa-home"></i>
-                    </a>
-                </li>
-                <li class="breadcrumb-item">
-                    <a asp-area="Student" asp-controller="Course" asp-action="Index" class="breadcrumb-link">
-                        <i class="fas fa-book-open"></i>
-                    </a>
-                </li>
-                <li class="breadcrumb-item">
-                    <a href="javascript:history.back()" class="breadcrumb-link">
-                        دوره
-                    </a>
-                </li>
-                <li class="breadcrumb-item active">
-                    <i class="fas fa-play"></i>
-                </li>
-            </ol>
-        </nav>
-        
-        <!-- Content Title & Timer -->
-        <div class="study-title-timer-row">
-            <div class="content-title-section">
-                <h1 class="content-title-compact">@Model.Title</h1>
-                <div class="study-stats-minimal">
-                    <span class="stat-item">
-                        <i class="fas fa-clock"></i>
-                        <span id="total-study-time">@Model.StudyStatistics.TotalStudyTime.ToString(@"hh\:mm\:ss")</span>
-                    </span>
-                    <span class="stat-item">
-                        <i class="fas fa-repeat"></i>
-                        <span id="study-sessions-count">@Model.StudyStatistics.StudySessionsCount</span>
-                    </span>
-                    <span class="stat-item">
-                        <i class="fas fa-calendar"></i>
-                        <span id="last-study-date">@(Model.StudyStatistics.LastStudyDate?.ToString("yyyy/MM/dd") ?? "هیچ‌گاه")</span>
-                    </span>
-                </div>
-            </div>
-            
-            <!-- Study Timer -->
-            <div class="study-timer-compact">
-                <div class="timer-display-compact">
-                    <i class="fas fa-play-circle timer-icon-compact"></i>
-                    <span class="timer-text-compact" id="timer-text">00:00:00</span>
-                </div>
-                <div class="timer-controls-compact">
-                    <button class="timer-btn-compact" id="timer-toggle" title="توقف تایمر">
-                        <i class="fas fa-pause"></i>
-                    </button>
-                </div>
-            </div>
-            
-            <!-- Actions -->
-            <div class="header-actions-compact">
-                <a href="javascript:history.back()" class="btn-back-compact" title="بازگشت">
-                    <i class="fas fa-arrow-right"></i>
-                </a>
-            </div>
+<!-- Breadcrumb Navigation -->
+<nav aria-label="breadcrumb" class="study-breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a asp-area="Student" asp-controller="Home" asp-action="Index">
+                <i class="fas fa-home me-1"></i>خانه
+            </a>
+        </li>
+        <li class="breadcrumb-item">
+            <a asp-area="Student" asp-controller="Course" asp-action="Index">
+                <i class="fas fa-book-open me-1"></i>دوره‌های من
+            </a>
+        </li>
+        <li class="breadcrumb-item">
+            <a href="javascript:history.back()" class="breadcrumb-back">
+                <i class="fas fa-arrow-right me-1"></i>دوره
+            </a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">
+            <i class="fas fa-play me-1"></i>مطالعه
+        </li>
+    </ol>
+</nav>
+
+<!-- Ultra Minimal One-Line Header -->
+<div class="study-header-ultra-minimal">
+    <div class="study-header-content">
+        <div class="header-line">
+            <span class="study-title">@Model.Title</span>
+            <a href="javascript:history.back()" class="btn-back-minimal" title="بازگشت">
+                <i class="fas fa-arrow-right"></i>
+            </a>
         </div>
     </div>
 </div>
