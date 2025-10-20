@@ -9,15 +9,15 @@ public interface IStudySessionRepository
 {
     Task<StudySession?> GetByIdAsync(int id);
     Task<IEnumerable<StudySession>> GetByStudentIdAsync(string studentId);
-    Task<IEnumerable<StudySession>> GetByEducationalContentIdAsync(int educationalContentId);
-    Task<IEnumerable<StudySession>> GetByStudentAndContentAsync(string studentId, int educationalContentId);
-    Task<StudySession?> GetActiveSessionAsync(string studentId, int educationalContentId);
+    Task<IEnumerable<StudySession>> GetByScheduleItemIdAsync(int scheduleItemId);
+    Task<IEnumerable<StudySession>> GetByStudentAndScheduleItemAsync(string studentId, int scheduleItemId);
+    Task<StudySession?> GetActiveSessionAsync(string studentId, int scheduleItemId);
     Task<IEnumerable<StudySession>> GetCompletedSessionsByStudentAsync(string studentId);
-    Task<IEnumerable<StudySession>> GetCompletedSessionsByContentAsync(int educationalContentId);
+    Task<IEnumerable<StudySession>> GetCompletedSessionsByScheduleItemAsync(int scheduleItemId);
     Task<StudySession> AddAsync(StudySession studySession);
     Task UpdateAsync(StudySession studySession);
     Task DeleteAsync(int id);
-    Task<int> GetTotalStudyTimeAsync(string studentId, int educationalContentId);
-    Task<int> GetStudySessionsCountAsync(string studentId, int educationalContentId);
+    Task<int> GetTotalStudyTimeAsync(string studentId, int scheduleItemId);
+    Task<int> GetStudySessionsCountAsync(string studentId, int scheduleItemId);
     Task<IEnumerable<StudySession>> GetRecentSessionsAsync(string studentId, int count = 10);
 }

@@ -21,60 +21,60 @@ public class StudySessionRepository : IStudySessionRepository
     {
         return await _context.StudySessions
             .Include(s => s.Student)
-            .Include(s => s.EducationalContent)
+            .Include(s => s.ScheduleItem)
             .FirstOrDefaultAsync(s => s.Id == id);
     }
 
     public async Task<IEnumerable<StudySession>> GetByStudentIdAsync(string studentId)
     {
         return await _context.StudySessions
-            .Include(s => s.EducationalContent)
+            .Include(s => s.ScheduleItem)
             .Where(s => s.StudentId == studentId)
             .OrderByDescending(s => s.StartedAt)
             .ToListAsync();
     }
 
-    public async Task<IEnumerable<StudySession>> GetByEducationalContentIdAsync(int educationalContentId)
+    public async Task<IEnumerable<StudySession>> GetByScheduleItemIdAsync(int scheduleItemId)
     {
         return await _context.StudySessions
             .Include(s => s.Student)
-            .Where(s => s.EducationalContentId == educationalContentId)
+            .Where(s => s.ScheduleItemId == scheduleItemId)
             .OrderByDescending(s => s.StartedAt)
             .ToListAsync();
     }
 
-    public async Task<IEnumerable<StudySession>> GetByStudentAndContentAsync(string studentId, int educationalContentId)
+    public async Task<IEnumerable<StudySession>> GetByStudentAndScheduleItemAsync(string studentId, int scheduleItemId)
     {
         return await _context.StudySessions
-            .Include(s => s.EducationalContent)
-            .Where(s => s.StudentId == studentId && s.EducationalContentId == educationalContentId)
+            .Include(s => s.ScheduleItem)
+            .Where(s => s.StudentId == studentId && s.ScheduleItemId == scheduleItemId)
             .OrderByDescending(s => s.StartedAt)
             .ToListAsync();
     }
 
-    public async Task<StudySession?> GetActiveSessionAsync(string studentId, int educationalContentId)
+    public async Task<StudySession?> GetActiveSessionAsync(string studentId, int scheduleItemId)
     {
         return await _context.StudySessions
-            .Include(s => s.EducationalContent)
+            .Include(s => s.ScheduleItem)
             .FirstOrDefaultAsync(s => s.StudentId == studentId && 
-                                     s.EducationalContentId == educationalContentId && 
+                                     s.ScheduleItemId == scheduleItemId && 
                                      !s.IsCompleted && s.EndedAt == null);
     }
 
     public async Task<IEnumerable<StudySession>> GetCompletedSessionsByStudentAsync(string studentId)
     {
         return await _context.StudySessions
-            .Include(s => s.EducationalContent)
+            .Include(s => s.ScheduleItem)
             .Where(s => s.StudentId == studentId && s.IsCompleted)
             .OrderByDescending(s => s.EndedAt)
             .ToListAsync();
     }
 
-    public async Task<IEnumerable<StudySession>> GetCompletedSessionsByContentAsync(int educationalContentId)
+    public async Task<IEnumerable<StudySession>> GetCompletedSessionsByScheduleItemAsync(int scheduleItemId)
     {
         return await _context.StudySessions
             .Include(s => s.Student)
-            .Where(s => s.EducationalContentId == educationalContentId && s.IsCompleted)
+            .Where(s => s.ScheduleItemId == scheduleItemId && s.IsCompleted)
             .OrderByDescending(s => s.EndedAt)
             .ToListAsync();
     }
@@ -102,27 +102,27 @@ public class StudySessionRepository : IStudySessionRepository
         }
     }
 
-    public async Task<int> GetTotalStudyTimeAsync(string studentId, int educationalContentId)
+    public async Task<int> GetTotalStudyTimeAsync(string studentId, int scheduleItemId)
     {
         return await _context.StudySessions
             .Where(s => s.StudentId == studentId && 
-                       s.EducationalContentId == educationalContentId && 
+                       s.ScheduleItemId == scheduleItemId && 
                        s.IsCompleted)
             .SumAsync(s => s.DurationSeconds);
     }
 
-    public async Task<int> GetStudySessionsCountAsync(string studentId, int educationalContentId)
+    public async Task<int> GetStudySessionsCountAsync(string studentId, int scheduleItemId)
     {
         return await _context.StudySessions
             .CountAsync(s => s.StudentId == studentId && 
-                           s.EducationalContentId == educationalContentId && 
+                           s.ScheduleItemId == scheduleItemId && 
                            s.IsCompleted);
     }
 
     public async Task<IEnumerable<StudySession>> GetRecentSessionsAsync(string studentId, int count = 10)
     {
         return await _context.StudySessions
-            .Include(s => s.EducationalContent)
+            .Include(s => s.ScheduleItem)
             .Where(s => s.StudentId == studentId && s.IsCompleted)
             .OrderByDescending(s => s.EndedAt)
             .Take(count)

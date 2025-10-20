@@ -4,20 +4,38 @@ using EduTrack.Application.Common.Models.Courses;
 namespace EduTrack.Application.Common.Models.StudySessions;
 
 /// <summary>
+/// DTO for ScheduleItem entity
+/// </summary>
+public class ScheduleItemDto
+{
+    public int Id { get; set; }
+    public int TeachingPlanId { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public string? ContentJson { get; set; }
+    public ScheduleItemType Type { get; set; }
+    public bool IsActive { get; set; }
+    public int Order { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
+    public DateTimeOffset UpdatedAt { get; set; }
+    public string CreatedBy { get; set; } = string.Empty;
+}
+
+/// <summary>
 /// DTO for StudySession entity
 /// </summary>
 public class StudySessionDto
 {
     public int Id { get; set; }
     public string StudentId { get; set; } = string.Empty;
-    public int EducationalContentId { get; set; }
+    public int ScheduleItemId { get; set; }
     public DateTimeOffset StartedAt { get; set; }
     public DateTimeOffset? EndedAt { get; set; }
     public int DurationSeconds { get; set; }
     public bool IsCompleted { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
-    public EducationalContentDto? EducationalContent { get; set; }
+    public ScheduleItemDto? ScheduleItem { get; set; }
 }
 
 /// <summary>
@@ -26,7 +44,7 @@ public class StudySessionDto
 public class CreateStudySessionDto
 {
     public string StudentId { get; set; } = string.Empty;
-    public int EducationalContentId { get; set; }
+    public int ScheduleItemId { get; set; }
 }
 
 /// <summary>
@@ -54,23 +72,20 @@ public class StudySessionStatisticsDto
 }
 
 /// <summary>
-/// DTO for educational content with study statistics
+/// DTO for schedule item with study statistics
 /// </summary>
-public class EducationalContentWithStudyStatsDto
+public class ScheduleItemWithStudyStatsDto
 {
     public int Id { get; set; }
-    public int SubChapterId { get; set; }
+    public int TeachingPlanId { get; set; }
     public string Title { get; set; } = string.Empty;
     public string? Description { get; set; }
-    public EducationalContentType Type { get; set; }
-    public string? TextContent { get; set; }
-    public int? FileId { get; set; }
-    public string? ExternalUrl { get; set; }
+    public string? ContentJson { get; set; }
+    public ScheduleItemType Type { get; set; }
     public bool IsActive { get; set; }
     public int Order { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
     public string CreatedBy { get; set; } = string.Empty;
-    public FileDto? File { get; set; }
     public StudySessionStatisticsDto StudyStatistics { get; set; } = new();
 }

@@ -14,7 +14,43 @@ let studySession = {
         this.sessionId = window.studyContentConfig?.activeSessionId || 0;
         this.bindEvents();
         this.startHiddenTimer();
+        this.startStudySession();
         console.log('Study session initialized with sessionId:', this.sessionId);
+    },
+    
+    async startStudySession() {
+        // Only start a new session if we don't have one
+        if (!this.sessionId || this.sessionId === 0) {
+            try {
+                console.log('Starting new study session...');
+                const response = await fetch(window.studyContentConfig.startSessionUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                    },
+                    body: `scheduleItemId=${window.studyContentConfig.educationalContentId}`
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                console.log('Study session started:', result);
+                
+                if (result.success) {
+                    this.sessionId = result.sessionId;
+                    console.log('Session ID set to:', this.sessionId);
+                } else {
+                    console.error('Failed to start session:', result.error);
+                }
+            } catch (error) {
+                console.error('Error starting study session:', error);
+            }
+        } else {
+            console.log('Using existing session ID:', this.sessionId);
+        }
     },
     
     bindEvents() {
@@ -129,11 +165,15 @@ let studySession = {
     startTimer() {
         if (!this.isActive) {
             this.isActive = true;
-            this.startTime = Date.now() - this.elapsedTime;
+            this.startTime = Date.now();
+            this.elapsedTime = 0;
+            
+            console.log('Timer started at:', new Date(this.startTime).toLocaleTimeString());
             
             // Timer runs in background, no UI updates needed
             this.updateInterval = setInterval(() => {
                 // Timer runs silently in background
+                this.elapsedTime = Math.floor((Date.now() - this.startTime) / 1000);
             }, 1000);
             
             console.log('Timer started');
@@ -142,8 +182,11 @@ let studySession = {
     
     getElapsedTime() {
         if (this.isActive && this.startTime) {
-            return Math.floor((Date.now() - this.startTime) / 1000);
+            const elapsed = Math.floor((Date.now() - this.startTime) / 1000);
+            console.log('Elapsed time calculated:', elapsed, 'seconds');
+            return elapsed;
         }
+        console.log('Timer not active, returning elapsedTime:', this.elapsedTime);
         return this.elapsedTime;
     },
     
@@ -337,30 +380,46 @@ let studySession = {
     },
     
     async saveStudySession() {
-        const studyData = {
-            sessionId: this.sessionId || 0,
-            durationSeconds: this.getElapsedTime()
-        };
+        console.log('=== SAVING STUDY SESSION ===');
+        console.log('Timer active:', this.isActive);
+        console.log('Start time:', this.startTime ? new Date(this.startTime).toLocaleTimeString() : 'null');
+        console.log('Current time:', new Date().toLocaleTimeString());
+        console.log('Session ID:', this.sessionId);
+        console.log('============================');
         
-        console.log('Saving study session:', studyData);
+        if (!this.sessionId || this.sessionId === 0) {
+            throw new Error('No active session to complete');
+        }
         
         try {
-            const response = await fetch(window.studyContentConfig.completeSessionUrl, {
+            // Complete the session - duration will be calculated automatically by backend
+            const completeData = {
+                StudySessionId: this.sessionId
+            };
+            
+            console.log('Completing session with data:', completeData);
+            
+            const completeResponse = await fetch(window.studyContentConfig.completeSessionUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
                 },
-                body: JSON.stringify(studyData)
+                body: JSON.stringify(completeData)
             });
             
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+            if (!completeResponse.ok) {
+                throw new Error(`HTTP error! status: ${completeResponse.status}`);
             }
             
-            const result = await response.json();
-            console.log('Study session saved:', result);
-            return result;
+            const completeResult = await completeResponse.json();
+            console.log('Study session completed:', completeResult);
+            
+            if (!completeResult.success) {
+                throw new Error(completeResult.error || 'خطا در تکمیل جلسه مطالعه');
+            }
+            
+            return completeResult;
         } catch (error) {
             console.error('Failed to save study session:', error);
             throw error;

@@ -41,7 +41,7 @@ public class EducationalContentController : Controller
         }
 
         // Get educational content with study statistics
-        var contentResult = await _mediator.Send(new GetEducationalContentWithStudyStatsQuery(id, currentUser.Id));
+        var contentResult = await _mediator.Send(new GetScheduleItemWithStudyStatsQuery(id, currentUser.Id));
         if (!contentResult.IsSuccess || contentResult.Value == null)
         {
             TempData["Error"] = "محتوا یافت نشد";
@@ -83,7 +83,7 @@ public class EducationalContentController : Controller
     /// Complete a study session
     /// </summary>
     [HttpPost]
-    public async Task<IActionResult> CompleteStudySession(int sessionId, int durationSeconds)
+    public async Task<IActionResult> CompleteStudySession(int sessionId)
     {
         var currentUser = await _userManager.GetUserAsync(User);
         if (currentUser == null)
@@ -91,7 +91,7 @@ public class EducationalContentController : Controller
             return Json(new { success = false, error = "کاربر یافت نشد" });
         }
 
-        var result = await _mediator.Send(new CompleteStudySessionCommand(sessionId, durationSeconds));
+        var result = await _mediator.Send(new CompleteStudySessionCommand(sessionId));
         if (!result.IsSuccess)
         {
             return Json(new { success = false, error = result.Error });
@@ -100,26 +100,6 @@ public class EducationalContentController : Controller
         return Json(new { success = true, message = "زمان مطالعه با موفقیت ثبت شد" });
     }
 
-    /// <summary>
-    /// Update study session duration (for real-time updates)
-    /// </summary>
-    [HttpPost]
-    public async Task<IActionResult> UpdateStudySessionDuration(int sessionId, int durationSeconds)
-    {
-        var currentUser = await _userManager.GetUserAsync(User);
-        if (currentUser == null)
-        {
-            return Json(new { success = false, error = "کاربر یافت نشد" });
-        }
-
-        var result = await _mediator.Send(new UpdateStudySessionDurationCommand(sessionId, durationSeconds));
-        if (!result.IsSuccess)
-        {
-            return Json(new { success = false, error = result.Error });
-        }
-
-        return Json(new { success = true });
-    }
 
     /// <summary>
     /// Get study session statistics for a content item

@@ -1,5 +1,4 @@
 @using EduTrack.Application.Common.Models.StudySessions
-@model EducationalContentWithStudyStatsDto
 @{
     ViewData["Title"] = $"مطالعه: {Model.Title}";
 }
@@ -234,10 +233,9 @@
             educationalContentId: @Model.Id,
             currentUserId: '@ViewBag.CurrentUserId',
             activeSessionId: @(ViewBag.ActiveSession?.Id ?? 0),
-            startSessionUrl: '@Url.Action("StartStudySession")',
-            completeSessionUrl: '@Url.Action("CompleteStudySession")',
-            updateDurationUrl: '@Url.Action("UpdateStudySessionDuration")',
-            getStatisticsUrl: '@Url.Action("GetStudyStatistics")'
+            startSessionUrl: '@Url.Action("StartStudySession", "ScheduleItem")',
+            completeSessionUrl: '@Url.Action("TestCompleteStudySession", "ScheduleItem")',
+            getStatisticsUrl: '@Url.Action("GetStudyStatistics", "ScheduleItem")'
         };
     </script>
     <script src="~/js/areas/student/educational-content/study-content.js" asp-append-version="true"></script>

@@ -13,8 +13,7 @@ namespace EduTrack.WebApp.Areas.Student.Controllers;
 
 public class CompleteStudySessionRequest
 {
-    public int SessionId { get; set; }
-    public int DurationSeconds { get; set; }
+    public int StudySessionId { get; set; }
 }
 
 [Area("Student")]
@@ -47,38 +46,15 @@ public class ScheduleItemController : Controller
             return RedirectToAction("Login", "Account", new { area = "Public" });
         }
 
-        // Get schedule item details
-        var scheduleItemResult = await _mediator.Send(new GetScheduleItemByIdQuery(id));
-        if (!scheduleItemResult.IsSuccess || scheduleItemResult.Value == null)
+        // Get schedule item details with study stats
+        var scheduleItemWithStatsResult = await _mediator.Send(new GetScheduleItemWithStudyStatsQuery(id, currentUser.Id));
+        if (!scheduleItemWithStatsResult.IsSuccess || scheduleItemWithStatsResult.Value == null)
         {
             TempData["Error"] = "آیتم آموزشی یافت نشد";
             return RedirectToAction("Index", "Home");
         }
 
-        var scheduleItem = scheduleItemResult.Value;
-
-        // For now, we'll create a mock EducationalContentWithStudyStatsDto
-        // In a real implementation, you'd need to map ScheduleItem to EducationalContent
-        var mockContent = new EducationalContentWithStudyStatsDto
-        {
-            Id = scheduleItem.Id,
-            Title = scheduleItem.Title,
-            Description = scheduleItem.Description,
-            Type = EduTrack.Domain.Enums.EducationalContentType.Text, // Default type
-            TextContent = scheduleItem.ContentJson, // Use ContentJson as text content
-            IsActive = true,
-            Order = 0,
-            CreatedAt = scheduleItem.CreatedAt,
-            UpdatedAt = scheduleItem.UpdatedAt,
-            CreatedBy = "System",
-            StudyStatistics = new StudySessionStatisticsDto
-            {
-                TotalStudyTimeSeconds = 0,
-                StudySessionsCount = 0,
-                LastStudyDate = null,
-                RecentSessions = new List<StudySessionDto>()
-            }
-        };
+        var scheduleItemWithStats = scheduleItemWithStatsResult.Value;
 
         // Check if there's an active study session
         var activeSessionResult = await _mediator.Send(new GetActiveStudySessionQuery(currentUser.Id, id));
@@ -86,9 +62,9 @@ public class ScheduleItemController : Controller
 
         ViewBag.ActiveSession = activeSession;
         ViewBag.CurrentUserId = currentUser.Id;
-        ViewBag.ScheduleItem = scheduleItem;
+        ViewBag.ScheduleItem = scheduleItemWithStats;
 
-        return View("~/Areas/Student/Views/EducationalContent/Study.cshtml", mockContent);
+        return View("~/Areas/Student/Views/EducationalContent/Study.cshtml", scheduleItemWithStats);
     }
 
     /// <summary>
@@ -97,64 +73,86 @@ public class ScheduleItemController : Controller
     [HttpPost]
     public async Task<IActionResult> StartStudySession(int scheduleItemId)
     {
-        var currentUser = await _userManager.GetUserAsync(User);
-        if (currentUser == null)
+        try
         {
-            return Json(new { success = false, error = "کاربر یافت نشد" });
-        }
+            _logger.LogInformation("StartStudySession called with ScheduleItemId: {ScheduleItemId}", scheduleItemId);
 
-        // For schedule items, we'll use the schedule item ID as educational content ID
-        // In a real implementation, you'd need to map schedule items to educational content
-        var result = await _mediator.Send(new StartStudySessionCommand(currentUser.Id, scheduleItemId));
-        if (!result.IsSuccess)
+            var currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser == null)
+            {
+                _logger.LogWarning("User not found");
+                return Json(new { success = false, error = "کاربر یافت نشد" });
+            }
+
+            _logger.LogInformation("User found: {UserId}", currentUser.Id);
+
+            // For schedule items, we'll use the schedule item ID as educational content ID
+            // In a real implementation, you'd need to map schedule items to educational content
+            var result = await _mediator.Send(new StartStudySessionCommand(currentUser.Id, scheduleItemId));
+            if (!result.IsSuccess)
+            {
+                _logger.LogError("StartStudySessionCommand failed: {Error}", result.Error);
+                return Json(new { success = false, error = result.Error });
+            }
+
+            _logger.LogInformation("Study session started successfully with ID: {SessionId}", result.Value!.Id);
+            return Json(new { success = true, sessionId = result.Value!.Id });
+        }
+        catch (Exception ex)
         {
-            return Json(new { success = false, error = result.Error });
+            _logger.LogError(ex, "Error in StartStudySession");
+            return Json(new { success = false, error = "خطا در شروع جلسه مطالعه" });
         }
-
-        return Json(new { success = true, sessionId = result.Value!.Id });
     }
 
     /// <summary>
-    /// Complete a study session for schedule item
+    /// Test endpoint to check if study session can be completed
     /// </summary>
     [HttpPost]
-    public async Task<IActionResult> CompleteStudySession([FromBody] CompleteStudySessionRequest request)
+    public async Task<IActionResult> TestCompleteStudySession([FromBody] CompleteStudySessionRequest request)
     {
-        var currentUser = await _userManager.GetUserAsync(User);
-        if (currentUser == null)
+        try
         {
-            return Json(new { success = false, error = "کاربر یافت نشد" });
-        }
+            _logger.LogInformation("TestCompleteStudySession called with StudySessionId: {StudySessionId}", 
+                request.StudySessionId);
 
-        var result = await _mediator.Send(new CompleteStudySessionCommand(request.SessionId, request.DurationSeconds));
-        if (!result.IsSuccess)
+            var currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser == null)
+            {
+                _logger.LogWarning("User not found");
+                return Json(new { success = false, error = "کاربر یافت نشد" });
+            }
+
+            _logger.LogInformation("User found: {UserId}", currentUser.Id);
+
+            // First, check if the study session exists
+            var studySession = await _mediator.Send(new GetStudySessionByIdQuery(request.StudySessionId));
+            if (!studySession.IsSuccess)
+            {
+                _logger.LogError("Study session not found: {Error}", studySession.Error);
+                return Json(new { success = false, error = $"جلسه مطالعه یافت نشد: {studySession.Error}" });
+            }
+
+            _logger.LogInformation("Study session found: {SessionId}", studySession.Value!.Id);
+
+            var result = await _mediator.Send(new CompleteStudySessionCommand(request.StudySessionId));
+            if (!result.IsSuccess)
+            {
+                _logger.LogError("CompleteStudySessionCommand failed: {Error}", result.Error);
+                return Json(new { success = false, error = result.Error });
+            }
+
+            _logger.LogInformation("Study session completed successfully with duration: {DurationSeconds} seconds", 
+                result.Value!.DurationSeconds);
+            return Json(new { success = true, message = "زمان مطالعه با موفقیت ثبت شد" });
+        }
+        catch (Exception ex)
         {
-            return Json(new { success = false, error = result.Error });
+            _logger.LogError(ex, "Error in TestCompleteStudySession");
+            return Json(new { success = false, error = $"خطا در ثبت زمان مطالعه: {ex.Message}" });
         }
-
-        return Json(new { success = true, message = "زمان مطالعه با موفقیت ثبت شد" });
     }
 
-    /// <summary>
-    /// Update study session duration for schedule item
-    /// </summary>
-    [HttpPost]
-    public async Task<IActionResult> UpdateStudySessionDuration(int sessionId, int durationSeconds)
-    {
-        var currentUser = await _userManager.GetUserAsync(User);
-        if (currentUser == null)
-        {
-            return Json(new { success = false, error = "کاربر یافت نشد" });
-        }
-
-        var result = await _mediator.Send(new UpdateStudySessionDurationCommand(sessionId, durationSeconds));
-        if (!result.IsSuccess)
-        {
-            return Json(new { success = false, error = result.Error });
-        }
-
-        return Json(new { success = true });
-    }
 
     /// <summary>
     /// Get study session statistics for a schedule item

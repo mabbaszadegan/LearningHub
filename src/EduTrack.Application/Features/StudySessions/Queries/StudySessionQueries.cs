@@ -18,61 +18,61 @@ public class GetStudySessionByIdQuery : IRequest<Result<StudySessionDto>>
 }
 
 /// <summary>
-/// Query to get active study session for student and content
+/// Query to get active study session for student and schedule item
 /// </summary>
-public class GetActiveStudySessionQuery : IRequest<Result<StudySessionDto?>>
+public class GetActiveStudySessionQuery : IRequest<Result<StudySessionDto>>
 {
     public string StudentId { get; set; } = string.Empty;
-    public int EducationalContentId { get; set; }
+    public int ScheduleItemId { get; set; }
 
-    public GetActiveStudySessionQuery(string studentId, int educationalContentId)
+    public GetActiveStudySessionQuery(string studentId, int scheduleItemId)
     {
         StudentId = studentId;
-        EducationalContentId = educationalContentId;
+        ScheduleItemId = scheduleItemId;
     }
 }
 
 /// <summary>
-/// Query to get study sessions for student and content
+/// Query to get study sessions for student and schedule item
 /// </summary>
-public class GetStudySessionsByStudentAndContentQuery : IRequest<Result<IEnumerable<StudySessionDto>>>
+public class GetStudySessionsByStudentAndScheduleItemQuery : IRequest<Result<IEnumerable<StudySessionDto>>>
 {
     public string StudentId { get; set; } = string.Empty;
-    public int EducationalContentId { get; set; }
+    public int ScheduleItemId { get; set; }
 
-    public GetStudySessionsByStudentAndContentQuery(string studentId, int educationalContentId)
+    public GetStudySessionsByStudentAndScheduleItemQuery(string studentId, int scheduleItemId)
     {
         StudentId = studentId;
-        EducationalContentId = educationalContentId;
+        ScheduleItemId = scheduleItemId;
     }
 }
 
 /// <summary>
-/// Query to get study session statistics for student and content
+/// Query to get study session statistics for student and schedule item
 /// </summary>
 public class GetStudySessionStatisticsQuery : IRequest<Result<StudySessionStatisticsDto>>
 {
     public string StudentId { get; set; } = string.Empty;
-    public int EducationalContentId { get; set; }
+    public int ScheduleItemId { get; set; }
 
-    public GetStudySessionStatisticsQuery(string studentId, int educationalContentId)
+    public GetStudySessionStatisticsQuery(string studentId, int scheduleItemId)
     {
         StudentId = studentId;
-        EducationalContentId = educationalContentId;
+        ScheduleItemId = scheduleItemId;
     }
 }
 
 /// <summary>
-/// Query to get educational content with study statistics
+/// Query to get schedule item with study statistics
 /// </summary>
-public class GetEducationalContentWithStudyStatsQuery : IRequest<Result<EducationalContentWithStudyStatsDto>>
+public class GetScheduleItemWithStudyStatsQuery : IRequest<Result<ScheduleItemWithStudyStatsDto>>
 {
-    public int EducationalContentId { get; set; }
+    public int ScheduleItemId { get; set; }
     public string StudentId { get; set; } = string.Empty;
 
-    public GetEducationalContentWithStudyStatsQuery(int educationalContentId, string studentId)
+    public GetScheduleItemWithStudyStatsQuery(int scheduleItemId, string studentId)
     {
-        EducationalContentId = educationalContentId;
+        ScheduleItemId = scheduleItemId;
         StudentId = studentId;
     }
 }

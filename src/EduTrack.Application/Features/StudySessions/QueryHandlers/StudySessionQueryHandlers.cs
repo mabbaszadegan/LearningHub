@@ -1,7 +1,7 @@
 using EduTrack.Application.Common.Models;
 using EduTrack.Application.Common.Models.StudySessions;
 using EduTrack.Application.Features.StudySessions.Queries;
-using EduTrack.Application.Features.EducationalContent.Queries;
+using EduTrack.Application.Features.ScheduleItems.Queries;
 using EduTrack.Domain.Repositories;
 using MediatR;
 
@@ -43,7 +43,7 @@ public class GetStudySessionByIdQueryHandler : IRequestHandler<GetStudySessionBy
         {
             Id = studySession.Id,
             StudentId = studySession.StudentId,
-            EducationalContentId = studySession.EducationalContentId,
+            ScheduleItemId = studySession.ScheduleItemId,
             StartedAt = studySession.StartedAt,
             EndedAt = studySession.EndedAt,
             DurationSeconds = studySession.DurationSeconds,
@@ -57,7 +57,7 @@ public class GetStudySessionByIdQueryHandler : IRequestHandler<GetStudySessionBy
 /// <summary>
 /// Handler for getting active study session
 /// </summary>
-public class GetActiveStudySessionQueryHandler : IRequestHandler<GetActiveStudySessionQuery, Result<StudySessionDto?>>
+public class GetActiveStudySessionQueryHandler : IRequestHandler<GetActiveStudySessionQuery, Result<StudySessionDto>>
 {
     private readonly IStudySessionRepository _studySessionRepository;
 
@@ -66,22 +66,21 @@ public class GetActiveStudySessionQueryHandler : IRequestHandler<GetActiveStudyS
         _studySessionRepository = studySessionRepository;
     }
 
-    public async Task<Result<StudySessionDto?>> Handle(GetActiveStudySessionQuery request, CancellationToken cancellationToken)
+    public async Task<Result<StudySessionDto>> Handle(GetActiveStudySessionQuery request, CancellationToken cancellationToken)
     {
         try
         {
-            var studySession = await _studySessionRepository.GetActiveSessionAsync(request.StudentId, request.EducationalContentId);
-            
-            if (studySession == null)
+            var activeSession = await _studySessionRepository.GetActiveSessionAsync(request.StudentId, request.ScheduleItemId);
+            if (activeSession == null)
             {
-                return Result<StudySessionDto?>.Success(null);
+                return Result<StudySessionDto>.Failure("جلسه فعال یافت نشد");
             }
 
-            return Result<StudySessionDto?>.Success(MapToDto(studySession));
+            return Result<StudySessionDto>.Success(MapToDto(activeSession));
         }
         catch (Exception ex)
         {
-            return Result<StudySessionDto?>.Failure($"خطا در دریافت جلسه فعال مطالعه: {ex.Message}");
+            return Result<StudySessionDto>.Failure($"خطا در دریافت جلسه فعال: {ex.Message}");
         }
     }
 
@@ -91,7 +90,7 @@ public class GetActiveStudySessionQueryHandler : IRequestHandler<GetActiveStudyS
         {
             Id = studySession.Id,
             StudentId = studySession.StudentId,
-            EducationalContentId = studySession.EducationalContentId,
+            ScheduleItemId = studySession.ScheduleItemId,
             StartedAt = studySession.StartedAt,
             EndedAt = studySession.EndedAt,
             DurationSeconds = studySession.DurationSeconds,
@@ -103,25 +102,25 @@ public class GetActiveStudySessionQueryHandler : IRequestHandler<GetActiveStudyS
 }
 
 /// <summary>
-/// Handler for getting study sessions by student and content
+/// Handler for getting study sessions by student and schedule item
 /// </summary>
-public class GetStudySessionsByStudentAndContentQueryHandler : IRequestHandler<GetStudySessionsByStudentAndContentQuery, Result<IEnumerable<StudySessionDto>>>
+public class GetStudySessionsByStudentAndScheduleItemQueryHandler : IRequestHandler<GetStudySessionsByStudentAndScheduleItemQuery, Result<IEnumerable<StudySessionDto>>>
 {
     private readonly IStudySessionRepository _studySessionRepository;
 
-    public GetStudySessionsByStudentAndContentQueryHandler(IStudySessionRepository studySessionRepository)
+    public GetStudySessionsByStudentAndScheduleItemQueryHandler(IStudySessionRepository studySessionRepository)
     {
         _studySessionRepository = studySessionRepository;
     }
 
-    public async Task<Result<IEnumerable<StudySessionDto>>> Handle(GetStudySessionsByStudentAndContentQuery request, CancellationToken cancellationToken)
+    public async Task<Result<IEnumerable<StudySessionDto>>> Handle(GetStudySessionsByStudentAndScheduleItemQuery request, CancellationToken cancellationToken)
     {
         try
         {
-            var studySessions = await _studySessionRepository.GetByStudentAndContentAsync(request.StudentId, request.EducationalContentId);
-            var dtos = studySessions.Select(MapToDto);
+            var sessions = await _studySessionRepository.GetByStudentAndScheduleItemAsync(request.StudentId, request.ScheduleItemId);
+            var sessionDtos = sessions.Select(MapToDto);
 
-            return Result<IEnumerable<StudySessionDto>>.Success(dtos);
+            return Result<IEnumerable<StudySessionDto>>.Success(sessionDtos);
         }
         catch (Exception ex)
         {
@@ -135,7 +134,7 @@ public class GetStudySessionsByStudentAndContentQueryHandler : IRequestHandler<G
         {
             Id = studySession.Id,
             StudentId = studySession.StudentId,
-            EducationalContentId = studySession.EducationalContentId,
+            ScheduleItemId = studySession.ScheduleItemId,
             StartedAt = studySession.StartedAt,
             EndedAt = studySession.EndedAt,
             DurationSeconds = studySession.DurationSeconds,
@@ -162,30 +161,25 @@ public class GetStudySessionStatisticsQueryHandler : IRequestHandler<GetStudySes
     {
         try
         {
-            var totalStudyTime = await _studySessionRepository.GetTotalStudyTimeAsync(request.StudentId, request.EducationalContentId);
-            var sessionsCount = await _studySessionRepository.GetStudySessionsCountAsync(request.StudentId, request.EducationalContentId);
+            var totalTime = await _studySessionRepository.GetTotalStudyTimeAsync(request.StudentId, request.ScheduleItemId);
+            var sessionsCount = await _studySessionRepository.GetStudySessionsCountAsync(request.StudentId, request.ScheduleItemId);
             var recentSessions = await _studySessionRepository.GetRecentSessionsAsync(request.StudentId, 5);
+
+            var lastStudyDate = recentSessions.FirstOrDefault()?.EndedAt;
 
             var statistics = new StudySessionStatisticsDto
             {
-                TotalStudyTimeSeconds = totalStudyTime,
+                TotalStudyTimeSeconds = totalTime,
                 StudySessionsCount = sessionsCount,
-                RecentSessions = recentSessions
-                    .Where(s => s.EducationalContentId == request.EducationalContentId)
-                    .Select(MapToDto)
-                    .ToList()
+                LastStudyDate = lastStudyDate,
+                RecentSessions = recentSessions.Select(MapToDto).ToList()
             };
-
-            if (statistics.RecentSessions.Any())
-            {
-                statistics.LastStudyDate = statistics.RecentSessions.Max(s => s.EndedAt);
-            }
 
             return Result<StudySessionStatisticsDto>.Success(statistics);
         }
         catch (Exception ex)
         {
-            return Result<StudySessionStatisticsDto>.Failure($"خطا در دریافت آمار جلسات مطالعه: {ex.Message}");
+            return Result<StudySessionStatisticsDto>.Failure($"خطا در دریافت آمار مطالعه: {ex.Message}");
         }
     }
 
@@ -195,7 +189,7 @@ public class GetStudySessionStatisticsQueryHandler : IRequestHandler<GetStudySes
         {
             Id = studySession.Id,
             StudentId = studySession.StudentId,
-            EducationalContentId = studySession.EducationalContentId,
+            ScheduleItemId = studySession.ScheduleItemId,
             StartedAt = studySession.StartedAt,
             EndedAt = studySession.EndedAt,
             DurationSeconds = studySession.DurationSeconds,
@@ -207,63 +201,63 @@ public class GetStudySessionStatisticsQueryHandler : IRequestHandler<GetStudySes
 }
 
 /// <summary>
-/// Handler for getting educational content with study statistics
+/// Handler for getting schedule item with study statistics
 /// </summary>
-public class GetEducationalContentWithStudyStatsQueryHandler : IRequestHandler<GetEducationalContentWithStudyStatsQuery, Result<EducationalContentWithStudyStatsDto>>
+public class GetScheduleItemWithStudyStatsQueryHandler : IRequestHandler<GetScheduleItemWithStudyStatsQuery, Result<ScheduleItemWithStudyStatsDto>>
 {
     private readonly IMediator _mediator;
     private readonly IStudySessionRepository _studySessionRepository;
 
-    public GetEducationalContentWithStudyStatsQueryHandler(IMediator mediator, IStudySessionRepository studySessionRepository)
+    public GetScheduleItemWithStudyStatsQueryHandler(IMediator mediator, IStudySessionRepository studySessionRepository)
     {
         _mediator = mediator;
         _studySessionRepository = studySessionRepository;
     }
 
-    public async Task<Result<EducationalContentWithStudyStatsDto>> Handle(GetEducationalContentWithStudyStatsQuery request, CancellationToken cancellationToken)
+    public async Task<Result<ScheduleItemWithStudyStatsDto>> Handle(GetScheduleItemWithStudyStatsQuery request, CancellationToken cancellationToken)
     {
         try
         {
-            // Get educational content
-            var contentResult = await _mediator.Send(new GetEducationalContentByIdQuery(request.EducationalContentId));
-            if (!contentResult.IsSuccess || contentResult.Value == null)
+            // Get schedule item
+            var scheduleItemResult = await _mediator.Send(new GetScheduleItemByIdQuery(request.ScheduleItemId));
+            if (!scheduleItemResult.IsSuccess || scheduleItemResult.Value == null)
             {
-                return Result<EducationalContentWithStudyStatsDto>.Failure("محتوا یافت نشد");
+                return Result<ScheduleItemWithStudyStatsDto>.Failure("آیتم آموزشی یافت نشد");
             }
 
-            var content = contentResult.Value;
+            var scheduleItem = scheduleItemResult.Value;
 
             // Get study statistics
-            var statisticsResult = await _mediator.Send(new GetStudySessionStatisticsQuery(request.StudentId, request.EducationalContentId));
+            var statisticsResult = await _mediator.Send(new GetStudySessionStatisticsQuery(request.StudentId, request.ScheduleItemId));
             if (!statisticsResult.IsSuccess)
             {
-                return Result<EducationalContentWithStudyStatsDto>.Failure("خطا در دریافت آمار مطالعه");
+                return Result<ScheduleItemWithStudyStatsDto>.Failure(statisticsResult.Error ?? "خطا در دریافت آمار مطالعه");
             }
 
-            var result = new EducationalContentWithStudyStatsDto
+            var statistics = statisticsResult.Value!;
+
+            // Map to DTO
+            var result = new ScheduleItemWithStudyStatsDto
             {
-                Id = content.Id,
-                SubChapterId = content.SubChapterId,
-                Title = content.Title,
-                Description = content.Description,
-                Type = content.Type,
-                TextContent = content.TextContent,
-                FileId = content.FileId,
-                ExternalUrl = content.ExternalUrl,
-                IsActive = content.IsActive,
-                Order = content.Order,
-                CreatedAt = content.CreatedAt,
-                UpdatedAt = content.UpdatedAt,
-                CreatedBy = content.CreatedBy,
-                File = content.File,
-                StudyStatistics = statisticsResult.Value!
+                Id = scheduleItem.Id,
+                TeachingPlanId = scheduleItem.TeachingPlanId,
+                Title = scheduleItem.Title,
+                Description = scheduleItem.Description,
+                ContentJson = scheduleItem.ContentJson,
+                Type = scheduleItem.Type,
+                IsActive = true, // Default value since ScheduleItemDto doesn't have this property
+                Order = 0, // Default value since ScheduleItemDto doesn't have this property
+                CreatedAt = scheduleItem.CreatedAt,
+                UpdatedAt = scheduleItem.UpdatedAt,
+                CreatedBy = "System", // Default value since ScheduleItemDto doesn't have this property
+                StudyStatistics = statistics
             };
 
-            return Result<EducationalContentWithStudyStatsDto>.Success(result);
+            return Result<ScheduleItemWithStudyStatsDto>.Success(result);
         }
         catch (Exception ex)
         {
-            return Result<EducationalContentWithStudyStatsDto>.Failure($"خطا در دریافت محتوا با آمار مطالعه: {ex.Message}");
+            return Result<ScheduleItemWithStudyStatsDto>.Failure($"خطا در دریافت آیتم آموزشی: {ex.Message}");
         }
     }
 }

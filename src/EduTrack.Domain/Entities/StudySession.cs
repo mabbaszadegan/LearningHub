@@ -3,14 +3,14 @@ using EduTrack.Domain.Enums;
 namespace EduTrack.Domain.Entities;
 
 /// <summary>
-/// StudySession entity - represents a student's study session for educational content
-/// Tracks multiple study attempts and time spent on each content item
+/// StudySession entity - represents a student's study session for schedule items
+/// Tracks multiple study attempts and time spent on each schedule item
 /// </summary>
 public class StudySession
 {
     public int Id { get; private set; }
     public string StudentId { get; private set; } = string.Empty;
-    public int EducationalContentId { get; private set; }
+    public int ScheduleItemId { get; private set; }
     public DateTimeOffset StartedAt { get; private set; }
     public DateTimeOffset? EndedAt { get; private set; }
     public int DurationSeconds { get; private set; }
@@ -20,23 +20,23 @@ public class StudySession
 
     // Navigation properties
     public User Student { get; private set; } = null!;
-    public EducationalContent EducationalContent { get; private set; } = null!;
+    public ScheduleItem ScheduleItem { get; private set; } = null!;
 
     // Private constructor for EF Core
     private StudySession() { }
 
-    public static StudySession Create(string studentId, int educationalContentId)
+    public static StudySession Create(string studentId, int scheduleItemId)
     {
         if (string.IsNullOrWhiteSpace(studentId))
             throw new ArgumentException("Student ID cannot be null or empty", nameof(studentId));
         
-        if (educationalContentId <= 0)
-            throw new ArgumentException("EducationalContent ID must be greater than 0", nameof(educationalContentId));
+        if (scheduleItemId <= 0)
+            throw new ArgumentException("ScheduleItem ID must be greater than 0", nameof(scheduleItemId));
 
         return new StudySession
         {
             StudentId = studentId,
-            EducationalContentId = educationalContentId,
+            ScheduleItemId = scheduleItemId,
             StartedAt = DateTimeOffset.UtcNow,
             CreatedAt = DateTimeOffset.UtcNow,
             UpdatedAt = DateTimeOffset.UtcNow,
@@ -45,13 +45,17 @@ public class StudySession
         };
     }
 
-    public void Complete(int durationSeconds)
+    public void Complete()
     {
-        if (durationSeconds < 0)
-            throw new ArgumentException("Duration cannot be negative", nameof(durationSeconds));
-
         EndedAt = DateTimeOffset.UtcNow;
-        DurationSeconds = durationSeconds;
+        
+        // Calculate duration automatically from StartedAt and EndedAt
+        var duration = EndedAt.Value - StartedAt;
+        DurationSeconds = (int)duration.TotalSeconds;
+        
+        // Add some logging for debugging
+        Console.WriteLine($"StudySession Complete - StartedAt: {StartedAt}, EndedAt: {EndedAt}, Duration: {DurationSeconds} seconds");
+        
         IsCompleted = true;
         UpdatedAt = DateTimeOffset.UtcNow;
     }
