@@ -1845,3 +1845,361 @@
         padding: 1rem;
     }
 }
+
+/* Minimal Course Footer Buttons for Modal */
+.course-footer-minimal {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    padding: 0.75rem 1rem;
+    z-index: 1000;
+}
+
+.course-footer-actions-inline {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.course-footer-btn-minimal {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border: none;
+    border-radius: 50%;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    position: relative;
+}
+
+.course-footer-btn-minimal:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.course-footer-btn-minimal:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.course-footer-btn-minimal:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.course-footer-btn-minimal i {
+    font-size: 1rem;
+    line-height: 1;
+}
+
+/* Button Color Variants */
+.btn-study-minimal {
+    background: linear-gradient(135deg, #4CAF50, #45a049);
+    color: white;
+}
+
+.btn-study-minimal:hover {
+    background: linear-gradient(135deg, #45a049, #3d8b40);
+}
+
+.btn-enroll-minimal {
+    background: linear-gradient(135deg, #2196F3, #1976D2);
+    color: white;
+}
+
+.btn-enroll-minimal:hover {
+    background: linear-gradient(135deg, #1976D2, #1565C0);
+}
+
+.btn-unenroll-minimal {
+    background: linear-gradient(135deg, #FF5722, #E64A19);
+    color: white;
+}
+
+.btn-unenroll-minimal:hover {
+    background: linear-gradient(135deg, #E64A19, #D84315);
+}
+
+.btn-close-minimal {
+    background: linear-gradient(135deg, #9E9E9E, #757575);
+    color: white;
+}
+
+.btn-close-minimal:hover {
+    background: linear-gradient(135deg, #757575, #616161);
+}
+
+.btn-secondary-minimal {
+    background: linear-gradient(135deg, #BDBDBD, #9E9E9E);
+    color: white;
+}
+
+.btn-secondary-minimal:hover {
+    background: linear-gradient(135deg, #9E9E9E, #757575);
+}
+
+/* Minimal Course Header for Modal */
+.course-details-modal {
+    padding: 0;
+}
+
+.course-header-minimal {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 12px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.course-header-content-minimal {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.75rem;
+}
+
+.course-title-section {
+    flex: 1;
+}
+
+.course-title-minimal {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin: 0 0 0.5rem 0;
+    line-height: 1.3;
+}
+
+.course-meta-minimal {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.course-teacher-minimal,
+.course-date-minimal {
+    font-size: 0.8rem;
+    color: #6c757d;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.course-teacher-minimal i,
+.course-date-minimal i {
+    font-size: 0.7rem;
+    opacity: 0.7;
+}
+
+.course-badge-minimal {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 500;
+    white-space: nowrap;
+    box-shadow: 0 2px 4px rgba(40, 167, 69, 0.3);
+}
+
+.course-stats-compact {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.stat-compact {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    flex: 1;
+}
+
+.stat-compact i {
+    font-size: 0.9rem;
+    color: #6c757d;
+    opacity: 0.8;
+}
+
+.stat-compact span {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #495057;
+}
+
+/* Minimal Description Section */
+.course-description-section-minimal {
+    background: #fff;
+    border-radius: 8px;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    margin-bottom: 1rem;
+    overflow: hidden;
+}
+
+.course-description-header-minimal {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    background: #f8f9fa;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.course-description-header-minimal:hover {
+    background: #e9ecef;
+}
+
+.course-description-title-minimal {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #495057;
+    margin: 0;
+}
+
+.course-description-toggle-minimal {
+    font-size: 0.8rem;
+    color: #6c757d;
+    transition: transform 0.2s ease;
+}
+
+.course-description-content-minimal {
+    padding: 0;
+}
+
+.course-description-preview-minimal {
+    padding: 1rem;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: #495057;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.course-description-full-minimal {
+    padding: 1rem;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: #495057;
+}
+
+/* Modal-specific footer */
+.course-footer-modal {
+    position: sticky;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    padding: 1rem;
+    margin: 1rem -1rem -1rem -1rem;
+    z-index: 10;
+}
+
+.course-footer-actions-modal {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+}
+
+/* Mobile Responsive */
+@media (max-width: 767px) {
+    /* Minimal Header Mobile */
+    .course-header-minimal {
+        padding: 0.75rem;
+        margin-bottom: 0.75rem;
+    }
+    
+    .course-title-minimal {
+        font-size: 1.1rem;
+        margin-bottom: 0.4rem;
+    }
+    
+    .course-meta-minimal {
+        gap: 0.2rem;
+    }
+    
+    .course-teacher-minimal,
+    .course-date-minimal {
+        font-size: 0.75rem;
+    }
+    
+    .course-badge-minimal {
+        font-size: 0.65rem;
+        padding: 0.2rem 0.4rem;
+    }
+    
+    .course-stats-compact {
+        gap: 0.3rem;
+        padding-top: 0.5rem;
+    }
+    
+    .stat-compact i {
+        font-size: 0.8rem;
+    }
+    
+    .stat-compact span {
+        font-size: 0.75rem;
+    }
+    
+    /* Description Mobile */
+    .course-description-header-minimal {
+        padding: 0.6rem 0.8rem;
+    }
+    
+    .course-description-title-minimal {
+        font-size: 0.85rem;
+    }
+    
+    .course-description-preview-minimal,
+    .course-description-full-minimal {
+        padding: 0.8rem;
+        font-size: 0.8rem;
+    }
+    
+    /* Footer Mobile */
+    .course-footer-minimal {
+        padding: 0.5rem 0.75rem;
+    }
+    
+    .course-footer-actions-inline {
+        gap: 0.5rem;
+    }
+    
+    .course-footer-btn-minimal {
+        width: 40px;
+        height: 40px;
+        font-size: 0.9rem;
+    }
+    
+    .course-footer-btn-minimal i {
+        font-size: 0.9rem;
+    }
+    
+    .course-footer-modal {
+        padding: 0.75rem;
+        margin: 0.75rem -0.75rem -0.75rem -0.75rem;
+    }
+    
+    .course-footer-actions-modal {
+        gap: 0.75rem;
+    }
+}

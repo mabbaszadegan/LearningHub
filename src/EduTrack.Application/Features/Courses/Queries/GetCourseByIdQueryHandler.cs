@@ -68,6 +68,12 @@ public class GetCourseByIdQueryHandler : IRequestHandler<GetCourseByIdQuery, Res
                 .ToListAsync(cancellationToken);
         }
 
+        // Step 6: Get student count (enrollments)
+        var studentCount = await _courseRepository.GetAll()
+            .Where(c => c.Id == request.Id)
+            .SelectMany(c => c.Enrollments)
+            .CountAsync(e => e.IsActive, cancellationToken);
+
         // Step 8: Build DTO efficiently
         var courseDto = new CourseDto
         {
@@ -85,6 +91,7 @@ public class GetCourseByIdQueryHandler : IRequestHandler<GetCourseByIdQuery, Res
             ChapterCount = chapters.Count,
             ModuleCount = chapters.Sum(ch => ch.SubChapters.Count),
             LessonCount = teachingPlans.Sum(tp => tp.ScheduleItems.Count),
+            StudentCount = studentCount,
             Chapters = chapters.Select(ch => new ChapterDto
             {
                 Id = ch.Id,

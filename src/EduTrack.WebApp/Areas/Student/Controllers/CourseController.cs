@@ -69,10 +69,16 @@ public class CourseController : Controller
             return RedirectToAction("Login", "Account", new { area = "Public" });
         }
 
-        var result = await _mediator.Send(new GetCoursesQuery(pageNumber, pageSize, true));
+        var result = await _mediator.Send(new GetAvailableCoursesForEnrollmentQuery(currentUser.Id, pageNumber, pageSize));
         
-        ViewBag.CurrentUserId = currentUser.Id;
-        return View(result);
+        if (result.IsSuccess)
+        {
+            ViewBag.CurrentUserId = currentUser.Id;
+            return View(result.Value);
+        }
+
+        TempData["Error"] = result.Error;
+        return View(new PaginatedList<CourseDto>(new List<CourseDto>(), 0, pageNumber, pageSize));
     }
 
     /// <summary>
