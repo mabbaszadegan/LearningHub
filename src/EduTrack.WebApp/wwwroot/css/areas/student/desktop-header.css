@@ -1,0 +1,461 @@
+/* Modern Desktop Header for Student Panel */
+
+/* Desktop Header - Only visible on desktop */
+@media (min-width: 768px) {
+    .desktop-header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 70px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        z-index: 1000;
+        box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+        display: flex;
+        align-items: center;
+        padding: 0;
+        margin: 0;
+    }
+
+    .desktop-header-content {
+        width: 100%;
+        max-width: 1400px;
+        margin: 0 auto;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 2rem;
+        height: 100%;
+    }
+
+    /* Logo Section */
+    .desktop-header-logo {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        text-decoration: none;
+        color: white;
+        transition: all 0.3s ease;
+    }
+
+    .desktop-header-logo:hover {
+        color: white;
+        text-decoration: none;
+        transform: scale(1.05);
+    }
+
+    .desktop-logo-icon {
+        width: 45px;
+        height: 45px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .desktop-logo-text h4 {
+        margin: 0;
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: white;
+    }
+
+    .desktop-logo-text span {
+        font-size: 0.85rem;
+        opacity: 0.9;
+        color: white;
+    }
+
+    /* Navigation Menu */
+    .desktop-nav-menu {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex: 1;
+        justify-content: center;
+    }
+
+    .desktop-nav-item {
+        position: relative;
+    }
+
+    .desktop-nav-link {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.25rem;
+        color: rgba(255, 255, 255, 0.9);
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: 500;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .desktop-nav-link::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.1);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        border-radius: 8px;
+    }
+
+    .desktop-nav-link:hover {
+        color: white;
+        text-decoration: none;
+        transform: translateY(-1px);
+    }
+
+    .desktop-nav-link:hover::before {
+        opacity: 1;
+    }
+
+    .desktop-nav-link.active {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        font-weight: 600;
+    }
+
+    .desktop-nav-link.active::before {
+        opacity: 1;
+    }
+
+    .desktop-nav-icon {
+        font-size: 1rem;
+        width: 20px;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .desktop-nav-text {
+        font-size: 0.9rem;
+        font-weight: inherit;
+    }
+
+    /* Dropdown Menu */
+    .desktop-nav-dropdown {
+        position: relative;
+    }
+
+    .desktop-nav-dropdown-menu {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        min-width: 200px;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(-10px);
+        transition: all 0.3s ease;
+        z-index: 1001;
+        padding: 0.5rem 0;
+        margin-top: 0.5rem;
+    }
+
+    .desktop-nav-dropdown:hover .desktop-nav-dropdown-menu {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+    }
+
+    .desktop-nav-dropdown-item {
+        display: block;
+        padding: 0.75rem 1.25rem;
+        color: #495057;
+        text-decoration: none;
+        font-size: 0.9rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        border-radius: 0;
+    }
+
+    .desktop-nav-dropdown-item:hover {
+        background: #f8f9fa;
+        color: #667eea;
+        text-decoration: none;
+    }
+
+    .desktop-nav-dropdown-item i {
+        width: 20px;
+        margin-left: 0.5rem;
+        color: #6c757d;
+    }
+
+    .desktop-nav-dropdown-item:hover i {
+        color: #667eea;
+    }
+
+    /* Header Actions */
+    .desktop-header-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .desktop-header-btn {
+        width: 40px;
+        height: 40px;
+        border: none;
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .desktop-header-btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: scale(1.05);
+    }
+
+    .desktop-header-btn i {
+        font-size: 1rem;
+    }
+
+    .desktop-notification-badge {
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        background: #ff4757;
+        color: white;
+        border-radius: 50%;
+        width: 18px;
+        height: 18px;
+        font-size: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        border: 2px solid white;
+    }
+
+    /* User Profile Dropdown */
+    .desktop-user-profile {
+        position: relative;
+    }
+
+    .desktop-user-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+    .desktop-user-avatar:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: scale(1.05);
+    }
+
+    .desktop-user-dropdown {
+        position: absolute;
+        top: 100%;
+        right: 0;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        min-width: 220px;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(-10px);
+        transition: all 0.3s ease;
+        z-index: 1001;
+        padding: 0.5rem 0;
+        margin-top: 0.5rem;
+    }
+
+    .desktop-user-profile:hover .desktop-user-dropdown {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+    }
+
+    .desktop-user-info {
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid #e9ecef;
+        margin-bottom: 0.5rem;
+    }
+
+    .desktop-user-name {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: #2c3e50;
+        margin: 0 0 0.25rem 0;
+    }
+
+    .desktop-user-role {
+        font-size: 0.8rem;
+        color: #6c757d;
+        margin: 0;
+    }
+
+    .desktop-user-menu-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem 1.25rem;
+        color: #495057;
+        text-decoration: none;
+        font-size: 0.9rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+
+    .desktop-user-menu-item:hover {
+        background: #f8f9fa;
+        color: #667eea;
+        text-decoration: none;
+    }
+
+    .desktop-user-menu-item i {
+        width: 20px;
+        color: #6c757d;
+    }
+
+    .desktop-user-menu-item:hover i {
+        color: #667eea;
+    }
+
+    .desktop-user-menu-divider {
+        height: 1px;
+        background: #e9ecef;
+        margin: 0.5rem 0;
+    }
+
+
+    /* Responsive adjustments for larger screens */
+    @media (min-width: 1200px) {
+        .desktop-header-content {
+            padding: 0 3rem;
+        }
+
+        .desktop-nav-link {
+            padding: 0.75rem 1.5rem;
+        }
+    }
+
+    @media (min-width: 1400px) {
+        .desktop-header-content {
+            padding: 0 4rem;
+        }
+    }
+}
+
+/* Hide desktop header on mobile */
+@media (max-width: 767px) {
+    .desktop-header {
+        display: none !important;
+    }
+}
+
+/* Adjust main content for desktop header */
+@media (min-width: 768px) {
+    .main-content {
+        top: 70px !important;
+    }
+
+    .fixed-header {
+        display: none !important;
+    }
+
+    .fixed-footer {
+        display: none !important;
+    }
+}
+
+/* Animation for smooth transitions */
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.desktop-nav-dropdown-menu,
+.desktop-user-dropdown {
+    animation: slideDown 0.3s ease;
+}
+
+/* Hover effects for better UX */
+.desktop-nav-item:hover .desktop-nav-link {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.desktop-nav-item:hover .desktop-nav-link::before {
+    opacity: 1;
+}
+
+/* Active state indicators */
+.desktop-nav-link.active::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 20px;
+    height: 3px;
+    background: white;
+    border-radius: 2px;
+}
+
+/* Loading states */
+.desktop-header-loading {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.desktop-header-loading::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.1);
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 0.5;
+    }
+    50% {
+        opacity: 0.8;
+    }
+}

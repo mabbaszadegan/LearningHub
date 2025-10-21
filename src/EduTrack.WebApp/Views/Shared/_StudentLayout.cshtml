@@ -17,6 +17,7 @@
     <link rel="stylesheet" href="~/lib/toastr/toastr.min.css" />
     <link rel="stylesheet" href="~/css/areas/student/mobile-app.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/areas/student/student.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/areas/student/desktop-header.css" asp-append-version="true" />
     <link rel="manifest" href="~/manifest.webmanifest" />
     <meta name="theme-color" content="#6366f1" />
     <meta name="description" content="EduTrack - سیستم مدیریت یادگیری آنلاین" />
@@ -26,6 +27,101 @@
     <div class="offline-indicator" id="offlineIndicator">
         <i class="fas fa-wifi"></i> شما در حالت آفلاین هستید
     </div>
+
+    <!-- Desktop Header -->
+    <header class="desktop-header">
+        <div class="desktop-header-content">
+            <!-- Logo Section -->
+            <a href="/Student/Home" class="desktop-header-logo">
+                <div class="desktop-logo-icon">
+                    <i class="fas fa-graduation-cap"></i>
+                </div>
+                <div class="desktop-logo-text">
+                    <h4>EduTrack</h4>
+                    <span>پنل دانش‌آموز</span>
+                </div>
+            </a>
+
+            <!-- Navigation Menu -->
+            <nav class="desktop-nav-menu">
+                <div class="desktop-nav-item">
+                    <a href="/Student/Course/Catalog" class="desktop-nav-link" data-page="courses">
+                        <div class="desktop-nav-icon">
+                            <i class="fas fa-graduation-cap"></i>
+                        </div>
+                        <span class="desktop-nav-text">دوره‌ها</span>
+                    </a>
+                </div>
+
+                <div class="desktop-nav-item">
+                    <a href="/Student/Course" class="desktop-nav-link" data-page="my-courses">
+                        <div class="desktop-nav-icon">
+                            <i class="fas fa-book-open"></i>
+                        </div>
+                        <span class="desktop-nav-text">دوره‌های من</span>
+                    </a>
+                </div>
+
+                <div class="desktop-nav-item">
+                    <a href="/Progress" class="desktop-nav-link" data-page="progress">
+                        <div class="desktop-nav-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <span class="desktop-nav-text">پیشرفت</span>
+                    </a>
+                </div>
+            </nav>
+
+            <!-- Header Actions -->
+            <div class="desktop-header-actions">
+                <!-- Notifications -->
+                <button class="desktop-header-btn" data-action="notifications" title="اعلانات">
+                    <i class="fas fa-bell"></i>
+                    <span class="desktop-notification-badge">3</span>
+                </button>
+
+                <!-- Messages -->
+                <button class="desktop-header-btn" data-action="messages" title="پیام‌ها">
+                    <i class="fas fa-envelope"></i>
+                </button>
+
+                <!-- Help -->
+                <button class="desktop-header-btn" data-action="help" title="راهنما">
+                    <i class="fas fa-question-circle"></i>
+                </button>
+
+                <!-- User Profile -->
+                <div class="desktop-user-profile">
+                    <div class="desktop-user-avatar">
+                        @(User.Identity?.Name?.Split(' ').FirstOrDefault()?.FirstOrDefault() ?? 'U')
+                    </div>
+                    <div class="desktop-user-dropdown">
+                        <div class="desktop-user-info">
+                            <div class="desktop-user-name">@(User.Identity?.Name ?? "کاربر")</div>
+                            <div class="desktop-user-role">دانش‌آموز</div>
+                        </div>
+                        <a href="/Profile" class="desktop-user-menu-item">
+                            <i class="fas fa-user"></i>
+                            پروفایل من
+                        </a>
+                        <a href="/Settings" class="desktop-user-menu-item">
+                            <i class="fas fa-cog"></i>
+                            تنظیمات
+                        </a>
+                        <div class="desktop-user-menu-divider"></div>
+                        <a href="#" class="desktop-user-menu-item" data-action="help">
+                            <i class="fas fa-question-circle"></i>
+                            راهنما
+                        </a>
+                        <a href="#" class="desktop-user-menu-item" data-action="logout">
+                            <i class="fas fa-sign-out-alt"></i>
+                            خروج
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
 
     <!-- Fixed Header -->
     <header class="fixed-header">
@@ -102,6 +198,7 @@
     <script src="~/js/site.js" asp-append-version="true"></script>
     <script src="~/js/pwa.js" asp-append-version="true"></script>
     <script src="~/js/areas/student/bottom-navigation.js" asp-append-version="true"></script>
+    <script src="~/js/areas/student/desktop-header.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
