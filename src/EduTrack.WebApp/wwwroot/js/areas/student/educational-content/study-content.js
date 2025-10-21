@@ -53,39 +53,11 @@ let studySession = {
         // Clear loading state
         container.innerHTML = '';
         
-        // Create header
-        const header = this.createReminderHeader(content);
-        container.appendChild(header);
-        
         // Create body
         const body = this.createReminderBody(content);
         container.appendChild(body);
         
         console.log('Reminder content rendered successfully');
-    },
-    
-    createReminderHeader(content) {
-        const header = document.createElement('div');
-        header.className = 'reminder-header';
-        
-        const icon = document.createElement('div');
-        icon.className = 'reminder-icon';
-        icon.innerHTML = '<i class="fas fa-bell"></i>';
-        
-        const title = document.createElement('div');
-        title.className = 'reminder-title';
-        title.textContent = content.message || content.Message || 'یادآوری';
-        
-        const priority = document.createElement('div');
-        const priorityValue = content.priority || content.Priority || 'normal';
-        priority.className = `reminder-priority ${priorityValue}`;
-        priority.textContent = this.getPriorityText(priorityValue);
-        
-        header.appendChild(icon);
-        header.appendChild(title);
-        header.appendChild(priority);
-        
-        return header;
     },
     
     createReminderBody(content) {
