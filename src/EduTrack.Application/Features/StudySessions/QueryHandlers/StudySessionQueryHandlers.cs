@@ -245,6 +245,11 @@ public class GetLastStudySessionsQueryHandler : IRequestHandler<GetLastStudySess
 
                 var teachingPlan = teachingPlanResult.Value;
 
+                // Get course information
+                var courseResult = await _mediator.Send(new EduTrack.Application.Features.Courses.Queries.GetCourseByIdQuery(teachingPlan.CourseId));
+                var courseTitle = courseResult.IsSuccess && courseResult.Value != null ? courseResult.Value.Title : "دوره آموزشی";
+                var courseThumbnail = courseResult.IsSuccess && courseResult.Value != null ? courseResult.Value.Thumbnail : null;
+
                 var studyHistoryDto = new StudySessionHistoryDto
                 {
                     Id = session.Id,
@@ -253,8 +258,8 @@ public class GetLastStudySessionsQueryHandler : IRequestHandler<GetLastStudySess
                     ScheduleItemTitle = scheduleItem.Title,
                     ScheduleItemDescription = scheduleItem.Description,
                     CourseId = teachingPlan.CourseId,
-                    CourseTitle = "دوره آموزشی", // This would need to be fetched from course service
-                    CourseThumbnail = null, // This would need to be fetched from course service
+                    CourseTitle = courseTitle,
+                    CourseThumbnail = courseThumbnail,
                     StartedAt = session.StartedAt,
                     EndedAt = session.EndedAt,
                     DurationSeconds = session.DurationSeconds,
@@ -271,6 +276,85 @@ public class GetLastStudySessionsQueryHandler : IRequestHandler<GetLastStudySess
         catch (Exception ex)
         {
             return Result<List<StudySessionHistoryDto>>.Failure($"خطا در دریافت تاریخچه مطالعه: {ex.Message}");
+        }
+    }
+}
+
+/// <summary>
+/// Handler for getting all study sessions for a student (for statistics)
+/// </summary>
+public class GetAllStudySessionsQueryHandler : IRequestHandler<GetAllStudySessionsQuery, Result<List<StudySessionHistoryDto>>>
+{
+    private readonly IStudySessionRepository _studySessionRepository;
+    private readonly IMediator _mediator;
+
+    public GetAllStudySessionsQueryHandler(IStudySessionRepository studySessionRepository, IMediator mediator)
+    {
+        _studySessionRepository = studySessionRepository;
+        _mediator = mediator;
+    }
+
+    public async Task<Result<List<StudySessionHistoryDto>>> Handle(GetAllStudySessionsQuery request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            // Get all study sessions for the student
+            var allSessions = await _studySessionRepository.GetByStudentIdAsync(request.StudentId);
+            
+            if (!allSessions.Any())
+            {
+                return Result<List<StudySessionHistoryDto>>.Success(new List<StudySessionHistoryDto>());
+            }
+
+            var studyHistoryDtos = new List<StudySessionHistoryDto>();
+
+            foreach (var session in allSessions)
+            {
+                // Get schedule item to find course
+                var scheduleItemResult = await _mediator.Send(new EduTrack.Application.Features.ScheduleItems.Queries.GetScheduleItemByIdQuery(session.ScheduleItemId));
+                if (!scheduleItemResult.IsSuccess || scheduleItemResult.Value == null)
+                    continue;
+
+                var scheduleItem = scheduleItemResult.Value;
+
+                // Get teaching plan to get course ID
+                var teachingPlanResult = await _mediator.Send(new GetTeachingPlanByIdQuery(scheduleItem.TeachingPlanId));
+                if (!teachingPlanResult.IsSuccess || teachingPlanResult.Value == null)
+                    continue;
+
+                var teachingPlan = teachingPlanResult.Value;
+
+                // Get course information
+                var courseResult = await _mediator.Send(new EduTrack.Application.Features.Courses.Queries.GetCourseByIdQuery(teachingPlan.CourseId));
+                var courseTitle = courseResult.IsSuccess && courseResult.Value != null ? courseResult.Value.Title : "دوره آموزشی";
+                var courseThumbnail = courseResult.IsSuccess && courseResult.Value != null ? courseResult.Value.Thumbnail : null;
+
+                var studyHistoryDto = new StudySessionHistoryDto
+                {
+                    Id = session.Id,
+                    StudentId = session.StudentId,
+                    ScheduleItemId = session.ScheduleItemId,
+                    ScheduleItemTitle = scheduleItem.Title,
+                    ScheduleItemDescription = scheduleItem.Description,
+                    CourseId = teachingPlan.CourseId,
+                    CourseTitle = courseTitle,
+                    CourseThumbnail = courseThumbnail,
+                    StartedAt = session.StartedAt,
+                    EndedAt = session.EndedAt,
+                    DurationSeconds = session.DurationSeconds,
+                    IsCompleted = session.IsCompleted,
+                    CreatedAt = session.CreatedAt,
+                    UpdatedAt = session.UpdatedAt
+                };
+
+                studyHistoryDtos.Add(studyHistoryDto);
+            }
+
+            return Result<List<StudySessionHistoryDto>>.Success(studyHistoryDtos);
+        }
+        catch (Exception ex)
+        {
+            return Result<List<StudySessionHistoryDto>>.Failure($"خطا در دریافت تمام جلسات مطالعه: {ex.Message}");
         }
     }
 }
@@ -339,11 +423,16 @@ public class GetLastStudyCoursesQueryHandler : IRequestHandler<GetLastStudyCours
                 var totalStudyTime = sessions.Sum(s => s.DurationSeconds);
                 var sessionsCount = sessions.Count;
 
+                // Get course information
+                var courseResult = await _mediator.Send(new EduTrack.Application.Features.Courses.Queries.GetCourseByIdQuery(courseId));
+                var courseTitle = courseResult.IsSuccess && courseResult.Value != null ? courseResult.Value.Title : "دوره آموزشی";
+                var courseThumbnail = courseResult.IsSuccess && courseResult.Value != null ? courseResult.Value.Thumbnail : null;
+
                 var courseHistoryDto = new CourseStudyHistoryDto
                 {
                     CourseId = courseId,
-                    CourseTitle = "دوره آموزشی", // This would need to be fetched from course service
-                    CourseThumbnail = null, // This would need to be fetched from course service
+                    CourseTitle = courseTitle,
+                    CourseThumbnail = courseThumbnail,
                     LastStudyDate = lastStudyDate,
                     TotalStudyTimeSeconds = totalStudyTime,
                     StudySessionsCount = sessionsCount,

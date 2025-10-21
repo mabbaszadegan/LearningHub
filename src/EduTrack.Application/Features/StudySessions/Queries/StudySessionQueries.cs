@@ -78,6 +78,19 @@ public class GetLastStudySessionsQuery : IRequest<Result<List<StudySessionHistor
 }
 
 /// <summary>
+/// Query to get all study sessions for a student (for statistics)
+/// </summary>
+public class GetAllStudySessionsQuery : IRequest<Result<List<StudySessionHistoryDto>>>
+{
+    public string StudentId { get; set; } = string.Empty;
+
+    public GetAllStudySessionsQuery(string studentId)
+    {
+        StudentId = studentId;
+    }
+}
+
+/// <summary>
 /// Query to get the last courses with study activity for a student
 /// </summary>
 public class GetLastStudyCoursesQuery : IRequest<Result<List<CourseStudyHistoryDto>>>

@@ -21,7 +21,7 @@ public class HomeController : Controller
     private readonly IMediator _mediator;
 
     public HomeController(
-        ILogger<HomeController> logger, 
+        ILogger<HomeController> logger,
         UserManager<User> userManager,
         IMediator mediator)
     {
@@ -42,6 +42,7 @@ public class HomeController : Controller
         var dashboardData = new StudentDashboardViewModel
         {
             StudentName = currentUser.FullName,
+            StudentFirstName = currentUser.FirstName,
             TotalClasses = await GetStudentClassesCount(currentUser.Id),
             CompletedLessons = await GetCompletedLessonsCount(currentUser.Id),
             TotalExams = await GetStudentExamsCount(currentUser.Id),
@@ -50,7 +51,8 @@ public class HomeController : Controller
             UpcomingExams = await GetStudentUpcomingExams(currentUser.Id),
             ProgressStats = await GetStudentProgressStats(currentUser.Id),
             LastStudySessions = await GetLastStudySessions(currentUser.Id),
-            LastStudyCourses = await GetLastStudyCourses(currentUser.Id)
+            LastStudyCourses = await GetLastStudyCourses(currentUser.Id),
+            StudyStatistics = await GetStudyStatistics(currentUser.Id)
         };
 
         return View(dashboardData);
@@ -66,7 +68,7 @@ public class HomeController : Controller
 
         // Get detailed progress data
         var progressData = await _mediator.Send(new GetProgressByStudentQuery(currentUser.Id, 1, 50));
-        
+
         return View(progressData);
     }
 
@@ -182,5 +184,100 @@ public class HomeController : Controller
             _logger.LogError(ex, "Error getting last study courses");
             return new List<EduTrack.Application.Common.Models.StudySessions.CourseStudyHistoryDto>();
         }
+    }
+
+    private async Task<StudyStatisticsDto> GetStudyStatistics(string studentId)
+    {
+        try
+        {
+            _logger.LogInformation("Getting study statistics for student: {StudentId}", studentId);
+            
+            var now = DateTimeOffset.Now;
+            var today = now.Date;
+            var weekAgo = now.AddDays(-7);
+            var monthAgo = now.AddDays(-30);
+
+            // Get all study sessions for the student
+            var allSessionsResult = await _mediator.Send(new GetAllStudySessionsQuery(studentId));
+            if (!allSessionsResult.IsSuccess || allSessionsResult.Value == null)
+            {
+                _logger.LogWarning("Failed to get study sessions for student: {StudentId}, Error: {Error}", 
+                    studentId, allSessionsResult.Error);
+                
+                // Fallback to old method
+                var fallbackResult = await _mediator.Send(new GetLastStudySessionsQuery(studentId, 1000));
+                if (!fallbackResult.IsSuccess || fallbackResult.Value == null)
+                {
+                    _logger.LogWarning("Fallback also failed for student: {StudentId}", studentId);
+                    return new StudyStatisticsDto();
+                }
+                allSessionsResult = fallbackResult;
+            }
+
+            var allSessions = allSessionsResult.Value;
+            _logger.LogInformation("Found {Count} study sessions for student: {StudentId}", 
+                allSessions.Count, studentId);
+
+            // Calculate study time for different periods
+            var todayStudyMinutes = allSessions
+                .Where(s => s.StartedAt.Date == today)
+                .Sum(s => s.DurationSeconds) / 60;
+
+            var lastWeekStudyMinutes = allSessions
+                .Where(s => s.StartedAt >= weekAgo)
+                .Sum(s => s.DurationSeconds) / 60;
+
+            var lastMonthStudyMinutes = allSessions
+                .Where(s => s.StartedAt >= monthAgo)
+                .Sum(s => s.DurationSeconds) / 60;
+
+            var totalStudyMinutes = allSessions
+                .Sum(s => s.DurationSeconds) / 60;
+
+            _logger.LogInformation("Study statistics calculated - Today: {Today}min, Week: {Week}min, Month: {Month}min, Total: {Total}min", 
+                todayStudyMinutes, lastWeekStudyMinutes, lastMonthStudyMinutes, totalStudyMinutes);
+
+            // Calculate averages
+            var studyDays = allSessions
+                .Select(s => s.StartedAt.Date)
+                .Distinct()
+                .Count();
+
+            var studyWeeks = allSessions
+                .Select(s => GetWeekOfYear(s.StartedAt))
+                .Distinct()
+                .Count();
+
+            var studyMonths = allSessions
+                .Select(s => new { s.StartedAt.Year, s.StartedAt.Month })
+                .Distinct()
+                .Count();
+
+            var averageDailyStudyMinutes = studyDays > 0 ? (double)totalStudyMinutes / studyDays : 0;
+            var averageWeeklyStudyMinutes = studyWeeks > 0 ? (double)totalStudyMinutes / studyWeeks : 0;
+            var averageMonthlyStudyMinutes = studyMonths > 0 ? (double)totalStudyMinutes / studyMonths : 0;
+
+            return new StudyStatisticsDto
+            {
+                TodayStudyMinutes = (int)todayStudyMinutes,
+                LastWeekStudyMinutes = (int)lastWeekStudyMinutes,
+                LastMonthStudyMinutes = (int)lastMonthStudyMinutes,
+                TotalStudyMinutes = (int)totalStudyMinutes,
+                AverageDailyStudyMinutes = averageDailyStudyMinutes,
+                AverageWeeklyStudyMinutes = averageWeeklyStudyMinutes,
+                AverageMonthlyStudyMinutes = averageMonthlyStudyMinutes
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting study statistics for student: {StudentId}", studentId);
+            return new StudyStatisticsDto();
+        }
+    }
+
+    private static int GetWeekOfYear(DateTimeOffset date)
+    {
+        var calendar = System.Globalization.CultureInfo.CurrentCulture.Calendar;
+        return calendar.GetWeekOfYear(date.DateTime, System.Globalization.CalendarWeekRule.FirstDay, DayOfWeek.Saturday);
     }
 }

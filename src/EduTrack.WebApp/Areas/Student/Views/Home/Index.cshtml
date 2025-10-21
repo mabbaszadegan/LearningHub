@@ -5,7 +5,7 @@
 
 @section Styles {
     <link rel="stylesheet" href="~/css/areas/student/buttons.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/dashboard.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/dashboard.css?v=5" asp-append-version="true" />
 }
 
 <div class="content-container">
@@ -13,26 +13,93 @@
     <div class="card mb-4">
         <div class="card-header">
             <i class="fas fa-home me-2"></i>
-            خوش آمدید، @Model.StudentName!
+            خوش اومدی @Model.StudentFirstName!
         </div>
         <div class="card-body">
-            <p class="mb-3">آماده یادگیری و کسب دانش جدید هستید؟</p>
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <div class="stat-item">
-                        <i class="fas fa-book-open text-primary"></i>
-                        <div>
-                            <div class="stat-number">@Model.CompletedLessons</div>
-                            <div class="stat-label">درس تکمیل شده</div>
+            <p class="mb-3">میدونی چقدر درس خوندی تا امروز؟</p>
+            
+            <!-- Study Statistics -->
+            <div class="study-stats-container">
+                <div class="row g-3">
+                    <div class="col-md-3 col-sm-6">
+                        <div class="study-stat-item">
+                            <div class="study-stat-icon">
+                                <i class="fas fa-calendar-day"></i>
+                            </div>
+                            <div class="study-stat-content">
+                                <div class="study-stat-value">@Model.StudyStatistics.TodayStudyTime</div>
+                                <div class="study-stat-label">امروز</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6">
+                        <div class="study-stat-item">
+                            <div class="study-stat-icon">
+                                <i class="fas fa-calendar-week"></i>
+                            </div>
+                            <div class="study-stat-content">
+                                <div class="study-stat-value">@Model.StudyStatistics.LastWeekStudyTime</div>
+                                <div class="study-stat-label">هفته گذشته</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6">
+                        <div class="study-stat-item">
+                            <div class="study-stat-icon">
+                                <i class="fas fa-calendar-alt"></i>
+                            </div>
+                            <div class="study-stat-content">
+                                <div class="study-stat-value">@Model.StudyStatistics.LastMonthStudyTime</div>
+                                <div class="study-stat-label">ماه گذشته</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6">
+                        <div class="study-stat-item">
+                            <div class="study-stat-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="study-stat-content">
+                                <div class="study-stat-value">@Model.StudyStatistics.TotalStudyTime</div>
+                                <div class="study-stat-label">در کل</div>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-6 mb-3">
-                    <div class="stat-item">
-                        <i class="fas fa-graduation-cap text-success"></i>
-                        <div>
-                            <div class="stat-number">@Model.TotalClasses</div>
-                            <div class="stat-label">کل کلاس‌ها</div>
+                
+                <!-- Average Statistics -->
+                <div class="row g-3 mt-2">
+                    <div class="col-md-4">
+                        <div class="study-stat-item average">
+                            <div class="study-stat-icon">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <div class="study-stat-content">
+                                <div class="study-stat-value">@Model.StudyStatistics.AverageDailyStudyTime</div>
+                                <div class="study-stat-label">میانگین روزانه</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="study-stat-item average">
+                            <div class="study-stat-icon">
+                                <i class="fas fa-chart-bar"></i>
+                            </div>
+                            <div class="study-stat-content">
+                                <div class="study-stat-value">@Model.StudyStatistics.AverageWeeklyStudyTime</div>
+                                <div class="study-stat-label">میانگین هفتگی</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="study-stat-item average">
+                            <div class="study-stat-icon">
+                                <i class="fas fa-chart-area"></i>
+                            </div>
+                            <div class="study-stat-content">
+                                <div class="study-stat-value">@Model.StudyStatistics.AverageMonthlyStudyTime</div>
+                                <div class="study-stat-label">میانگین ماهانه</div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -72,6 +139,12 @@
                                         <div class="study-item">
                                             <div class="study-content">
                                                 <div class="study-title">@session.ScheduleItemTitle</div>
+                                                <div class="study-course">
+                                                    <small class="text-muted">
+                                                        <i class="fas fa-graduation-cap me-1"></i>
+                                                        @session.CourseTitle
+                                                    </small>
+                                                </div>
                                                 <div class="study-meta">
                                                     <span class="study-time">@session.RelativeTime</span>
                                                     <span class="study-duration">@session.FormattedDuration</span>
@@ -113,9 +186,9 @@
                                                 </div>
                                             </div>
                                             <div class="study-action">
-                                                <a href="@Url.Action("Index", "Course")" 
-                                                   class="btn-continue-mini" title="مشاهده دوره">
-                                                    <i class="fas fa-external-link-alt"></i>
+                                                <a href="@Url.Action("Study", "Course", new { id = course.CourseId })" 
+                                                   class="btn-continue-mini" title="مشاهده آیتم‌های دوره">
+                                                    <i class="fas fa-list"></i>
                                                 </a>
                                             </div>
                                         </div>
