@@ -1,6 +1,7 @@
 using EduTrack.Application.Features.StudySessions.Commands;
 using EduTrack.Application.Features.StudySessions.Queries;
-using EduTrack.Application.Features.EducationalContent.Queries;
+using EduTrack.Application.Features.ScheduleItems.Queries;
+using EduTrack.Application.Features.TeachingPlan.Queries;
 using EduTrack.Application.Common.Models.StudySessions;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -40,13 +41,44 @@ public class EducationalContentController : Controller
             return RedirectToAction("Login", "Account", new { area = "Public" });
         }
 
-        // Get educational content with study statistics
-        var contentResult = await _mediator.Send(new GetScheduleItemWithStudyStatsQuery(id, currentUser.Id));
-        if (!contentResult.IsSuccess || contentResult.Value == null)
+        // Get schedule item details
+        var scheduleItemResult = await _mediator.Send(new EduTrack.Application.Features.ScheduleItems.Queries.GetScheduleItemByIdQuery(id));
+        if (!scheduleItemResult.IsSuccess || scheduleItemResult.Value == null)
         {
             TempData["Error"] = "محتوا یافت نشد";
             return RedirectToAction("Index", "Home");
         }
+
+        var scheduleItem = scheduleItemResult.Value;
+
+        // Get teaching plan to get course ID
+        var teachingPlanResult = await _mediator.Send(new GetTeachingPlanByIdQuery(scheduleItem.TeachingPlanId));
+        if (!teachingPlanResult.IsSuccess || teachingPlanResult.Value == null)
+        {
+            TempData["Error"] = "طرح تدریس یافت نشد";
+            return RedirectToAction("Index", "Home");
+        }
+
+        var teachingPlan = teachingPlanResult.Value;
+
+        // Get study statistics
+        var statisticsResult = await _mediator.Send(new GetStudySessionStatisticsQuery(currentUser.Id, id));
+        var statistics = statisticsResult.IsSuccess ? statisticsResult.Value : new StudySessionStatisticsDto();
+
+        // Create a combined object for the view
+        var contentWithStats = new
+        {
+            Id = scheduleItem.Id,
+            TeachingPlanId = scheduleItem.TeachingPlanId,
+            CourseId = teachingPlan.CourseId,
+            Title = scheduleItem.Title,
+            Description = scheduleItem.Description,
+            ContentJson = scheduleItem.ContentJson,
+            Type = scheduleItem.Type,
+            CreatedAt = scheduleItem.CreatedAt,
+            UpdatedAt = scheduleItem.UpdatedAt,
+            StudyStatistics = statistics
+        };
 
         // Check if there's an active study session
         var activeSessionResult = await _mediator.Send(new GetActiveStudySessionQuery(currentUser.Id, id));
@@ -55,7 +87,7 @@ public class EducationalContentController : Controller
         ViewBag.ActiveSession = activeSession;
         ViewBag.CurrentUserId = currentUser.Id;
 
-        return View(contentResult.Value);
+        return View(contentWithStats);
     }
 
     /// <summary>
@@ -80,10 +112,10 @@ public class EducationalContentController : Controller
     }
 
     /// <summary>
-    /// Complete a study session
+    /// Create and complete a study session in one operation
     /// </summary>
     [HttpPost]
-    public async Task<IActionResult> CompleteStudySession(int sessionId)
+    public async Task<IActionResult> CreateAndCompleteStudySession([FromBody] CreateAndCompleteStudySessionRequest request)
     {
         var currentUser = await _userManager.GetUserAsync(User);
         if (currentUser == null)
@@ -91,15 +123,40 @@ public class EducationalContentController : Controller
             return Json(new { success = false, error = "کاربر یافت نشد" });
         }
 
-        var result = await _mediator.Send(new CompleteStudySessionCommand(sessionId));
+        var result = await _mediator.Send(new CreateAndCompleteStudySessionCommand(
+            currentUser.Id, 
+            request.ScheduleItemId, 
+            request.StartedAt, 
+            request.EndedAt));
+        
         if (!result.IsSuccess)
         {
             return Json(new { success = false, error = result.Error });
         }
 
-        return Json(new { success = true, message = "زمان مطالعه با موفقیت ثبت شد" });
+        return Json(new { success = true, sessionId = result.Value!.Id });
     }
 
+    /// <summary>
+    /// Delete a study session (for exit without saving)
+    /// </summary>
+    [HttpPost]
+    public async Task<IActionResult> DeleteStudySession(int sessionId)
+    {
+        var currentUser = await _userManager.GetUserAsync(User);
+        if (currentUser == null)
+        {
+            return Json(new { success = false, error = "کاربر یافت نشد" });
+        }
+
+        var result = await _mediator.Send(new DeleteStudySessionCommand(sessionId));
+        if (!result.IsSuccess)
+        {
+            return Json(new { success = false, error = result.Error });
+        }
+
+        return Json(new { success = true, message = "جلسه مطالعه حذف شد" });
+    }
 
     /// <summary>
     /// Get study session statistics for a content item

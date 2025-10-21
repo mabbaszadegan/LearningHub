@@ -202,73 +202,166 @@ public class GetStudySessionStatisticsQueryHandler : IRequestHandler<GetStudySes
 }
 
 /// <summary>
-/// Handler for getting schedule item with study statistics
+/// Handler for getting the last study sessions for a student
 /// </summary>
-public class GetScheduleItemWithStudyStatsQueryHandler : IRequestHandler<GetScheduleItemWithStudyStatsQuery, Result<ScheduleItemWithStudyStatsDto>>
+public class GetLastStudySessionsQueryHandler : IRequestHandler<GetLastStudySessionsQuery, Result<List<StudySessionHistoryDto>>>
 {
-    private readonly IMediator _mediator;
     private readonly IStudySessionRepository _studySessionRepository;
+    private readonly IMediator _mediator;
 
-    public GetScheduleItemWithStudyStatsQueryHandler(IMediator mediator, IStudySessionRepository studySessionRepository)
+    public GetLastStudySessionsQueryHandler(IStudySessionRepository studySessionRepository, IMediator mediator)
     {
-        _mediator = mediator;
         _studySessionRepository = studySessionRepository;
+        _mediator = mediator;
     }
 
-    public async Task<Result<ScheduleItemWithStudyStatsDto>> Handle(GetScheduleItemWithStudyStatsQuery request, CancellationToken cancellationToken)
+    public async Task<Result<List<StudySessionHistoryDto>>> Handle(GetLastStudySessionsQuery request, CancellationToken cancellationToken)
     {
         try
         {
-            // Get schedule item
-            var scheduleItemResult = await _mediator.Send(new EduTrack.Application.Features.ScheduleItems.Queries.GetScheduleItemByIdQuery(request.ScheduleItemId));
-            if (!scheduleItemResult.IsSuccess || scheduleItemResult.Value == null)
+            // Get the most recent study sessions for the student
+            var recentSessions = await _studySessionRepository.GetRecentSessionsAsync(request.StudentId, request.Count);
+            
+            if (!recentSessions.Any())
             {
-                return Result<ScheduleItemWithStudyStatsDto>.Failure("آیتم آموزشی یافت نشد");
+                return Result<List<StudySessionHistoryDto>>.Success(new List<StudySessionHistoryDto>());
             }
 
-            var scheduleItem = scheduleItemResult.Value;
+            var studyHistoryDtos = new List<StudySessionHistoryDto>();
 
-            // Get teaching plan to get course ID
-            var teachingPlanResult = await _mediator.Send(new GetTeachingPlanByIdQuery(scheduleItem.TeachingPlanId));
-            if (!teachingPlanResult.IsSuccess || teachingPlanResult.Value == null)
+            foreach (var session in recentSessions)
             {
-                return Result<ScheduleItemWithStudyStatsDto>.Failure("طرح تدریس یافت نشد");
+                // Get schedule item details
+                var scheduleItemResult = await _mediator.Send(new EduTrack.Application.Features.ScheduleItems.Queries.GetScheduleItemByIdQuery(session.ScheduleItemId));
+                if (!scheduleItemResult.IsSuccess || scheduleItemResult.Value == null)
+                    continue;
+
+                var scheduleItem = scheduleItemResult.Value;
+
+                // Get teaching plan to get course ID
+                var teachingPlanResult = await _mediator.Send(new GetTeachingPlanByIdQuery(scheduleItem.TeachingPlanId));
+                if (!teachingPlanResult.IsSuccess || teachingPlanResult.Value == null)
+                    continue;
+
+                var teachingPlan = teachingPlanResult.Value;
+
+                var studyHistoryDto = new StudySessionHistoryDto
+                {
+                    Id = session.Id,
+                    StudentId = session.StudentId,
+                    ScheduleItemId = session.ScheduleItemId,
+                    ScheduleItemTitle = scheduleItem.Title,
+                    ScheduleItemDescription = scheduleItem.Description,
+                    CourseId = teachingPlan.CourseId,
+                    CourseTitle = "دوره آموزشی", // This would need to be fetched from course service
+                    CourseThumbnail = null, // This would need to be fetched from course service
+                    StartedAt = session.StartedAt,
+                    EndedAt = session.EndedAt,
+                    DurationSeconds = session.DurationSeconds,
+                    IsCompleted = session.IsCompleted,
+                    CreatedAt = session.CreatedAt,
+                    UpdatedAt = session.UpdatedAt
+                };
+
+                studyHistoryDtos.Add(studyHistoryDto);
             }
 
-            var teachingPlan = teachingPlanResult.Value;
-
-            // Get study statistics
-            var statisticsResult = await _mediator.Send(new GetStudySessionStatisticsQuery(request.StudentId, request.ScheduleItemId));
-            if (!statisticsResult.IsSuccess)
-            {
-                return Result<ScheduleItemWithStudyStatsDto>.Failure(statisticsResult.Error ?? "خطا در دریافت آمار مطالعه");
-            }
-
-            var statistics = statisticsResult.Value!;
-
-            // Map to DTO
-            var result = new ScheduleItemWithStudyStatsDto
-            {
-                Id = scheduleItem.Id,
-                TeachingPlanId = scheduleItem.TeachingPlanId,
-                CourseId = teachingPlan.CourseId,
-                Title = scheduleItem.Title,
-                Description = scheduleItem.Description,
-                ContentJson = scheduleItem.ContentJson,
-                Type = scheduleItem.Type,
-                IsActive = true, // Default value since ScheduleItemDto doesn't have this property
-                Order = 0, // Default value since ScheduleItemDto doesn't have this property
-                CreatedAt = scheduleItem.CreatedAt,
-                UpdatedAt = scheduleItem.UpdatedAt,
-                CreatedBy = "System", // Default value since ScheduleItemDto doesn't have this property
-                StudyStatistics = statistics
-            };
-
-            return Result<ScheduleItemWithStudyStatsDto>.Success(result);
+            return Result<List<StudySessionHistoryDto>>.Success(studyHistoryDtos);
         }
         catch (Exception ex)
         {
-            return Result<ScheduleItemWithStudyStatsDto>.Failure($"خطا در دریافت آیتم آموزشی: {ex.Message}");
+            return Result<List<StudySessionHistoryDto>>.Failure($"خطا در دریافت تاریخچه مطالعه: {ex.Message}");
+        }
+    }
+}
+
+/// <summary>
+/// Handler for getting the last courses with study activity for a student
+/// </summary>
+public class GetLastStudyCoursesQueryHandler : IRequestHandler<GetLastStudyCoursesQuery, Result<List<CourseStudyHistoryDto>>>
+{
+    private readonly IStudySessionRepository _studySessionRepository;
+    private readonly IMediator _mediator;
+
+    public GetLastStudyCoursesQueryHandler(IStudySessionRepository studySessionRepository, IMediator mediator)
+    {
+        _studySessionRepository = studySessionRepository;
+        _mediator = mediator;
+    }
+
+    public async Task<Result<List<CourseStudyHistoryDto>>> Handle(GetLastStudyCoursesQuery request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            // Get all study sessions for the student
+            var allSessions = await _studySessionRepository.GetByStudentIdAsync(request.StudentId);
+            
+            if (!allSessions.Any())
+            {
+                return Result<List<CourseStudyHistoryDto>>.Success(new List<CourseStudyHistoryDto>());
+            }
+
+            // Group sessions by course and get course statistics
+            var courseGroups = new Dictionary<int, List<Domain.Entities.StudySession>>();
+            
+            foreach (var session in allSessions)
+            {
+                // Get schedule item to find course
+                var scheduleItemResult = await _mediator.Send(new EduTrack.Application.Features.ScheduleItems.Queries.GetScheduleItemByIdQuery(session.ScheduleItemId));
+                if (!scheduleItemResult.IsSuccess || scheduleItemResult.Value == null)
+                    continue;
+
+                var scheduleItem = scheduleItemResult.Value;
+
+                // Get teaching plan to get course ID
+                var teachingPlanResult = await _mediator.Send(new GetTeachingPlanByIdQuery(scheduleItem.TeachingPlanId));
+                if (!teachingPlanResult.IsSuccess || teachingPlanResult.Value == null)
+                    continue;
+
+                var teachingPlan = teachingPlanResult.Value;
+                var courseId = teachingPlan.CourseId;
+
+                if (!courseGroups.ContainsKey(courseId))
+                {
+                    courseGroups[courseId] = new List<Domain.Entities.StudySession>();
+                }
+                courseGroups[courseId].Add(session);
+            }
+
+            var courseHistoryDtos = new List<CourseStudyHistoryDto>();
+
+            foreach (var courseGroup in courseGroups.Take(request.Count))
+            {
+                var courseId = courseGroup.Key;
+                var sessions = courseGroup.Value;
+
+                var lastStudyDate = sessions.Max(s => s.StartedAt);
+                var totalStudyTime = sessions.Sum(s => s.DurationSeconds);
+                var sessionsCount = sessions.Count;
+
+                var courseHistoryDto = new CourseStudyHistoryDto
+                {
+                    CourseId = courseId,
+                    CourseTitle = "دوره آموزشی", // This would need to be fetched from course service
+                    CourseThumbnail = null, // This would need to be fetched from course service
+                    LastStudyDate = lastStudyDate,
+                    TotalStudyTimeSeconds = totalStudyTime,
+                    StudySessionsCount = sessionsCount,
+                    CompletedItems = sessions.Count(s => s.IsCompleted),
+                    TotalItems = sessions.Count // This should be total items in course
+                };
+
+                courseHistoryDtos.Add(courseHistoryDto);
+            }
+
+            // Sort by last study date
+            courseHistoryDtos = courseHistoryDtos.OrderByDescending(c => c.LastStudyDate).ToList();
+
+            return Result<List<CourseStudyHistoryDto>>.Success(courseHistoryDtos);
+        }
+        catch (Exception ex)
+        {
+            return Result<List<CourseStudyHistoryDto>>.Failure($"خطا در دریافت تاریخچه دوره‌ها: {ex.Message}");
         }
     }
 }

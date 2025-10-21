@@ -25,6 +25,33 @@ public class StudySession
     // Private constructor for EF Core
     private StudySession() { }
 
+    public static StudySession CreateCompleted(string studentId, int scheduleItemId, DateTimeOffset startedAt, DateTimeOffset endedAt)
+    {
+        if (string.IsNullOrWhiteSpace(studentId))
+            throw new ArgumentException("Student ID cannot be null or empty", nameof(studentId));
+        
+        if (scheduleItemId <= 0)
+            throw new ArgumentException("Schedule Item ID must be greater than 0", nameof(scheduleItemId));
+        
+        if (endedAt <= startedAt)
+            throw new ArgumentException("End time must be after start time", nameof(endedAt));
+
+        var now = DateTimeOffset.UtcNow;
+        var duration = endedAt - startedAt;
+        
+        return new StudySession
+        {
+            StudentId = studentId,
+            ScheduleItemId = scheduleItemId,
+            StartedAt = startedAt,
+            EndedAt = endedAt,
+            DurationSeconds = (int)Math.Floor(duration.TotalSeconds),
+            IsCompleted = true,
+            CreatedAt = now,
+            UpdatedAt = now
+        };
+    }
+
     public static StudySession Create(string studentId, int scheduleItemId)
     {
         if (string.IsNullOrWhiteSpace(studentId))
@@ -51,7 +78,7 @@ public class StudySession
         
         // Calculate duration automatically from StartedAt and EndedAt
         var duration = EndedAt.Value - StartedAt;
-        DurationSeconds = (int)duration.TotalSeconds;
+        DurationSeconds = (int)Math.Floor(duration.TotalSeconds);
         
         // Add some logging for debugging
         Console.WriteLine($"StudySession Complete - StartedAt: {StartedAt}, EndedAt: {EndedAt}, Duration: {DurationSeconds} seconds");

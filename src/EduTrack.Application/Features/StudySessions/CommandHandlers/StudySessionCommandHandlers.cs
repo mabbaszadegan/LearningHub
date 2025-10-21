@@ -53,41 +53,30 @@ public class StartStudySessionCommandHandler : IRequestHandler<StartStudySession
 }
 
 /// <summary>
-/// Handler for completing a study session
+/// Handler for creating and completing a study session in one operation
 /// </summary>
-public class CompleteStudySessionCommandHandler : IRequestHandler<CompleteStudySessionCommand, Result<StudySessionDto>>
+public class CreateAndCompleteStudySessionCommandHandler : IRequestHandler<CreateAndCompleteStudySessionCommand, Result<StudySessionDto>>
 {
     private readonly IStudySessionRepository _studySessionRepository;
 
-    public CompleteStudySessionCommandHandler(IStudySessionRepository studySessionRepository)
+    public CreateAndCompleteStudySessionCommandHandler(IStudySessionRepository studySessionRepository)
     {
         _studySessionRepository = studySessionRepository;
     }
 
-    public async Task<Result<StudySessionDto>> Handle(CompleteStudySessionCommand request, CancellationToken cancellationToken)
+    public async Task<Result<StudySessionDto>> Handle(CreateAndCompleteStudySessionCommand request, CancellationToken cancellationToken)
     {
         try
         {
-            var studySession = await _studySessionRepository.GetByIdAsync(request.StudySessionId);
-            if (studySession == null)
-            {
-                return Result<StudySessionDto>.Failure("جلسه مطالعه یافت نشد");
-            }
+            // Create a completed study session directly
+            var studySession = StudySession.CreateCompleted(request.StudentId, request.ScheduleItemId, request.StartedAt, request.EndedAt);
+            var createdSession = await _studySessionRepository.AddAsync(studySession);
 
-            if (studySession.IsCompleted)
-            {
-                return Result<StudySessionDto>.Failure("جلسه مطالعه قبلاً تکمیل شده است");
-            }
-
-            // Complete the session - duration will be calculated automatically
-            studySession.Complete();
-            await _studySessionRepository.UpdateAsync(studySession);
-
-            return Result<StudySessionDto>.Success(MapToDto(studySession));
+            return Result<StudySessionDto>.Success(MapToDto(createdSession));
         }
         catch (Exception ex)
         {
-            return Result<StudySessionDto>.Failure($"خطا در تکمیل جلسه مطالعه: {ex.Message}");
+            return Result<StudySessionDto>.Failure($"خطا در ایجاد و تکمیل جلسه مطالعه: {ex.Message}");
         }
     }
 
@@ -105,5 +94,37 @@ public class CompleteStudySessionCommandHandler : IRequestHandler<CompleteStudyS
             CreatedAt = studySession.CreatedAt,
             UpdatedAt = studySession.UpdatedAt
         };
+    }
+}
+
+/// <summary>
+/// Handler for deleting a study session
+/// </summary>
+public class DeleteStudySessionCommandHandler : IRequestHandler<DeleteStudySessionCommand, Result<bool>>
+{
+    private readonly IStudySessionRepository _studySessionRepository;
+
+    public DeleteStudySessionCommandHandler(IStudySessionRepository studySessionRepository)
+    {
+        _studySessionRepository = studySessionRepository;
+    }
+
+    public async Task<Result<bool>> Handle(DeleteStudySessionCommand request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var studySession = await _studySessionRepository.GetByIdAsync(request.StudySessionId);
+            if (studySession == null)
+            {
+                return Result<bool>.Failure("جلسه مطالعه یافت نشد");
+            }
+
+            await _studySessionRepository.DeleteAsync(request.StudySessionId);
+            return Result<bool>.Success(true);
+        }
+        catch (Exception ex)
+        {
+            return Result<bool>.Failure($"خطا در حذف جلسه مطالعه: {ex.Message}");
+        }
     }
 }

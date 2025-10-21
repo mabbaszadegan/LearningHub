@@ -63,16 +63,31 @@ public class GetStudySessionStatisticsQuery : IRequest<Result<StudySessionStatis
 }
 
 /// <summary>
-/// Query to get schedule item with study statistics
+/// Query to get the last study sessions for a student
 /// </summary>
-public class GetScheduleItemWithStudyStatsQuery : IRequest<Result<ScheduleItemWithStudyStatsDto>>
+public class GetLastStudySessionsQuery : IRequest<Result<List<StudySessionHistoryDto>>>
 {
-    public int ScheduleItemId { get; set; }
     public string StudentId { get; set; } = string.Empty;
+    public int Count { get; set; } = 5;
 
-    public GetScheduleItemWithStudyStatsQuery(int scheduleItemId, string studentId)
+    public GetLastStudySessionsQuery(string studentId, int count = 5)
     {
-        ScheduleItemId = scheduleItemId;
         StudentId = studentId;
+        Count = count;
+    }
+}
+
+/// <summary>
+/// Query to get the last courses with study activity for a student
+/// </summary>
+public class GetLastStudyCoursesQuery : IRequest<Result<List<CourseStudyHistoryDto>>>
+{
+    public string StudentId { get; set; } = string.Empty;
+    public int Count { get; set; } = 5;
+
+    public GetLastStudyCoursesQuery(string studentId, int count = 5)
+    {
+        StudentId = studentId;
+        Count = count;
     }
 }

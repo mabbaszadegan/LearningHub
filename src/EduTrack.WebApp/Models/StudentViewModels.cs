@@ -1,3 +1,5 @@
+using EduTrack.Application.Common.Models.StudySessions;
+
 namespace EduTrack.WebApp.Models;
 
 public class StudentDashboardViewModel
@@ -10,4 +12,6 @@ public class StudentDashboardViewModel
     public List<object> RecentClasses { get; set; } = new();
     public List<object> UpcomingExams { get; set; } = new();
     public object ProgressStats { get; set; } = new();
+    public List<StudySessionHistoryDto> LastStudySessions { get; set; } = new();
+    public List<CourseStudyHistoryDto> LastStudyCourses { get; set; } = new();
 }

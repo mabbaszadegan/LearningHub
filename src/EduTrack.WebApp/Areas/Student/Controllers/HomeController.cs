@@ -1,6 +1,7 @@
 using EduTrack.Application.Features.Classroom.Queries;
 using EduTrack.Application.Features.Progress.Queries;
 using EduTrack.Application.Features.Exams.Queries;
+using EduTrack.Application.Features.StudySessions.Queries;
 using EduTrack.Application.Common.Models;
 using EduTrack.Domain.Entities;
 using EduTrack.WebApp.Models;
@@ -47,7 +48,9 @@ public class HomeController : Controller
             AverageScore = await GetStudentAverageScore(currentUser.Id),
             RecentClasses = await GetStudentRecentClasses(currentUser.Id),
             UpcomingExams = await GetStudentUpcomingExams(currentUser.Id),
-            ProgressStats = await GetStudentProgressStats(currentUser.Id)
+            ProgressStats = await GetStudentProgressStats(currentUser.Id),
+            LastStudySessions = await GetLastStudySessions(currentUser.Id),
+            LastStudyCourses = await GetLastStudyCourses(currentUser.Id)
         };
 
         return View(dashboardData);
@@ -150,6 +153,34 @@ public class HomeController : Controller
         {
             _logger.LogError(ex, "Error getting student progress stats");
             return new { Total = 0, Completed = 0, InProgress = 0, NotStarted = 0, CompletionPercentage = 0.0 };
+        }
+    }
+
+    private async Task<List<EduTrack.Application.Common.Models.StudySessions.StudySessionHistoryDto>> GetLastStudySessions(string studentId)
+    {
+        try
+        {
+            var result = await _mediator.Send(new GetLastStudySessionsQuery(studentId, 5));
+            return result.IsSuccess && result.Value != null ? result.Value : new List<EduTrack.Application.Common.Models.StudySessions.StudySessionHistoryDto>();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting last study sessions");
+            return new List<EduTrack.Application.Common.Models.StudySessions.StudySessionHistoryDto>();
+        }
+    }
+
+    private async Task<List<EduTrack.Application.Common.Models.StudySessions.CourseStudyHistoryDto>> GetLastStudyCourses(string studentId)
+    {
+        try
+        {
+            var result = await _mediator.Send(new GetLastStudyCoursesQuery(studentId, 5));
+            return result.IsSuccess && result.Value != null ? result.Value : new List<EduTrack.Application.Common.Models.StudySessions.CourseStudyHistoryDto>();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting last study courses");
+            return new List<EduTrack.Application.Common.Models.StudySessions.CourseStudyHistoryDto>();
         }
     }
 }

@@ -184,220 +184,18 @@
     text-align: center;
 }
 
-/* Course Actions */
+/* Course Actions - Updated Design */
 .course-actions {
-    margin-top: auto;
-    padding-top: 16px;
+    margin-top: 12px;
+    padding-top: 12px;
     border-top: 1px solid #e9ecef;
-}
-
-/* Course Header Actions - Beautiful Design */
-.course-header-actions {
-    position: absolute;
-    top: 12px;
-    left: 12px;
-    display: flex;
-    gap: 8px;
-    opacity: 0;
-    transform: translateY(-10px);
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    z-index: 10;
-}
-
-.course-card:hover .course-header-actions {
-    opacity: 1;
-    transform: translateY(0);
-}
-
-.course-header-actions {
-    opacity: 1 !important;
-    transform: translateY(0) !important;
-    position: absolute !important;
-    top: 12px !important;
-    left: 12px !important;
-    display: flex !important;
-    gap: 8px !important;
-    z-index: 10 !important;
-}
-
-
-
-.btn-study-header {
-    background: linear-gradient(135deg, rgba(40, 167, 69, 0.9) 0%, rgba(32, 201, 151, 0.9) 100%) !important;
-    color: white !important;
-    border: 1px solid rgba(255, 255, 255, 0.2) !important;
-}
-
-.btn-details-header {
-    background: linear-gradient(135deg, rgba(0, 123, 255, 0.9) 0%, rgba(0, 86, 179, 0.9) 100%) !important;
-    color: white !important;
-    border: 1px solid rgba(255, 255, 255, 0.2) !important;
-}
-
-.btn-unenroll-header {
-    background: linear-gradient(135deg, rgba(220, 53, 69, 0.9) 0%, rgba(200, 35, 51, 0.9) 100%) !important;
-    color: white !important;
-    border: 1px solid rgba(255, 255, 255, 0.2) !important;
-}
-.course-header-btn {
-    width: 30px !important;
-    height: 30px !important;
-    border-radius: 15px !important;
-    border: none !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    font-size: 1.1rem !important;
-    cursor: pointer !important;
-    position: relative !important;
-    overflow: hidden !important;
-    backdrop-filter: blur(10px) !important;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15) !important;
-}
-
-.course-header-btn::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: inherit;
-    opacity: 0.1;
-    transition: opacity 0.3s ease;
-}
-
-.course-header-btn:hover::before {
-    opacity: 0.2;
-}
-
-.course-header-btn:hover {
-    transform: translateY(-2px) scale(1.05);
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
-}
-
-.course-header-btn:active {
-    transform: translateY(0) scale(0.98);
-}
-
-/* Study Button - Elegant Green */
-.btn-study-header {
-    background: linear-gradient(135deg, rgba(40, 167, 69, 0.9) 0%, rgba(32, 201, 151, 0.9) 100%);
-    color: white;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.btn-study-header:hover {
-    background: linear-gradient(135deg, rgba(40, 167, 69, 1) 0%, rgba(32, 201, 151, 1) 100%);
-    color: white;
-}
-
-.btn-study-header i {
-    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
-}
-
-/* Details Button - Elegant Blue */
-.btn-details-header {
-    background: linear-gradient(135deg, rgba(0, 123, 255, 0.9) 0%, rgba(0, 86, 179, 0.9) 100%);
-    color: white;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.btn-details-header:hover {
-    background: linear-gradient(135deg, rgba(0, 123, 255, 1) 0%, rgba(0, 86, 179, 1) 100%);
-    color: white;
-}
-
-.btn-details-header i {
-    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
-}
-
-
-
-.btn-unenroll-header:hover {
-    background: linear-gradient(135deg, rgba(220, 53, 69, 1) 0%, rgba(200, 35, 51, 1) 100%);
-    color: white;
-}
-
-.btn-unenroll-header i {
-    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
-}
-
-/* Elegant Tooltip */
-.course-header-btn[title]:hover::after {
-    content: attr(title);
-    position: absolute;
-    bottom: -40px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(0, 0, 0, 0.9);
-    color: white;
-    padding: 6px 12px;
-    border-radius: 8px;
-    font-size: 0.8rem;
-    font-weight: 500;
-    white-space: nowrap;
-    z-index: 1000;
-    pointer-events: none;
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-}
-
-.course-header-btn[title]:hover::before {
-    content: '';
-    position: absolute;
-    bottom: -30px;
-    left: 50%;
-    transform: translateX(-50%);
-    border: 6px solid transparent;
-    border-bottom-color: rgba(0, 0, 0, 0.9);
-    z-index: 1000;
-    pointer-events: none;
-}
-
-/* Pulse Animation for Study Button */
-.btn-study-header {
-    animation: pulse-study 2s infinite;
-}
-
-@keyframes pulse-study {
-    0% {
-        box-shadow: 0 4px 20px rgba(40, 167, 69, 0.3);
-    }
-    50% {
-        box-shadow: 0 4px 20px rgba(40, 167, 69, 0.6), 0 0 0 10px rgba(40, 167, 69, 0.1);
-    }
-    100% {
-        box-shadow: 0 4px 20px rgba(40, 167, 69, 0.3);
-    }
-}
-
-/* Ripple Effect */
-.course-header-btn::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.3);
-    transform: translate(-50%, -50%);
-    transition: width 0.6s, height 0.6s;
-}
-
-.course-header-btn:active::after {
-    width: 300px;
-    height: 300px;
 }
 
 .course-actions .btn {
     font-weight: 600;
-    border-radius: 10px;
-    padding: 10px 16px;
-    font-size: 0.9rem;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 0.85rem;
     transition: all 0.3s ease;
     border: none;
     text-decoration: none;
@@ -405,10 +203,26 @@
     align-items: center;
     justify-content: center;
     gap: 6px;
+    min-height: 36px;
+    flex: 0 0 auto;
 }
 
 .course-actions .btn i {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
+}
+
+.course-actions .btn.flex-fill {
+    flex: 1;
+}
+
+.course-actions .btn:not(.flex-fill) {
+    width: 40px;
+    padding: 8px;
+}
+
+.course-actions .d-flex {
+    gap: 8px;
+    align-items: center;
 }
 
 /* Button Styles */
@@ -436,17 +250,16 @@
     color: white;
 }
 
-.btn-modern-outline-danger {
-    background: transparent;
-    color: #dc3545;
-    border: 2px solid #dc3545;
+.btn-modern-danger {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
 }
 
-.btn-modern-outline-danger:hover {
-    background: #dc3545;
-    color: white;
+.btn-modern-danger:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(220, 53, 69, 0.3);
+    box-shadow: 0 8px 25px rgba(220, 53, 69, 0.4);
+    color: white;
 }
 
 /* Empty State */
@@ -544,32 +357,18 @@
     }
     
     .course-actions .btn {
-        font-size: 0.85rem;
-        padding: 8px 12px;
+        font-size: 0.8rem;
+        padding: 6px 10px;
+        min-height: 32px;
     }
     
-    /* Minimal buttons responsive */
-    .course-action-btn-minimal {
+    .course-actions .btn:not(.flex-fill) {
         width: 36px;
-        height: 36px;
-        font-size: 0.9rem;
+        padding: 6px;
     }
     
-    .course-actions-minimal {
+    .course-actions .d-flex {
         gap: 6px;
-    }
-    
-    /* Header buttons responsive */
-    .course-header-btn {
-        width: 40px;
-        height: 40px;
-        font-size: 1rem;
-    }
-    
-    .course-header-actions {
-        gap: 6px;
-        top: 10px;
-        left: 10px;
     }
     
     .page-header {
@@ -599,60 +398,21 @@
         font-size: 0.65rem;
     }
     
-    .course-actions .d-flex {
-        flex-direction: column;
-        gap: 8px;
-    }
-    
     .course-actions .btn {
         width: 100%;
-    }
-    
-    /* Minimal buttons for small screens */
-    .course-action-btn-minimal {
-        width: 32px;
-        height: 32px;
-        font-size: 0.8rem;
-    }
-    
-    .course-actions-minimal {
-        gap: 4px;
-        padding: 6px 0;
-    }
-    
-    /* Adjust tooltip position for small screens */
-    .course-action-btn-minimal[title]:hover::after {
-        bottom: -30px;
-        font-size: 0.7rem;
-        padding: 3px 6px;
-    }
-    
-    .course-action-btn-minimal[title]:hover::before {
-        bottom: -20px;
-    }
-    
-    /* Header buttons for small screens */
-    .course-header-btn {
-        width: 36px;
-        height: 36px;
-        font-size: 0.9rem;
-    }
-    
-    .course-header-actions {
-        gap: 4px;
-        top: 8px;
-        left: 8px;
-    }
-    
-    /* Adjust tooltip for small screens */
-    .course-header-btn[title]:hover::after {
-        bottom: -35px;
         font-size: 0.75rem;
-        padding: 4px 8px;
+        padding: 6px 8px;
+        min-height: 30px;
     }
     
-    .course-header-btn[title]:hover::before {
-        bottom: -25px;
+    .course-actions .btn:not(.flex-fill) {
+        width: 100%;
+        padding: 6px 8px;
+    }
+    
+    .course-actions .d-flex {
+        flex-direction: column;
+        gap: 6px;
     }
 }
 

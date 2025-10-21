@@ -40,25 +40,6 @@
                                         <span class="badge bg-primary">در حال انجام</span>
                                     }
                                 </div>
-                                
-                                <!-- Course Action Buttons in Header -->
-                                <div class="course-header-actions">
-                                    <button type="button" class="course-header-btn btn-study-header" 
-                                            onclick="window.location.href='@Url.Action("Study", new { id = enrollment.CourseId })'"
-                                            title="شروع مطالعه">
-                                        <i class="fas fa-play"></i>
-                                    </button>
-                                    <button type="button" class="course-header-btn btn-details-header" 
-                                            onclick="showCourseDetails(@enrollment.CourseId)"
-                                            title="جزئیات دوره">
-                                        <i class="fas fa-info-circle"></i>
-                                    </button>
-                                    <button type="button" class="course-header-btn btn-unenroll-header" 
-                                            data-action="unenroll" data-course-id="@enrollment.CourseId"
-                                            title="خروج از دوره">
-                                        <i class="fas fa-sign-out-alt"></i>
-                                    </button>
-                                </div>
                             </div>
                             <div class="course-content">
                                 <h5 class="course-title">@enrollment.CourseTitle</h5>
@@ -93,6 +74,26 @@
                                             <div class="stat-number">@enrollment.AverageScore.ToString("F1")</div>
                                             <div class="stat-label">میانگین نمره</div>
                                         </div>
+                                    </div>
+                                </div>
+
+                                <!-- Course Action Buttons -->
+                                <div class="course-actions">
+                                    <div class="d-flex gap-2">
+                                        <button type="button" class="btn btn-modern-primary flex-fill" 
+                                                onclick="window.location.href='@Url.Action("Study", new { id = enrollment.CourseId })'">
+                                            <i class="fas fa-play me-2"></i>شروع مطالعه
+                                        </button>
+                                        <button type="button" class="btn btn-modern-secondary" 
+                                                onclick="showCourseDetails(@enrollment.CourseId)"
+                                                title="جزئیات دوره">
+                                            <i class="fas fa-info-circle"></i>جزئیات دوره
+                                        </button>
+                                        <button type="button" class="btn btn-modern-danger" 
+                                                data-action="unenroll" data-course-id="@enrollment.CourseId"
+                                                title="خروج از دوره">
+                                            <i class="fas fa-sign-out-alt"></i>خروج از دوره
+                                        </button>
                                     </div>
                                 </div>
 

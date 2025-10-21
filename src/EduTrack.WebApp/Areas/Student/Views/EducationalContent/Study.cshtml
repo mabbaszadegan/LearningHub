@@ -255,7 +255,7 @@
             activeSessionId: @(ViewBag.ActiveSession?.Id ?? 0),
             courseId: @(ViewBag.CourseId ?? 0),
             startSessionUrl: '@Url.Action("StartStudySession", "ScheduleItem")',
-            completeSessionUrl: '@Url.Action("TestCompleteStudySession", "ScheduleItem")',
+            completeSessionUrl: '@Url.Action("CompleteStudySession", "EducationalContent")',
             getStatisticsUrl: '@Url.Action("GetStudyStatistics", "ScheduleItem")',
             contentType: '@Model.Type',
             contentJson: @Html.Raw(Model.ContentJson ?? "null")

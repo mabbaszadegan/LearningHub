@@ -10,6 +10,7 @@ let studySession = {
     elapsedTime: 0,
     sessionId: null,
     updateInterval: null,
+    fixedEndTime: null, // Fixed end time when modal is open
     
     init() {
         this.sessionId = window.studyContentConfig?.activeSessionId || 0;
@@ -536,38 +537,10 @@ let studySession = {
     },
     
     async startStudySession() {
-        // Only start a new session if we don't have one
-        if (!this.sessionId || this.sessionId === 0) {
-            try {
-                console.log('Starting new study session...');
-                const response = await fetch(window.studyContentConfig.startSessionUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
-                    },
-                    body: `scheduleItemId=${window.studyContentConfig.educationalContentId}`
-                });
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                
-                const result = await response.json();
-                console.log('Study session started:', result);
-                
-                if (result.success) {
-                    this.sessionId = result.sessionId;
-                    console.log('Session ID set to:', this.sessionId);
-                } else {
-                    console.error('Failed to start session:', result.error);
-                }
-            } catch (error) {
-                console.error('Error starting study session:', error);
-            }
-        } else {
-            console.log('Using existing session ID:', this.sessionId);
-        }
+        // Don't create session in database until user completes study
+        // Just track locally for now
+        console.log('Study session tracking started locally (no database record yet)');
+        this.sessionId = 0; // No database session yet
     },
     
     bindEvents() {
@@ -687,8 +660,11 @@ let studySession = {
     startTimer() {
         if (!this.isActive) {
             this.isActive = true;
-            this.startTime = Date.now();
-            this.elapsedTime = 0;
+            // Don't reset startTime if it already exists (for resume after cancel)
+            if (!this.startTime) {
+                this.startTime = Date.now();
+                this.elapsedTime = 0;
+            }
             
             console.log('Timer started at:', new Date(this.startTime).toLocaleTimeString());
             
@@ -702,6 +678,17 @@ let studySession = {
         }
     },
     
+    stopTimer() {
+        if (this.isActive) {
+            this.isActive = false;
+            if (this.updateInterval) {
+                clearInterval(this.updateInterval);
+                this.updateInterval = null;
+            }
+            console.log('Timer stopped');
+        }
+    },
+    
     getElapsedTime() {
         if (this.isActive && this.startTime) {
             const elapsed = Math.floor((Date.now() - this.startTime) / 1000);
@@ -712,17 +699,45 @@ let studySession = {
         return this.elapsedTime;
     },
     
+    getActualSessionDuration() {
+        // If we have a fixed end time (modal is open), use it
+        if (this.fixedEndTime) {
+            const duration = Math.floor((this.fixedEndTime - this.startTime) / 1000);
+            console.log('Using fixed end time, duration:', duration, 'seconds');
+            return duration;
+        }
+        
+        // If we have an active session, calculate duration from StartedAt and current time
+        // This matches the backend calculation logic
+        if (this.sessionId && this.sessionId > 0) {
+            // For active sessions, calculate from start time to now
+            if (this.isActive && this.startTime) {
+                const duration = Math.floor((Date.now() - this.startTime) / 1000);
+                return duration;
+            }
+            // For completed sessions, we should get the actual duration from backend
+            return this.elapsedTime;
+        }
+        return 0;
+    },
+    
     formatTime(seconds) {
         const hours = Math.floor(seconds / 3600);
         const minutes = Math.floor((seconds % 3600) / 60);
-        const secs = seconds % 60;
+        const secs = Math.floor(seconds % 60);
         
         return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     },
     
     showExitConfirmation() {
-        const currentTime = this.getElapsedTime();
-        console.log('Showing exit confirmation, time:', currentTime);
+        // Stop the timer immediately when modal opens
+        this.stopTimer();
+        
+        // Fix the end time to prevent further changes
+        this.fixedEndTime = Date.now();
+        
+        const currentTime = this.getActualSessionDuration();
+        console.log('Showing exit confirmation, fixed session duration:', currentTime);
         
         // Remove any existing modal first
         const existingModal = document.getElementById('exitConfirmationModal');
@@ -812,6 +827,7 @@ let studySession = {
         document.getElementById('cancel-exit').onclick = () => {
             console.log('Cancel clicked');
             this.hideModal();
+            this.exitWithoutSaving();
         };
         
         document.getElementById('exit-without-saving').onclick = () => {
@@ -905,55 +921,63 @@ let studySession = {
         console.log('=== SAVING STUDY SESSION ===');
         console.log('Timer active:', this.isActive);
         console.log('Start time:', this.startTime ? new Date(this.startTime).toLocaleTimeString() : 'null');
+        console.log('Fixed end time:', this.fixedEndTime ? new Date(this.fixedEndTime).toLocaleTimeString() : 'null');
         console.log('Current time:', new Date().toLocaleTimeString());
-        console.log('Session ID:', this.sessionId);
         console.log('============================');
         
-        if (!this.sessionId || this.sessionId === 0) {
-            throw new Error('No active session to complete');
-        }
-        
         try {
-            // Complete the session - duration will be calculated automatically by backend
-            const completeData = {
-                StudySessionId: this.sessionId
+            // Create and complete the session in one operation
+            const createAndCompleteData = {
+                ScheduleItemId: window.studyContentConfig.educationalContentId,
+                StartedAt: new Date(this.startTime).toISOString(),
+                EndedAt: new Date(this.fixedEndTime || Date.now()).toISOString()
             };
             
-            console.log('Completing session with data:', completeData);
+            console.log('Creating and completing session with data:', createAndCompleteData);
             
-            const completeResponse = await fetch(window.studyContentConfig.completeSessionUrl, {
+            const response = await fetch('/Student/EducationalContent/CreateAndCompleteStudySession', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
                 },
-                body: JSON.stringify(completeData)
+                body: JSON.stringify(createAndCompleteData)
             });
             
-            if (!completeResponse.ok) {
-                throw new Error(`HTTP error! status: ${completeResponse.status}`);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
             
-            const completeResult = await completeResponse.json();
-            console.log('Study session completed:', completeResult);
+            const result = await response.json();
+            console.log('Study session created and completed:', result);
             
-            if (!completeResult.success) {
-                throw new Error(completeResult.error || 'خطا در تکمیل جلسه مطالعه');
+            if (!result.success) {
+                throw new Error(result.error || 'خطا در ثبت جلسه مطالعه');
             }
             
-            return completeResult;
+            return result;
         } catch (error) {
             console.error('Failed to save study session:', error);
             throw error;
         }
     },
     
-    exitWithoutSaving() {
-        // Don't stop the timer, just navigate back
-        // The timer should continue running for future attempts
+    async exitWithoutSaving() {
+        // Clear the fixed end time since user cancelled
+        this.fixedEndTime = null;
         
-        // Navigate to course schedule items list immediately
-        this.navigateToCourseScheduleItems();
+        // Make sure timer is active and restart it
+        this.isActive = true;
+        if (this.updateInterval) {
+            clearInterval(this.updateInterval);
+        }
+        this.updateInterval = setInterval(() => {
+            this.elapsedTime = Math.floor((Date.now() - this.startTime) / 1000);
+        }, 1000);
+        
+        console.log('User cancelled exit, continuing study on same page');
+        console.log('Timer is now active:', this.isActive);
+        console.log('Elapsed time:', this.elapsedTime);
     },
     
     navigateToCourseScheduleItems() {

@@ -1,6 +1,7 @@
 using EduTrack.Application.Features.StudySessions.Commands;
 using EduTrack.Application.Features.StudySessions.Queries;
 using EduTrack.Application.Features.ScheduleItems.Queries;
+using EduTrack.Application.Features.TeachingPlan.Queries;
 using EduTrack.Application.Common.Models.StudySessions;
 using EduTrack.Application.Common.Models.TeachingPlans;
 using MediatR;
@@ -10,6 +11,13 @@ using Microsoft.AspNetCore.Mvc;
 using EduTrack.Domain.Entities;
 
 namespace EduTrack.WebApp.Areas.Student.Controllers;
+
+public class CreateAndCompleteStudySessionRequest
+{
+    public int ScheduleItemId { get; set; }
+    public DateTimeOffset StartedAt { get; set; }
+    public DateTimeOffset EndedAt { get; set; }
+}
 
 public class CompleteStudySessionRequest
 {
@@ -46,15 +54,44 @@ public class ScheduleItemController : Controller
             return RedirectToAction("Login", "Account", new { area = "Public" });
         }
 
-        // Get schedule item details with study stats
-        var scheduleItemWithStatsResult = await _mediator.Send(new GetScheduleItemWithStudyStatsQuery(id, currentUser.Id));
-        if (!scheduleItemWithStatsResult.IsSuccess || scheduleItemWithStatsResult.Value == null)
+        // Get schedule item details
+        var scheduleItemResult = await _mediator.Send(new EduTrack.Application.Features.ScheduleItems.Queries.GetScheduleItemByIdQuery(id));
+        if (!scheduleItemResult.IsSuccess || scheduleItemResult.Value == null)
         {
             TempData["Error"] = "آیتم آموزشی یافت نشد";
             return RedirectToAction("Index", "Home");
         }
 
-        var scheduleItemWithStats = scheduleItemWithStatsResult.Value;
+        var scheduleItem = scheduleItemResult.Value;
+
+        // Get teaching plan to get course ID
+        var teachingPlanResult = await _mediator.Send(new GetTeachingPlanByIdQuery(scheduleItem.TeachingPlanId));
+        if (!teachingPlanResult.IsSuccess || teachingPlanResult.Value == null)
+        {
+            TempData["Error"] = "طرح تدریس یافت نشد";
+            return RedirectToAction("Index", "Home");
+        }
+
+        var teachingPlan = teachingPlanResult.Value;
+
+        // Get study statistics
+        var statisticsResult = await _mediator.Send(new GetStudySessionStatisticsQuery(currentUser.Id, id));
+        var statistics = statisticsResult.IsSuccess ? statisticsResult.Value : new StudySessionStatisticsDto();
+
+        // Create a combined object for the view
+        var scheduleItemWithStats = new
+        {
+            Id = scheduleItem.Id,
+            TeachingPlanId = scheduleItem.TeachingPlanId,
+            CourseId = teachingPlan.CourseId,
+            Title = scheduleItem.Title,
+            Description = scheduleItem.Description,
+            ContentJson = scheduleItem.ContentJson,
+            Type = scheduleItem.Type,
+            CreatedAt = scheduleItem.CreatedAt,
+            UpdatedAt = scheduleItem.UpdatedAt,
+            StudyStatistics = statistics
+        };
 
         // Check if there's an active study session
         var activeSessionResult = await _mediator.Send(new GetActiveStudySessionQuery(currentUser.Id, id));
@@ -63,7 +100,7 @@ public class ScheduleItemController : Controller
         ViewBag.ActiveSession = activeSession;
         ViewBag.CurrentUserId = currentUser.Id;
         ViewBag.ScheduleItem = scheduleItemWithStats;
-        ViewBag.CourseId = scheduleItemWithStats.CourseId; // Add course ID for navigation
+        ViewBag.CourseId = teachingPlan.CourseId; // Add course ID for navigation
 
         return View("~/Areas/Student/Views/EducationalContent/Study.cshtml", scheduleItemWithStats);
     }
@@ -105,55 +142,6 @@ public class ScheduleItemController : Controller
             return Json(new { success = false, error = "خطا در شروع جلسه مطالعه" });
         }
     }
-
-    /// <summary>
-    /// Test endpoint to check if study session can be completed
-    /// </summary>
-    [HttpPost]
-    public async Task<IActionResult> TestCompleteStudySession([FromBody] CompleteStudySessionRequest request)
-    {
-        try
-        {
-            _logger.LogInformation("TestCompleteStudySession called with StudySessionId: {StudySessionId}", 
-                request.StudySessionId);
-
-            var currentUser = await _userManager.GetUserAsync(User);
-            if (currentUser == null)
-            {
-                _logger.LogWarning("User not found");
-                return Json(new { success = false, error = "کاربر یافت نشد" });
-            }
-
-            _logger.LogInformation("User found: {UserId}", currentUser.Id);
-
-            // First, check if the study session exists
-            var studySession = await _mediator.Send(new GetStudySessionByIdQuery(request.StudySessionId));
-            if (!studySession.IsSuccess)
-            {
-                _logger.LogError("Study session not found: {Error}", studySession.Error);
-                return Json(new { success = false, error = $"جلسه مطالعه یافت نشد: {studySession.Error}" });
-            }
-
-            _logger.LogInformation("Study session found: {SessionId}", studySession.Value!.Id);
-
-            var result = await _mediator.Send(new CompleteStudySessionCommand(request.StudySessionId));
-            if (!result.IsSuccess)
-            {
-                _logger.LogError("CompleteStudySessionCommand failed: {Error}", result.Error);
-                return Json(new { success = false, error = result.Error });
-            }
-
-            _logger.LogInformation("Study session completed successfully with duration: {DurationSeconds} seconds", 
-                result.Value!.DurationSeconds);
-            return Json(new { success = true, message = "زمان مطالعه با موفقیت ثبت شد" });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error in TestCompleteStudySession");
-            return Json(new { success = false, error = $"خطا در ثبت زمان مطالعه: {ex.Message}" });
-        }
-    }
-
 
     /// <summary>
     /// Get study session statistics for a schedule item

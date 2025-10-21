@@ -5,6 +5,7 @@
 
 @section Styles {
     <link rel="stylesheet" href="~/css/areas/student/buttons.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/dashboard.css" asp-append-version="true" />
 }
 
 <div class="content-container">
@@ -38,6 +39,95 @@
             </div>
         </div>
     </div>
+
+    <!-- Study History - Modern Minimal Design -->
+    @if (Model.LastStudySessions.Any() || Model.LastStudyCourses.Any())
+    {
+        <div class="card mb-4 study-history-card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">
+                        <i class="fas fa-history me-2"></i>
+                        تاریخچه مطالعه
+                    </h6>
+                    <small class="text-muted">آخرین فعالیت‌های شما</small>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="row g-0">
+                    <!-- Last Study Sessions -->
+                    @if (Model.LastStudySessions.Any())
+                    {
+                        <div class="col-md-6">
+                            <div class="study-section">
+                                <div class="section-header">
+                                    <h6 class="section-title">
+                                        <i class="fas fa-play-circle me-2"></i>
+                                        آخرین مطالعات
+                                    </h6>
+                                </div>
+                                <div class="study-list">
+                                    @foreach (var session in Model.LastStudySessions.Take(5))
+                                    {
+                                        <div class="study-item">
+                                            <div class="study-content">
+                                                <div class="study-title">@session.ScheduleItemTitle</div>
+                                                <div class="study-meta">
+                                                    <span class="study-time">@session.RelativeTime</span>
+                                                    <span class="study-duration">@session.FormattedDuration</span>
+                                                </div>
+                                            </div>
+                                            <div class="study-action">
+                                                <a href="@Url.Action("Study", "ScheduleItem", new { id = session.ScheduleItemId })" 
+                                                   class="btn-continue-mini" title="ادامه مطالعه">
+                                                    <i class="fas fa-play"></i>
+                                                </a>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    
+                    <!-- Last Study Courses -->
+                    @if (Model.LastStudyCourses.Any())
+                    {
+                        <div class="col-md-6">
+                            <div class="study-section">
+                                <div class="section-header">
+                                    <h6 class="section-title">
+                                        <i class="fas fa-graduation-cap me-2"></i>
+                                        دوره‌های اخیر
+                                    </h6>
+                                </div>
+                                <div class="study-list">
+                                    @foreach (var course in Model.LastStudyCourses.Take(5))
+                                    {
+                                        <div class="study-item">
+                                            <div class="study-content">
+                                                <div class="study-title">@course.CourseTitle</div>
+                                                <div class="study-meta">
+                                                    <span class="study-time">@course.RelativeTime</span>
+                                                    <span class="study-progress">@course.FormattedTotalTime</span>
+                                                </div>
+                                            </div>
+                                            <div class="study-action">
+                                                <a href="@Url.Action("Index", "Course")" 
+                                                   class="btn-continue-mini" title="مشاهده دوره">
+                                                    <i class="fas fa-external-link-alt"></i>
+                                                </a>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
 
     <!-- Quick Actions -->
     <div class="card mb-4">
