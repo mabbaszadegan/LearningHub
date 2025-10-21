@@ -250,6 +250,14 @@ public class ContentBlockData
     // Audio specific settings
     public bool IsRecorded { get; set; } = false;
     public int? Duration { get; set; } // in seconds
+    
+    // Code block specific settings
+    public string? CodeContent { get; set; }
+    public string? Language { get; set; } = "plaintext";
+    public string? Theme { get; set; } = "default";
+    public string? CodeTitle { get; set; }
+    public bool ShowLineNumbers { get; set; } = true;
+    public bool EnableCopyButton { get; set; } = true;
 }
 
 public enum ContentBlockType
@@ -257,7 +265,8 @@ public enum ContentBlockType
     Text = 0,
     Image = 1,
     Video = 2,
-    Audio = 3
+    Audio = 3,
+    Code = 4
 }
 
 // Stats DTO

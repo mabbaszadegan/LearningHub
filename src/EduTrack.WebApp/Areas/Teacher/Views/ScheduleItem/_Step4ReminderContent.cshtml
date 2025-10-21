@@ -363,6 +363,135 @@
                 </div>
                 </div>
             </div>
+            
+    <!-- Code Block Template -->
+    <div class="content-block-template" data-type="code">
+        <div class="block-header">
+            <div class="block-type">
+                <i class="fas fa-code"></i>
+                <span>بلاک کد</span>
+            </div>
+            <div class="block-actions">
+                <button type="button" class="btn-icon" data-action="move-up" title="انتقال به بالا">
+                    <i class="fas fa-arrow-up"></i>
+                </button>
+                <button type="button" class="btn-icon" data-action="move-down" title="انتقال به پایین">
+                    <i class="fas fa-arrow-down"></i>
+                </button>
+                <button type="button" class="btn-icon success" data-action="insert-above" title="درج بلاک بالا">
+                    <i class="fas fa-plus"></i>
+                </button>
+                <button type="button" class="btn-icon" data-action="fullscreen" title="تمام صفحه">
+                    <i class="fas fa-expand"></i>
+                </button>
+                <button type="button" class="btn-icon danger" data-action="delete" title="حذف">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+            <i class="fas fa-chevron-down collapse-icon" data-action="toggle-collapse"></i>
+        </div>
+        <div class="block-content">
+            <div class="code-block-settings">
+                <div class="settings-grid">
+                    <div class="setting-item">
+                        <label>زبان برنامه‌نویسی:</label>
+                        <select class="form-select-sm" data-setting="language">
+                            <option value="javascript">JavaScript</option>
+                            <option value="python">Python</option>
+                            <option value="csharp">C#</option>
+                            <option value="java">Java</option>
+                            <option value="cpp">C++</option>
+                            <option value="c">C</option>
+                            <option value="php">PHP</option>
+                            <option value="ruby">Ruby</option>
+                            <option value="go">Go</option>
+                            <option value="rust">Rust</option>
+                            <option value="swift">Swift</option>
+                            <option value="kotlin">Kotlin</option>
+                            <option value="typescript">TypeScript</option>
+                            <option value="html">HTML</option>
+                            <option value="css">CSS</option>
+                            <option value="scss">SCSS</option>
+                            <option value="sql">SQL</option>
+                            <option value="json">JSON</option>
+                            <option value="xml">XML</option>
+                            <option value="yaml">YAML</option>
+                            <option value="markdown">Markdown</option>
+                            <option value="bash">Bash</option>
+                            <option value="powershell">PowerShell</option>
+                            <option value="plaintext" selected>Plain Text</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <label>تم رنگی:</label>
+                        <select class="form-select-sm" data-setting="theme">
+                            <option value="default" selected>پیش‌فرض</option>
+                            <option value="dark">تیره</option>
+                            <option value="light">روشن</option>
+                            <option value="monokai">Monokai</option>
+                            <option value="github">GitHub</option>
+                            <option value="vs">Visual Studio</option>
+                            <option value="atom">Atom</option>
+                            <option value="dracula">Dracula</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <label>اندازه:</label>
+                        <select class="form-select-sm" data-setting="size">
+                            <option value="small">کوچک</option>
+                            <option value="medium" selected>متوسط</option>
+                            <option value="large">بزرگ</option>
+                            <option value="full">تمام عرض</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="settings-row">
+                    <div class="setting-item full-width">
+                        <label>عنوان کد (اختیاری):</label>
+                        <input type="text" class="form-control-sm" data-setting="title" placeholder="عنوان کد را وارد کنید">
+                    </div>
+                </div>
+                <div class="settings-row">
+                    <div class="setting-item">
+                        <label class="checkbox-label">
+                            <input type="checkbox" data-setting="showLineNumbers" checked>
+                            <span>نمایش شماره خط</span>
+                        </label>
+                    </div>
+                    <div class="setting-item">
+                        <label class="checkbox-label">
+                            <input type="checkbox" data-setting="enableCopyButton" checked>
+                            <span>دکمه کپی</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="code-editor-container">
+                <div class="code-editor-header">
+                    <div class="code-language-badge">
+                        <i class="fas fa-code"></i>
+                        <span class="language-name">Plain Text</span>
+                    </div>
+                    <div class="code-actions">
+                        <button type="button" class="btn-icon" data-action="copy-code" title="کپی کد">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                        <button type="button" class="btn-icon" data-action="format-code" title="فرمت کد">
+                            <i class="fas fa-magic"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="code-editor">
+                    <textarea class="code-textarea" data-code-content placeholder="کد خود را اینجا وارد کنید..."></textarea>
+                    <div class="code-preview" data-code-preview></div>
+                </div>
+                <div class="code-stats">
+                    <span class="line-count">خط: <span data-line-count>0</span></span>
+                    <span class="char-count">کاراکتر: <span data-char-count>0</span></span>
+                </div>
+            </div>
+        </div>
+    </div>
         </div>
         
 <!-- Block Type Selection Modal -->

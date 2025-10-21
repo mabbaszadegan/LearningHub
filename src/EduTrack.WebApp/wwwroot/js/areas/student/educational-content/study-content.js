@@ -218,6 +218,46 @@ let studySession = {
                 }
                 break;
                 
+            case 'code':
+            case 4: // Code
+                const codeContent = block.data?.codeContent || block.data?.CodeContent || '';
+                const language = block.data?.language || block.data?.Language || 'plaintext';
+                const theme = block.data?.theme || block.data?.Theme || 'default';
+                const codeTitle = block.data?.codeTitle || block.data?.CodeTitle || '';
+                const showLineNumbers = block.data?.showLineNumbers !== false;
+                const enableCopyButton = block.data?.enableCopyButton !== false;
+                
+                if (codeContent) {
+                    const codeId = `code-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+                    
+                    blockElement.innerHTML = `
+                        <div class="content-block-code">
+                            <div class="code-header">
+                                ${codeTitle ? `<div class="code-title">${codeTitle}</div>` : ''}
+                                <div class="code-language">
+                                    <i class="fas fa-code"></i>
+                                    <span>${this.getLanguageDisplayName(language)}</span>
+                                </div>
+                                ${enableCopyButton ? `
+                                    <div class="code-actions">
+                                        <button type="button" class="copy-btn" onclick="studySession.copyCodeToClipboard('${codeId}'); return false;" title="کپی کد">
+                                            <i class="fas fa-copy"></i>
+                                            <span>کپی</span>
+                                        </button>
+                                    </div>
+                                ` : ''}
+                            </div>
+                            <div class="code-content">
+                                <pre><code id="${codeId}" class="language-${language} theme-${theme}" data-code-content="${this.escapeHtml(codeContent)}">${this.highlightCodeSyntax(codeContent, language)}</code></pre>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    console.warn('Code block without content:', block);
+                    return null;
+                }
+                break;
+                
             default:
                 console.warn('Unknown content block type:', block.type);
                 return null;
@@ -241,6 +281,153 @@ let studySession = {
         formatted = formatted.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
         
         return formatted;
+    },
+    
+    getLanguageDisplayName(language) {
+        const languageNames = {
+            'javascript': 'JavaScript',
+            'python': 'Python',
+            'csharp': 'C#',
+            'java': 'Java',
+            'cpp': 'C++',
+            'c': 'C',
+            'php': 'PHP',
+            'ruby': 'Ruby',
+            'go': 'Go',
+            'rust': 'Rust',
+            'swift': 'Swift',
+            'kotlin': 'Kotlin',
+            'typescript': 'TypeScript',
+            'html': 'HTML',
+            'css': 'CSS',
+            'scss': 'SCSS',
+            'sql': 'SQL',
+            'json': 'JSON',
+            'xml': 'XML',
+            'yaml': 'YAML',
+            'markdown': 'Markdown',
+            'bash': 'Bash',
+            'powershell': 'PowerShell',
+            'plaintext': 'Plain Text'
+        };
+        return languageNames[language] || 'Plain Text';
+    },
+    
+    highlightCodeSyntax(code, language) {
+        if (language === 'plaintext') {
+            return this.escapeHtml(code);
+        }
+        
+        let highlighted = this.escapeHtml(code);
+        
+        switch (language) {
+            case 'javascript':
+            case 'typescript':
+                highlighted = this.highlightJavaScript(highlighted);
+                break;
+            case 'python':
+                highlighted = this.highlightPython(highlighted);
+                break;
+            case 'html':
+                highlighted = this.highlightHTML(highlighted);
+                break;
+            case 'css':
+            case 'scss':
+                highlighted = this.highlightCSS(highlighted);
+                break;
+            case 'json':
+                highlighted = this.highlightJSON(highlighted);
+                break;
+            case 'sql':
+                highlighted = this.highlightSQL(highlighted);
+                break;
+        }
+        
+        return highlighted;
+    },
+    
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    },
+    
+    highlightJavaScript(code) {
+        return code
+            .replace(/\b(function|const|let|var|if|else|for|while|return|class|import|export|from|async|await|try|catch|finally|throw|new|this|typeof|instanceof|in|of|true|false|null|undefined)\b/g, '<span class="keyword">$1</span>')
+            .replace(/(["'`])((?:\\.|(?!\1)[^\\])*?)\1/g, '<span class="string">$1$2$1</span>')
+            .replace(/\/\/.*$/gm, '<span class="comment">$&</span>')
+            .replace(/\/\*[\s\S]*?\*\//g, '<span class="comment">$&</span>')
+            .replace(/\b\d+\.?\d*\b/g, '<span class="number">$&</span>');
+    },
+    
+    highlightPython(code) {
+        return code
+            .replace(/\b(def|class|if|elif|else|for|while|try|except|finally|with|import|from|return|yield|lambda|and|or|not|in|is|True|False|None)\b/g, '<span class="keyword">$1</span>')
+            .replace(/(["'`])((?:\\.|(?!\1)[^\\])*?)\1/g, '<span class="string">$1$2$1</span>')
+            .replace(/#.*$/gm, '<span class="comment">$&</span>')
+            .replace(/\b\d+\.?\d*\b/g, '<span class="number">$&</span>');
+    },
+    
+    highlightHTML(code) {
+        return code
+            .replace(/&lt;(\/?[^&]+)&gt;/g, '<span class="keyword">&lt;$1&gt;</span>')
+            .replace(/(["'])((?:\\.|(?!\1)[^\\])*?)\1/g, '<span class="string">$1$2$1</span>')
+            .replace(/&lt;!--[\s\S]*?--&gt;/g, '<span class="comment">$&</span>');
+    },
+    
+    highlightCSS(code) {
+        return code
+            .replace(/([.#]?[a-zA-Z-]+)\s*\{/g, '<span class="function">$1</span> {')
+            .replace(/([a-zA-Z-]+)\s*:/g, '<span class="variable">$1</span>:')
+            .replace(/(["'])((?:\\.|(?!\1)[^\\])*?)\1/g, '<span class="string">$1$2$1</span>')
+            .replace(/\/\*[\s\S]*?\*\//g, '<span class="comment">$&</span>')
+            .replace(/\b\d+[a-zA-Z%]*\b/g, '<span class="number">$&</span>');
+    },
+    
+    highlightJSON(code) {
+        return code
+            .replace(/("(?:[^"\\]|\\.)*")\s*:/g, '<span class="variable">$1</span>:')
+            .replace(/: ("(?:[^"\\]|\\.)*")/g, ': <span class="string">$1</span>')
+            .replace(/: (true|false|null)/g, ': <span class="keyword">$1</span>')
+            .replace(/: (\d+\.?\d*)/g, ': <span class="number">$1</span>');
+    },
+    
+    highlightSQL(code) {
+        return code
+            .replace(/\b(SELECT|FROM|WHERE|INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|TABLE|INDEX|PRIMARY|KEY|FOREIGN|REFERENCES|JOIN|INNER|LEFT|RIGHT|OUTER|ON|GROUP|BY|ORDER|HAVING|UNION|DISTINCT|COUNT|SUM|AVG|MIN|MAX|AS|AND|OR|NOT|IN|EXISTS|BETWEEN|LIKE|IS|NULL)\b/gi, '<span class="keyword">$1</span>')
+            .replace(/(["'])((?:\\.|(?!\1)[^\\])*?)\1/g, '<span class="string">$1$2$1</span>')
+            .replace(/--.*$/gm, '<span class="comment">$&</span>')
+            .replace(/\/\*[\s\S]*?\*\//g, '<span class="comment">$&</span>');
+    },
+    
+    copyCodeToClipboard(codeId) {
+        const codeElement = document.getElementById(codeId);
+        if (codeElement) {
+            const codeContent = codeElement.dataset.codeContent || codeElement.textContent;
+            navigator.clipboard.writeText(codeContent).then(() => {
+                const button = codeElement.closest('.content-block-code').querySelector('.copy-btn');
+                if (button) {
+                    const originalContent = button.innerHTML;
+                    button.innerHTML = '<i class="fas fa-check"></i><span>کپی شد!</span>';
+                    button.classList.add('copied');
+                    
+                    setTimeout(() => {
+                        button.innerHTML = originalContent;
+                        button.classList.remove('copied');
+                    }, 2000);
+                }
+            }).catch(err => {
+                console.error('Failed to copy code:', err);
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = codeContent;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+            });
+        }
     },
     
     formatDuration(seconds) {

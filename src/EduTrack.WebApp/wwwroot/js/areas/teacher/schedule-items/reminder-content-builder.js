@@ -33,12 +33,13 @@ function showBlockTypeModal() {
             { type: 'text', name: 'متن' },
             { type: 'image', name: 'تصویر' },
             { type: 'video', name: 'ویدیو' },
-            { type: 'audio', name: 'صوت' }
+            { type: 'audio', name: 'صوت' },
+            { type: 'code', name: 'کد' }
         ];
         
-        const selection = prompt('انتخاب نوع بلاک:\n1. متن\n2. تصویر\n3. ویدیو\n4. صوت\n\nلطفاً شماره مورد نظر را وارد کنید:');
+        const selection = prompt('انتخاب نوع بلاک:\n1. متن\n2. تصویر\n3. ویدیو\n4. صوت\n5. کد\n\nلطفاً شماره مورد نظر را وارد کنید:');
         
-        if (selection && selection >= 1 && selection <= 4) {
+        if (selection && selection >= 1 && selection <= 5) {
             const selectedType = types[selection - 1].type;
             if (window.reminderBlockManager) {
                 window.reminderBlockManager.addBlock(selectedType);
@@ -62,12 +63,13 @@ function showBlockTypeModal() {
             { type: 'text', name: 'متن' },
             { type: 'image', name: 'تصویر' },
             { type: 'video', name: 'ویدیو' },
-            { type: 'audio', name: 'صوت' }
+            { type: 'audio', name: 'صوت' },
+            { type: 'code', name: 'کد' }
         ];
         
-        const selection = prompt('انتخاب نوع بلاک:\n1. متن\n2. تصویر\n3. ویدیو\n4. صوت\n\nلطفاً شماره مورد نظر را وارد کنید:');
+        const selection = prompt('انتخاب نوع بلاک:\n1. متن\n2. تصویر\n3. ویدیو\n4. صوت\n5. کد\n\nلطفاً شماره مورد نظر را وارد کنید:');
         
-        if (selection && selection >= 1 && selection <= 4) {
+        if (selection && selection >= 1 && selection <= 5) {
             const selectedType = types[selection - 1].type;
             if (window.reminderBlockManager) {
                 window.reminderBlockManager.addBlock(selectedType);
@@ -461,12 +463,13 @@ class ReminderContentBlockManager {
             { type: 'text', name: 'متن', icon: 'fas fa-font' },
             { type: 'image', name: 'تصویر', icon: 'fas fa-image' },
             { type: 'video', name: 'ویدیو', icon: 'fas fa-video' },
-            { type: 'audio', name: 'صوت', icon: 'fas fa-microphone' }
+            { type: 'audio', name: 'صوت', icon: 'fas fa-microphone' },
+            { type: 'code', name: 'کد', icon: 'fas fa-code' }
         ];
         
-        const selection = prompt('انتخاب نوع بلاک:\n1. متن\n2. تصویر\n3. ویدیو\n4. صوت\n\nلطفاً شماره مورد نظر را وارد کنید:');
+        const selection = prompt('انتخاب نوع بلاک:\n1. متن\n2. تصویر\n3. ویدیو\n4. صوت\n5. کد\n\nلطفاً شماره مورد نظر را وارد کنید:');
         
-        if (selection && selection >= 1 && selection <= 4) {
+        if (selection && selection >= 1 && selection <= 5) {
             const selectedType = types[selection - 1].type;
             this.addBlock(selectedType);
         }
@@ -474,17 +477,27 @@ class ReminderContentBlockManager {
     
     addBlock(type) {
         const blockId = `block-${this.nextBlockId++}`;
+        const insertionIndex = this.insertionPoint !== undefined ? this.insertionPoint : this.blocks.length;
+        
         const block = {
             id: blockId,
             type: type,
-            order: this.blocks.length,
+            order: insertionIndex,
             data: this.getDefaultBlockData(type)
         };
         
-        this.blocks.push(block);
+        // Insert block at the specified position
+        this.blocks.splice(insertionIndex, 0, block);
+        
+        // Update order values for all blocks to ensure consistency
+        this.updateBlockOrders();
+        
         this.renderBlock(block);
         this.updateEmptyState();
         this.updateHiddenField();
+        
+        // Clear insertion point
+        this.insertionPoint = undefined;
         
         // Ensure scroll is enabled
         this.ensureScrollEnabled();
@@ -548,10 +561,13 @@ class ReminderContentBlockManager {
                 };
             case 'code':
                 return {
-                    content: '',
+                    codeContent: '',
                     language: 'plaintext',
                     theme: 'default',
-                    title: ''
+                    codeTitle: '',
+                    size: 'medium',
+                    showLineNumbers: true,
+                    enableCopyButton: true
                 };
             default:
                 return {};
@@ -709,6 +725,298 @@ class ReminderContentBlockManager {
         settingsSelects.forEach(select => {
             select.addEventListener('change', () => this.updateBlockSettings(blockElement));
         });
+        
+        // Code block events
+        if (blockElement.dataset.type === 'code') {
+            this.setupCodeBlockEventListeners(blockElement);
+        }
+    }
+    
+    setupCodeBlockEventListeners(blockElement) {
+        // Code textarea events
+        const codeTextarea = blockElement.querySelector('[data-code-content]');
+        if (codeTextarea) {
+            codeTextarea.addEventListener('input', (e) => {
+                // Ensure textarea only contains plain text
+                const plainText = e.target.value;
+                if (e.target.value !== plainText) {
+                    e.target.value = plainText;
+                }
+                this.updateCodePreview(blockElement);
+                this.updateCodeBlockData(blockElement);
+            });
+            
+            codeTextarea.addEventListener('keydown', (e) => {
+                // Handle Tab key for indentation
+                if (e.key === 'Tab') {
+                    e.preventDefault();
+                    const start = codeTextarea.selectionStart;
+                    const end = codeTextarea.selectionEnd;
+                    const value = codeTextarea.value;
+                    
+                    if (e.shiftKey) {
+                        // Shift+Tab: Remove indentation
+                        const lines = value.substring(0, start).split('\n');
+                        const currentLine = lines[lines.length - 1];
+                        if (currentLine.startsWith('    ')) {
+                            const newValue = value.substring(0, start - 4) + value.substring(start);
+                            codeTextarea.value = newValue;
+                            codeTextarea.setSelectionRange(start - 4, end - 4);
+                        }
+                    } else {
+                        // Tab: Add indentation
+                        const newValue = value.substring(0, start) + '    ' + value.substring(end);
+                        codeTextarea.value = newValue;
+                        codeTextarea.setSelectionRange(start + 4, end + 4);
+                    }
+                    
+                    this.updateCodePreview(blockElement);
+                    this.updateCodeBlockData(blockElement);
+                }
+            });
+        }
+        
+        // Code action events
+        const codeActions = blockElement.querySelector('.code-actions');
+        if (codeActions) {
+            codeActions.addEventListener('click', (e) => {
+                const button = e.target.closest('.btn-icon');
+                if (button) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const action = button.dataset.action;
+                    this.handleCodeAction(action, blockElement);
+                }
+            });
+        }
+        
+        // Settings change events for code blocks
+        const languageSelect = blockElement.querySelector('[data-setting="language"]');
+        if (languageSelect) {
+            languageSelect.addEventListener('change', () => {
+                this.updateCodeBlockData(blockElement);
+                this.updateCodePreview(blockElement);
+                this.updateLanguageBadge(blockElement);
+            });
+        }
+        
+        const themeSelect = blockElement.querySelector('[data-setting="theme"]');
+        if (themeSelect) {
+            themeSelect.addEventListener('change', () => {
+                this.updateCodeBlockData(blockElement);
+                this.updateCodeTheme(blockElement);
+            });
+        }
+        
+        const sizeSelect = blockElement.querySelector('[data-setting="size"]');
+        if (sizeSelect) {
+            sizeSelect.addEventListener('change', () => {
+                this.updateCodeBlockData(blockElement);
+                this.updateCodeSize(blockElement);
+            });
+        }
+        
+        const titleInput = blockElement.querySelector('[data-setting="title"]');
+        if (titleInput) {
+            titleInput.addEventListener('input', () => {
+                this.updateCodeBlockData(blockElement);
+            });
+        }
+        
+        const showLineNumbersCheckbox = blockElement.querySelector('[data-setting="showLineNumbers"]');
+        if (showLineNumbersCheckbox) {
+            showLineNumbersCheckbox.addEventListener('change', () => {
+                this.updateCodeBlockData(blockElement);
+            });
+        }
+        
+        const enableCopyButtonCheckbox = blockElement.querySelector('[data-setting="enableCopyButton"]');
+        if (enableCopyButtonCheckbox) {
+            enableCopyButtonCheckbox.addEventListener('change', () => {
+                this.updateCodeBlockData(blockElement);
+            });
+        }
+    }
+    
+    handleCodeAction(action, blockElement) {
+        switch (action) {
+            case 'copy-code':
+                this.copyCodeToClipboard(blockElement);
+                break;
+            case 'format-code':
+                this.formatCode(blockElement);
+                break;
+        }
+    }
+    
+    copyCodeToClipboard(blockElement) {
+        const textarea = blockElement.querySelector('[data-code-content]');
+        if (textarea) {
+            navigator.clipboard.writeText(textarea.value).then(() => {
+                const button = blockElement.querySelector('[data-action="copy-code"]');
+                if (button) {
+                    const originalIcon = button.innerHTML;
+                    button.innerHTML = '<i class="fas fa-check"></i>';
+                    button.classList.add('copied');
+                    
+                    setTimeout(() => {
+                        button.innerHTML = originalIcon;
+                        button.classList.remove('copied');
+                    }, 2000);
+                }
+            }).catch(err => {
+                console.error('Failed to copy code:', err);
+                // Fallback for older browsers
+                textarea.select();
+                document.execCommand('copy');
+            });
+        }
+    }
+    
+    formatCode(blockElement) {
+        const textarea = blockElement.querySelector('[data-code-content]');
+        const language = blockElement.querySelector('[data-setting="language"]')?.value || 'plaintext';
+        
+        if (!textarea) return;
+        
+        let formatted = textarea.value;
+        
+        // Basic formatting for different languages
+        switch (language) {
+            case 'javascript':
+            case 'typescript':
+                formatted = this.formatJavaScript(formatted);
+                break;
+            case 'json':
+                formatted = this.formatJSON(formatted);
+                break;
+            case 'html':
+                formatted = this.formatHTML(formatted);
+                break;
+            case 'css':
+            case 'scss':
+                formatted = this.formatCSS(formatted);
+                break;
+        }
+        
+        if (formatted !== textarea.value) {
+            textarea.value = formatted;
+            this.updateCodePreview(blockElement);
+            this.updateCodeBlockData(blockElement);
+        }
+    }
+    
+    formatJavaScript(code) {
+        // Basic JavaScript formatting
+        return code
+            .replace(/\s*{\s*/g, ' {\n    ')
+            .replace(/;\s*/g, ';\n')
+            .replace(/\s*}\s*/g, '\n}\n')
+            .replace(/\n\s*\n/g, '\n')
+            .trim();
+    }
+    
+    formatJSON(code) {
+        try {
+            const parsed = JSON.parse(code);
+            return JSON.stringify(parsed, null, 2);
+        } catch (e) {
+            return code; // Return original if not valid JSON
+        }
+    }
+    
+    formatHTML(code) {
+        // Basic HTML formatting
+        return code
+            .replace(/></g, '>\n<')
+            .replace(/\n\s*\n/g, '\n')
+            .trim();
+    }
+    
+    formatCSS(code) {
+        // Basic CSS formatting
+        return code
+            .replace(/\s*{\s*/g, ' {\n    ')
+            .replace(/;\s*/g, ';\n')
+            .replace(/\s*}\s*/g, '\n}\n')
+            .replace(/\n\s*\n/g, '\n')
+            .trim();
+    }
+    
+    updateCodeBlockData(blockElement) {
+        const blockId = blockElement.dataset.blockId;
+        const block = this.blocks.find(b => b.id === blockId);
+        
+        if (block) {
+            const textarea = blockElement.querySelector('[data-code-content]');
+            const languageSelect = blockElement.querySelector('[data-setting="language"]');
+            const themeSelect = blockElement.querySelector('[data-setting="theme"]');
+            const sizeSelect = blockElement.querySelector('[data-setting="size"]');
+            const titleInput = blockElement.querySelector('[data-setting="title"]');
+            const showLineNumbersCheckbox = blockElement.querySelector('[data-setting="showLineNumbers"]');
+            const enableCopyButtonCheckbox = blockElement.querySelector('[data-setting="enableCopyButton"]');
+            
+            block.data.codeContent = textarea?.value || '';
+            block.data.language = languageSelect?.value || 'plaintext';
+            block.data.theme = themeSelect?.value || 'default';
+            block.data.size = sizeSelect?.value || 'medium';
+            block.data.codeTitle = titleInput?.value || '';
+            block.data.showLineNumbers = showLineNumbersCheckbox?.checked || true;
+            block.data.enableCopyButton = enableCopyButtonCheckbox?.checked || true;
+            
+            this.updateHiddenField();
+        }
+    }
+    
+    updateLanguageBadge(blockElement) {
+        const languageSelect = blockElement.querySelector('[data-setting="language"]');
+        const languageBadge = blockElement.querySelector('.language-name');
+        
+        if (languageSelect && languageBadge) {
+            const languageNames = {
+                'javascript': 'JavaScript',
+                'python': 'Python',
+                'csharp': 'C#',
+                'java': 'Java',
+                'cpp': 'C++',
+                'c': 'C',
+                'php': 'PHP',
+                'ruby': 'Ruby',
+                'go': 'Go',
+                'rust': 'Rust',
+                'swift': 'Swift',
+                'kotlin': 'Kotlin',
+                'typescript': 'TypeScript',
+                'html': 'HTML',
+                'css': 'CSS',
+                'scss': 'SCSS',
+                'sql': 'SQL',
+                'json': 'JSON',
+                'xml': 'XML',
+                'yaml': 'YAML',
+                'markdown': 'Markdown',
+                'bash': 'Bash',
+                'powershell': 'PowerShell',
+                'plaintext': 'Plain Text'
+            };
+            languageBadge.textContent = languageNames[languageSelect.value] || 'Plain Text';
+        }
+    }
+    
+    updateCodeTheme(blockElement) {
+        const themeSelect = blockElement.querySelector('[data-setting="theme"]');
+        if (themeSelect) {
+            blockElement.className = blockElement.className.replace(/code-block-theme-\w+/g, '');
+            blockElement.classList.add(`code-block-theme-${themeSelect.value}`);
+        }
+    }
+    
+    updateCodeSize(blockElement) {
+        const sizeSelect = blockElement.querySelector('[data-setting="size"]');
+        if (sizeSelect) {
+            blockElement.className = blockElement.className.replace(/code-block-size-\w+/g, '');
+            blockElement.classList.add(`code-block-size-${sizeSelect.value}`);
+        }
     }
     
     updateBlockContent(element, block) {
@@ -776,6 +1084,9 @@ class ReminderContentBlockManager {
                     }
                 }
                 break;
+            case 'code':
+                this.updateCodeBlockContent(element, block);
+                break;
         }
         
         // Update settings
@@ -794,6 +1105,187 @@ class ReminderContentBlockManager {
         });
     }
     
+    updateCodeBlockContent(element, block) {
+        // Update code content
+        const textarea = element.querySelector('[data-code-content]');
+        const preview = element.querySelector('[data-code-preview]');
+        const languageBadge = element.querySelector('.language-name');
+        
+        if (textarea && block.data.codeContent) {
+            textarea.value = block.data.codeContent;
+            this.updateCodePreview(element);
+        }
+        
+        // Update language badge
+        if (languageBadge) {
+            const languageNames = {
+                'javascript': 'JavaScript',
+                'python': 'Python',
+                'csharp': 'C#',
+                'java': 'Java',
+                'cpp': 'C++',
+                'c': 'C',
+                'php': 'PHP',
+                'ruby': 'Ruby',
+                'go': 'Go',
+                'rust': 'Rust',
+                'swift': 'Swift',
+                'kotlin': 'Kotlin',
+                'typescript': 'TypeScript',
+                'html': 'HTML',
+                'css': 'CSS',
+                'scss': 'SCSS',
+                'sql': 'SQL',
+                'json': 'JSON',
+                'xml': 'XML',
+                'yaml': 'YAML',
+                'markdown': 'Markdown',
+                'bash': 'Bash',
+                'powershell': 'PowerShell',
+                'plaintext': 'Plain Text'
+            };
+            languageBadge.textContent = languageNames[block.data.language] || 'Plain Text';
+        }
+        
+        // Update theme classes
+        element.className = element.className.replace(/code-block-theme-\w+/g, '');
+        element.classList.add(`code-block-theme-${block.data.theme || 'default'}`);
+        
+        // Update size classes
+        element.className = element.className.replace(/code-block-size-\w+/g, '');
+        element.classList.add(`code-block-size-${block.data.size || 'medium'}`);
+    }
+    
+    updateCodePreview(element) {
+        const textarea = element.querySelector('[data-code-content]');
+        const preview = element.querySelector('[data-code-preview]');
+        const lineCountSpan = element.querySelector('[data-line-count]');
+        const charCountSpan = element.querySelector('[data-char-count]');
+        
+        if (!textarea || !preview) return;
+        
+        const content = textarea.value;
+        const lines = content.split('\n').length;
+        const chars = content.length;
+        
+        // Update stats
+        if (lineCountSpan) lineCountSpan.textContent = lines;
+        if (charCountSpan) charCountSpan.textContent = chars;
+        
+        // Update preview with syntax highlighting
+        const highlighted = this.highlightSyntax(content, element);
+        preview.innerHTML = highlighted;
+        
+        // Ensure textarea only contains plain text (no HTML tags)
+        if (textarea.value !== content) {
+            textarea.value = content;
+        }
+    }
+    
+    highlightSyntax(code, element) {
+        const language = element.querySelector('[data-setting="language"]')?.value || 'plaintext';
+        
+        // First escape any existing HTML to prevent XSS
+        let escaped = this.escapeHtml(code);
+        
+        if (language === 'plaintext') {
+            return escaped;
+        }
+        
+        // Apply syntax highlighting - the methods add HTML tags
+        let highlighted = escaped;
+        
+        switch (language) {
+            case 'javascript':
+            case 'typescript':
+                highlighted = this.highlightJavaScript(highlighted);
+                break;
+            case 'python':
+                highlighted = this.highlightPython(highlighted);
+                break;
+            case 'html':
+                highlighted = this.highlightHTMLCode(highlighted);
+                break;
+            case 'css':
+            case 'scss':
+                highlighted = this.highlightCSS(highlighted);
+                break;
+            case 'json':
+                highlighted = this.highlightJSON(highlighted);
+                break;
+            case 'sql':
+                highlighted = this.highlightSQL(highlighted);
+                break;
+        }
+        
+        return highlighted;
+    }
+    
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
+    highlightJavaScript(code) {
+        return code
+            .replace(/\b(function|const|let|var|if|else|for|while|return|class|import|export|from|async|await|try|catch|finally|throw|new|this|typeof|instanceof|in|of|true|false|null|undefined)\b/g, '<span class="keyword">$1</span>')
+            .replace(/(["'`])((?:\\.|(?!\1)[^\\])*?)\1/g, '<span class="string">$1$2$1</span>')
+            .replace(/\/\/.*$/gm, '<span class="comment">$&</span>')
+            .replace(/\/\*[\s\S]*?\*\//g, '<span class="comment">$&</span>')
+            .replace(/\b\d+\.?\d*\b/g, '<span class="number">$&</span>');
+    }
+    
+    highlightPython(code) {
+        return code
+            .replace(/\b(def|class|if|elif|else|for|while|try|except|finally|with|import|from|return|yield|lambda|and|or|not|in|is|True|False|None)\b/g, '<span class="keyword">$1</span>')
+            .replace(/(["'`])((?:\\.|(?!\1)[^\\])*?)\1/g, '<span class="string">$1$2$1</span>')
+            .replace(/#.*$/gm, '<span class="comment">$&</span>')
+            .replace(/\b\d+\.?\d*\b/g, '<span class="number">$&</span>');
+    }
+    
+    highlightHTMLCode(code) {
+        return code
+            .replace(/&lt;(\/?[^&]+)&gt;/g, '<span class="keyword">&lt;$1&gt;</span>')
+            .replace(/(["'])((?:\\.|(?!\1)[^\\])*?)\1/g, '<span class="string">$1$2$1</span>')
+            .replace(/&lt;!--[\s\S]*?--&gt;/g, '<span class="comment">$&</span>');
+    }
+    
+    highlightCSS(code) {
+        return code
+            .replace(/([.#]?[a-zA-Z-]+)\s*\{/g, '<span class="function">$1</span> {')
+            .replace(/([a-zA-Z-]+)\s*:/g, '<span class="variable">$1</span>:')
+            .replace(/(["'])((?:\\.|(?!\1)[^\\])*?)\1/g, '<span class="string">$1$2$1</span>')
+            .replace(/\/\*[\s\S]*?\*\//g, '<span class="comment">$&</span>')
+            .replace(/\b\d+[a-zA-Z%]*\b/g, '<span class="number">$&</span>');
+    }
+    
+    highlightJSON(code) {
+        return code
+            .replace(/("(?:[^"\\]|\\.)*")\s*:/g, '<span class="variable">$1</span>:')
+            .replace(/: ("(?:[^"\\]|\\.)*")/g, ': <span class="string">$1</span>')
+            .replace(/: (true|false|null)/g, ': <span class="keyword">$1</span>')
+            .replace(/: (\d+\.?\d*)/g, ': <span class="number">$1</span>');
+    }
+    
+    highlightSQL(code) {
+        return code
+            .replace(/\b(SELECT|FROM|WHERE|INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|TABLE|INDEX|PRIMARY|KEY|FOREIGN|REFERENCES|JOIN|INNER|LEFT|RIGHT|OUTER|ON|GROUP|BY|ORDER|HAVING|UNION|DISTINCT|COUNT|SUM|AVG|MIN|MAX|AS|AND|OR|NOT|IN|EXISTS|BETWEEN|LIKE|IS|NULL)\b/gi, '<span class="keyword">$1</span>')
+            .replace(/(["'])((?:\\.|(?!\1)[^\\])*?)\1/g, '<span class="string">$1$2$1</span>')
+            .replace(/--.*$/gm, '<span class="comment">$&</span>')
+            .replace(/\/\*[\s\S]*?\*\//g, '<span class="comment">$&</span>');
+    }
+    
+    updateBlockOrders() {
+        // Update order values for all blocks to match their current positions
+        this.blocks.forEach((block, index) => {
+            block.order = index;
+        });
+        
+        // Debug log to verify order is correct
+        console.log('Block orders updated:', this.blocks.map(b => ({ id: b.id, order: b.order })));
+    }
+    
     updateEmptyState() {
         if (this.blocks.length === 0) {
             this.emptyState.style.display = 'flex';
@@ -809,6 +1301,9 @@ class ReminderContentBlockManager {
         if (blockIndex > 0) {
             // Swap blocks
             [this.blocks[blockIndex], this.blocks[blockIndex - 1]] = [this.blocks[blockIndex - 1], this.blocks[blockIndex]];
+            
+            // Update order values to match new positions
+            this.updateBlockOrders();
             
             // Update DOM
             const prevBlock = blockElement.previousElementSibling;
@@ -830,6 +1325,9 @@ class ReminderContentBlockManager {
         if (blockIndex < this.blocks.length - 1) {
             // Swap blocks
             [this.blocks[blockIndex], this.blocks[blockIndex + 1]] = [this.blocks[blockIndex + 1], this.blocks[blockIndex]];
+            
+            // Update order values to match new positions
+            this.updateBlockOrders();
             
             // Update DOM
             const nextBlock = blockElement.nextElementSibling;
@@ -859,6 +1357,9 @@ class ReminderContentBlockManager {
             
             // Remove from blocks array
             this.blocks = this.blocks.filter(b => b.id !== blockId);
+            
+            // Update order values for remaining blocks
+            this.updateBlockOrders();
             
             // Remove from DOM
             blockElement.remove();
@@ -1911,6 +2412,9 @@ class ReminderContentBlockManager {
                     } else {
                         this.nextBlockId = 1;
                     }
+                    
+                    // Ensure order values are correct (in case they were corrupted)
+                    this.updateBlockOrders();
                     
                     console.log('Loading blocks:', this.blocks);
                     console.log('Next block ID:', this.nextBlockId);
