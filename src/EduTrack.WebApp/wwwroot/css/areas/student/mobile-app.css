@@ -43,6 +43,7 @@ body {
     align-items: center;
     padding: 0 20px;
     height: 100%;
+    flex-direction: row-reverse;
 }
 
 .header-left {

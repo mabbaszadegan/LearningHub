@@ -16,7 +16,7 @@
             <div class="row">
                 @foreach (var enrollment in Model)
                 {
-                    <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="col-lg col-md-6 mb-4">
                         <div class="course-card" data-course-id="@enrollment.CourseId">
                             <div class="course-thumbnail">
                                 @if (!string.IsNullOrEmpty(enrollment.CourseThumbnail))
