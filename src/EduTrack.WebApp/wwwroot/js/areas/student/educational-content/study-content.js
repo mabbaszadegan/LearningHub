@@ -1,6 +1,7 @@
 /**
  * Study Content JavaScript - Hidden Timer with Exit Confirmation
  * Handles hidden timer and elegant exit confirmation for ScheduleItem study
+ * Includes beautiful reminder content rendering
  */
 
 let studySession = {
@@ -15,7 +16,523 @@ let studySession = {
         this.bindEvents();
         this.startHiddenTimer();
         this.startStudySession();
+        
+        // Initialize reminder content if needed
+        if (window.studyContentConfig?.contentType === 'Reminder') {
+            this.initializeReminderContent();
+        }
+        
         console.log('Study session initialized with sessionId:', this.sessionId);
+    },
+    
+    initializeReminderContent() {
+        const contentJson = window.studyContentConfig?.contentJson;
+        if (!contentJson) {
+            console.warn('No content JSON found for reminder');
+            this.showReminderError('محتوای یادآوری یافت نشد');
+            return;
+        }
+        
+        try {
+            const reminderContent = typeof contentJson === 'string' ? JSON.parse(contentJson) : contentJson;
+            this.renderReminderContent(reminderContent);
+        } catch (error) {
+            console.error('Error parsing reminder content:', error);
+            this.showReminderError('خطا در بارگذاری محتوای یادآوری');
+        }
+    },
+    
+    renderReminderContent(content) {
+        const container = document.getElementById('reminder-content');
+        if (!container) {
+            console.error('Reminder content container not found');
+            return;
+        }
+        
+        // Clear loading state
+        container.innerHTML = '';
+        
+        // Create header
+        const header = this.createReminderHeader(content);
+        container.appendChild(header);
+        
+        // Create body
+        const body = this.createReminderBody(content);
+        container.appendChild(body);
+        
+        console.log('Reminder content rendered successfully');
+    },
+    
+    createReminderHeader(content) {
+        const header = document.createElement('div');
+        header.className = 'reminder-header';
+        
+        const icon = document.createElement('div');
+        icon.className = 'reminder-icon';
+        icon.innerHTML = '<i class="fas fa-bell"></i>';
+        
+        const title = document.createElement('div');
+        title.className = 'reminder-title';
+        title.textContent = content.message || content.Message || 'یادآوری';
+        
+        const priority = document.createElement('div');
+        const priorityValue = content.priority || content.Priority || 'normal';
+        priority.className = `reminder-priority ${priorityValue}`;
+        priority.textContent = this.getPriorityText(priorityValue);
+        
+        header.appendChild(icon);
+        header.appendChild(title);
+        header.appendChild(priority);
+        
+        return header;
+    },
+    
+    createReminderBody(content) {
+        const body = document.createElement('div');
+        body.className = 'reminder-body';
+        
+        // Add main message if exists
+        const mainMessage = content.message || content.Message;
+        if (mainMessage && mainMessage.trim()) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'reminder-message';
+            messageDiv.innerHTML = this.formatTextContent(mainMessage);
+            body.appendChild(messageDiv);
+        }
+        
+        // Add content blocks
+        const blocks = content.blocks || content.Blocks;
+        if (blocks && blocks.length > 0) {
+            const blocksContainer = document.createElement('div');
+            blocksContainer.className = 'content-blocks';
+            
+            // Sort blocks by order
+            const sortedBlocks = blocks.sort((a, b) => (a.order || a.Order || 0) - (b.order || b.Order || 0));
+            
+            sortedBlocks.forEach(block => {
+                const blockElement = this.createContentBlock(block);
+                if (blockElement) {
+                    blocksContainer.appendChild(blockElement);
+                }
+            });
+            
+            body.appendChild(blocksContainer);
+        }
+        
+        return body;
+    },
+    
+    createContentBlock(block) {
+        const blockElement = document.createElement('div');
+        blockElement.className = 'content-block';
+        
+        switch ((block.type || block.Type)?.toLowerCase()) {
+            case 'text':
+            case 0: // Text
+                const textContent = block.data?.content || 
+                                  block.data?.textContent || 
+                                  block.data?.Content || 
+                                  block.data?.TextContent || 
+                                  '';
+                blockElement.innerHTML = `
+                    <div class="content-block-text">
+                        ${this.formatTextContent(textContent)}
+                    </div>
+                `;
+                break;
+                
+            case 'image':
+            case 1: // Image
+                const imageUrl = block.data?.fileUrl || block.data?.FileUrl;
+                const imageCaption = block.data?.caption || block.data?.Caption;
+                if (imageUrl) {
+                    const imageId = `image-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+                    
+                    blockElement.innerHTML = `
+                        <div class="content-block-image">
+                            <img src="${imageUrl}" 
+                                 alt="${imageCaption || 'تصویر'}" 
+                                 loading="lazy" 
+                                 id="${imageId}" 
+                                 data-image-url="${imageUrl}" 
+                                 data-image-caption="${imageCaption || ''}">
+                            <div class="image-overlay">
+                                <button type="button" class="image-action-btn" onclick="studySession.openImageModal('${imageId}'); return false;" title="بزرگنمایی">
+                                    <i class="fas fa-search-plus"></i>
+                                </button>
+                                <button type="button" class="image-action-btn" onclick="studySession.downloadImage('${imageUrl}', '${imageCaption || 'تصویر'}'); return false;" title="دانلود">
+                                    <i class="fas fa-download"></i>
+                                </button>
+                            </div>
+                            ${imageCaption ? `<div class="image-caption">${imageCaption}</div>` : ''}
+                        </div>
+                    `;
+                } else {
+                    console.warn('Image block without file URL:', block);
+                    return null;
+                }
+                break;
+                
+            case 'video':
+            case 2: // Video
+                const videoUrl = block.data?.fileUrl || block.data?.FileUrl;
+                const videoMimeType = block.data?.mimeType || block.data?.MimeType || 'video/mp4';
+                const videoCaption = block.data?.caption || block.data?.Caption;
+                if (videoUrl) {
+                    blockElement.innerHTML = `
+                        <div class="content-block-video">
+                            <video controls preload="metadata">
+                                <source src="${videoUrl}" type="${videoMimeType}">
+                                مرورگر شما از پخش ویدیو پشتیبانی نمی‌کند.
+                            </video>
+                            ${videoCaption ? `<div class="image-caption">${videoCaption}</div>` : ''}
+                        </div>
+                    `;
+                } else {
+                    console.warn('Video block without file URL:', block);
+                    return null;
+                }
+                break;
+                
+            case 'audio':
+            case 3: // Audio
+                const audioUrl = block.data?.fileUrl || block.data?.FileUrl;
+                const audioMimeType = block.data?.mimeType || block.data?.MimeType || 'audio/mpeg';
+                const audioDuration = block.data?.duration || block.data?.Duration;
+                const audioCaption = block.data?.caption || block.data?.Caption;
+                if (audioUrl) {
+                    const duration = audioDuration ? this.formatDuration(audioDuration) : '';
+                    const audioId = `audio-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+                    
+                    blockElement.innerHTML = `
+                        <div class="content-block-audio">
+                            <div class="audio-player-container">
+                                <div class="custom-audio-player">
+                                    <div class="speaker-button" id="speaker-${audioId}" data-audio-id="${audioId}">
+                                        <i class="fas fa-volume-up speaker-icon"></i>
+                                    </div>
+                                    <div class="audio-title">فایل صوتی</div>
+                                    <div class="audio-info">
+                                        ${duration ? `<span class="audio-duration">${duration}</span>` : ''}
+                                        <span class="audio-status" id="status-${audioId}">آماده پخش</span>
+                                    </div>
+                                    <div class="progress-container">
+                                        <div class="progress-bar" id="progress-${audioId}">
+                                            <div class="progress-fill" id="progress-fill-${audioId}"></div>
+                                        </div>
+                                        <div class="time-display">
+                                            <span id="current-time-${audioId}">00:00</span>
+                                            <span id="total-time-${audioId}">${duration || '00:00'}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <audio class="hidden-audio" id="${audioId}" preload="metadata">
+                                    <source src="${audioUrl}" type="${audioMimeType}">
+                                    مرورگر شما از پخش صدا پشتیبانی نمی‌کند.
+                                </audio>
+                                ${audioCaption ? `<div class="audio-caption">${audioCaption}</div>` : ''}
+                            </div>
+                        </div>
+                    `;
+                    
+                    // Initialize custom audio player after DOM is ready
+                    setTimeout(() => {
+                        this.initializeCustomAudioPlayer(audioId, audioUrl);
+                    }, 100);
+                } else {
+                    console.warn('Audio block without file URL:', block);
+                    return null;
+                }
+                break;
+                
+            default:
+                console.warn('Unknown content block type:', block.type);
+                return null;
+        }
+        
+        return blockElement;
+    },
+    
+    formatTextContent(text) {
+        if (!text) return '';
+        
+        // Convert line breaks to HTML
+        let formatted = text.replace(/\n/g, '<br>');
+        
+        // Convert markdown-style formatting
+        formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        formatted = formatted.replace(/\*(.*?)\*/g, '<em>$1</em>');
+        formatted = formatted.replace(/`(.*?)`/g, '<code>$1</code>');
+        
+        // Convert URLs to links
+        formatted = formatted.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
+        
+        return formatted;
+    },
+    
+    formatDuration(seconds) {
+        if (!seconds || seconds < 0) return '00:00';
+        
+        // Convert to integer to remove decimals
+        const totalSeconds = Math.floor(seconds);
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const secs = totalSeconds % 60;
+        
+        if (hours > 0) {
+            return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        } else {
+            return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+    },
+    
+    getPriorityText(priority) {
+        const priorityTexts = {
+            'high': 'اولویت بالا',
+            'normal': 'اولویت عادی',
+            'low': 'اولویت پایین'
+        };
+        return priorityTexts[priority] || 'اولویت عادی';
+    },
+    
+    initializeCustomAudioPlayer(audioId, audioUrl) {
+        const audio = document.getElementById(audioId);
+        const speakerButton = document.getElementById(`speaker-${audioId}`);
+        const statusElement = document.getElementById(`status-${audioId}`);
+        const progressBar = document.getElementById(`progress-${audioId}`);
+        const progressFill = document.getElementById(`progress-fill-${audioId}`);
+        const currentTimeElement = document.getElementById(`current-time-${audioId}`);
+        const totalTimeElement = document.getElementById(`total-time-${audioId}`);
+        
+        // Check if all elements exist
+        if (!audio || !speakerButton || !statusElement || !progressBar || !progressFill || !currentTimeElement || !totalTimeElement) {
+            console.warn('Audio player elements not found for:', audioId);
+            return;
+        }
+        
+        let isPlaying = false;
+        let isDragging = false;
+        
+        // Speaker button click handler
+        speakerButton.addEventListener('click', () => {
+            if (isPlaying) {
+                this.pauseAudio(audioId);
+            } else {
+                this.playAudio(audioId);
+            }
+        });
+        
+        // Progress bar click handler
+        progressBar.addEventListener('click', (e) => {
+            if (audio.duration) {
+                const rect = progressBar.getBoundingClientRect();
+                const clickX = e.clientX - rect.left;
+                const percentage = clickX / rect.width;
+                const newTime = percentage * audio.duration;
+                audio.currentTime = newTime;
+            }
+        });
+        
+        // Audio event listeners
+        audio.addEventListener('loadedmetadata', () => {
+            const duration = this.formatDuration(audio.duration);
+            totalTimeElement.textContent = duration;
+        });
+        
+        audio.addEventListener('timeupdate', () => {
+            if (!isDragging) {
+                const percentage = (audio.currentTime / audio.duration) * 100;
+                progressFill.style.width = `${percentage}%`;
+                currentTimeElement.textContent = this.formatDuration(audio.currentTime);
+            }
+        });
+        
+        audio.addEventListener('play', () => {
+            isPlaying = true;
+            speakerButton.classList.add('playing');
+            statusElement.textContent = 'در حال پخش';
+            speakerButton.querySelector('.speaker-icon').className = 'fas fa-volume-mute speaker-icon';
+        });
+        
+        audio.addEventListener('pause', () => {
+            isPlaying = false;
+            speakerButton.classList.remove('playing');
+            statusElement.textContent = 'متوقف شده';
+            speakerButton.querySelector('.speaker-icon').className = 'fas fa-volume-up speaker-icon';
+        });
+        
+        audio.addEventListener('ended', () => {
+            isPlaying = false;
+            speakerButton.classList.remove('playing');
+            statusElement.textContent = 'پایان یافت';
+            speakerButton.querySelector('.speaker-icon').className = 'fas fa-volume-up speaker-icon';
+            progressFill.style.width = '0%';
+            currentTimeElement.textContent = '00:00';
+        });
+        
+        audio.addEventListener('error', () => {
+            statusElement.textContent = 'خطا در بارگذاری';
+            console.error('Audio loading error:', audio.error);
+        });
+        
+        // Touch events for mobile
+        progressBar.addEventListener('touchstart', (e) => {
+            isDragging = true;
+            e.preventDefault();
+        });
+        
+        progressBar.addEventListener('touchmove', (e) => {
+            if (isDragging && audio.duration) {
+                const rect = progressBar.getBoundingClientRect();
+                const touchX = e.touches[0].clientX - rect.left;
+                const percentage = Math.max(0, Math.min(1, touchX / rect.width));
+                const newTime = percentage * audio.duration;
+                audio.currentTime = newTime;
+                progressFill.style.width = `${percentage * 100}%`;
+                currentTimeElement.textContent = this.formatDuration(newTime);
+            }
+            e.preventDefault();
+        });
+        
+        progressBar.addEventListener('touchend', () => {
+            isDragging = false;
+        });
+    },
+    
+    playAudio(audioId) {
+        const audio = document.getElementById(audioId);
+        if (audio) {
+            audio.play().catch(error => {
+                console.error('Error playing audio:', error);
+                const statusElement = document.getElementById(`status-${audioId}`);
+                statusElement.textContent = 'خطا در پخش';
+            });
+        }
+    },
+    
+    pauseAudio(audioId) {
+        const audio = document.getElementById(audioId);
+        if (audio) {
+            audio.pause();
+        }
+    },
+    
+    openImageModal(imageId) {
+        const imageElement = document.getElementById(imageId);
+        if (!imageElement) return;
+        
+        const imageUrl = imageElement.dataset.imageUrl;
+        const imageCaption = imageElement.dataset.imageCaption;
+        
+        // Create modal if it doesn't exist
+        let modal = document.getElementById('imageModal');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'imageModal';
+            modal.className = 'image-modal';
+            modal.innerHTML = `
+                <div class="image-modal-content">
+                    <div class="image-modal-header">
+                        <div class="image-modal-title" id="modalImageTitle">تصویر</div>
+                        <div class="image-modal-actions">
+                            <button type="button" class="image-modal-btn" id="modalDownloadBtn">
+                                <i class="fas fa-download"></i>
+                                دانلود
+                            </button>
+                        </div>
+                    </div>
+                    <img id="modalImage" src="" alt="">
+                    <button type="button" class="image-modal-close" onclick="studySession.closeImageModal()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+        
+        // Set image data
+        document.getElementById('modalImage').src = imageUrl;
+        document.getElementById('modalImageTitle').textContent = imageCaption || 'تصویر';
+        
+        // Set download button
+        const downloadBtn = document.getElementById('modalDownloadBtn');
+        downloadBtn.onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            this.downloadImage(imageUrl, imageCaption || 'تصویر');
+        };
+        
+        // Show modal
+        modal.style.display = 'block';
+        document.body.style.overflow = 'hidden';
+        
+        // Close modal on background click
+        modal.onclick = (e) => {
+            if (e.target === modal) {
+                this.closeImageModal();
+            }
+        };
+        
+        // Close modal on Escape key
+        document.addEventListener('keydown', this.handleModalKeydown);
+    },
+    
+    closeImageModal() {
+        const modal = document.getElementById('imageModal');
+        if (modal) {
+            modal.style.display = 'none';
+            document.body.style.overflow = 'auto';
+            document.removeEventListener('keydown', this.handleModalKeydown);
+        }
+    },
+    
+    handleModalKeydown(e) {
+        if (e.key === 'Escape') {
+            this.closeImageModal();
+        }
+    },
+    
+    downloadImage(imageUrl, filename) {
+        try {
+            // Prevent form submission
+            event.preventDefault();
+            event.stopPropagation();
+            
+            // Create a temporary link element
+            const link = document.createElement('a');
+            link.href = imageUrl;
+            link.download = filename || 'تصویر';
+            link.target = '_blank';
+            
+            // Add to DOM, click, and remove
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        } catch (error) {
+            console.error('Error downloading image:', error);
+            // Fallback: open image in new tab
+            window.open(imageUrl, '_blank');
+        }
+    },
+    
+    showReminderError(message) {
+        const container = document.getElementById('reminder-content');
+        if (!container) return;
+        
+        container.innerHTML = `
+            <div class="reminder-error" style="
+                padding: 3rem;
+                text-align: center;
+                color: #dc2626;
+                background: #fef2f2;
+                border-radius: 16px;
+                border: 1px solid #fecaca;
+            ">
+                <i class="fas fa-exclamation-triangle" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+                <h3 style="margin-bottom: 1rem;">خطا در بارگذاری محتوا</h3>
+                <p>${message}</p>
+            </div>
+        `;
     },
     
     async startStudySession() {
@@ -56,15 +573,6 @@ let studySession = {
     bindEvents() {
         const self = this;
         
-        // Prevent accidental page refresh/close
-        window.addEventListener('beforeunload', (e) => {
-            if (self.isActive && self.getElapsedTime() > 5) {
-                e.preventDefault();
-                e.returnValue = 'آیا مطمئن هستید که می‌خواهید صفحه را ترک کنید؟';
-                return e.returnValue;
-            }
-        });
-        
         // Handle browser back button
         window.addEventListener('popstate', (e) => {
             if (self.isActive && self.getElapsedTime() > 5) {
@@ -78,11 +586,11 @@ let studySession = {
         
         // Wait for DOM to be fully loaded
         setTimeout(() => {
-            // Handle ALL clicks on the page
-            document.addEventListener('click', function(e) {
+            // Handle specific navigation clicks only
+            const handleNavigationClick = function(e) {
                 const target = e.target;
                 
-                console.log('Click detected on:', target.tagName, target.className, target.id, 'timer active:', self.isActive, 'time:', self.getElapsedTime());
+                console.log('Navigation click detected on:', target.tagName, target.className, target.id, 'timer active:', self.isActive, 'time:', self.getElapsedTime());
                 
                 // Check if timer is active and has enough time
                 if (self.isActive && self.getElapsedTime() > 5) {
@@ -90,6 +598,20 @@ let studySession = {
                     // Skip if clicking inside the modal
                     if (target.closest('#exitConfirmationModal')) {
                         console.log('Click inside modal, ignoring');
+                        return;
+                    }
+                    
+                    // Skip if clicking on image action buttons
+                    if (target.closest('.image-action-btn') || target.closest('.image-overlay')) {
+                        console.log('Image action button clicked, ignoring');
+                        return;
+                    }
+                    
+                    // Skip if clicking on audio/video controls
+                    if (target.closest('.speaker-button') || target.closest('.play-button') || 
+                        target.closest('.progress-bar') || target.closest('.audio-controls') ||
+                        target.closest('.video-controls')) {
+                        console.log('Media control clicked, ignoring');
                         return;
                     }
                     
@@ -105,11 +627,28 @@ let studySession = {
                         }
                     }
                     
-                    // Check for navbar/menu clicks - ANY click inside navbar
-                    if (target.closest('.navbar') || target.closest('.nav-link') || target.closest('.navbar-nav') || 
-                        target.closest('.navbar-brand') || target.closest('.navbar-toggler') || 
-                        target.closest('.navbar-collapse') || target.closest('.navbar-nav')) {
-                        console.log('Navbar/menu clicked:', target);
+                    // Check for navbar/menu clicks - ONLY specific navigation elements
+                    if (target.closest('.navbar-brand') || target.closest('.nav-link') || 
+                        target.closest('.navbar-toggler') || target.closest('.dropdown-item')) {
+                        console.log('Navigation element clicked:', target);
+                        e.preventDefault();
+                        e.stopPropagation();
+                        self.showExitConfirmation();
+                        return false;
+                    }
+                    
+                    // Check for breadcrumb clicks
+                    if (target.closest('.breadcrumb') || target.closest('.breadcrumb-item')) {
+                        console.log('Breadcrumb clicked:', target);
+                        e.preventDefault();
+                        e.stopPropagation();
+                        self.showExitConfirmation();
+                        return false;
+                    }
+                    
+                    // Check for bottom navigation clicks - handle nested elements
+                    if (target.closest('.bottom-nav') || target.closest('.nav-item') || target.closest('.fixed-footer')) {
+                        console.log('Bottom navigation clicked:', target);
                         e.preventDefault();
                         e.stopPropagation();
                         self.showExitConfirmation();
@@ -128,30 +667,13 @@ let studySession = {
                             return false;
                         }
                     }
-                    
-                    // Check for any button that might navigate (but not modal buttons)
-                    if ((target.tagName === 'BUTTON' || target.closest('button')) && 
-                        !target.closest('#exitConfirmationModal')) {
-                        console.log('Button clicked:', target);
-                        e.preventDefault();
-                        e.stopPropagation();
-                        self.showExitConfirmation();
-                        return false;
-                    }
-                    
-                    // Check for any element that might cause navigation (breadcrumb, menu items, etc.)
-                    if (target.closest('.breadcrumb') || target.closest('.dropdown') || target.closest('.dropdown-menu') ||
-                        target.closest('.nav-item') || target.closest('.dropdown-item')) {
-                        console.log('Navigation element clicked:', target);
-                        e.preventDefault();
-                        e.stopPropagation();
-                        self.showExitConfirmation();
-                        return false;
-                    }
                 }
-            }, true); // Use capture phase
+            };
             
-            console.log('Events bound successfully');
+            // Bind event to document but only handle navigation elements
+            document.addEventListener('click', handleNavigationClick, true);
+            
+            console.log('Navigation events bound successfully to document');
         }, 1000); // Wait 1 second for DOM to be ready
     },
     

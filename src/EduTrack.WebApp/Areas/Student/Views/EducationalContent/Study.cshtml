@@ -49,32 +49,39 @@
         <!-- Content Type Header -->
         <div class="content-type-header">
             <div class="content-type-icon">
-                @switch (Model.Type)
+                @if (Model.Type == EduTrack.Domain.Enums.ScheduleItemType.Reminder)
                 {
-                    case EduTrack.Domain.Enums.EducationalContentType.Text:
-                        <i class="fas fa-file-text"></i>
-                        break;
-                    case EduTrack.Domain.Enums.EducationalContentType.Image:
-                        <i class="fas fa-image"></i>
-                        break;
-                    case EduTrack.Domain.Enums.EducationalContentType.Video:
-                        <i class="fas fa-video"></i>
-                        break;
-                    case EduTrack.Domain.Enums.EducationalContentType.Audio:
-                        <i class="fas fa-volume-up"></i>
-                        break;
-                    case EduTrack.Domain.Enums.EducationalContentType.PDF:
-                        <i class="fas fa-file-pdf"></i>
-                        break;
-                    case EduTrack.Domain.Enums.EducationalContentType.ExternalUrl:
-                        <i class="fas fa-external-link-alt"></i>
-                        break;
-                    case EduTrack.Domain.Enums.EducationalContentType.File:
-                        <i class="fas fa-file"></i>
-                        break;
-                    default:
-                        <i class="fas fa-file"></i>
-                        break;
+                    <i class="fas fa-bell"></i>
+                }
+                else
+                {
+                    @switch (Model.Type)
+                    {
+                        case EduTrack.Domain.Enums.EducationalContentType.Text:
+                            <i class="fas fa-file-text"></i>
+                            break;
+                        case EduTrack.Domain.Enums.EducationalContentType.Image:
+                            <i class="fas fa-image"></i>
+                            break;
+                        case EduTrack.Domain.Enums.EducationalContentType.Video:
+                            <i class="fas fa-video"></i>
+                            break;
+                        case EduTrack.Domain.Enums.EducationalContentType.Audio:
+                            <i class="fas fa-volume-up"></i>
+                            break;
+                        case EduTrack.Domain.Enums.EducationalContentType.PDF:
+                            <i class="fas fa-file-pdf"></i>
+                            break;
+                        case EduTrack.Domain.Enums.EducationalContentType.ExternalUrl:
+                            <i class="fas fa-external-link-alt"></i>
+                            break;
+                        case EduTrack.Domain.Enums.EducationalContentType.File:
+                            <i class="fas fa-file"></i>
+                            break;
+                        default:
+                            <i class="fas fa-file"></i>
+                            break;
+                    }
                 }
             </div>
             <div class="content-type-info">
@@ -88,13 +95,25 @@
 
         <!-- Content Display -->
         <div class="content-display">
-            @switch (Model.Type)
+            @if (Model.Type == EduTrack.Domain.Enums.ScheduleItemType.Reminder)
             {
-                case EduTrack.Domain.Enums.EducationalContentType.Text:
-                    <div class="text-content">
-                        @Html.Raw(Model.TextContent)
+                <!-- Reminder Content Display -->
+                <div class="reminder-content" id="reminder-content">
+                    <div class="reminder-loading">
+                        <div class="loading-spinner"></div>
+                        <p>در حال بارگذاری محتوا...</p>
                     </div>
-                    break;
+                </div>
+            }
+            else
+            {
+                @switch (Model.Type)
+                {
+                    case EduTrack.Domain.Enums.EducationalContentType.Text:
+                        <div class="text-content">
+                            @Html.Raw(Model.TextContent)
+                        </div>
+                        break;
                     
                 case EduTrack.Domain.Enums.EducationalContentType.Image:
                     @if (Model.File != null)
@@ -175,6 +194,7 @@
                         </div>
                     }
                     break;
+                }
             }
         </div>
     </div>
@@ -236,7 +256,9 @@
             courseId: @(ViewBag.CourseId ?? 0),
             startSessionUrl: '@Url.Action("StartStudySession", "ScheduleItem")',
             completeSessionUrl: '@Url.Action("TestCompleteStudySession", "ScheduleItem")',
-            getStatisticsUrl: '@Url.Action("GetStudyStatistics", "ScheduleItem")'
+            getStatisticsUrl: '@Url.Action("GetStudyStatistics", "ScheduleItem")',
+            contentType: '@Model.Type',
+            contentJson: @Html.Raw(Model.ContentJson ?? "null")
         };
     </script>
     <script src="~/js/areas/student/educational-content/study-content.js" asp-append-version="true"></script>
