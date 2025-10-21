@@ -26,13 +26,33 @@ class Step4ContentManager {
     validateStep4() {
         let isValid = true;
         
-        // Validate Content JSON
+        const itemTypeSelect = document.getElementById('itemType');
+        const selectedType = itemTypeSelect ? itemTypeSelect.value : '0';
+        
+        // Validate Content JSON based on type
         const contentJsonInput = document.querySelector('input[name="ContentJson"]');
         if (!contentJsonInput || !contentJsonInput.value || contentJsonInput.value === '{}') {
             this.showFieldError('ContentJson', 'محتوای آموزشی الزامی است');
             isValid = false;
         } else {
             this.clearFieldError('ContentJson');
+            
+            // Additional validation based on content type
+            if (selectedType === '0') {
+                // Reminder content validation
+                const reminderData = this.collectReminderContentData();
+                if (!reminderData || !reminderData.blocks || reminderData.blocks.length === 0) {
+                    this.showFieldError('ContentJson', 'حداقل یک بلاک محتوا برای یادآوری الزامی است');
+                    isValid = false;
+                }
+            } else if (selectedType === '1') {
+                // Written content validation
+                const writtenData = this.collectWrittenContentData();
+                if (!writtenData || !writtenData.questionBlocks || writtenData.questionBlocks.length === 0) {
+                    this.showFieldError('ContentJson', 'حداقل یک سوال برای تمرین نوشتاری الزامی است');
+                    isValid = false;
+                }
+            }
         }
         
         return isValid;
@@ -113,6 +133,7 @@ class Step4ContentManager {
         const contentDesigner = document.getElementById('contentDesigner');
         const contentBuilder = document.getElementById('contentBuilder');
         const reminderContentBuilder = document.getElementById('reminderContentBuilder');
+        const writtenContentBuilder = document.getElementById('writtenContentBuilder');
         const contentTemplates = document.getElementById('contentTemplates');
 
         // Hide all content builders first
@@ -120,6 +141,7 @@ class Step4ContentManager {
         if (contentDesigner) contentDesigner.style.display = 'none';
         if (contentBuilder) contentBuilder.style.display = 'none';
         if (reminderContentBuilder) reminderContentBuilder.style.display = 'none';
+        if (writtenContentBuilder) writtenContentBuilder.style.display = 'none';
         if (contentTemplates) contentTemplates.style.display = 'none';
 
         const itemTypeSelect = document.getElementById('itemType');
@@ -129,6 +151,11 @@ class Step4ContentManager {
             // Reminder type
             if (reminderContentBuilder) {
                 reminderContentBuilder.style.display = 'block';
+            }
+        } else if (selectedType === '1') {
+            // Writing type
+            if (writtenContentBuilder) {
+                writtenContentBuilder.style.display = 'block';
             }
         } else {
             // Other types
@@ -155,6 +182,14 @@ class Step4ContentManager {
     collectReminderContentData() {
         if (window.reminderBlockManager && typeof window.reminderBlockManager.getContent === 'function') {
             return window.reminderBlockManager.getContent();
+        }
+        return null;
+    }
+
+    // Collect written content data
+    collectWrittenContentData() {
+        if (window.writtenBlockManager && typeof window.writtenBlockManager.getContent === 'function') {
+            return window.writtenBlockManager.getContent();
         }
         return null;
     }

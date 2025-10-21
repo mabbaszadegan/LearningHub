@@ -170,3 +170,15 @@ public interface IFileRepository : IRepository<Domain.Entities.File>
     Task<IEnumerable<Domain.Entities.File>> GetFilesByCreatorAsync(string createdBy, CancellationToken cancellationToken = default);
     Task<IEnumerable<Domain.Entities.File>> GetUnreferencedFilesAsync(CancellationToken cancellationToken = default);
 }
+
+/// <summary>
+/// Specific repository for WrittenContentAnswer entity with domain-specific queries
+/// </summary>
+public interface IWrittenContentAnswerRepository : IRepository<StudentAnswer>
+{
+    Task<StudentAnswer?> GetAnswerByStudentAndScheduleItemAsync(string studentId, int scheduleItemId, CancellationToken cancellationToken = default);
+    Task<IEnumerable<StudentAnswer>> GetAnswersByScheduleItemAsync(int scheduleItemId, CancellationToken cancellationToken = default);
+    Task<IEnumerable<StudentAnswer>> GetAnswersByStudentAsync(string studentId, CancellationToken cancellationToken = default);
+    Task<IEnumerable<StudentAnswer>> GetAnswersNeedingGradingAsync(CancellationToken cancellationToken = default);
+    Task<IEnumerable<StudentAnswer>> GetAnswersByTeacherAsync(string teacherId, CancellationToken cancellationToken = default);
+}

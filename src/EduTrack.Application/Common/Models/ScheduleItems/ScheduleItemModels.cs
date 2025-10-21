@@ -220,6 +220,100 @@ public class ReminderContent
     public List<ContentBlock> Blocks { get; set; } = new();
 }
 
+public class WrittenContent
+{
+    public string Title { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public List<WrittenQuestionBlock> QuestionBlocks { get; set; } = new();
+    public int TimeLimitMinutes { get; set; } = 0; // 0 means no time limit
+    public bool AllowLateSubmission { get; set; } = true;
+    public string Instructions { get; set; } = string.Empty;
+}
+
+public class WrittenQuestionBlock
+{
+    public string Id { get; set; } = Guid.NewGuid().ToString();
+    public int Order { get; set; }
+    public string QuestionText { get; set; } = string.Empty;
+    public WrittenQuestionType QuestionType { get; set; }
+    public WrittenQuestionData QuestionData { get; set; } = new();
+    public decimal Points { get; set; } = 1;
+    public bool IsRequired { get; set; } = true;
+    public string? Hint { get; set; }
+}
+
+public class WrittenQuestionData
+{
+    // Text question data
+    public string? TextContent { get; set; }
+    
+    // Media question data (image, video, audio)
+    public string? FileId { get; set; }
+    public string? FileName { get; set; }
+    public string? FileUrl { get; set; }
+    public long? FileSize { get; set; }
+    public string? MimeType { get; set; }
+    
+    // Image/Video specific settings
+    public string? Size { get; set; } = "medium"; // small, medium, large, full
+    public string? Position { get; set; } = "center"; // left, center, right
+    public string? Caption { get; set; }
+    public string? CaptionPosition { get; set; } = "bottom"; // top, bottom, overlay
+    
+    // Audio specific settings
+    public bool IsRecorded { get; set; } = false;
+    public int? Duration { get; set; } // in seconds
+    
+    // Code question specific settings
+    public string? CodeContent { get; set; }
+    public string? Language { get; set; } = "plaintext";
+    public string? Theme { get; set; } = "default";
+    public string? CodeTitle { get; set; }
+    public bool ShowLineNumbers { get; set; } = true;
+    public bool EnableCopyButton { get; set; } = true;
+}
+
+public enum WrittenQuestionType
+{
+    Text = 0,
+    Image = 1,
+    Video = 2,
+    Audio = 3,
+    Code = 4
+}
+
+// Student Answer Models for Written Content
+public class WrittenContentAnswer
+{
+    public int Id { get; set; }
+    public int ScheduleItemId { get; set; }
+    public string StudentId { get; set; } = string.Empty;
+    public List<WrittenQuestionAnswer> QuestionAnswers { get; set; } = new();
+    public DateTimeOffset SubmittedAt { get; set; }
+    public DateTimeOffset? GradedAt { get; set; }
+    public decimal? TotalScore { get; set; }
+    public decimal? MaxPossibleScore { get; set; }
+    public string? TeacherFeedback { get; set; }
+    public WrittenAnswerStatus Status { get; set; } = WrittenAnswerStatus.Submitted;
+}
+
+public class WrittenQuestionAnswer
+{
+    public int StudentAnswerId { get; set; }
+    public string QuestionBlockId { get; set; } = string.Empty;
+    public string AnswerText { get; set; } = string.Empty;
+    public decimal? Score { get; set; }
+    public string? TeacherFeedback { get; set; }
+    public bool IsGraded { get; set; } = false;
+}
+
+public enum WrittenAnswerStatus
+{
+    Submitted = 0,
+    Graded = 1,
+    Returned = 2
+}
+
 public class ContentBlock
 {
     public string Id { get; set; } = Guid.NewGuid().ToString();

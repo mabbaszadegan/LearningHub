@@ -26,7 +26,7 @@ public static class ScheduleItemTypeExtensions
         return type switch
         {
             ScheduleItemType.Reminder => "ایجاد محتوای یادآوری با قابلیت افزودن متن، تصویر، ویدیو و صوت",
-            ScheduleItemType.Writing => "تمرین نوشتاری برای دانش‌آموزان",
+            ScheduleItemType.Writing => "تمرین نوشتاری با سوالات چندگانه که نیاز به تصحیح توسط معلم دارد",
             ScheduleItemType.Audio => "تمرینات صوتی و شنیداری",
             ScheduleItemType.GapFill => "تمرین پر کردن جای خالی در متن",
             ScheduleItemType.MultipleChoice => "سوالات چند گزینه‌ای",
@@ -40,6 +40,6 @@ public static class ScheduleItemTypeExtensions
 
     public static bool HasContentBuilder(this ScheduleItemType type)
     {
-        return type == ScheduleItemType.Reminder;
+        return type == ScheduleItemType.Reminder || type == ScheduleItemType.Writing;
     }
 }

@@ -13,8 +13,13 @@
     
     <div class="step-content">
         <!-- Reminder Content Builder -->
-        <div id="reminderContentBuilder" style="display: block;">
+        <div id="reminderContentBuilder" style="display: none;">
             @await Html.PartialAsync("_Step4ReminderContent", Model)
+        </div>
+        
+        <!-- Written Content Builder -->
+        <div id="writtenContentBuilder" style="display: none;">
+            @await Html.PartialAsync("_Step4WrittenContent", Model)
         </div>
         
         <!-- Content Builder for Other Types -->
