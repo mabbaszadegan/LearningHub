@@ -1,4 +1,5 @@
 using EduTrack.Application.Common.Models.StudySessions;
+using EduTrack.Application.Common.Models.ScheduleItems;
 
 namespace EduTrack.WebApp.Models;
 
@@ -16,6 +17,7 @@ public class StudentDashboardViewModel
     public List<StudySessionHistoryDto> LastStudySessions { get; set; } = new();
     public List<CourseStudyHistoryDto> LastStudyCourses { get; set; } = new();
     public StudyStatisticsDto StudyStatistics { get; set; } = new();
+    public List<EduTrack.Application.Common.Models.ScheduleItems.ScheduleItemDto> AccessibleScheduleItems { get; set; } = new();
 }
 
 public class StudyStatisticsDto

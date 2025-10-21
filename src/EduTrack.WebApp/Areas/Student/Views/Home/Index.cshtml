@@ -202,6 +202,78 @@
         </div>
     }
 
+    <!-- Accessible Schedule Items -->
+    @if (Model.AccessibleScheduleItems.Any())
+    {
+        <div class="card mb-4">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">
+                        <i class="fas fa-tasks me-2"></i>
+                        آیتم‌های آموزشی من
+                    </h6>
+                    <small class="text-muted">@Model.AccessibleScheduleItems.Count آیتم</small>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="schedule-items-list">
+                    @foreach (var item in Model.AccessibleScheduleItems.Take(5))
+                    {
+                        <div class="schedule-item">
+                            <div class="schedule-item-content">
+                                <div class="schedule-item-header">
+                                    <h6 class="schedule-item-title">@item.Title</h6>
+                                    <span class="schedule-item-type">@item.TypeName</span>
+                                </div>
+                                @if (!string.IsNullOrEmpty(item.Description))
+                                {
+                                    <p class="schedule-item-description">@item.Description</p>
+                                }
+                                <div class="schedule-item-meta">
+                                    <div class="schedule-item-dates">
+                                        <small class="text-muted">
+                                            <i class="fas fa-calendar-alt me-1"></i>
+                                            شروع: @item.StartDate.ToString("yyyy/MM/dd HH:mm")
+                                        </small>
+                                        @if (item.DueDate.HasValue)
+                                        {
+                                            <small class="text-muted ms-3">
+                                                <i class="fas fa-clock me-1"></i>
+                                                مهلت: @item.DueDate.Value.ToString("yyyy/MM/dd HH:mm")
+                                            </small>
+                                        }
+                                    </div>
+                                    <div class="schedule-item-status">
+                                        <span class="badge @GetStatusBadgeClass(item.Status)">@item.StatusText</span>
+                                        @if (item.IsMandatory)
+                                        {
+                                            <span class="badge bg-warning">اجباری</span>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="schedule-item-action">
+                                <a href="@Url.Action("Study", "ScheduleItem", new { id = item.Id })" 
+                                   class="btn-continue-mini" title="شروع مطالعه">
+                                    <i class="fas fa-play"></i>
+                                </a>
+                            </div>
+                        </div>
+                    }
+                </div>
+                @if (Model.AccessibleScheduleItems.Count > 5)
+                {
+                    <div class="text-center p-3 border-top">
+                        <a href="@Url.Action("Index", "ScheduleItem")" class="btn-secondary-action">
+                            <i class="fas fa-list"></i>
+                            مشاهده همه آیتم‌ها
+                        </a>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
     <!-- Quick Actions -->
     <div class="card mb-4">
         <div class="card-header">
@@ -287,6 +359,21 @@
         </div>
     </div>
 </div>
+
+@{
+    string GetStatusBadgeClass(EduTrack.Application.Common.Models.ScheduleItems.ScheduleItemStatus status)
+    {
+        return status switch
+        {
+            EduTrack.Application.Common.Models.ScheduleItems.ScheduleItemStatus.Draft => "bg-secondary",
+            EduTrack.Application.Common.Models.ScheduleItems.ScheduleItemStatus.Published => "bg-info",
+            EduTrack.Application.Common.Models.ScheduleItems.ScheduleItemStatus.Active => "bg-success",
+            EduTrack.Application.Common.Models.ScheduleItems.ScheduleItemStatus.Completed => "bg-primary",
+            EduTrack.Application.Common.Models.ScheduleItems.ScheduleItemStatus.Expired => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+}
 
 @section Scripts {
     <script>

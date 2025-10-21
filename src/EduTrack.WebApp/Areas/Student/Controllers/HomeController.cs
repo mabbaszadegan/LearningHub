@@ -2,6 +2,7 @@ using EduTrack.Application.Features.Classroom.Queries;
 using EduTrack.Application.Features.Progress.Queries;
 using EduTrack.Application.Features.Exams.Queries;
 using EduTrack.Application.Features.StudySessions.Queries;
+using EduTrack.Application.Features.ScheduleItems.Queries;
 using EduTrack.Application.Common.Models;
 using EduTrack.Domain.Entities;
 using EduTrack.WebApp.Models;
@@ -52,7 +53,8 @@ public class HomeController : Controller
             ProgressStats = await GetStudentProgressStats(currentUser.Id),
             LastStudySessions = await GetLastStudySessions(currentUser.Id),
             LastStudyCourses = await GetLastStudyCourses(currentUser.Id),
-            StudyStatistics = await GetStudyStatistics(currentUser.Id)
+            StudyStatistics = await GetStudyStatistics(currentUser.Id),
+            AccessibleScheduleItems = await GetAccessibleScheduleItems(currentUser.Id)
         };
 
         return View(dashboardData);
@@ -279,5 +281,19 @@ public class HomeController : Controller
     {
         var calendar = System.Globalization.CultureInfo.CurrentCulture.Calendar;
         return calendar.GetWeekOfYear(date.DateTime, System.Globalization.CalendarWeekRule.FirstDay, DayOfWeek.Saturday);
+    }
+
+    private async Task<List<EduTrack.Application.Common.Models.ScheduleItems.ScheduleItemDto>> GetAccessibleScheduleItems(string studentId)
+    {
+        try
+        {
+            var result = await _mediator.Send(new GetScheduleItemsAccessibleToStudentQuery(studentId));
+            return result.IsSuccess && result.Value != null ? result.Value : new List<EduTrack.Application.Common.Models.ScheduleItems.ScheduleItemDto>();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting accessible schedule items for student: {StudentId}", studentId);
+            return new List<EduTrack.Application.Common.Models.ScheduleItems.ScheduleItemDto>();
+        }
     }
 }

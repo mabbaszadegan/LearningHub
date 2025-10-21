@@ -143,6 +143,9 @@ public interface IScheduleItemRepository : IRepository<ScheduleItem>
     // SubChapter Assignment methods
     Task<IEnumerable<ScheduleItemSubChapterAssignment>> GetSubChapterAssignmentsAsync(int scheduleItemId, CancellationToken cancellationToken = default);
     Task RemoveSubChapterAssignmentsAsync(IEnumerable<ScheduleItemSubChapterAssignment> assignments, CancellationToken cancellationToken = default);
+    
+    // Student Access methods
+    Task<IEnumerable<ScheduleItem>> GetScheduleItemsAccessibleToStudentAsync(string studentId, CancellationToken cancellationToken = default);
 }
 
 /// <summary>

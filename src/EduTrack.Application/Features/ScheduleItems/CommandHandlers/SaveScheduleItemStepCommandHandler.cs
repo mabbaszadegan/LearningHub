@@ -245,8 +245,7 @@ public class SaveScheduleItemStepCommandHandler : IRequestHandler<SaveScheduleIt
                 return Result<int>.Failure($"خطا در تلاش مجدد: {retryEx.Message}");
             }
         }
-        catch (Microsoft.EntityFrameworkCore.DbUpdateException ex) when (ex.InnerException is Microsoft.Data.SqlClient.SqlException sqlEx && 
-                                                                        (sqlEx.Number == 2601 || sqlEx.Number == 2627))
+        catch (Microsoft.EntityFrameworkCore.DbUpdateException)
         {
             // Handle duplicate key violations
             return Result<int>.Failure("خطا: تخصیص تکراری دانش‌آموز یا مبحث");

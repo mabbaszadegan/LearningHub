@@ -167,4 +167,42 @@ public class ScheduleItemRepository : Repository<ScheduleItem>, IScheduleItemRep
         }
         return Task.CompletedTask;
     }
+
+    public async Task<IEnumerable<ScheduleItem>> GetScheduleItemsAccessibleToStudentAsync(string studentId, CancellationToken cancellationToken = default)
+    {
+        // Get all schedule items that the student has access to based on the rules:
+        // 1. Direct assignment to the student
+        // 2. Assignment to student's group AND no individual students in that group are assigned
+        // 3. No group assignments (accessible to all students)
+        
+        var accessibleItems = await _dbSet
+            .Include(si => si.GroupAssignments)
+                .ThenInclude(ga => ga.StudentGroup)
+            .Include(si => si.SubChapterAssignments)
+                .ThenInclude(sca => sca.SubChapter)
+            .Include(si => si.StudentAssignments)
+                .ThenInclude(sa => sa.Student)
+            .Include(si => si.TeachingPlan)
+            .Include(si => si.Group)
+            .Include(si => si.Lesson)
+            .Where(si => 
+                // Rule 1: Direct assignment to student
+                si.StudentAssignments.Any(sa => sa.StudentId == studentId) ||
+                
+                // Rule 2: Assignment to student's group AND no individual students in that group are assigned
+                si.GroupAssignments.Any(ga => 
+                    ga.StudentGroup.Members.Any(m => m.StudentId == studentId) &&
+                    !si.StudentAssignments.Any(sa => 
+                        ga.StudentGroup.Members.Any(m => m.StudentId == sa.StudentId)
+                    )
+                ) ||
+                
+                // Rule 3: No group assignments (accessible to all students)
+                !si.GroupAssignments.Any()
+            )
+            .OrderBy(si => si.StartDate)
+            .ToListAsync(cancellationToken);
+
+        return accessibleItems;
+    }
 }

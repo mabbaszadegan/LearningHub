@@ -22,3 +22,5 @@ public record GetOverdueScheduleItemsQuery : IRequest<Result<List<ScheduleItemDt
 public record GetScheduleItemStatsQuery(int TeachingPlanId) : IRequest<Result<ScheduleItemStatsDto>>;
 
 public record GetScheduleItemContentQuery(int Id) : IRequest<Result<object>>;
+
+public record GetScheduleItemsAccessibleToStudentQuery(string StudentId) : IRequest<Result<List<ScheduleItemDto>>>;
