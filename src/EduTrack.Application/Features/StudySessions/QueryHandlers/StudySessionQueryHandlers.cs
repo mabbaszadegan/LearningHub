@@ -2,6 +2,7 @@ using EduTrack.Application.Common.Models;
 using EduTrack.Application.Common.Models.StudySessions;
 using EduTrack.Application.Features.StudySessions.Queries;
 using EduTrack.Application.Features.ScheduleItems.Queries;
+using EduTrack.Application.Features.TeachingPlan.Queries;
 using EduTrack.Domain.Repositories;
 using MediatR;
 
@@ -219,13 +220,22 @@ public class GetScheduleItemWithStudyStatsQueryHandler : IRequestHandler<GetSche
         try
         {
             // Get schedule item
-            var scheduleItemResult = await _mediator.Send(new GetScheduleItemByIdQuery(request.ScheduleItemId));
+            var scheduleItemResult = await _mediator.Send(new EduTrack.Application.Features.ScheduleItems.Queries.GetScheduleItemByIdQuery(request.ScheduleItemId));
             if (!scheduleItemResult.IsSuccess || scheduleItemResult.Value == null)
             {
                 return Result<ScheduleItemWithStudyStatsDto>.Failure("آیتم آموزشی یافت نشد");
             }
 
             var scheduleItem = scheduleItemResult.Value;
+
+            // Get teaching plan to get course ID
+            var teachingPlanResult = await _mediator.Send(new GetTeachingPlanByIdQuery(scheduleItem.TeachingPlanId));
+            if (!teachingPlanResult.IsSuccess || teachingPlanResult.Value == null)
+            {
+                return Result<ScheduleItemWithStudyStatsDto>.Failure("طرح تدریس یافت نشد");
+            }
+
+            var teachingPlan = teachingPlanResult.Value;
 
             // Get study statistics
             var statisticsResult = await _mediator.Send(new GetStudySessionStatisticsQuery(request.StudentId, request.ScheduleItemId));
@@ -241,6 +251,7 @@ public class GetScheduleItemWithStudyStatsQueryHandler : IRequestHandler<GetSche
             {
                 Id = scheduleItem.Id,
                 TeachingPlanId = scheduleItem.TeachingPlanId,
+                CourseId = teachingPlan.CourseId,
                 Title = scheduleItem.Title,
                 Description = scheduleItem.Description,
                 ContentJson = scheduleItem.ContentJson,

@@ -81,7 +81,7 @@
                 <h2 class="content-type-title">@Model.Title</h2>
                 @if (!string.IsNullOrEmpty(Model.Description))
                 {
-                    <p class="content-description">@Model.Description</p>
+                    <div class="content-description">@Html.Raw(Model.Description)</div>
                 }
             </div>
         </div>
@@ -233,6 +233,7 @@
             educationalContentId: @Model.Id,
             currentUserId: '@ViewBag.CurrentUserId',
             activeSessionId: @(ViewBag.ActiveSession?.Id ?? 0),
+            courseId: @(ViewBag.CourseId ?? 0),
             startSessionUrl: '@Url.Action("StartStudySession", "ScheduleItem")',
             completeSessionUrl: '@Url.Action("TestCompleteStudySession", "ScheduleItem")',
             getStatisticsUrl: '@Url.Action("GetStudyStatistics", "ScheduleItem")'

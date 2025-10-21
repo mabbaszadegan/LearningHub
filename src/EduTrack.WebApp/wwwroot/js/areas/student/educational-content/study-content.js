@@ -364,9 +364,9 @@ let studySession = {
             // Show success message
             this.showToast('زمان مطالعه با موفقیت ثبت شد', 'success');
             
-            // Navigate back after a short delay
+            // Navigate to course schedule items list after a short delay
             setTimeout(() => {
-                history.back();
+                this.navigateToCourseScheduleItems();
             }, 1000);
         }).catch((error) => {
             console.error('Error saving study session:', error);
@@ -374,7 +374,7 @@ let studySession = {
             
             // Still navigate back even if save failed
             setTimeout(() => {
-                history.back();
+                this.navigateToCourseScheduleItems();
             }, 2000);
         });
     },
@@ -430,8 +430,42 @@ let studySession = {
         // Don't stop the timer, just navigate back
         // The timer should continue running for future attempts
         
-        // Navigate back immediately
-        history.back();
+        // Navigate to course schedule items list immediately
+        this.navigateToCourseScheduleItems();
+    },
+    
+    navigateToCourseScheduleItems() {
+        // Get the course ID from config or URL
+        const courseId = window.studyContentConfig?.courseId || this.getCourseIdFromUrl();
+        if (courseId && courseId > 0) {
+            window.location.href = `/Student/Course/Study/${courseId}`;
+        } else {
+            // Fallback to history.back() if we can't determine the course ID
+            console.warn('Course ID not found, using history.back()');
+            history.back();
+        }
+    },
+    
+    getCourseIdFromUrl() {
+        // Try to extract course ID from current URL or referrer
+        const currentUrl = window.location.href;
+        const referrer = document.referrer;
+        
+        // Look for course ID in referrer URL (coming from course study page)
+        if (referrer) {
+            const courseMatch = referrer.match(/\/Student\/Course\/Study\/(\d+)/);
+            if (courseMatch) {
+                return courseMatch[1];
+            }
+        }
+        
+        // Look for course ID in current URL if we're in a nested route
+        const currentMatch = currentUrl.match(/\/Student\/Course\/Study\/(\d+)/);
+        if (currentMatch) {
+            return currentMatch[1];
+        }
+        
+        return null;
     },
     
     showToast(message, type) {

@@ -63,6 +63,7 @@ public class ScheduleItemController : Controller
         ViewBag.ActiveSession = activeSession;
         ViewBag.CurrentUserId = currentUser.Id;
         ViewBag.ScheduleItem = scheduleItemWithStats;
+        ViewBag.CourseId = scheduleItemWithStats.CourseId; // Add course ID for navigation
 
         return View("~/Areas/Student/Views/EducationalContent/Study.cshtml", scheduleItemWithStats);
     }
