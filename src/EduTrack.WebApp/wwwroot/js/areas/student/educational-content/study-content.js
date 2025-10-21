@@ -23,7 +23,128 @@ let studySession = {
             this.initializeReminderContent();
         }
         
+        // Apply automatic code highlighting to all code blocks on page load
+        this.applyAutomaticCodeHighlighting();
+        
         console.log('Study session initialized with sessionId:', this.sessionId);
+    },
+    
+    applyAutomaticCodeHighlighting() {
+        // Wait for DOM to be fully loaded
+        setTimeout(() => {
+            console.log('Applying automatic code highlighting...');
+            
+            // Find all code blocks in the page
+            const codeBlocks = document.querySelectorAll('pre code, .text-content code, .content-description code');
+            
+            codeBlocks.forEach((codeElement, index) => {
+                // Skip if already highlighted (has syntax highlighting classes)
+                if (codeElement.classList.contains('highlighted') || 
+                    codeElement.querySelector('.keyword') || 
+                    codeElement.querySelector('.string')) {
+                    return;
+                }
+                
+                const codeContent = codeElement.textContent || codeElement.innerText;
+                if (!codeContent || codeContent.trim().length === 0) {
+                    return;
+                }
+                
+                // Detect language from class or content
+                let language = 'plaintext';
+                const classList = Array.from(codeElement.classList);
+                
+                // Check for language class (language-javascript, language-python, etc.)
+                const langClass = classList.find(cls => cls.startsWith('language-'));
+                if (langClass) {
+                    language = langClass.replace('language-', '');
+                } else {
+                    // Auto-detect language from content
+                    language = this.detectLanguageFromContent(codeContent);
+                }
+                
+                // Apply syntax highlighting
+                const highlightedCode = this.highlightCodeSyntax(codeContent, language);
+                
+                // Create wrapper for the code block if it's in a pre tag
+                const isInPre = codeElement.parentElement.tagName === 'PRE';
+                if (isInPre) {
+                    // Create a proper code block container
+                    const codeId = `auto-code-${Date.now()}-${index}`;
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'content-block-code auto-highlighted';
+                    wrapper.innerHTML = `
+                        <div class="code-header">
+                            <div class="code-language">
+                                <i class="fas fa-code"></i>
+                                <span>${this.getLanguageDisplayName(language)}</span>
+                            </div>
+                            <div class="code-actions">
+                                <button type="button" class="copy-btn" onclick="studySession.copyCodeToClipboard('${codeId}'); return false;" title="کپی کد">
+                                    <i class="fas fa-copy"></i>
+                                    <span>کپی</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="code-content">
+                            <pre><code id="${codeId}" class="language-${language} theme-default" data-code-content="${this.escapeHtml(codeContent)}">${highlightedCode}</code></pre>
+                        </div>
+                    `;
+                    
+                    // Replace the original pre element with the new wrapper
+                    codeElement.parentElement.parentElement.replaceChild(wrapper, codeElement.parentElement);
+                } else {
+                    // For inline code, just apply highlighting
+                    codeElement.innerHTML = highlightedCode;
+                    codeElement.classList.add('highlighted');
+                }
+                
+                console.log(`Applied highlighting to code block ${index + 1} (language: ${language})`);
+            });
+            
+            console.log(`Applied automatic highlighting to ${codeBlocks.length} code blocks`);
+        }, 100); // Small delay to ensure DOM is ready
+    },
+    
+    detectLanguageFromContent(codeContent) {
+        const content = codeContent.toLowerCase();
+        
+        // JavaScript/TypeScript detection
+        if (content.includes('function') && (content.includes('var ') || content.includes('let ') || content.includes('const '))) {
+            return 'javascript';
+        }
+        
+        // Python detection
+        if (content.includes('def ') || content.includes('import ') || content.includes('from ') || content.includes('print(')) {
+            return 'python';
+        }
+        
+        // HTML detection
+        if (content.includes('<html') || content.includes('<div') || content.includes('<span') || content.includes('<p>')) {
+            return 'html';
+        }
+        
+        // CSS detection
+        if (content.includes('{') && content.includes('}') && (content.includes('color:') || content.includes('margin:') || content.includes('padding:'))) {
+            return 'css';
+        }
+        
+        // JSON detection
+        if (content.trim().startsWith('{') && content.trim().endsWith('}')) {
+            return 'json';
+        }
+        
+        // SQL detection
+        if (content.includes('select ') || content.includes('insert ') || content.includes('update ') || content.includes('delete ')) {
+            return 'sql';
+        }
+        
+        // C# detection
+        if (content.includes('using ') || content.includes('namespace ') || content.includes('public class')) {
+            return 'csharp';
+        }
+        
+        return 'plaintext';
     },
     
     initializeReminderContent() {
@@ -426,6 +547,19 @@ let studySession = {
                 textArea.select();
                 document.execCommand('copy');
                 document.body.removeChild(textArea);
+                
+                // Show success message for fallback
+                const button = codeElement.closest('.content-block-code').querySelector('.copy-btn');
+                if (button) {
+                    const originalContent = button.innerHTML;
+                    button.innerHTML = '<i class="fas fa-check"></i><span>کپی شد!</span>';
+                    button.classList.add('copied');
+                    
+                    setTimeout(() => {
+                        button.innerHTML = originalContent;
+                        button.classList.remove('copied');
+                    }, 2000);
+                }
             });
         }
     },
@@ -984,9 +1118,9 @@ let studySession = {
         
         // Bind events
         document.getElementById('cancel-exit').onclick = () => {
-            console.log('Cancel clicked');
+            console.log('Cancel clicked - continuing study');
             this.hideModal();
-            this.exitWithoutSaving();
+            this.continueStudy();
         };
         
         document.getElementById('exit-without-saving').onclick = () => {
@@ -1121,7 +1255,9 @@ let studySession = {
         }
     },
     
-    async exitWithoutSaving() {
+    continueStudy() {
+        console.log('User chose to continue studying');
+        
         // Clear the fixed end time since user cancelled
         this.fixedEndTime = null;
         
@@ -1134,9 +1270,27 @@ let studySession = {
             this.elapsedTime = Math.floor((Date.now() - this.startTime) / 1000);
         }, 1000);
         
-        console.log('User cancelled exit, continuing study on same page');
+        console.log('Continuing study on same page');
         console.log('Timer is now active:', this.isActive);
         console.log('Elapsed time:', this.elapsedTime);
+    },
+    
+    async exitWithoutSaving() {
+        console.log('User chose to exit without saving');
+        
+        // Stop the timer completely
+        this.stopTimer();
+        
+        // Clear the fixed end time since user cancelled
+        this.fixedEndTime = null;
+        
+        // Show a brief message that no time was saved
+        this.showToast('زمان مطالعه ثبت نشد', 'info');
+        
+        // Navigate back to the course schedule items page
+        setTimeout(() => {
+            this.navigateToCourseScheduleItems();
+        }, 1000);
     },
     
     navigateToCourseScheduleItems() {
@@ -1174,7 +1328,22 @@ let studySession = {
     },
     
     showToast(message, type) {
-        const toastClass = type === 'error' ? 'alert-danger' : 'alert-success';
+        let toastClass;
+        switch (type) {
+            case 'error':
+                toastClass = 'alert-danger';
+                break;
+            case 'info':
+                toastClass = 'alert-info';
+                break;
+            case 'warning':
+                toastClass = 'alert-warning';
+                break;
+            default:
+                toastClass = 'alert-success';
+                break;
+        }
+        
         const toastHtml = `
             <div class="alert ${toastClass} alert-dismissible fade show position-fixed" 
                  style="top: 20px; right: 20px; z-index: 9999;" role="alert">
