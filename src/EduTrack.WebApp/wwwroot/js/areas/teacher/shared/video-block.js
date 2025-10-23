@@ -3,9 +3,9 @@
  * Handles video block functionality including file upload and preview
  */
 
-// Check if VideoBlockManager is already defined to prevent duplicate declarations
-if (typeof VideoBlockManager === 'undefined') {
-class VideoBlockManager {
+// Define VideoBlockManager class globally (with duplicate protection)
+if (typeof window.VideoBlockManager === 'undefined') {
+window.VideoBlockManager = class VideoBlockManager {
     constructor(options = {}) {
         this.isInitialized = false;
         this.maxFileSize = options.maxFileSize || 50 * 1024 * 1024; // 50MB default

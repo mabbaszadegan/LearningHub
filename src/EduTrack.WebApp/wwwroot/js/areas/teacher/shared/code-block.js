@@ -3,9 +3,9 @@
  * Handles code block functionality including syntax highlighting and formatting
  */
 
-// Check if CodeBlockManager is already defined to prevent duplicate declarations
-if (typeof CodeBlockManager === 'undefined') {
-class CodeBlockManager {
+// Define CodeBlockManager class globally (with duplicate protection)
+if (typeof window.CodeBlockManager === 'undefined') {
+window.CodeBlockManager = class CodeBlockManager {
     constructor(options = {}) {
         this.isInitialized = false;
         this.supportedLanguages = options.supportedLanguages || [

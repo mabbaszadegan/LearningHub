@@ -3,9 +3,9 @@
  * Handles text block functionality including rich text editing
  */
 
-// Check if TextBlockManager is already defined to prevent duplicate declarations
-if (typeof TextBlockManager === 'undefined') {
-class TextBlockManager {
+// Define TextBlockManager class globally (with duplicate protection)
+if (typeof window.TextBlockManager === 'undefined') {
+window.TextBlockManager = class TextBlockManager {
     constructor(options = {}) {
         this.isInitialized = false;
         this.richTextEditors = new Map();

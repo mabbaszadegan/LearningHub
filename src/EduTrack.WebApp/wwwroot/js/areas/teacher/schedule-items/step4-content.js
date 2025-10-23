@@ -14,20 +14,20 @@ class Step4ContentManager {
     init() {
         this.setupContentTypeListeners();
         this.setupContentBuilder();
-        
+
         // Wait a bit for DOM to be ready
         setTimeout(async () => {
             this.updateStep4Content();
             await this.loadStepData();
-        }, 100);
+        }, 500);
     }
 
     validateStep4() {
         let isValid = true;
-        
+
         const itemTypeSelect = document.getElementById('itemType');
         const selectedType = itemTypeSelect ? itemTypeSelect.value : '0';
-        
+
         // Validate Content JSON based on type
         const contentJsonInput = document.querySelector('input[name="ContentJson"]');
         if (!contentJsonInput || !contentJsonInput.value || contentJsonInput.value === '{}') {
@@ -35,7 +35,7 @@ class Step4ContentManager {
             isValid = false;
         } else {
             this.clearFieldError('ContentJson');
-            
+
             // Additional validation based on content type
             if (selectedType === '0') {
                 // Reminder content validation
@@ -53,7 +53,7 @@ class Step4ContentManager {
                 }
             }
         }
-        
+
         return isValid;
     }
 
@@ -61,13 +61,13 @@ class Step4ContentManager {
         const field = document.querySelector(`[name="${fieldName}"]`);
         if (field) {
             field.classList.add('is-invalid');
-            
+
             // Remove existing error message
             const existingError = field.parentNode.querySelector('.field-error');
             if (existingError) {
                 existingError.remove();
             }
-            
+
             // Add new error message
             const errorDiv = document.createElement('div');
             errorDiv.className = 'field-error text-danger mt-1';
@@ -80,7 +80,7 @@ class Step4ContentManager {
         const field = document.querySelector(`[name="${fieldName}"]`);
         if (field) {
             field.classList.remove('is-invalid');
-            
+
             const existingError = field.parentNode.querySelector('.field-error');
             if (existingError) {
                 existingError.remove();
@@ -108,7 +108,7 @@ class Step4ContentManager {
                 setTimeout(checkContentBuilder, 100);
             }
         };
-        checkContentBuilder();
+        checkContentBuilder();      
     }
 
     setupContentBuilderEvents() {
@@ -125,11 +125,11 @@ class Step4ContentManager {
                 this.previewContentBuilderData();
             });
         }
-        
+
         // Setup step header buttons
         this.setupStepHeaderButtons();
     }
-    
+
     setupStepHeaderButtons() {
         // Add block button in step header
         const addBlockBtn = document.getElementById('addContentBlockBtn');
@@ -140,7 +140,7 @@ class Step4ContentManager {
                 this.handleAddBlockFromHeader();
             });
         }
-        
+
         // Preview button in step header
         const previewBtn = document.getElementById('previewReminderBtn');
         if (previewBtn) {
@@ -151,11 +151,11 @@ class Step4ContentManager {
             });
         }
     }
-    
+
     handleAddBlockFromHeader() {
         const itemTypeSelect = document.getElementById('itemType');
         const selectedType = itemTypeSelect ? itemTypeSelect.value : '0';
-        
+
         if (selectedType === '0') {
             // Reminder content
             if (window.sharedContentBlockManager) {
@@ -174,11 +174,11 @@ class Step4ContentManager {
             }
         }
     }
-    
+
     handlePreviewFromHeader() {
         const itemTypeSelect = document.getElementById('itemType');
         const selectedType = itemTypeSelect ? itemTypeSelect.value : '0';
-        
+
         if (selectedType === '0') {
             // Reminder content
             if (window.reminderBlockManager) {
@@ -291,7 +291,7 @@ class Step4ContentManager {
         }
         previewHTML += '</div>';
         previewContent.innerHTML = previewHTML;
-        
+
         const bsModal = new bootstrap.Modal(modal);
         bsModal.show();
     }
@@ -358,7 +358,7 @@ class Step4ContentManager {
     collectContentData() {
         const itemTypeSelect = document.getElementById('itemType');
         const selectedType = itemTypeSelect ? itemTypeSelect.value : '0';
-        
+
         if (selectedType === '0') {
             // Reminder type - collect from reminder editor
             const reminderData = this.collectReminderContentData();
@@ -386,7 +386,7 @@ class Step4ContentManager {
                 throw new Error('خطا در آپلود فایل‌ها: ' + error.message);
             }
         }
-        
+
         const contentData = this.collectContentData();
         return {
             ContentJson: typeof contentData === 'string' ? contentData : JSON.stringify(contentData)
@@ -395,31 +395,31 @@ class Step4ContentManager {
 
     // Load step 4 data from existing item
     async loadStepData() {
-        
+
         // Try to load data with retry mechanism
         let retryCount = 0;
         const maxRetries = 15;
-        
+
         const tryLoadData = () => {
-            
+
             if (this.formManager && typeof this.formManager.getExistingItemData === 'function') {
                 const existingData = this.formManager.getExistingItemData();
-                
+
                 if (existingData && existingData.contentJson) {
                     const contentField = document.getElementById('contentJson');
                     const reminderField = document.getElementById('reminderContentJson');
-                    
+
                     if (contentField) {
                         contentField.value = existingData.contentJson;
                     }
-                    
+
                     if (reminderField) {
                         reminderField.value = existingData.contentJson;
                     }
-                    
+
                     // Notify reminder block manager to reload content
                     const notifyReminderManager = () => {
-                        
+
                         if (window.reminderBlockManager && typeof window.reminderBlockManager.loadExistingContent === 'function') {
                             // Force reload the content
                             window.reminderBlockManager.loadExistingContent();
@@ -427,7 +427,7 @@ class Step4ContentManager {
                         }
                         return false;
                     };
-                    
+
                     // Also notify written block manager if it exists
                     const notifyWrittenManager = () => {
                         if (window.writtenBlockManager && typeof window.writtenBlockManager.loadExistingContent === 'function') {
@@ -436,10 +436,10 @@ class Step4ContentManager {
                         }
                         return false;
                     };
-                    
+
                     const reminderSuccess = notifyReminderManager();
                     const writtenSuccess = notifyWrittenManager();
-                    
+
                     if (!reminderSuccess && !writtenSuccess) {
                         return false;
                     }
@@ -452,16 +452,16 @@ class Step4ContentManager {
             }
             return false;
         };
-        
+
         // Try immediately
         if (tryLoadData()) {
             return;
         }
-        
+
         // Retry with intervals
         const retryInterval = setInterval(() => {
             retryCount++;
-            
+
             if (tryLoadData() || retryCount >= maxRetries) {
                 clearInterval(retryInterval);
                 if (retryCount >= maxRetries) {

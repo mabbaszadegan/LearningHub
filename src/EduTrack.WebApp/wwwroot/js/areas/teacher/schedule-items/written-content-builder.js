@@ -5,25 +5,6 @@
  */
 
 // Global functions for onclick handlers
-function showWrittenQuestionBlockTypeModal() {
-    
-    if (window.sharedContentBlockManager) {
-        window.sharedContentBlockManager.showBlockTypeModal('questionTypeModal');
-    } else {
-        console.warn('Shared Content Block Manager not available');
-        alert('سیستم مدیریت بلاک‌ها هنوز آماده نیست. لطفاً صفحه را رفرش کنید.');
-    }
-}
-
-function showQuestionTypeModal() {
-    
-    if (window.sharedContentBlockManager) {
-        window.sharedContentBlockManager.showBlockTypeModal('questionTypeModal');
-    } else {
-        console.warn('Shared Content Block Manager not available');
-        alert('سیستم مدیریت بلاک‌ها هنوز آماده نیست. لطفاً صفحه را رفرش کنید.');
-    }
-}
 
 function updateWrittenPreview() {
     
@@ -71,18 +52,6 @@ class WrittenContentBlockManager extends ContentBuilderBase {
     }
 
     setupWrittenSpecificEventListeners() {
-        // Listen for block type selection from shared manager
-        document.addEventListener('blockTypeSelected', (e) => {
-            if (e.detail.type) {
-                this.addQuestionBlock(e.detail.type);
-            }
-        });
-
-        // Listen for insert block above events
-        document.addEventListener('insertBlockAbove', (e) => {
-            this.showBlockTypeModal();
-        });
-
         // Modal close events
         const previewModal = document.getElementById('writtenPreviewModal');
         if (previewModal) {
@@ -106,6 +75,18 @@ class WrittenContentBlockManager extends ContentBuilderBase {
                 this.updateQuestionHint(e.target);
             }
         });
+
+        // Handle insert block above event
+        document.addEventListener('insertBlockAbove', (e) => {
+            this.handleInsertBlockAbove(e.detail.blockElement);
+        });
+    }
+
+    handleInsertBlockAbove(blockElement) {
+        // Show question type selection modal for inserting above
+        if (window.sharedContentBlockManager) {
+            window.sharedContentBlockManager.showBlockTypeModal('questionTypeModal');
+        }
     }
 
     addQuestionBlock(type) {

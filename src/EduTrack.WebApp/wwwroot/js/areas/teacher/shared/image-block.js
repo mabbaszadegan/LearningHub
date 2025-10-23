@@ -3,9 +3,9 @@
  * Handles image block functionality including file upload and preview
  */
 
-// Check if ImageBlockManager is already defined to prevent duplicate declarations
-if (typeof ImageBlockManager === 'undefined') {
-class ImageBlockManager {
+// Define ImageBlockManager class globally (with duplicate protection)
+if (typeof window.ImageBlockManager === 'undefined') {
+window.ImageBlockManager = class ImageBlockManager {
     constructor(options = {}) {
         this.isInitialized = false;
         this.maxFileSize = options.maxFileSize || 5 * 1024 * 1024; // 5MB default

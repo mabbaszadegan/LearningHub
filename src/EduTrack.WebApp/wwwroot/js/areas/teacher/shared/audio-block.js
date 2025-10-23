@@ -3,9 +3,9 @@
  * Handles audio block functionality including file upload, recording, and preview
  */
 
-// Check if AudioBlockManager is already defined to prevent duplicate declarations
-if (typeof AudioBlockManager === 'undefined') {
-class AudioBlockManager {
+// Define AudioBlockManager class globally (with duplicate protection)
+if (typeof window.AudioBlockManager === 'undefined') {
+window.AudioBlockManager = class AudioBlockManager {
     constructor(options = {}) {
         this.isInitialized = false;
         this.maxFileSize = options.maxFileSize || 10 * 1024 * 1024; // 10MB default

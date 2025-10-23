@@ -5,13 +5,6 @@
  */
 
 // Global functions
-function showBlockTypeModal() {
-    if (window.sharedContentBlockManager) {
-        window.sharedContentBlockManager.showBlockTypeModal('blockTypeModal');
-    } else {
-        alert('سیستم مدیریت بلاک‌ها هنوز آماده نیست. لطفاً صفحه را رفرش کنید.');
-    }
-}
 
 function updatePreview() {
     if (window.reminderBlockManager) {
@@ -46,17 +39,24 @@ class ReminderContentBlockManager extends ContentBuilderBase {
     }
 
     setupReminderSpecificEventListeners() {
-        // Listen for insert block above events
-        document.addEventListener('insertBlockAbove', (e) => {
-            this.showBlockTypeModal();
-        });
-
         // Caption changes
         document.addEventListener('input', (e) => {
             if (e.target.matches('[data-caption="true"]')) {
                 this.updateBlockCaption(e.target);
             }
         });
+
+        // Handle insert block above event
+        document.addEventListener('insertBlockAbove', (e) => {
+            this.handleInsertBlockAbove(e.detail.blockElement);
+        });
+    }
+
+    handleInsertBlockAbove(blockElement) {
+        // Show block type selection modal for inserting above
+        if (window.sharedContentBlockManager) {
+            window.sharedContentBlockManager.showBlockTypeModal('blockTypeModal');
+        }
     }
 
     updateBlockCaption(textarea) {

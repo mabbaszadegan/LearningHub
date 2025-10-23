@@ -6,12 +6,13 @@
     var modalLabel = ViewData["ModalLabel"]?.ToString() ?? "blockTypeModalLabel";
 }
 
-<!-- Block Type Selection Modal -->
-<div class="modal fade" id="@modalId" tabindex="-1" aria-labelledby="@modalLabel" aria-hidden="true">
+<!-- Ultra-Modern Block Type Selection Modal -->
+<div class="modal fade" id="@modalId" tabindex="-1" aria-labelledby="@modalLabel" aria-hidden="true" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered modal-sm">
         <div class="modal-content elegant-modal">
             <div class="modal-header elegant-header">
                 <h5 class="modal-title elegant-title" id="@modalLabel">
+                    <i class="fas fa-magic me-2"></i>
                     @modalTitle
                 </h5>
                 <button type="button" class="btn-close elegant-close" data-bs-dismiss="modal" aria-label="بستن">
@@ -20,39 +21,52 @@
             </div>
             <div class="modal-body elegant-body">
                 <div class="block-type-list">
-                    <div class="block-type-option" data-type="text">
+                    <div class="block-type-option" data-type="text" role="button" tabindex="0" aria-label="افزودن بلاک متن">
                         <div class="option-icon">
                             <i class="fas fa-font"></i>
                         </div>
                         <span class="option-label">متن</span>
+                        <small class="text-muted mt-1">محتوای متنی</small>
                     </div>
                     
-                    <div class="block-type-option" data-type="image">
+                    <div class="block-type-option" data-type="image" role="button" tabindex="0" aria-label="افزودن بلاک تصویر">
                         <div class="option-icon">
                             <i class="fas fa-image"></i>
                         </div>
                         <span class="option-label">تصویر</span>
+                        <small class="text-muted mt-1">عکس و تصویر</small>
                     </div>
                     
-                    <div class="block-type-option" data-type="video">
+                    <div class="block-type-option" data-type="video" role="button" tabindex="0" aria-label="افزودن بلاک ویدیو">
                         <div class="option-icon">
                             <i class="fas fa-video"></i>
                         </div>
                         <span class="option-label">ویدیو</span>
+                        <small class="text-muted mt-1">فیلم آموزشی</small>
                     </div>
                     
-                    <div class="block-type-option" data-type="audio">
+                    <div class="block-type-option" data-type="audio" role="button" tabindex="0" aria-label="افزودن بلاک صوت">
                         <div class="option-icon">
                             <i class="fas fa-microphone"></i>
                         </div>
                         <span class="option-label">صوت</span>
+                        <small class="text-muted mt-1">فایل صوتی</small>
                     </div>
                     
-                    <div class="block-type-option" data-type="code">
+                    <div class="block-type-option" data-type="code" role="button" tabindex="0" aria-label="افزودن بلاک کد">
                         <div class="option-icon">
                             <i class="fas fa-code"></i>
                         </div>
                         <span class="option-label">کد</span>
+                        <small class="text-muted mt-1">کد برنامه‌نویسی</small>
+                    </div>
+                    
+                    <div class="block-type-option" data-type="quiz" role="button" tabindex="0" aria-label="افزودن بلاک آزمون">
+                        <div class="option-icon">
+                            <i class="fas fa-question-circle"></i>
+                        </div>
+                        <span class="option-label">آزمون</span>
+                        <small class="text-muted mt-1">سوال و پاسخ</small>
                     </div>
                 </div>
             </div>

@@ -20,6 +20,13 @@ class SharedContentBlockManager {
         this.isInitialized = true;
     }
 
+    // Method to reinitialize if block managers are not available
+    reinitialize() {
+        this.isInitialized = false;
+        this.blockManagers.clear();
+        this.init();
+    }
+
     initializeBlockManagers() {
         // Initialize text block manager
         if (typeof TextBlockManager !== 'undefined') {
@@ -109,17 +116,108 @@ class SharedContentBlockManager {
     }
 
     handleBlockAction(e) {
-        const action = e.target.closest('[data-action]').dataset.action;
-        const blockElement = e.target.closest('.content-block-template, .question-block-template');
+        const actionButton = e.target.closest('[data-action]');
+        if (!actionButton) return;
+        
+        const action = actionButton.dataset.action;
+        const blockElement = actionButton.closest('.content-block-template, .question-block-template');
         
         if (!blockElement) return;
 
         const blockType = blockElement.dataset.type;
         const manager = this.blockManagers.get(blockType);
         
+        // Try to delegate to specific block manager first
         if (manager && typeof manager.handleAction === 'function') {
             manager.handleAction(action, blockElement);
+            return;
         }
+        
+        // Handle common block actions directly
+        this.handleCommonBlockAction(action, blockElement);
+    }
+
+    handleCommonBlockAction(action, blockElement) {
+        switch (action) {
+            case 'move-up':
+                this.moveBlockUp(blockElement);
+                break;
+            case 'move-down':
+                this.moveBlockDown(blockElement);
+                break;
+            case 'delete':
+                this.deleteBlock(blockElement);
+                break;
+            case 'fullscreen':
+                this.toggleFullscreen(blockElement);
+                break;
+            case 'toggle-collapse':
+                this.toggleCollapse(blockElement);
+                break;
+            case 'insert-above':
+                this.insertBlockAbove(blockElement);
+                break;
+            default:
+                console.warn(`Unknown block action: ${action}`);
+        }
+    }
+
+    moveBlockUp(blockElement) {
+        const previousBlock = blockElement.previousElementSibling;
+        if (previousBlock && previousBlock.classList.contains('content-block-template')) {
+            blockElement.parentNode.insertBefore(blockElement, previousBlock);
+            this.triggerBlockReorder();
+        }
+    }
+
+    moveBlockDown(blockElement) {
+        const nextBlock = blockElement.nextElementSibling;
+        if (nextBlock && nextBlock.classList.contains('content-block-template')) {
+            blockElement.parentNode.insertBefore(nextBlock, blockElement);
+            this.triggerBlockReorder();
+        }
+    }
+
+    deleteBlock(blockElement) {
+        if (confirm('آیا از حذف این بلاک اطمینان دارید؟')) {
+            blockElement.remove();
+            this.triggerBlockReorder();
+        }
+    }
+
+    toggleFullscreen(blockElement) {
+        blockElement.classList.toggle('fullscreen');
+        
+        if (blockElement.classList.contains('fullscreen')) {
+            blockElement.classList.remove('collapsed');
+        }
+    }
+
+    toggleCollapse(blockElement) {
+        if (blockElement.classList.contains('fullscreen')) {
+            return;
+        }
+        blockElement.classList.toggle('collapsed');
+    }
+
+    insertBlockAbove(blockElement) {
+        // Trigger event for specific content builders to handle
+        const event = new CustomEvent('insertBlockAbove', {
+            detail: {
+                blockElement: blockElement
+            }
+        });
+        document.dispatchEvent(event);
+    }
+
+    triggerBlockReorder() {
+        // Trigger event to notify content builders about reordering
+        const event = new CustomEvent('blockReorder', {
+            detail: {
+                timestamp: Date.now()
+            }
+        });
+        document.dispatchEvent(event);
     }
 
     initializeNewBlock(blockElement) {
@@ -178,6 +276,14 @@ class SharedContentBlockManager {
         if (modalManager) {
             modalManager.modalId = modalId || modalManager.modalId;
             modalManager.showModal();
+        } else {
+            // Try to reinitialize if modal manager is not found
+            this.reinitialize();
+            const retryModalManager = this.blockManagers.get('modal');
+            if (retryModalManager) {
+                retryModalManager.modalId = modalId || retryModalManager.modalId;
+                retryModalManager.showModal();
+            }
         }
     }
 
@@ -224,27 +330,18 @@ function initializeContentBlocks(options = {}) {
     return window.sharedContentBlockManager;
 }
 
-function showBlockTypeModal(modalId) {
-    if (window.sharedContentBlockManager) {
-        window.sharedContentBlockManager.showBlockTypeModal(modalId);
-    }
-}
-
-function hideBlockTypeModal() {
-    if (window.sharedContentBlockManager) {
-        window.sharedContentBlockManager.hideBlockTypeModal();
-    }
-}
-
 // Auto-initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize with default options
-    initializeContentBlocks({
-        imageMaxSize: 5 * 1024 * 1024, // 5MB
-        videoMaxSize: 50 * 1024 * 1024, // 50MB
-        audioMaxSize: 10 * 1024 * 1024, // 10MB
-        modalId: 'blockTypeModal'
-    });
+    // Wait a bit for all scripts to load
+    setTimeout(() => {
+        // Initialize with default options
+        initializeContentBlocks({
+            imageMaxSize: 5 * 1024 * 1024, // 5MB
+            videoMaxSize: 50 * 1024 * 1024, // 50MB
+            audioMaxSize: 10 * 1024 * 1024, // 10MB
+            modalId: 'blockTypeModal'
+        });
+    }, 100);
 });
 
 // Export for module systems
