@@ -1,0 +1,289 @@
+/* Video Block Styles */
+.video-upload-area {
+    position: relative;
+    margin-bottom: 1rem;
+}
+
+.video-upload-area .file-input {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+    z-index: 2;
+}
+
+.video-upload-area .upload-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    border: 2px dashed #dee2e6;
+    border-radius: 8px;
+    background: #f8f9fa;
+    text-align: center;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    min-height: 120px;
+}
+
+.video-upload-area .upload-placeholder:hover {
+    border-color: #007bff;
+    background: #f0f8ff;
+}
+
+.video-upload-area .upload-placeholder i {
+    font-size: 2rem;
+    color: #6c757d;
+    margin-bottom: 0.5rem;
+}
+
+.video-upload-area .upload-placeholder span {
+    font-size: 1rem;
+    color: #495057;
+    margin-bottom: 0.25rem;
+    font-weight: 500;
+}
+
+.video-upload-area .upload-placeholder small {
+    font-size: 0.75rem;
+    color: #6c757d;
+}
+
+.video-upload-area .upload-progress {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 8px;
+    z-index: 3;
+}
+
+.video-preview {
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.preview-video {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    margin-bottom: 0.75rem;
+}
+
+.video-settings {
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+    background: #f8f9fa;
+    border-radius: 6px;
+    border: 1px solid #e9ecef;
+}
+
+.video-caption {
+    margin-bottom: 1rem;
+}
+
+.video-caption textarea {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    resize: vertical;
+    min-height: 60px;
+    margin-bottom: 0.75rem;
+}
+
+.video-caption textarea:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    outline: none;
+}
+
+.caption-position {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.caption-position label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #495057;
+    margin: 0;
+    white-space: nowrap;
+}
+
+/* Video size variations */
+.video-preview.size-small .preview-video {
+    max-width: 400px;
+}
+
+.video-preview.size-medium .preview-video {
+    max-width: 600px;
+}
+
+.video-preview.size-large .preview-video {
+    max-width: 800px;
+}
+
+.video-preview.size-full .preview-video {
+    max-width: 100%;
+}
+
+/* Video position variations */
+.video-preview.position-left {
+    text-align: left;
+}
+
+.video-preview.position-center {
+    text-align: center;
+}
+
+.video-preview.position-right {
+    text-align: right;
+}
+
+/* Drag and drop styles */
+.video-upload-area .upload-placeholder.drag-over {
+    border-color: #007bff;
+    background: #f0f8ff;
+    transform: scale(1.02);
+}
+
+.video-upload-area .upload-placeholder.drag-over i {
+    color: #007bff;
+    transform: scale(1.1);
+}
+
+/* Loading animation */
+.video-upload-area .upload-progress .progress-fill {
+    animation: progressAnimation 2s ease-in-out infinite;
+}
+
+@keyframes progressAnimation {
+    0% {
+        width: 0%;
+    }
+    50% {
+        width: 70%;
+    }
+    100% {
+        width: 100%;
+    }
+}
+
+/* Error state */
+.video-upload-area .upload-placeholder.error {
+    border-color: #dc3545;
+    background: #f8d7da;
+}
+
+.video-upload-area .upload-placeholder.error i {
+    color: #dc3545;
+}
+
+/* Success state */
+.video-upload-area .upload-placeholder.success {
+    border-color: #28a745;
+    background: #d4edda;
+}
+
+.video-upload-area .upload-placeholder.success i {
+    color: #28a745;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .video-upload-area .upload-placeholder {
+        padding: 1.5rem 1rem;
+        min-height: 100px;
+    }
+    
+    .video-upload-area .upload-placeholder i {
+        font-size: 1.5rem;
+    }
+    
+    .video-upload-area .upload-placeholder span {
+        font-size: 0.9rem;
+    }
+    
+    .video-upload-area .upload-placeholder small {
+        font-size: 0.7rem;
+    }
+    
+    .video-upload-area .progress-bar {
+        width: 150px;
+    }
+    
+    .caption-position {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+    }
+    
+    .form-select-sm {
+        width: 100%;
+    }
+}
+
+/* Accessibility */
+.video-upload-area .file-input:focus + .upload-placeholder {
+    outline: 2px solid #007bff;
+    outline-offset: 2px;
+}
+
+/* Animation for video preview */
+.video-preview {
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Hover effects for preview video */
+.preview-video:hover {
+    transform: scale(1.01);
+    transition: transform 0.3s ease;
+}
+
+/* Video controls customization */
+.preview-video::-webkit-media-controls-panel {
+    background-color: rgba(0, 0, 0, 0.8);
+}
+
+.preview-video::-webkit-media-controls-play-button,
+.preview-video::-webkit-media-controls-pause-button {
+    background-color: #007bff;
+    border-radius: 50%;
+}
+
+/* Video loading state */
+.preview-video.loading {
+    opacity: 0.7;
+    filter: blur(1px);
+}
+
+/* Video error state */
+.preview-video.error {
+    border: 2px solid #dc3545;
+    background: #f8d7da;
+}

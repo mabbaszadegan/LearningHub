@@ -8,7 +8,6 @@ class Step4ContentManager {
         this.formManager = formManager;
         this.contentBuilder = null;
         this.selectedContentType = null;
-        console.log('Step4ContentManager initialized with formManager:', formManager);
         this.init();
     }
 
@@ -125,6 +124,79 @@ class Step4ContentManager {
             previewBtn.addEventListener('click', () => {
                 this.previewContentBuilderData();
             });
+        }
+        
+        // Setup step header buttons
+        this.setupStepHeaderButtons();
+    }
+    
+    setupStepHeaderButtons() {
+        // Add block button in step header
+        const addBlockBtn = document.getElementById('addContentBlockBtn');
+        if (addBlockBtn) {
+            addBlockBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.handleAddBlockFromHeader();
+            });
+        }
+        
+        // Preview button in step header
+        const previewBtn = document.getElementById('previewReminderBtn');
+        if (previewBtn) {
+            previewBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.handlePreviewFromHeader();
+            });
+        }
+    }
+    
+    handleAddBlockFromHeader() {
+        const itemTypeSelect = document.getElementById('itemType');
+        const selectedType = itemTypeSelect ? itemTypeSelect.value : '0';
+        
+        if (selectedType === '0') {
+            // Reminder content
+            if (window.sharedContentBlockManager) {
+                window.sharedContentBlockManager.showBlockTypeModal('blockTypeModal');
+            } else {
+                console.warn('Shared Content Block Manager not available');
+                alert('سیستم مدیریت بلاک‌ها هنوز آماده نیست. لطفاً صفحه را رفرش کنید.');
+            }
+        } else if (selectedType === '1') {
+            // Written content
+            if (window.sharedContentBlockManager) {
+                window.sharedContentBlockManager.showBlockTypeModal('questionTypeModal');
+            } else {
+                console.warn('Shared Content Block Manager not available');
+                alert('سیستم مدیریت بلاک‌ها هنوز آماده نیست. لطفاً صفحه را رفرش کنید.');
+            }
+        }
+    }
+    
+    handlePreviewFromHeader() {
+        const itemTypeSelect = document.getElementById('itemType');
+        const selectedType = itemTypeSelect ? itemTypeSelect.value : '0';
+        
+        if (selectedType === '0') {
+            // Reminder content
+            if (window.reminderBlockManager) {
+                window.reminderBlockManager.updatePreview();
+                window.reminderBlockManager.showPreviewModal();
+            } else {
+                console.warn('Reminder Block Manager not available');
+                alert('سیستم پیش‌نمایش هنوز آماده نیست');
+            }
+        } else if (selectedType === '1') {
+            // Written content
+            if (window.writtenBlockManager) {
+                window.writtenBlockManager.updatePreview();
+                window.writtenBlockManager.showPreviewModal();
+            } else {
+                console.warn('Written Block Manager not available');
+                alert('سیستم پیش‌نمایش هنوز آماده نیست');
+            }
         }
     }
 
@@ -323,64 +395,60 @@ class Step4ContentManager {
 
     // Load step 4 data from existing item
     async loadStepData() {
-        console.log('loadStepData called');
         
         // Try to load data with retry mechanism
         let retryCount = 0;
-        const maxRetries = 10;
+        const maxRetries = 15;
         
         const tryLoadData = () => {
-            console.log(`Attempt ${retryCount + 1} to load step data`);
-            console.log('FormManager exists:', !!this.formManager);
-            console.log('getExistingItemData function exists:', !!(this.formManager && typeof this.formManager.getExistingItemData === 'function'));
             
             if (this.formManager && typeof this.formManager.getExistingItemData === 'function') {
                 const existingData = this.formManager.getExistingItemData();
-                console.log('Existing data from formManager:', existingData);
                 
                 if (existingData && existingData.contentJson) {
                     const contentField = document.getElementById('contentJson');
                     const reminderField = document.getElementById('reminderContentJson');
                     
-                    console.log('Content field found:', !!contentField);
-                    console.log('Reminder field found:', !!reminderField);
-                    
                     if (contentField) {
                         contentField.value = existingData.contentJson;
-                        console.log('Content field updated with:', existingData.contentJson);
                     }
                     
                     if (reminderField) {
                         reminderField.value = existingData.contentJson;
-                        console.log('Reminder field updated with:', existingData.contentJson);
                     }
-                    
-                    console.log('Step 4 data loaded:', existingData.contentJson);
                     
                     // Notify reminder block manager to reload content
                     const notifyReminderManager = () => {
-                        console.log('Checking reminder block manager...');
-                        console.log('window.reminderBlockManager exists:', !!window.reminderBlockManager);
                         
                         if (window.reminderBlockManager && typeof window.reminderBlockManager.loadExistingContent === 'function') {
-                            console.log('Notifying reminder block manager to load content');
+                            // Force reload the content
                             window.reminderBlockManager.loadExistingContent();
                             return true;
                         }
                         return false;
                     };
                     
-                    if (!notifyReminderManager()) {
-                        console.log('Reminder block manager not ready, will retry...');
+                    // Also notify written block manager if it exists
+                    const notifyWrittenManager = () => {
+                        if (window.writtenBlockManager && typeof window.writtenBlockManager.loadExistingContent === 'function') {
+                            window.writtenBlockManager.loadExistingContent();
+                            return true;
+                        }
+                        return false;
+                    };
+                    
+                    const reminderSuccess = notifyReminderManager();
+                    const writtenSuccess = notifyWrittenManager();
+                    
+                    if (!reminderSuccess && !writtenSuccess) {
                         return false;
                     }
                     return true;
                 } else {
-                    console.log('No existing data or contentJson found');
-                    console.log('existingData:', existingData);
+                    // No existing data found
                 }
             } else {
-                console.log('FormManager not ready or getExistingItemData not available');
+                // FormManager not ready
             }
             return false;
         };
@@ -393,15 +461,14 @@ class Step4ContentManager {
         // Retry with intervals
         const retryInterval = setInterval(() => {
             retryCount++;
-            console.log(`Retry ${retryCount} to load step 4 data`);
             
             if (tryLoadData() || retryCount >= maxRetries) {
                 clearInterval(retryInterval);
                 if (retryCount >= maxRetries) {
-                    console.log('Max retries reached, giving up on loading step 4 data');
+                    console.warn('Step4ContentManager: Failed to load existing content after maximum retries');
                 }
             }
-        }, 500);
+        }, 300);
     }
 }
 

@@ -427,8 +427,6 @@ class ModernScheduleItemFormManager {
             // Collect form data from step 1
             const formData = this.collectStep1Data();
             
-            console.log('Sending request:', formData);
-            
             // Create the item via API
             const response = await fetch('/Teacher/ScheduleItem/CreateScheduleItem', {
                 method: 'POST',
@@ -439,9 +437,7 @@ class ModernScheduleItemFormManager {
                 body: JSON.stringify(formData)
             });
             
-            console.log('Response status:', response.status);
             const result = await response.json();
-            console.log('Response result:', result);
             
             if (result.success) {
                 this.lastCreatedItemId = result.id;
@@ -468,12 +464,6 @@ class ModernScheduleItemFormManager {
         const typeSelect = form.querySelector('select[name="Type"]');
         
         // Debug: log the form data
-        console.log('Form data collected:', {
-            TeachingPlanId: formData.get('TeachingPlanId'),
-            Title: titleInput ? titleInput.value : 'not found',
-            Description: descriptionInput ? descriptionInput.value : 'not found',
-            Type: typeSelect ? typeSelect.value : 'not found'
-        });
         
         return {
             TeachingPlanId: parseInt(formData.get('TeachingPlanId')) || 0,
@@ -1367,11 +1357,6 @@ class ModernScheduleItemFormManager {
                 ...stepData
             };
 
-            console.log('Request data being sent:', requestData);
-            console.log('Step data collected:', stepData);
-            console.log('Current step:', this.currentStep);
-            console.log('Current item ID:', this.currentItemId);
-
             // For step 3, ensure we have proper data structure
             if (this.currentStep === 3) {
                 if (!requestData.GroupIds) requestData.GroupIds = [];
@@ -1383,8 +1368,6 @@ class ModernScheduleItemFormManager {
             if (requestData.ContentJson && typeof requestData.ContentJson === 'object') {
                 requestData.ContentJson = JSON.stringify(requestData.ContentJson);
             }
-
-            console.log('Final request data before sending:', requestData);
 
             const response = await fetch('/Teacher/ScheduleItem/SaveStep', {
                 method: 'POST',
@@ -1451,17 +1434,13 @@ class ModernScheduleItemFormManager {
         // Collect data from all steps that have been completed
         const stepData = {};
 
-        console.log('collectCurrentStepData called for step:', this.currentStep);
-
         if (this.currentStep >= 1 && window.step1Manager && typeof window.step1Manager.collectStep1Data === 'function') {
             const step1Data = window.step1Manager.collectStep1Data();
-            console.log('Step 1 data:', step1Data);
             Object.assign(stepData, step1Data);
         }
         
         if (this.currentStep >= 2 && window.step2Manager && typeof window.step2Manager.collectStep2Data === 'function') {
             const step2Data = window.step2Manager.collectStep2Data();
-            console.log('Step 2 data:', step2Data);
             Object.assign(stepData, step2Data);
         }
         
@@ -1472,18 +1451,15 @@ class ModernScheduleItemFormManager {
             }
             if (window.step3Manager && typeof window.step3Manager.collectStep3Data === 'function') {
                 const step3Data = window.step3Manager.collectStep3Data();
-                console.log('Step 3 data:', step3Data);
                 Object.assign(stepData, step3Data);
             }
         }
         
         if (this.currentStep >= 4 && window.step4Manager && typeof window.step4Manager.collectStep4Data === 'function') {
             const step4Data = await window.step4Manager.collectStep4Data();
-            console.log('Step 4 data:', step4Data);
             Object.assign(stepData, step4Data);
         }
 
-        console.log('Final step data collected:', stepData);
         return stepData;
     }
 
@@ -1507,32 +1483,22 @@ class ModernScheduleItemFormManager {
     }
 
     async loadExistingItem() {
-        console.log('=== loadExistingItem called ===');
-        console.log('Current item ID:', this.currentItemId);
         
         if (!this.currentItemId) {
-            console.log('No current item ID, returning');
             return;
         }
 
         try {
-            console.log('Fetching item data from server...');
             const response = await fetch(`/Teacher/ScheduleItem/GetById/${this.currentItemId}`);
             const result = await response.json();
             
-            console.log('Server response:', result);
-
             if (result.success) {
-                console.log('Server response successful');
-                console.log('Item data:', result.data);
                 
                 // Store the loaded data for step managers to use
                 this.existingItemData = result.data;
-                console.log('Stored existing item data:', this.existingItemData);
                 
                 // Update current step from server data
                 if (result.data.currentStep) {
-                    console.log('Updating current step from server:', result.data.currentStep);
                     this.currentStep = result.data.currentStep;
                     this.updateStepVisibility();
                 }
@@ -1556,27 +1522,20 @@ class ModernScheduleItemFormManager {
         } catch (error) {
             console.error('Error in loadExistingItem:', error);
         }
-        
-        console.log('=== loadExistingItem finished ===');
     }
 
     // Get existing item data for step managers
     getExistingItemData() {
-        console.log('getExistingItemData called');
-        console.log('existingItemData:', this.existingItemData);
         return this.existingItemData || null;
     }
 
     // Notify step managers to load their data
     notifyStepManagersToLoadData() {
-        console.log('notifyStepManagersToLoadData called for step:', this.currentStep);
-        console.log('Existing item data:', this.existingItemData);
         
         // Only notify the current step manager to load data
         switch (this.currentStep) {
             case 1:
                 if (window.step1Manager && typeof window.step1Manager.loadStepData === 'function') {
-                    console.log('Notifying step1Manager to load data');
                     setTimeout(() => {
                         window.step1Manager.loadStepData();
                     }, 100);
@@ -1584,7 +1543,6 @@ class ModernScheduleItemFormManager {
                 break;
             case 2:
                 if (window.step2Manager && typeof window.step2Manager.loadStepData === 'function') {
-                    console.log('Notifying step2Manager to load data');
                     setTimeout(() => {
                         window.step2Manager.loadStepData();
                     }, 100);
@@ -1592,7 +1550,6 @@ class ModernScheduleItemFormManager {
                 break;
             case 3:
                 if (window.step3Manager && typeof window.step3Manager.loadStepData === 'function') {
-                    console.log('Notifying step3Manager to load data');
                     setTimeout(() => {
                         window.step3Manager.loadStepData();
                     }, 100);
@@ -1601,19 +1558,15 @@ class ModernScheduleItemFormManager {
             case 4:
                 // Step 4 needs step 3 data, so load step 3 first
                 if (this.step3Manager && typeof this.step3Manager.loadStepData === 'function') {
-                    console.log('Loading step 3 data for step 4');
                     setTimeout(() => {
                         this.step3Manager.loadStepData();
                     }, 100);
                 }
                 
                 if (window.step4Manager && typeof window.step4Manager.loadStepData === 'function') {
-                    console.log('Notifying step4Manager to load data');
                     setTimeout(() => {
                         window.step4Manager.loadStepData();
                     }, 200); // Increased delay to ensure step 3 loads first
-                } else {
-                    console.log('step4Manager not ready');
                 }
                 break;
         }

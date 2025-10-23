@@ -1,0 +1,241 @@
+/* Elegant Block Type Selection Modal Styles */
+
+/* Modal Container */
+.elegant-modal {
+    border: none;
+    border-radius: 16px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.modal-dialog.modal-sm {
+    max-width: 400px;
+}
+
+/* Modal Header */
+.elegant-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    padding: 1.5rem 1.5rem 1rem;
+    position: relative;
+}
+
+
+.elegant-title {
+    color: #fff;
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin: 0;
+    text-align: center;
+    letter-spacing: 0.5px;
+}
+
+.elegant-close {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 0.875rem;
+    transition: all 0.3s ease;
+}
+
+.elegant-close:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.1);
+}
+
+.elegant-close:focus {
+    outline: 2px solid rgba(255, 255, 255, 0.5);
+    outline-offset: 2px;
+}
+
+/* Modal Body */
+.elegant-body {
+    padding: 0;
+    background: #fff;
+}
+
+/* Block Type List */
+.block-type-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.block-type-option {
+    display: flex;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-bottom: 1px solid #f1f3f4;
+    position: relative;
+    background: #fff;
+}
+
+.block-type-option:last-child {
+    border-bottom: none;
+}
+
+.block-type-option:hover {
+    background: linear-gradient(90deg, #f8f9ff 0%, #fff 100%);
+    transform: translateX(4px);
+    box-shadow: inset 4px 0 0 #667eea;
+}
+
+.block-type-option:active {
+    transform: translateX(2px);
+    background: #f0f2ff;
+}
+
+.option-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 10px;
+    margin-left: 1rem;
+    font-size: 1.1rem;
+    color: #6c757d;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+}
+
+.block-type-option:hover .option-icon {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.option-label {
+    font-weight: 500;
+    color: #2d3748;
+    font-size: 0.95rem;
+    transition: color 0.3s ease;
+}
+
+.block-type-option:hover .option-label {
+    color: #667eea;
+    font-weight: 600;
+}
+
+/* Modal Animation */
+.modal.fade .modal-dialog {
+    transform: translateY(-20px) scale(0.95);
+    opacity: 0;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.modal.show .modal-dialog {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+}
+
+/* Backdrop */
+.modal-backdrop {
+    background: rgba(0, 0, 0, 0.5);
+}
+
+/* Focus styles for accessibility */
+.block-type-option:focus {
+    outline: 2px solid #667eea;
+    outline-offset: -2px;
+    background: #f8f9ff;
+}
+
+/* Loading state */
+.block-type-option.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.block-type-option.loading .option-icon {
+    animation: elegant-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes elegant-pulse {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.05);
+        opacity: 0.8;
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 576px) {
+    .elegant-header {
+        padding: 1.25rem 1.25rem 0.75rem;
+    }
+    
+    .elegant-title {
+        font-size: 1rem;
+        padding-right: 2.5rem;
+    }
+    
+    .elegant-close {
+        top: 0.75rem;
+        left: 0.75rem;
+        width: 28px;
+        height: 28px;
+        font-size: 0.8rem;
+    }
+    
+    .block-type-option {
+        padding: 0.875rem 1.25rem;
+    }
+    
+    .option-icon {
+        width: 36px;
+        height: 36px;
+        margin-left: 0.75rem;
+        font-size: 1rem;
+    }
+    
+    .option-label {
+        font-size: 0.9rem;
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .elegant-body {
+        background: #1a202c;
+    }
+    
+    .block-type-option {
+        background: #1a202c;
+        border-bottom-color: #2d3748;
+    }
+    
+    .block-type-option:hover {
+        background: linear-gradient(90deg, #2d3748 0%, #1a202c 100%);
+    }
+    
+    .option-icon {
+        background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
+        color: #a0aec0;
+    }
+    
+    .option-label {
+        color: #e2e8f0;
+    }
+    
+    .block-type-option:hover .option-label {
+        color: #90cdf4;
+    }
+}
+

@@ -285,13 +285,9 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Description toggle function
         function toggleDescriptionMinimal() {
-            console.log('toggleDescriptionMinimal called'); // Debug log
-            
             const preview = document.getElementById('descriptionPreviewMinimal');
             const full = document.getElementById('descriptionFullMinimal');
             const toggle = document.getElementById('descriptionToggleMinimal');
-            
-            console.log('Elements found:', { preview, full, toggle }); // Debug log
             
             if (!preview || !full || !toggle) {
                 console.error('Required elements not found');
@@ -301,12 +297,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Check if full description is currently visible
             const isFullVisible = full.style.display === 'block' || 
                                  window.getComputedStyle(full).display === 'block';
-            
-            console.log('Current state:', { 
-                fullStyleDisplay: full.style.display, 
-                computedDisplay: window.getComputedStyle(full).display,
-                isFullVisible 
-            });
+                     
             
             if (isFullVisible) {
                 // Currently showing full, switch to preview
@@ -314,14 +305,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 full.style.display = 'none';
                 toggle.classList.remove('fa-chevron-up');
                 toggle.classList.add('fa-chevron-down');
-                console.log('Switched to preview (collapsed)');
             } else {
                 // Currently showing preview, switch to full
                 preview.style.display = 'none';
                 full.style.display = 'block';
                 toggle.classList.remove('fa-chevron-down');
                 toggle.classList.add('fa-chevron-up');
-                console.log('Switched to full (expanded)');
             }
         }
         

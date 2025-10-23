@@ -1,0 +1,63 @@
+<link rel="stylesheet" href="~/css/areas/teacher/shared/block-type-selection-modal.css" asp-append-version="true" />
+
+@{
+    var modalId = ViewData["ModalId"]?.ToString() ?? "blockTypeModal";
+    var modalTitle = ViewData["ModalTitle"]?.ToString() ?? "انتخاب نوع بلاک";
+    var modalLabel = ViewData["ModalLabel"]?.ToString() ?? "blockTypeModalLabel";
+}
+
+<!-- Block Type Selection Modal -->
+<div class="modal fade" id="@modalId" tabindex="-1" aria-labelledby="@modalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content elegant-modal">
+            <div class="modal-header elegant-header">
+                <h5 class="modal-title elegant-title" id="@modalLabel">
+                    @modalTitle
+                </h5>
+                <button type="button" class="btn-close elegant-close" data-bs-dismiss="modal" aria-label="بستن">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body elegant-body">
+                <div class="block-type-list">
+                    <div class="block-type-option" data-type="text">
+                        <div class="option-icon">
+                            <i class="fas fa-font"></i>
+                        </div>
+                        <span class="option-label">متن</span>
+                    </div>
+                    
+                    <div class="block-type-option" data-type="image">
+                        <div class="option-icon">
+                            <i class="fas fa-image"></i>
+                        </div>
+                        <span class="option-label">تصویر</span>
+                    </div>
+                    
+                    <div class="block-type-option" data-type="video">
+                        <div class="option-icon">
+                            <i class="fas fa-video"></i>
+                        </div>
+                        <span class="option-label">ویدیو</span>
+                    </div>
+                    
+                    <div class="block-type-option" data-type="audio">
+                        <div class="option-icon">
+                            <i class="fas fa-microphone"></i>
+                        </div>
+                        <span class="option-label">صوت</span>
+                    </div>
+                    
+                    <div class="block-type-option" data-type="code">
+                        <div class="option-icon">
+                            <i class="fas fa-code"></i>
+                        </div>
+                        <span class="option-label">کد</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="~/js/areas/teacher/shared/block-type-selection-modal.js" asp-append-version="true"></script>

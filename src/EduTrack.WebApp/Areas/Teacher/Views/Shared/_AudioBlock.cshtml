@@ -1,0 +1,127 @@
+<link rel="stylesheet" href="~/css/areas/teacher/shared/audio-block.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/areas/teacher/shared/content-blocks.css" asp-append-version="true" />
+
+@{
+    var blockType = ViewData["BlockType"]?.ToString() ?? "audio";
+    var isQuestionBlock = ViewData["IsQuestionBlock"]?.ToString() == "true";
+    var blockTitle = isQuestionBlock ? "سوال صوتی" : "بلاک صوت";
+    var uploadText = isQuestionBlock ? "فایل صوتی سوال را اینجا بکشید یا کلیک کنید" : "فایل صوتی را اینجا بکشید یا کلیک کنید";
+    var questionText = isQuestionBlock ? "سوال مربوط به فایل صوتی را اینجا تایپ کنید..." : "";
+}
+
+<div class="content-block-template" data-type="@blockType">
+    <div class="block-header">
+        <div class="block-type">
+            <i class="fas fa-microphone"></i>
+            <span>@blockTitle</span>
+        </div>
+        <div class="block-actions">
+            <button type="button" class="btn-icon" data-action="move-up" title="انتقال به بالا">
+                <i class="fas fa-arrow-up"></i>
+            </button>
+            <button type="button" class="btn-icon" data-action="move-down" title="انتقال به پایین">
+                <i class="fas fa-arrow-down"></i>
+            </button>
+            <button type="button" class="btn-icon success" data-action="insert-above" title="@(isQuestionBlock ? "درج سوال بالا" : "درج بلاک بالا")">
+                <i class="fas fa-plus"></i>
+            </button>
+            <button type="button" class="btn-icon" data-action="fullscreen" title="تمام صفحه">
+                <i class="fas fa-expand"></i>
+            </button>
+            <button type="button" class="btn-icon danger" data-action="delete" title="حذف">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+        <i class="fas fa-chevron-down collapse-icon" data-action="toggle-collapse"></i>
+    </div>
+    <div class="block-content">
+        @if (isQuestionBlock)
+        {
+            <div class="question-settings">
+                <div class="settings-grid">
+                    <div class="setting-item">
+                        <label>امتیاز:</label>
+                        <input type="number" class="form-control-sm" data-setting="points" value="1" min="0" max="100">
+                    </div>
+                    <div class="setting-item">
+                        <label class="checkbox-label">
+                            <input type="checkbox" data-setting="isRequired" checked>
+                            <span>اجباری</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="question-text-editor">
+                <label>متن سوال:</label>
+                <div class="rich-text-editor" contenteditable="true" data-placeholder="@questionText">
+                    <!-- Rich text content will be here -->
+                </div>
+            </div>
+        }
+        
+        <div class="audio-upload-area">
+            <input type="file" accept="audio/*" class="file-input" data-action="audio-upload">
+            <div class="upload-placeholder">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <span>@uploadText</span>
+                <small>فرمت‌های پشتیبانی شده: MP3, WAV, OGG (حداکثر 10MB)</small>
+            </div>
+            <div class="upload-progress" style="display: none;">
+                <div class="progress-bar">
+                    <div class="progress-fill"></div>
+                </div>
+                <span class="progress-text">در حال آپلود...</span>
+            </div>
+        </div>
+        
+        <div class="audio-preview" style="display: none;">
+            <audio controls class="preview-audio">
+                <source src="" type="audio/mpeg">
+            </audio>
+            <button type="button" class="btn-teacher btn-secondary btn-sm" data-action="change-audio">
+                <i class="fas fa-edit"></i>
+                <span>تغییر فایل صوتی</span>
+            </button>
+        </div>
+        
+        <div class="audio-recorder">
+            <div class="recorder-header">
+                <h5>یا صدای خود را ضبط کنید:</h5>
+            </div>
+            <div class="recorder-controls">
+                <button type="button" class="btn-teacher btn-danger" data-action="start-recording">
+                    <i class="fas fa-microphone"></i>
+                    <span>شروع ضبط</span>
+                </button>
+                <button type="button" class="btn-teacher btn-secondary" data-action="stop-recording" disabled>
+                    <i class="fas fa-stop"></i>
+                    <span>توقف ضبط</span>
+                </button>
+                <button type="button" class="btn-teacher btn-success" data-action="play-recording" disabled>
+                    <i class="fas fa-play"></i>
+                    <span>پخش</span>
+                </button>
+            </div>
+            <div class="recorder-status">
+                <span class="recording-status">آماده برای ضبط</span>
+                <div class="recording-timer" style="display: none;">
+                    <span class="timer-display">00:00</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="audio-caption">
+            <textarea placeholder="توضیحات فایل صوتی (اختیاری)" rows="2" data-caption="true"></textarea>
+        </div>
+        
+        @if (isQuestionBlock)
+        {
+            <div class="question-hint">
+                <label>راهنمایی (اختیاری):</label>
+                <textarea placeholder="راهنمایی برای دانش‌آموز..." rows="2" data-hint="true"></textarea>
+            </div>
+        }
+    </div>
+</div>
+
+<script src="~/js/areas/teacher/shared/audio-block.js" asp-append-version="true"></script>

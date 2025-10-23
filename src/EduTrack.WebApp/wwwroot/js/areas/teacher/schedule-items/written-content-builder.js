@@ -1,136 +1,55 @@
 /**
  * Written Content Question Block Manager
  * Handles question block creation, editing, and management for written-type schedule items
+ * Uses specific block managers (text-block.js, image-block.js, etc.) for individual block functionality
  */
 
-// Global cleanup function for modal backdrops
-function cleanupModalBackdrops() {
-    const backdrops = document.querySelectorAll('.modal-backdrop');
-    backdrops.forEach(backdrop => {
-        backdrop.remove();
-    });
-    document.body.classList.remove('modal-open');
-    document.body.style.paddingRight = '';
-    document.body.style.overflow = '';
-    document.body.style.overflowX = '';
-    document.body.style.overflowY = '';
-    document.documentElement.style.overflow = '';
-    document.documentElement.style.overflowX = '';
-    document.documentElement.style.overflowY = '';
-    console.log('Global modal backdrop cleanup completed');
-}
-
-// Global functions for onclick handlers - defined at the top to avoid timing issues
+// Global functions for onclick handlers
 function showWrittenQuestionBlockTypeModal() {
-    console.log('showWrittenQuestionBlockTypeModal called');
     
-    // Check if manager is available first
-    if (window.writtenBlockManager && window.writtenBlockManager.showBlockTypeModal) {
-        console.log('Using manager to show modal');
-        return window.writtenBlockManager.showBlockTypeModal();
-    }
-    
-    // Fallback: show simple selection
-    console.log('Manager not available, using fallback');
-    const types = [
-        { type: 'text', name: 'سوال متنی' },
-        { type: 'image', name: 'سوال تصویری' },
-        { type: 'video', name: 'سوال ویدیویی' },
-        { type: 'audio', name: 'سوال صوتی' },
-        { type: 'code', name: 'سوال کدی' }
-    ];
-    
-    const selection = prompt('انتخاب نوع سوال:\n1. سوال متنی\n2. سوال تصویری\n3. سوال ویدیویی\n4. سوال صوتی\n5. سوال کدی\n\nلطفاً شماره مورد نظر را وارد کنید:');
-    
-    if (selection && selection >= 1 && selection <= 5) {
-        const selectedType = types[selection - 1].type;
-        if (window.writtenBlockManager && window.writtenBlockManager.addBlock) {
-            window.writtenBlockManager.addBlock(selectedType);
-        } else {
-            console.warn('Written Block Manager not available');
-            alert('سیستم مدیریت بلاک‌ها هنوز آماده نیست. لطفاً صفحه را رفرش کنید.');
-        }
+    if (window.sharedContentBlockManager) {
+        window.sharedContentBlockManager.showBlockTypeModal('questionTypeModal');
+    } else {
+        console.warn('Shared Content Block Manager not available');
+        alert('سیستم مدیریت بلاک‌ها هنوز آماده نیست. لطفاً صفحه را رفرش کنید.');
     }
 }
 
 function showQuestionTypeModal() {
-    console.log('showQuestionTypeModal called');
     
-    // Check if modal element exists
-    const modalElement = document.getElementById('questionTypeModal');
-    if (!modalElement) {
-        console.error('Modal element not found in DOM');
-        // Use fallback immediately
-        const types = [
-            { type: 'text', name: 'متن' },
-            { type: 'image', name: 'تصویر' },
-            { type: 'video', name: 'ویدیو' },
-            { type: 'audio', name: 'صوت' },
-            { type: 'code', name: 'کد' }
-        ];
-        
-        const selection = prompt('انتخاب نوع سوال:\n1. متن\n2. تصویر\n3. ویدیو\n4. صوت\n5. کد\n\nلطفاً شماره مورد نظر را وارد کنید:');
-        
-        if (selection && selection >= 1 && selection <= 5) {
-            const selectedType = types[selection - 1].type;
-            if (window.writtenBlockManager) {
-                window.writtenBlockManager.addQuestionBlock(selectedType);
-            } else {
-                console.warn('Manager still not available after selection');
-            }
-        }
-        return;
-    }
-    
-    // Clean up any existing backdrops first
-    cleanupModalBackdrops();
-    
-    if (window.writtenBlockManager) {
-        console.log('Using manager to show modal');
-        window.writtenBlockManager.showQuestionTypeModal();
+    if (window.sharedContentBlockManager) {
+        window.sharedContentBlockManager.showBlockTypeModal('questionTypeModal');
     } else {
-        console.log('Manager not available, using fallback');
-        // Fallback: show simple selection
-        const types = [
-            { type: 'text', name: 'متن' },
-            { type: 'image', name: 'تصویر' },
-            { type: 'video', name: 'ویدیو' },
-            { type: 'audio', name: 'صوت' },
-            { type: 'code', name: 'کد' }
-        ];
-        
-        const selection = prompt('انتخاب نوع سوال:\n1. متن\n2. تصویر\n3. ویدیو\n4. صوت\n5. کد\n\nلطفاً شماره مورد نظر را وارد کنید:');
-        
-        if (selection && selection >= 1 && selection <= 5) {
-            const selectedType = types[selection - 1].type;
-            if (window.writtenBlockManager) {
-                window.writtenBlockManager.addQuestionBlock(selectedType);
-            } else {
-                console.warn('Manager still not available after selection');
-            }
-        }
+        console.warn('Shared Content Block Manager not available');
+        alert('سیستم مدیریت بلاک‌ها هنوز آماده نیست. لطفاً صفحه را رفرش کنید.');
     }
 }
 
 function updateWrittenPreview() {
-    console.log('updateWrittenPreview called');
     
     if (window.writtenBlockManager && window.writtenBlockManager.updatePreview) {
-        console.log('Using manager to update preview');
         window.writtenBlockManager.updatePreview();
         if (window.writtenBlockManager.showPreviewModal) {
             window.writtenBlockManager.showPreviewModal();
         }
     } else {
-        console.log('Manager not available for preview');
         alert('سیستم پیش‌نمایش هنوز آماده نیست. لطفاً صفحه را رفرش کنید.');
     }
 }
 
-class WrittenContentBlockManager {
+class WrittenContentBlockManager extends ContentBuilderBase {
     constructor() {
-        this.questionBlocks = [];
-        this.currentBlockId = 0;
+        super({
+            containerId: 'questionBlocksList',
+            emptyStateId: 'emptyQuestionBlocksState',
+            previewId: 'writtenPreview',
+            hiddenFieldId: 'writtenContentJson',
+            modalId: 'questionTypeModal',
+            contentType: 'written'
+        });
+
+        this.questionBlocks = this.blocks; // Alias for backward compatibility
+        this.currentBlockId = this.nextBlockId - 1; // Alias for backward compatibility
         this.isInitialized = false;
         
         // Initialize when DOM is ready
@@ -142,81 +61,54 @@ class WrittenContentBlockManager {
     }
 
     initialize() {
-        console.log('Initializing WrittenContentQuestionManager...');
         
         try {
-            this.setupEventListeners();
-            this.loadExistingContent();
+            this.setupWrittenSpecificEventListeners();
             this.isInitialized = true;
-            console.log('WrittenContentQuestionManager initialized successfully');
         } catch (error) {
             console.error('Error initializing WrittenContentQuestionManager:', error);
         }
     }
 
-    setupEventListeners() {
-        // Question type modal event listeners
-        const questionTypeItems = document.querySelectorAll('.question-type-item');
-        questionTypeItems.forEach(item => {
-            item.addEventListener('click', () => {
-                const type = item.dataset.type;
-                this.addQuestionBlock(type);
-                this.hideQuestionTypeModal();
-            });
+    setupWrittenSpecificEventListeners() {
+        // Listen for block type selection from shared manager
+        document.addEventListener('blockTypeSelected', (e) => {
+            if (e.detail.type) {
+                this.addQuestionBlock(e.detail.type);
+            }
+        });
+
+        // Listen for insert block above events
+        document.addEventListener('insertBlockAbove', (e) => {
+            this.showBlockTypeModal();
         });
 
         // Modal close events
-        const questionTypeModal = document.getElementById('questionTypeModal');
-        if (questionTypeModal) {
-            questionTypeModal.addEventListener('hidden.bs.modal', () => {
-                cleanupModalBackdrops();
-            });
-        }
-
         const previewModal = document.getElementById('writtenPreviewModal');
         if (previewModal) {
             previewModal.addEventListener('hidden.bs.modal', () => {
-                cleanupModalBackdrops();
+                this.cleanupModalBackdrops();
             });
         }
-    }
 
-    showBlockTypeModal() {
-        const modal = document.getElementById('writtenQuestionBlockTypeModal');
-        if (modal) {
-            const bsModal = new bootstrap.Modal(modal);
-            bsModal.show();
-        } else {
-            console.error('Written question block type modal not found');
-        }
-    }
-
-    showQuestionTypeModal() {
-        const modal = document.getElementById('questionTypeModal');
-        if (modal) {
-            const bsModal = new bootstrap.Modal(modal);
-            bsModal.show();
-        } else {
-            console.error('Question type modal not found');
-        }
-    }
-
-    hideQuestionTypeModal() {
-        const modal = document.getElementById('questionTypeModal');
-        if (modal) {
-            const bsModal = bootstrap.Modal.getInstance(modal);
-            if (bsModal) {
-                bsModal.hide();
+        // Question-specific settings
+        document.addEventListener('change', (e) => {
+            if (e.target.matches('[data-setting="points"]')) {
+                this.updateQuestionPoints(e.target);
+            } else if (e.target.matches('[data-setting="isRequired"]')) {
+                this.updateQuestionRequired(e.target);
             }
-        }
-    }
+        });
 
-    addBlock(type) {
-        this.addQuestionBlock(type);
+        // Question hint changes
+        document.addEventListener('input', (e) => {
+            if (e.target.matches('[data-hint="true"]')) {
+                this.updateQuestionHint(e.target);
+            }
+        });
     }
 
     addQuestionBlock(type) {
-        console.log(`Adding question block of type: ${type}`);
         
         const blockId = ++this.currentBlockId;
         const block = this.createQuestionBlock(type, blockId);
@@ -225,7 +117,6 @@ class WrittenContentBlockManager {
         this.renderQuestionBlocks();
         this.updateContentJson();
         
-        console.log(`Question block added with ID: ${blockId}`);
     }
 
     createQuestionBlock(type, blockId) {
@@ -321,17 +212,15 @@ class WrittenContentBlockManager {
             return;
         }
 
-        // Render each question block
+        // Render each question block using shared templates
         this.questionBlocks.forEach((block, index) => {
             const blockElement = this.createQuestionBlockElement(block, index);
             container.appendChild(blockElement);
         });
-
-        this.setupBlockEventListeners();
     }
 
     createQuestionBlockElement(block, index) {
-        const template = document.querySelector(`#questionBlockTemplates .question-block-template[data-type="${block.type}"]`);
+        const template = document.querySelector(`#questionBlockTemplates .content-block-template[data-type="${block.type}"]`);
         if (!template) return document.createElement('div');
 
         const clone = template.cloneNode(true);
@@ -391,11 +280,7 @@ class WrittenContentBlockManager {
                         preview.style.display = 'block';
                         const mediaElement = preview.querySelector(`.preview-${block.type}`);
                         if (mediaElement) {
-                            if (block.type === 'image') {
-                                mediaElement.src = data.fileUrl;
-                            } else {
-                                mediaElement.src = data.fileUrl;
-                            }
+                            mediaElement.src = data.fileUrl;
                         }
                     }
                 }
@@ -439,211 +324,36 @@ class WrittenContentBlockManager {
         }
     }
 
-    setupBlockEventListeners() {
-        // Block action buttons
-        document.querySelectorAll('.question-block-template [data-action]').forEach(button => {
-            button.addEventListener('click', (e) => {
-                e.preventDefault();
-                const action = button.dataset.action;
-                const blockElement = button.closest('.question-block-template');
-                const blockId = parseInt(blockElement.dataset.blockId);
-                
-                this.handleBlockAction(action, blockId, blockElement);
-            });
-        });
-
-        // Content change events
-        document.querySelectorAll('.question-block-template .rich-text-editor').forEach(editor => {
-            editor.addEventListener('input', (e) => {
-                const blockElement = e.target.closest('.question-block-template');
-                const blockId = parseInt(blockElement.dataset.blockId);
-                this.updateBlockContent(blockId, 'questionText', e.target.innerHTML);
-            });
-        });
-
-        document.querySelectorAll('.question-block-template [data-hint="true"]').forEach(textarea => {
-            textarea.addEventListener('input', (e) => {
-                const blockElement = e.target.closest('.question-block-template');
-                const blockId = parseInt(blockElement.dataset.blockId);
-                this.updateBlockContent(blockId, 'hint', e.target.value);
-            });
-        });
-
-        document.querySelectorAll('.question-block-template [data-setting="points"]').forEach(input => {
-            input.addEventListener('input', (e) => {
-                const blockElement = e.target.closest('.question-block-template');
-                const blockId = parseInt(blockElement.dataset.blockId);
-                this.updateBlockContent(blockId, 'points', parseInt(e.target.value) || 1);
-            });
-        });
-
-        document.querySelectorAll('.question-block-template [data-setting="isRequired"]').forEach(checkbox => {
-            checkbox.addEventListener('change', (e) => {
-                const blockElement = e.target.closest('.question-block-template');
-                const blockId = parseInt(blockElement.dataset.blockId);
-                this.updateBlockContent(blockId, 'isRequired', e.target.checked);
-            });
-        });
-
-        // File upload events
-        document.querySelectorAll('.question-block-template [data-action="image-upload"], .question-block-template [data-action="video-upload"], .question-block-template [data-action="audio-upload"]').forEach(input => {
-            input.addEventListener('change', (e) => {
-                const blockElement = e.target.closest('.question-block-template');
-                const blockId = parseInt(blockElement.dataset.blockId);
-                this.handleFileUpload(e.target, blockId, blockElement);
-            });
-        });
-
-        // Settings change events
-        document.querySelectorAll('.question-block-template [data-setting]').forEach(element => {
-            element.addEventListener('change', (e) => {
-                const blockElement = e.target.closest('.question-block-template');
-                const blockId = parseInt(blockElement.dataset.blockId);
-                const setting = e.target.dataset.setting;
-                const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
-                
-                this.updateQuestionData(blockId, setting, value);
-            });
-        });
-    }
-
-    handleBlockAction(action, blockId, blockElement) {
-        const blockIndex = this.questionBlocks.findIndex(b => b.id === blockId);
-        if (blockIndex === -1) return;
-
-        switch (action) {
-            case 'move-up':
-                if (blockIndex > 0) {
-                    this.swapBlocks(blockIndex, blockIndex - 1);
-                }
-                break;
-            case 'move-down':
-                if (blockIndex < this.questionBlocks.length - 1) {
-                    this.swapBlocks(blockIndex, blockIndex + 1);
-                }
-                break;
-            case 'insert-above':
-                this.showQuestionTypeModal();
-                break;
-            case 'delete':
-                if (confirm('آیا مطمئن هستید که می‌خواهید این سوال را حذف کنید؟')) {
-                    this.removeQuestionBlock(blockId);
-                }
-                break;
-            case 'fullscreen':
-                this.toggleFullscreen(blockElement);
-                break;
-            case 'toggle-collapse':
-                this.toggleCollapse(blockElement);
-                break;
-        }
-    }
-
-    swapBlocks(index1, index2) {
-        const temp = this.questionBlocks[index1];
-        this.questionBlocks[index1] = this.questionBlocks[index2];
-        this.questionBlocks[index2] = temp;
-        
-        // Update order
-        this.questionBlocks.forEach((block, index) => {
-            block.order = index + 1;
-        });
-        
-        this.renderQuestionBlocks();
-        this.updateContentJson();
-    }
-
-    removeQuestionBlock(blockId) {
-        this.questionBlocks = this.questionBlocks.filter(b => b.id !== blockId);
-        
-        // Update order
-        this.questionBlocks.forEach((block, index) => {
-            block.order = index + 1;
-        });
-        
-        this.renderQuestionBlocks();
-        this.updateContentJson();
-    }
-
-    updateBlockContent(blockId, property, value) {
+    updateQuestionPoints(input) {
+        const blockElement = input.closest('.content-block-template');
+        const blockId = blockElement.dataset.blockId;
         const block = this.questionBlocks.find(b => b.id === blockId);
+        
         if (block) {
-            block[property] = value;
+            block.points = parseInt(input.value) || 1;
             this.updateContentJson();
         }
     }
 
-    updateQuestionData(blockId, property, value) {
+    updateQuestionRequired(checkbox) {
+        const blockElement = checkbox.closest('.content-block-template');
+        const blockId = blockElement.dataset.blockId;
         const block = this.questionBlocks.find(b => b.id === blockId);
-        if (block && block.questionData) {
-            block.questionData[property] = value;
-            this.updateContentJson();
-        }
-    }
-
-    handleFileUpload(input, blockId, blockElement) {
-        const file = input.files[0];
-        if (!file) return;
-
-        // Show upload progress
-        const progressContainer = blockElement.querySelector('.upload-progress');
-        if (progressContainer) {
-            progressContainer.style.display = 'block';
-        }
-
-        // Simulate file upload (in real implementation, this would be an actual upload)
-        setTimeout(() => {
-            const block = this.questionBlocks.find(b => b.id === blockId);
-            if (block) {
-                block.questionData.fileId = `file_${Date.now()}`;
-                block.questionData.fileName = file.name;
-                block.questionData.fileUrl = URL.createObjectURL(file);
-                block.questionData.fileSize = file.size;
-                block.questionData.mimeType = file.type;
-
-                // Show preview
-                const preview = blockElement.querySelector(`.${block.type}-preview`);
-                if (preview) {
-                    preview.style.display = 'block';
-                    const mediaElement = preview.querySelector(`.preview-${block.type}`);
-                    if (mediaElement) {
-                        mediaElement.src = block.questionData.fileUrl;
-                    }
-                }
-
-                // Hide upload area
-                const uploadArea = blockElement.querySelector('.upload-placeholder');
-                if (uploadArea) {
-                    uploadArea.style.display = 'none';
-                }
-            }
-
-            // Hide progress
-            if (progressContainer) {
-                progressContainer.style.display = 'none';
-            }
-
-            this.updateContentJson();
-        }, 1000);
-    }
-
-    toggleFullscreen(element) {
-        // Implementation for fullscreen mode
-        console.log('Toggle fullscreen for block:', element.dataset.blockId);
-    }
-
-    toggleCollapse(element) {
-        const content = element.querySelector('.block-content');
-        const icon = element.querySelector('.collapse-icon');
         
-        if (content.style.display === 'none') {
-            content.style.display = 'block';
-            icon.classList.remove('fa-chevron-up');
-            icon.classList.add('fa-chevron-down');
-        } else {
-            content.style.display = 'none';
-            icon.classList.remove('fa-chevron-down');
-            icon.classList.add('fa-chevron-up');
+        if (block) {
+            block.isRequired = checkbox.checked;
+            this.updateContentJson();
+        }
+    }
+
+    updateQuestionHint(textarea) {
+        const blockElement = textarea.closest('.content-block-template');
+        const blockId = blockElement.dataset.blockId;
+        const block = this.questionBlocks.find(b => b.id === blockId);
+        
+        if (block) {
+            block.hint = textarea.value;
+            this.updateContentJson();
         }
     }
 
@@ -670,8 +380,6 @@ class WrittenContentBlockManager {
         if (hiddenInput) {
             hiddenInput.value = JSON.stringify(content);
         }
-
-        console.log('Written content JSON updated:', content);
     }
 
     loadExistingContent() {
@@ -693,11 +401,25 @@ class WrittenContentBlockManager {
                     
                     this.currentBlockId = Math.max(...this.questionBlocks.map(b => b.id), 0);
                     this.renderQuestionBlocks();
+                    
+                    // Populate content fields after rendering
+                    setTimeout(() => {
+                        this.populateAllQuestionBlocks();
+                    }, 200);
                 }
             } catch (error) {
                 console.error('Error loading existing written content:', error);
             }
         }
+    }
+
+    populateAllQuestionBlocks() {
+        this.questionBlocks.forEach(block => {
+            const blockElement = document.querySelector(`[data-question-id="${block.id}"]`);
+            if (blockElement) {
+                this.populateBlockContent(blockElement, block);
+            }
+        });
     }
 
     updatePreview() {
@@ -781,6 +503,23 @@ class WrittenContentBlockManager {
         }
     }
 
+    cleanupModalBackdrops() {
+        const backdrops = document.querySelectorAll('.modal-backdrop');
+        backdrops.forEach(backdrop => {
+            backdrop.remove();
+        });
+        
+        // Reset body styles
+        document.body.classList.remove('modal-open');
+        document.body.style.paddingRight = '';
+        document.body.style.overflow = '';
+        document.body.style.overflowX = '';
+        document.body.style.overflowY = '';
+        document.documentElement.style.overflow = '';
+        document.documentElement.style.overflowX = '';
+        document.documentElement.style.overflowY = '';
+    }
+
     getContent() {
         return {
             title: '',
@@ -795,16 +534,12 @@ class WrittenContentBlockManager {
 
 // Initialize the manager when DOM is ready
 function initializeWrittenQuestionManager() {
-    console.log('Initializing Written Question Manager...');
-    
     if (window.writtenBlockManager) {
-        console.log('Written Block Manager already exists');
         return;
     }
     
     try {
         window.writtenBlockManager = new WrittenContentBlockManager();
-        console.log('Written Block Manager initialized successfully');
     } catch (error) {
         console.error('Error initializing Written Block Manager:', error);
     }

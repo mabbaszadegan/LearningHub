@@ -1,3 +1,6 @@
+<link rel="stylesheet" href="~/css/areas/teacher/schedule-items/content-builder.css" asp-append-version="true" />
+<script src="~/js/areas/teacher/schedule-items/content-builder.js" asp-append-version="true"></script>
+
 @model EduTrack.Application.Common.Models.ScheduleItems.CreateScheduleItemRequest
 
 <div class="form-step" data-step="content">
@@ -8,6 +11,16 @@
         <div class="step-info">
             <h3 class="step-title">طراحی محتوای آموزشی</h3>
             <p class="step-description">محتوای تعاملی و جذاب برای دانش‌آموزان طراحی کنید</p>
+        </div>
+        <div class="step-actions">
+            <button type="button" class="btn-teacher btn-primary" id="addContentBlockBtn">
+                <i class="fas fa-plus"></i>
+                <span>افزودن بلاک</span>
+            </button>
+            <button type="button" class="btn-teacher btn-info" id="previewReminderBtn">
+                <i class="fas fa-eye"></i>
+                <span>پیش‌نمایش</span>
+            </button>
         </div>
     </div>
     
@@ -152,288 +165,7 @@
     </div>
 </div>
 
-<!-- Content Box Templates -->
-<div id="contentBoxTemplates" style="display: none;">
-    <!-- Text Box Template -->
-    <div class="content-box-template" data-type="text" data-box-id="0">
-        <div class="box-header">
-            <div class="box-type">
-                <i class="fas fa-font"></i>
-                <span>باکس متن</span>
-            </div>
-            <div class="box-actions">
-                <button type="button" class="btn-icon" data-action="move-up" title="انتقال به بالا">
-                    <i class="fas fa-arrow-up"></i>
-                </button>
-                <button type="button" class="btn-icon" data-action="move-down" title="انتقال به پایین">
-                    <i class="fas fa-arrow-down"></i>
-                </button>
-                <button type="button" class="btn-icon" data-action="settings" title="تنظیمات">
-                    <i class="fas fa-cog"></i>
-                </button>
-                <button type="button" class="btn-icon danger" data-action="delete" title="حذف">
-                    <i class="fas fa-trash"></i>
-                </button>
-            </div>
-        </div>
-        <div class="box-content">
-            <div class="text-editor-toolbar">
-                <button type="button" class="toolbar-btn" data-command="bold" title="ضخیم">
-                    <i class="fas fa-bold"></i>
-                </button>
-                <button type="button" class="toolbar-btn" data-command="italic" title="مورب">
-                    <i class="fas fa-italic"></i>
-                </button>
-                <button type="button" class="toolbar-btn" data-command="underline" title="زیرخط">
-                    <i class="fas fa-underline"></i>
-                </button>
-                <div class="toolbar-separator"></div>
-                <button type="button" class="toolbar-btn" data-command="insertUnorderedList" title="لیست نقطه‌ای">
-                    <i class="fas fa-list-ul"></i>
-                </button>
-                <button type="button" class="toolbar-btn" data-command="insertOrderedList" title="لیست شماره‌ای">
-                    <i class="fas fa-list-ol"></i>
-                </button>
-                <div class="toolbar-separator"></div>
-                <button type="button" class="toolbar-btn" data-command="createLink" title="لینک">
-                    <i class="fas fa-link"></i>
-                </button>
-            </div>
-            <div class="rich-text-editor" contenteditable="true" data-placeholder="متن خود را اینجا تایپ کنید...">
-                <!-- Rich text content will be here -->
-            </div>
-        </div>
-    </div>
-
-    <!-- Image Box Template -->
-    <div class="content-box-template" data-type="image" data-box-id="0">
-        <div class="box-header">
-            <div class="box-type">
-                <i class="fas fa-image"></i>
-                <span>باکس تصویر</span>
-            </div>
-            <div class="box-actions">
-                <button type="button" class="btn-icon" data-action="move-up" title="انتقال به بالا">
-                    <i class="fas fa-arrow-up"></i>
-                </button>
-                <button type="button" class="btn-icon" data-action="move-down" title="انتقال به پایین">
-                    <i class="fas fa-arrow-down"></i>
-                </button>
-                <button type="button" class="btn-icon" data-action="settings" title="تنظیمات">
-                    <i class="fas fa-cog"></i>
-                </button>
-                <button type="button" class="btn-icon danger" data-action="delete" title="حذف">
-                    <i class="fas fa-trash"></i>
-                </button>
-            </div>
-        </div>
-        <div class="box-content">
-            <div class="image-upload-area">
-                <input type="file" accept="image/*" class="file-input" data-action="image-upload">
-                <div class="upload-placeholder">
-                    <i class="fas fa-cloud-upload-alt"></i>
-                    <span>تصویر را اینجا بکشید یا کلیک کنید</span>
-                    <small>فرمت‌های پشتیبانی شده: JPG, PNG, GIF (حداکثر 5MB)</small>
-                </div>
-                <div class="upload-progress" style="display: none;">
-                    <div class="progress-bar">
-                        <div class="progress-fill"></div>
-                    </div>
-                    <span class="progress-text">در حال آپلود...</span>
-                </div>
-            </div>
-            <div class="image-preview" style="display: none;">
-                <img src="" alt="پیش‌نمایش تصویر" class="preview-image">
-                <button type="button" class="btn-teacher btn-secondary btn-sm" data-action="change-image">
-                    <i class="fas fa-edit"></i>
-                    <span>تغییر تصویر</span>
-                </button>
-            </div>
-            <div class="image-settings">
-                <div class="settings-grid">
-                    <div class="setting-item">
-                        <label>اندازه:</label>
-                        <select class="form-select-sm" data-setting="size">
-                            <option value="small">کوچک (300px)</option>
-                            <option value="medium" selected>متوسط (500px)</option>
-                            <option value="large">بزرگ (700px)</option>
-                            <option value="full">تمام عرض</option>
-                        </select>
-                    </div>
-                    <div class="setting-item">
-                        <label>موقعیت:</label>
-                        <select class="form-select-sm" data-setting="position">
-                            <option value="left">چپ</option>
-                            <option value="center" selected>وسط</option>
-                            <option value="right">راست</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-            <div class="image-caption">
-                <textarea placeholder="توضیحات تصویر (اختیاری)" rows="2" data-caption="true"></textarea>
-            </div>
-        </div>
-    </div>
-
-    <!-- Video Box Template -->
-    <div class="content-box-template" data-type="video" data-box-id="0">
-        <div class="box-header">
-            <div class="box-type">
-                <i class="fas fa-video"></i>
-                <span>باکس ویدیو</span>
-            </div>
-            <div class="box-actions">
-                <button type="button" class="btn-icon" onclick="moveBoxUp(this)">
-                    <i class="fas fa-arrow-up"></i>
-                </button>
-                <button type="button" class="btn-icon" onclick="moveBoxDown(this)">
-                    <i class="fas fa-arrow-down"></i>
-                </button>
-                <button type="button" class="btn-icon" onclick="removeContentBox(this)">
-                    <i class="fas fa-trash"></i>
-                </button>
-            </div>
-        </div>
-        <div class="box-content">
-            <div class="video-upload-area">
-                <input type="file" accept="video/*" class="file-input" onchange="handleVideoUpload(this)">
-                <div class="upload-placeholder">
-                    <i class="fas fa-cloud-upload-alt"></i>
-                    <span>ویدیو را اینجا بکشید یا کلیک کنید</span>
-                </div>
-            </div>
-            <div class="video-settings" style="display: none;">
-                <div class="setting-row">
-                    <label>اندازه:</label>
-                    <select class="form-select-sm" onchange="updateVideoSize(this)">
-                        <option value="small">کوچک</option>
-                        <option value="medium" selected>متوسط</option>
-                        <option value="large">بزرگ</option>
-                        <option value="full">تمام عرض</option>
-                    </select>
-                </div>
-                <div class="setting-row">
-                    <label>موقعیت:</label>
-                    <select class="form-select-sm" onchange="updateVideoPosition(this)">
-                        <option value="left">چپ</option>
-                        <option value="center" selected>وسط</option>
-                        <option value="right">راست</option>
-                    </select>
-                </div>
-            </div>
-            <div class="video-caption">
-                <textarea placeholder="توضیحات ویدیو (اختیاری)" rows="2"></textarea>
-            </div>
-        </div>
-    </div>
-
-    <!-- Audio Box Template -->
-    <div class="content-box-template" data-type="audio" data-box-id="0">
-        <div class="box-header">
-            <div class="box-type">
-                <i class="fas fa-microphone"></i>
-                <span>باکس صوت</span>
-            </div>
-            <div class="box-actions">
-                <button type="button" class="btn-icon" onclick="moveBoxUp(this)">
-                    <i class="fas fa-arrow-up"></i>
-                </button>
-                <button type="button" class="btn-icon" onclick="moveBoxDown(this)">
-                    <i class="fas fa-arrow-down"></i>
-                </button>
-                <button type="button" class="btn-icon" onclick="removeContentBox(this)">
-                    <i class="fas fa-trash"></i>
-                </button>
-            </div>
-        </div>
-        <div class="box-content">
-            <div class="audio-upload-area">
-                <input type="file" accept="audio/*" class="file-input" onchange="handleAudioUpload(this)">
-                <div class="upload-placeholder">
-                    <i class="fas fa-cloud-upload-alt"></i>
-                    <span>فایل صوتی را اینجا بکشید یا کلیک کنید</span>
-                </div>
-            </div>
-            <div class="audio-recorder" style="display: none;">
-                <div class="recorder-controls">
-                    <button type="button" class="btn-teacher btn-danger" id="startRecording">
-                        <i class="fas fa-microphone"></i>
-                        <span>شروع ضبط</span>
-                    </button>
-                    <button type="button" class="btn-teacher btn-secondary" id="stopRecording" disabled>
-                        <i class="fas fa-stop"></i>
-                        <span>توقف ضبط</span>
-                    </button>
-                </div>
-                <div class="recorder-status">
-                    <span id="recordingStatus">آماده برای ضبط</span>
-                </div>
-            </div>
-            <div class="audio-caption">
-                <textarea placeholder="توضیحات فایل صوتی (اختیاری)" rows="2"></textarea>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Content Box Type Selection Modal -->
-<div class="modal fade" id="contentBoxTypeModal" tabindex="-1" aria-labelledby="contentBoxTypeModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="contentBoxTypeModalLabel">
-                    <i class="fas fa-plus"></i>
-                    انتخاب نوع محتوا
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="box-type-grid">
-                    <div class="box-type-item" data-type="text">
-                        <div class="type-icon">
-                            <i class="fas fa-font"></i>
-                        </div>
-                        <div class="type-info">
-                            <h6>متن</h6>
-                            <p>باکس متنی با قابلیت فرمت‌بندی</p>
-                        </div>
-                    </div>
-                    
-                    <div class="box-type-item" data-type="image">
-                        <div class="type-icon">
-                            <i class="fas fa-image"></i>
-                        </div>
-                        <div class="type-info">
-                            <h6>تصویر</h6>
-                            <p>آپلود تصویر با تنظیمات</p>
-                        </div>
-                    </div>
-                    
-                    <div class="box-type-item" data-type="video">
-                        <div class="type-icon">
-                            <i class="fas fa-video"></i>
-                        </div>
-                        <div class="type-info">
-                            <h6>ویدیو</h6>
-                            <p>آپلود ویدیو آموزشی</p>
-                        </div>
-                    </div>
-                    
-                    <div class="box-type-item" data-type="audio">
-                        <div class="type-icon">
-                            <i class="fas fa-microphone"></i>
-                        </div>
-                        <div class="type-info">
-                            <h6>صوت</h6>
-                            <p>آپلود فایل صوتی یا ضبط</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
 <!-- Hidden field for content JSON -->
 <input type="hidden" id="contentJson" name="ContentJson" value="@Model.ContentJson" />
+
+<script src="~/js/areas/teacher/schedule-items/step4-content.js" asp-append-version="true"></script>

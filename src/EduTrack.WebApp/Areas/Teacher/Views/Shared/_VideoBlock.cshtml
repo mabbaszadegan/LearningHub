@@ -1,0 +1,131 @@
+<link rel="stylesheet" href="~/css/areas/teacher/shared/video-block.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/areas/teacher/shared/content-blocks.css" asp-append-version="true" />
+
+@{
+    var blockType = ViewData["BlockType"]?.ToString() ?? "video";
+    var isQuestionBlock = ViewData["IsQuestionBlock"]?.ToString() == "true";
+    var blockTitle = isQuestionBlock ? "سوال ویدیویی" : "بلاک ویدیو";
+    var uploadText = isQuestionBlock ? "ویدیو سوال را اینجا بکشید یا کلیک کنید" : "ویدیو را اینجا بکشید یا کلیک کنید";
+    var questionText = isQuestionBlock ? "سوال مربوط به ویدیو را اینجا تایپ کنید..." : "";
+}
+
+<div class="content-block-template" data-type="@blockType">
+    <div class="block-header">
+        <div class="block-type">
+            <i class="fas fa-video"></i>
+            <span>@blockTitle</span>
+        </div>
+        <div class="block-actions">
+            <button type="button" class="btn-icon" data-action="move-up" title="انتقال به بالا">
+                <i class="fas fa-arrow-up"></i>
+            </button>
+            <button type="button" class="btn-icon" data-action="move-down" title="انتقال به پایین">
+                <i class="fas fa-arrow-down"></i>
+            </button>
+            <button type="button" class="btn-icon success" data-action="insert-above" title="@(isQuestionBlock ? "درج سوال بالا" : "درج بلاک بالا")">
+                <i class="fas fa-plus"></i>
+            </button>
+            <button type="button" class="btn-icon" data-action="fullscreen" title="تمام صفحه">
+                <i class="fas fa-expand"></i>
+            </button>
+            <button type="button" class="btn-icon danger" data-action="delete" title="حذف">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+        <i class="fas fa-chevron-down collapse-icon" data-action="toggle-collapse"></i>
+    </div>
+    <div class="block-content">
+        @if (isQuestionBlock)
+        {
+            <div class="question-settings">
+                <div class="settings-grid">
+                    <div class="setting-item">
+                        <label>امتیاز:</label>
+                        <input type="number" class="form-control-sm" data-setting="points" value="1" min="0" max="100">
+                    </div>
+                    <div class="setting-item">
+                        <label class="checkbox-label">
+                            <input type="checkbox" data-setting="isRequired" checked>
+                            <span>اجباری</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="question-text-editor">
+                <label>متن سوال:</label>
+                <div class="rich-text-editor" contenteditable="true" data-placeholder="@questionText">
+                    <!-- Rich text content will be here -->
+                </div>
+            </div>
+        }
+        
+        <div class="video-upload-area">
+            <input type="file" accept="video/*" class="file-input" data-action="video-upload">
+            <div class="upload-placeholder">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <span>@uploadText</span>
+                <small>فرمت‌های پشتیبانی شده: MP4, WebM, MOV (حداکثر 50MB)</small>
+            </div>
+            <div class="upload-progress" style="display: none;">
+                <div class="progress-bar">
+                    <div class="progress-fill"></div>
+                </div>
+                <span class="progress-text">در حال آپلود...</span>
+            </div>
+        </div>
+        
+        <div class="video-preview" style="display: none;">
+            <video controls class="preview-video">
+                <source src="" type="video/mp4">
+            </video>
+            <button type="button" class="btn-teacher btn-secondary btn-sm" data-action="change-video">
+                <i class="fas fa-edit"></i>
+                <span>تغییر ویدیو</span>
+            </button>
+        </div>
+        
+        <div class="video-settings">
+            <div class="settings-grid">
+                <div class="setting-item">
+                    <label>اندازه:</label>
+                    <select class="form-select-sm" data-setting="size">
+                        <option value="small">کوچک (400px)</option>
+                        <option value="medium" selected>متوسط (600px)</option>
+                        <option value="large">بزرگ (800px)</option>
+                        <option value="full">تمام عرض</option>
+                    </select>
+                </div>
+                <div class="setting-item">
+                    <label>موقعیت:</label>
+                    <select class="form-select-sm" data-setting="position">
+                        <option value="left">چپ</option>
+                        <option value="center" selected>وسط</option>
+                        <option value="right">راست</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <div class="video-caption">
+            <textarea placeholder="توضیحات ویدیو (اختیاری)" rows="2" data-caption="true"></textarea>
+            <div class="caption-position">
+                <label>موقعیت توضیحات:</label>
+                <select class="form-select-sm" data-setting="captionPosition">
+                    <option value="top">بالای ویدیو</option>
+                    <option value="bottom" selected>زیر ویدیو</option>
+                    <option value="overlay">روی ویدیو</option>
+                </select>
+            </div>
+        </div>
+        
+        @if (isQuestionBlock)
+        {
+            <div class="question-hint">
+                <label>راهنمایی (اختیاری):</label>
+                <textarea placeholder="راهنمایی برای دانش‌آموز..." rows="2" data-hint="true"></textarea>
+            </div>
+        }
+    </div>
+</div>
+
+<script src="~/js/areas/teacher/shared/video-block.js" asp-append-version="true"></script>

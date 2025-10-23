@@ -1,0 +1,119 @@
+<link rel="stylesheet" href="~/css/areas/teacher/shared/text-block.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/areas/teacher/shared/content-blocks.css" asp-append-version="true" />
+
+@{
+    var blockType = ViewData["BlockType"]?.ToString() ?? "text";
+    var isQuestionBlock = ViewData["IsQuestionBlock"]?.ToString() == "true";
+    var blockTitle = isQuestionBlock ? "سوال متنی" : "بلاک متن";
+    var placeholder = isQuestionBlock ? "متن سوال خود را اینجا تایپ کنید..." : "متن خود را اینجا تایپ کنید...";
+}
+
+<div class="content-block-template" data-type="@blockType">
+    <div class="block-header">
+        <div class="block-type">
+            <i class="fas fa-font"></i>
+            <span>@blockTitle</span>
+        </div>
+        <div class="block-actions">
+            <button type="button" class="btn-icon" data-action="move-up" title="انتقال به بالا">
+                <i class="fas fa-arrow-up"></i>
+            </button>
+            <button type="button" class="btn-icon" data-action="move-down" title="انتقال به پایین">
+                <i class="fas fa-arrow-down"></i>
+            </button>
+            <button type="button" class="btn-icon success" data-action="insert-above" title="@(isQuestionBlock ? "درج سوال بالا" : "درج بلاک بالا")">
+                <i class="fas fa-plus"></i>
+            </button>
+            <button type="button" class="btn-icon" data-action="fullscreen" title="تمام صفحه">
+                <i class="fas fa-expand"></i>
+            </button>
+            <button type="button" class="btn-icon danger" data-action="delete" title="حذف">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+        <i class="fas fa-chevron-down collapse-icon" data-action="toggle-collapse"></i>
+    </div>
+    <div class="block-content">
+        @if (isQuestionBlock)
+        {
+            <div class="question-settings">
+                <div class="settings-grid">
+                    <div class="setting-item">
+                        <label>امتیاز:</label>
+                        <input type="number" class="form-control-sm" data-setting="points" value="1" min="0" max="100">
+                    </div>
+                    <div class="setting-item">
+                        <label class="checkbox-label">
+                            <input type="checkbox" data-setting="isRequired" checked>
+                            <span>اجباری</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="question-text-editor">
+                <label>متن سوال:</label>
+                <div class="text-editor-toolbar">
+                    <button type="button" class="toolbar-btn" data-command="bold" title="ضخیم">
+                        <i class="fas fa-bold"></i>
+                    </button>
+                    <button type="button" class="toolbar-btn" data-command="italic" title="مورب">
+                        <i class="fas fa-italic"></i>
+                    </button>
+                    <button type="button" class="toolbar-btn" data-command="underline" title="زیرخط">
+                        <i class="fas fa-underline"></i>
+                    </button>
+                    <div class="toolbar-separator"></div>
+                    <button type="button" class="toolbar-btn" data-command="insertUnorderedList" title="لیست نقطه‌ای">
+                        <i class="fas fa-list-ul"></i>
+                    </button>
+                    <button type="button" class="toolbar-btn" data-command="insertOrderedList" title="لیست شماره‌ای">
+                        <i class="fas fa-list-ol"></i>
+                    </button>
+                </div>
+                <div class="rich-text-editor" contenteditable="true" data-placeholder="@placeholder">
+                    <!-- Rich text content will be here -->
+                </div>
+            </div>
+            <div class="question-hint">
+                <label>راهنمایی (اختیاری):</label>
+                <textarea placeholder="راهنمایی برای دانش‌آموز..." rows="2" data-hint="true"></textarea>
+            </div>
+        }
+        else
+        {
+            <div class="text-editor-toolbar">
+                <button type="button" class="toolbar-btn" data-command="bold" title="ضخیم">
+                    <i class="fas fa-bold"></i>
+                </button>
+                <button type="button" class="toolbar-btn" data-command="italic" title="مورب">
+                    <i class="fas fa-italic"></i>
+                </button>
+                <button type="button" class="toolbar-btn" data-command="underline" title="زیرخط">
+                    <i class="fas fa-underline"></i>
+                </button>
+                <div class="toolbar-separator"></div>
+                <button type="button" class="toolbar-btn" data-command="insertUnorderedList" title="لیست نقطه‌ای">
+                    <i class="fas fa-list-ul"></i>
+                </button>
+                <button type="button" class="toolbar-btn" data-command="insertOrderedList" title="لیست شماره‌ای">
+                    <i class="fas fa-list-ol"></i>
+                </button>
+                <div class="toolbar-separator"></div>
+                <button type="button" class="toolbar-btn" data-action="text-formatting" title="فرمت‌بندی متن">
+                    <i class="fas fa-paint-brush"></i>
+                </button>
+                <button type="button" class="toolbar-btn" data-action="create-link" title="لینک">
+                    <i class="fas fa-link"></i>
+                </button>
+                <button type="button" class="toolbar-btn" data-action="insert-code" title="بلاک کد">
+                    <i class="fas fa-code"></i>
+                </button>
+            </div>
+            <div class="rich-text-editor" contenteditable="true" data-placeholder="@placeholder">
+                <!-- Rich text content will be here -->
+            </div>
+        }
+    </div>
+</div>
+
+<script src="~/js/areas/teacher/shared/text-block.js" asp-append-version="true"></script>

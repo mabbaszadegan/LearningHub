@@ -1,0 +1,380 @@
+/* Code Block Styles */
+.code-block-settings {
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+    background: #f8f9fa;
+    border-radius: 6px;
+    border: 1px solid #e9ecef;
+}
+
+.settings-row {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+}
+
+.settings-row .setting-item.full-width {
+    flex: 1;
+}
+
+.code-editor-container {
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    background: #fff;
+    overflow: hidden;
+}
+
+.code-editor-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0.75rem;
+    background: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.code-language-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #495057;
+}
+
+.code-language-badge i {
+    color: #007bff;
+}
+
+.code-actions {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.code-editor {
+    position: relative;
+    min-height: 200px;
+}
+
+.code-textarea {
+    width: 100%;
+    min-height: 200px;
+    padding: 1rem;
+    border: none;
+    outline: none;
+    font-family: 'Courier New', 'Monaco', 'Consolas', monospace;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: #495057;
+    background: transparent;
+    resize: vertical;
+}
+
+.code-textarea:focus {
+    outline: none;
+}
+
+.code-preview {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 1rem;
+    font-family: 'Courier New', 'Monaco', 'Consolas', monospace;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: #495057;
+    background: #fff;
+    pointer-events: none;
+    overflow: auto;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.code-stats {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0.75rem;
+    background: #f8f9fa;
+    border-top: 1px solid #e9ecef;
+    font-size: 0.75rem;
+    color: #6c757d;
+}
+
+.line-count,
+.char-count {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+/* Code themes */
+.code-editor-container.theme-default {
+    background: #fff;
+    color: #495057;
+}
+
+.code-editor-container.theme-dark {
+    background: #2d3748;
+    color: #e2e8f0;
+}
+
+.code-editor-container.theme-dark .code-editor-header,
+.code-editor-container.theme-dark .code-stats {
+    background: #1a202c;
+    border-color: #4a5568;
+}
+
+.code-editor-container.theme-light {
+    background: #f7fafc;
+    color: #2d3748;
+}
+
+.code-editor-container.theme-monokai {
+    background: #272822;
+    color: #f8f8f2;
+}
+
+.code-editor-container.theme-monokai .code-editor-header,
+.code-editor-container.theme-monokai .code-stats {
+    background: #1e1e1e;
+    border-color: #49483e;
+}
+
+.code-editor-container.theme-github {
+    background: #f6f8fa;
+    color: #24292e;
+}
+
+.code-editor-container.theme-vs {
+    background: #1e1e1e;
+    color: #d4d4d4;
+}
+
+.code-editor-container.theme-vs .code-editor-header,
+.code-editor-container.theme-vs .code-stats {
+    background: #2d2d30;
+    border-color: #3e3e42;
+}
+
+.code-editor-container.theme-atom {
+    background: #282c34;
+    color: #abb2bf;
+}
+
+.code-editor-container.theme-atom .code-editor-header,
+.code-editor-container.theme-atom .code-stats {
+    background: #21252b;
+    border-color: #3e4451;
+}
+
+.code-editor-container.theme-dracula {
+    background: #282a36;
+    color: #f8f8f2;
+}
+
+.code-editor-container.theme-dracula .code-editor-header,
+.code-editor-container.theme-dracula .code-stats {
+    background: #21222c;
+    border-color: #44475a;
+}
+
+/* Code size variations */
+.code-editor-container.size-small {
+    max-width: 400px;
+}
+
+.code-editor-container.size-medium {
+    max-width: 600px;
+}
+
+.code-editor-container.size-large {
+    max-width: 800px;
+}
+
+.code-editor-container.size-full {
+    max-width: 100%;
+}
+
+/* Line numbers */
+.code-editor-container.show-line-numbers .code-textarea {
+    padding-left: 3rem;
+}
+
+.code-editor-container.show-line-numbers .code-preview {
+    padding-left: 3rem;
+}
+
+.code-editor-container.show-line-numbers .code-preview::before {
+    content: attr(data-line-numbers);
+    position: absolute;
+    left: 0;
+    top: 1rem;
+    padding: 0 0.5rem;
+    color: #6c757d;
+    font-size: 0.75rem;
+    line-height: 1.5;
+    user-select: none;
+    pointer-events: none;
+}
+
+/* Copy button */
+.code-editor-container.enable-copy-button .code-actions {
+    display: flex;
+}
+
+.code-editor-container:not(.enable-copy-button) .code-actions {
+    display: none;
+}
+
+/* Syntax highlighting (basic) */
+.code-preview .keyword {
+    color: #d73a49;
+    font-weight: bold;
+}
+
+.code-preview .string {
+    color: #032f62;
+}
+
+.code-preview .comment {
+    color: #6a737d;
+    font-style: italic;
+}
+
+.code-preview .number {
+    color: #005cc5;
+}
+
+.code-preview .function {
+    color: #6f42c1;
+}
+
+.code-preview .variable {
+    color: #e36209;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .settings-row {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    
+    .code-editor-header {
+        flex-direction: column;
+        gap: 0.5rem;
+        align-items: flex-start;
+    }
+    
+    .code-actions {
+        align-self: flex-end;
+    }
+    
+    .code-textarea {
+        min-height: 150px;
+        font-size: 0.8rem;
+    }
+    
+    .code-preview {
+        font-size: 0.8rem;
+    }
+    
+    .code-stats {
+        flex-direction: column;
+        gap: 0.25rem;
+        text-align: center;
+    }
+}
+
+/* Animation for code editor */
+.code-editor-container {
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Focus styles for accessibility */
+.code-textarea:focus {
+    box-shadow: inset 0 0 0 2px #007bff;
+}
+
+/* Loading state */
+.code-editor-container.loading {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.code-editor-container.loading .code-textarea {
+    background: #f8f9fa;
+}
+
+/* Error state */
+.code-editor-container.error {
+    border-color: #dc3545;
+}
+
+.code-editor-container.error .code-editor-header {
+    background: #f8d7da;
+    border-color: #f5c6cb;
+}
+
+/* Success state */
+.code-editor-container.success {
+    border-color: #28a745;
+}
+
+.code-editor-container.success .code-editor-header {
+    background: #d4edda;
+    border-color: #c3e6cb;
+}
+
+/* Code formatting button animation */
+.code-actions .btn-icon[data-action="format-code"]:active {
+    animation: formatAnimation 0.3s ease-in-out;
+}
+
+@keyframes formatAnimation {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* Copy button feedback */
+.code-actions .btn-icon[data-action="copy-code"].copied {
+    background: #28a745;
+    color: #fff;
+    border-color: #28a745;
+}
+
+.code-actions .btn-icon[data-action="copy-code"].copied::after {
+    content: "✓";
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: #28a745;
+    color: #fff;
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    font-size: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}

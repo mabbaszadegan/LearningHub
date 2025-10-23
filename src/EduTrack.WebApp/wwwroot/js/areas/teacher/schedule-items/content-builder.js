@@ -1,974 +1,460 @@
 /**
- * Modern Content Builder for Educational Content
- * Handles text, image, video, and audio content boxes with drag & drop
+ * Content Builder Base Class
+ * Manages common functionality for content blocks across different content types
+ * Each block type has its own specific manager (text-block.js, image-block.js, etc.)
  */
 
-class ContentBuilder {
-    constructor() {
-        this.contentBoxes = [];
-        this.currentBoxId = 0;
-        this.mediaRecorder = null;
-        this.recordingTimer = null;
-        this.recordingStartTime = null;
-        this.isRecording = false;
+class ContentBuilderBase {
+    constructor(config = {}) {
+        this.config = {
+            containerId: config.containerId || 'contentBlocksList',
+            emptyStateId: config.emptyStateId || 'emptyBlocksState',
+            previewId: config.previewId || 'contentPreview',
+            hiddenFieldId: config.hiddenFieldId || 'contentJson',
+            modalId: config.modalId || 'blockTypeModal',
+            contentType: config.contentType || 'content',
+            ...config
+        };
+
+        this.blocks = [];
+        this.nextBlockId = 1;
+        this.isLoadingExistingContent = false;
+        
+        // DOM elements
+        this.blocksList = document.getElementById(this.config.containerId);
+        this.emptyState = document.getElementById(this.config.emptyStateId);
+        this.preview = document.getElementById(this.config.previewId);
+        this.hiddenField = document.getElementById(this.config.hiddenFieldId);
+        
         this.init();
     }
 
     init() {
+        if (!this.blocksList || !this.emptyState || !this.preview || !this.hiddenField) {
+            console.error('Required elements not found!', {
+                blocksList: !!this.blocksList,
+                emptyState: !!this.emptyState,
+                preview: !!this.preview,
+                hiddenField: !!this.hiddenField
+            });
+            return;
+        }
+        
         this.setupEventListeners();
-        this.setupDragAndDrop();
-        this.setupTextEditor();
-        this.setupFileUploads();
-        this.setupAudioRecording();
+        this.loadExistingContent();
     }
 
     setupEventListeners() {
-        // Add content box button
-        const addBtn = document.getElementById('addContentBoxBtn');
-        if (addBtn) {
-            addBtn.addEventListener('click', () => this.showContentBoxTypeModal());
-        }
-
-        // Preview content button
-        const previewBtn = document.getElementById('previewContentBtn');
-        if (previewBtn) {
-            previewBtn.addEventListener('click', () => this.previewContent());
-        }
-
-        // Save content button
-        const saveBtn = document.getElementById('saveContentBtn');
-        if (saveBtn) {
-            saveBtn.addEventListener('click', () => this.saveContent());
-        }
-
-        // Quick template buttons
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('.template-btn')) {
-                const template = e.target.closest('.template-btn').dataset.template;
-                this.addQuickTemplate(template);
+        // Block type selection
+        document.addEventListener('blockTypeSelected', (e) => {
+            if (e.detail.type) {
+                this.addBlock(e.detail.type);
             }
         });
 
-        // Content box type selection
+        // Block actions (move up, move down, delete)
         document.addEventListener('click', (e) => {
-            if (e.target.closest('.box-type-item')) {
-                const type = e.target.closest('.box-type-item').dataset.type;
-                this.addContentBox(type);
-                this.hideContentBoxTypeModal();
+            if (e.target.matches('[data-action="move-up"]')) {
+                this.moveBlockUp(e.target);
+            } else if (e.target.matches('[data-action="move-down"]')) {
+                this.moveBlockDown(e.target);
+            } else if (e.target.matches('[data-action="delete"]')) {
+                this.deleteBlock(e.target);
+            } else if (e.target.matches('[data-action="toggle-collapse"]')) {
+                this.toggleCollapse(e.target.closest('.content-block-template'));
+            } else if (e.target.matches('[data-action="fullscreen"]')) {
+                this.toggleFullscreen(e.target.closest('.content-block-template'));
+            } else if (e.target.matches('[data-action="insert-above"]')) {
+                this.insertBlockAbove(e.target.closest('.content-block-template'));
             }
         });
 
-        // Box actions
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('.btn-icon')) {
-                const btn = e.target.closest('.btn-icon');
-                const action = btn.dataset.action;
-                const box = btn.closest('.content-box-template');
-                
-                if (action === 'delete') {
-                    this.removeContentBox(box);
-                } else if (action === 'settings') {
-                    this.toggleBoxSettings(box);
-                } else if (action === 'move-up') {
-                    this.moveBoxUp(box);
-                } else if (action === 'move-down') {
-                    this.moveBoxDown(box);
-                }
-            }
-        });
-
-        // File input changes
-        document.addEventListener('change', (e) => {
-            if (e.target.classList.contains('image-file-input')) {
-                this.handleImageUpload(e.target);
-            } else if (e.target.classList.contains('video-file-input')) {
-                this.handleVideoUpload(e.target);
-            } else if (e.target.classList.contains('audio-file-input')) {
-                this.handleAudioUpload(e.target);
-            }
-        });
-
-        // Overlay actions
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('.overlay-btn')) {
-                const btn = e.target.closest('.overlay-btn');
-                const action = btn.dataset.action;
-                const box = btn.closest('.content-box-template');
-                
-                if (action === 'change') {
-                    this.changeFile(box);
-                } else if (action === 'remove') {
-                    this.removeFile(box);
-                }
-            }
+        // Listen for block content changes from specific block managers
+        document.addEventListener('blockContentChanged', (e) => {
+            this.handleBlockContentChanged(e.detail);
         });
 
         // Settings changes
         document.addEventListener('change', (e) => {
-            if (e.target.classList.contains('image-size-select') ||
-                e.target.classList.contains('image-align-select') ||
-                e.target.classList.contains('video-size-select') ||
-                e.target.classList.contains('video-align-select') ||
-                e.target.classList.contains('caption-position-select')) {
-                this.updateBoxSettings(e.target);
-            }
-        });
-
-        // Caption input changes
-        document.addEventListener('input', (e) => {
-            if (e.target.classList.contains('image-caption-input') ||
-                e.target.classList.contains('video-caption-input') ||
-                e.target.classList.contains('audio-caption-input')) {
-                this.updateBoxSettings(e.target);
-            }
-        });
-
-        // Text editor content changes
-        document.addEventListener('input', (e) => {
-            if (e.target.classList.contains('text-editor-content')) {
-                this.updateTextContent(e.target);
+            if (e.target.matches('[data-setting]')) {
+                this.updateBlockSettings(e.target);
             }
         });
     }
 
-    setupDragAndDrop() {
-        const container = document.getElementById('contentBoxesList');
-        if (!container) return;
-
-        // Make container droppable
-        container.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            container.classList.add('drag-over');
-        });
-
-        container.addEventListener('dragleave', (e) => {
-            if (!container.contains(e.relatedTarget)) {
-                container.classList.remove('drag-over');
-            }
-        });
-
-        container.addEventListener('drop', (e) => {
-            e.preventDefault();
-            container.classList.remove('drag-over');
-            
-            const draggedBox = document.querySelector('.content-box-template.dragging');
-            if (draggedBox) {
-                container.appendChild(draggedBox);
-                draggedBox.classList.remove('dragging');
-                this.updateBoxOrder();
-            }
-        });
-
-        // Make boxes draggable
-        container.addEventListener('dragstart', (e) => {
-            if (e.target.closest('.content-box-template')) {
-                const box = e.target.closest('.content-box-template');
-                box.classList.add('dragging');
-                e.dataTransfer.effectAllowed = 'move';
-            }
-        });
-
-        container.addEventListener('dragend', (e) => {
-            const box = e.target.closest('.content-box-template');
-            if (box) {
-                box.classList.remove('dragging');
-            }
-        });
-    }
-
-    setupTextEditor() {
-        // Text editor toolbar
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('.toolbar-btn')) {
-                const btn = e.target.closest('.toolbar-btn');
-                const command = btn.dataset.command;
-                const editor = btn.closest('.text-editor-container').querySelector('.text-editor-content');
-                
-                this.executeTextCommand(editor, command);
-            }
-        });
-
-        // Font size and color changes
-        document.addEventListener('change', (e) => {
-            if (e.target.classList.contains('font-size-select')) {
-                const editor = e.target.closest('.text-editor-container').querySelector('.text-editor-content');
-                this.executeTextCommand(editor, 'fontSize', e.target.value);
-            } else if (e.target.classList.contains('color-picker')) {
-                const editor = e.target.closest('.text-editor-container').querySelector('.text-editor-content');
-                this.executeTextCommand(editor, 'foreColor', e.target.value);
-            }
-        });
-    }
-
-    setupFileUploads() {
-        // Drag and drop for file uploads
-        document.addEventListener('dragover', (e) => {
-            if (e.target.closest('.image-upload-area, .video-upload-area, .audio-upload-area')) {
-                e.preventDefault();
-            }
-        });
-
-        document.addEventListener('drop', (e) => {
-            const uploadArea = e.target.closest('.image-upload-area, .video-upload-area, .audio-upload-area');
-            if (uploadArea) {
-                e.preventDefault();
-                const files = e.dataTransfer.files;
-                if (files.length > 0) {
-                    this.handleFileDrop(uploadArea, files[0]);
-                }
-            }
-        });
-
-        // Click to upload
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('.image-upload-area, .video-upload-area, .audio-upload-area')) {
-                const uploadArea = e.target.closest('.image-upload-area, .video-upload-area, .audio-upload-area');
-                const fileInput = uploadArea.querySelector('input[type="file"]');
-                if (fileInput) {
-                    fileInput.click();
-                }
-            }
-        });
-    }
-
-    setupAudioRecording() {
-        // Try both possible IDs
-        const recordBtn = document.getElementById('recordBtn') || document.getElementById('startRecording');
-        const stopBtn = document.getElementById('stopRecordBtn') || document.getElementById('stopRecording');
-        const timer = document.getElementById('recordingTimer');
-        const controls = document.getElementById('recordingControls');
-
-        if (recordBtn) {
-            recordBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                this.startRecording();
-            });
-        }
-
-        if (stopBtn) {
-            stopBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                this.stopRecording();
-            });
-        }
-    }
-
-    showContentBoxTypeModal() {
-        const modal = document.getElementById('contentBoxTypeModal');
-        if (modal) {
-            const bsModal = new bootstrap.Modal(modal);
-            bsModal.show();
-        }
-    }
-
-    hideContentBoxTypeModal() {
-        const modal = document.getElementById('contentBoxTypeModal');
-        if (modal) {
-            const bsModal = bootstrap.Modal.getInstance(modal);
-            if (bsModal) {
-                bsModal.hide();
-            }
-        }
-    }
-
-    addContentBox(type) {
-        const container = document.getElementById('contentBoxesContainer');
-        const templates = document.getElementById('contentBoxTemplates');
-        
-        if (!container || !templates) return;
-
-        const template = templates.querySelector(`[data-type="${type}"]`);
-        if (!template) return;
-
-        // Hide empty state
-        const emptyState = document.getElementById('emptyState');
-        if (emptyState) {
-            emptyState.style.display = 'none';
-        }
-
-        const newBox = template.cloneNode(true);
-        newBox.id = `content-box-${++this.currentBoxId}`;
-        newBox.dataset.boxId = this.currentBoxId;
-        newBox.dataset.type = type;
-        newBox.style.display = 'block';
-        newBox.draggable = true;
-
-        // Clear template content
-        this.clearTemplateContent(newBox, type);
-
-        // Add to container
-        container.appendChild(newBox);
-
-        // Add to data structure
-        this.contentBoxes.push({
-            id: this.currentBoxId,
+    addBlock(type) {
+        const blockId = `block-${this.nextBlockId++}`;
+        const block = {
+            id: blockId,
             type: type,
-            data: this.getDefaultDataForType(type)
-        });
-
-        // Update order
-        this.updateBoxOrder();
-
-        // Scroll to new box
-        newBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            order: this.blocks.length,
+            data: this.getDefaultBlockData(type)
+        };
+        
+        this.blocks.push(block);
+        this.renderBlock(block);
+        this.updateEmptyState();
+        this.updateHiddenField();
+        this.scrollToNewBlock(blockId);
     }
 
-    clearTemplateContent(box, type) {
-        switch (type) {
-            case 'text':
-                const textEditor = box.querySelector('.text-editor-content');
-                if (textEditor) {
-                    textEditor.innerHTML = '';
-                }
-                break;
-            case 'image':
-                const imagePreview = box.querySelector('.image-preview');
-                const imageUpload = box.querySelector('.image-upload-area');
-                if (imagePreview) imagePreview.style.display = 'none';
-                if (imageUpload) imageUpload.style.display = 'block';
-                break;
-            case 'video':
-                const videoPreview = box.querySelector('.video-preview');
-                const videoUpload = box.querySelector('.video-upload-area');
-                if (videoPreview) videoPreview.style.display = 'none';
-                if (videoUpload) videoUpload.style.display = 'block';
-                break;
-            case 'audio':
-                const audioPreview = box.querySelector('.audio-preview');
-                const audioUpload = box.querySelector('.audio-upload-area');
-                if (audioPreview) audioPreview.style.display = 'none';
-                if (audioUpload) audioUpload.style.display = 'block';
-                break;
-        }
-    }
+    getDefaultBlockData(type) {
+        const baseData = {
+            size: 'medium',
+            position: 'center',
+            caption: '',
+            captionPosition: 'bottom'
+        };
 
-    getDefaultDataForType(type) {
         switch (type) {
             case 'text':
-                return { content: '', style: {} };
+                return {
+                    content: '',
+                    textContent: ''
+                };
             case 'image':
-                return { fileId: null, size: 'medium', align: 'center', caption: '', captionPosition: 'bottom' };
+                return {
+                    ...baseData,
+                    fileId: null,
+                    fileName: null,
+                    fileUrl: null,
+                    fileSize: null,
+                    mimeType: null
+                };
             case 'video':
-                return { fileId: null, size: 'medium', align: 'center', caption: '', captionPosition: 'bottom' };
+                return {
+                    ...baseData,
+                    fileId: null,
+                    fileName: null,
+                    fileUrl: null,
+                    fileSize: null,
+                    mimeType: null
+                };
             case 'audio':
-                return { fileId: null, caption: '' };
+                return {
+                    ...baseData,
+                    fileId: null,
+                    fileName: null,
+                    fileUrl: null,
+                    fileSize: null,
+                    mimeType: null,
+                    isRecorded: false,
+                    duration: null
+                };
+            case 'code':
+                return {
+                    ...baseData,
+                    codeContent: '',
+                    language: 'plaintext',
+                    theme: 'default',
+                    codeTitle: '',
+                    showLineNumbers: true,
+                    enableCopyButton: true
+                };
             default:
-                return {};
+                return baseData;
         }
     }
 
-    removeContentBox(box) {
-        if (!box) return;
-
-        const boxId = parseInt(box.dataset.boxId);
+    renderBlock(block) {
+        const template = document.querySelector(`#contentBlockTemplates .content-block-template[data-type="${block.type}"]`);
+        if (!template) return;
         
-        // Remove from DOM
-        box.remove();
+        const blockElement = template.cloneNode(true);
+        blockElement.classList.add('content-block');
+        blockElement.dataset.blockId = block.id;
+        
+        // Store initial block data
+        blockElement.dataset.blockData = JSON.stringify(block.data);
+        
+        const emptyState = this.blocksList.querySelector('.empty-state');
+        if (emptyState) {
+            this.blocksList.insertBefore(blockElement, emptyState);
+        } else {
+            this.blocksList.appendChild(blockElement);
+        }
+    }
 
-        // Remove from data structure
-        this.contentBoxes = this.contentBoxes.filter(b => b.id !== boxId);
+    updateEmptyState() {
+        if (this.blocks.length === 0) {
+            this.emptyState.style.display = 'flex';
+        } else {
+            this.emptyState.style.display = 'none';
+        }
+    }
 
-        // Show empty state if no boxes left
-        if (this.contentBoxes.length === 0) {
-            const emptyState = document.getElementById('emptyState');
-            if (emptyState) {
-                emptyState.style.display = 'block';
+    moveBlockUp(blockElement) {
+        const blockId = blockElement.dataset.blockId;
+        const blockIndex = this.blocks.findIndex(b => b.id === blockId);
+        
+        if (blockIndex > 0) {
+            [this.blocks[blockIndex], this.blocks[blockIndex - 1]] = [this.blocks[blockIndex - 1], this.blocks[blockIndex]];
+            
+            const prevBlock = blockElement.previousElementSibling;
+            if (prevBlock && prevBlock.classList.contains('content-block')) {
+                this.blocksList.insertBefore(blockElement, prevBlock);
             }
-        }
-
-        // Update order
-        this.updateBoxOrder();
-    }
-
-    toggleBoxSettings(box) {
-        const settings = box.querySelector('.image-settings, .video-settings, .audio-settings');
-        if (settings) {
-            settings.style.display = settings.style.display === 'none' ? 'block' : 'none';
+            
+            this.updateHiddenField();
+            this.scrollToBlock(blockId);
         }
     }
 
-    updateBoxSettings(element) {
-        const box = element.closest('.content-box-template');
-        if (!box) return;
-
-        const boxId = parseInt(box.dataset.boxId);
-        const boxData = this.contentBoxes.find(b => b.id === boxId);
-        if (!boxData) return;
-
-        const type = boxData.type;
-        const name = element.className.split(' ')[0];
-
-        switch (name) {
-            case 'image-size-select':
-            case 'video-size-select':
-                boxData.data.size = element.value;
-                break;
-            case 'image-align-select':
-            case 'video-align-select':
-                boxData.data.align = element.value;
-                break;
-            case 'caption-position-select':
-                boxData.data.captionPosition = element.value;
-                break;
-            case 'image-caption-input':
-            case 'video-caption-input':
-            case 'audio-caption-input':
-                boxData.data.caption = element.value;
-                break;
+    moveBlockDown(blockElement) {
+        const blockId = blockElement.dataset.blockId;
+        const blockIndex = this.blocks.findIndex(b => b.id === blockId);
+        
+        if (blockIndex < this.blocks.length - 1) {
+            [this.blocks[blockIndex], this.blocks[blockIndex + 1]] = [this.blocks[blockIndex + 1], this.blocks[blockIndex]];
+            
+            const nextBlock = blockElement.nextElementSibling;
+            if (nextBlock && nextBlock.classList.contains('content-block')) {
+                this.blocksList.insertBefore(nextBlock, blockElement);
+            }
+            
+            this.updateHiddenField();
+            this.scrollToBlock(blockId);
         }
     }
 
-    updateTextContent(element) {
-        const box = element.closest('.content-box-template');
-        if (!box) return;
-
-        const boxId = parseInt(box.dataset.boxId);
-        const boxData = this.contentBoxes.find(b => b.id === boxId);
-        if (!boxData) return;
-
-        boxData.data.content = element.innerHTML;
+    deleteBlock(blockElement) {
+        if (confirm('آیا از حذف این بلاک اطمینان دارید؟')) {
+            const blockId = blockElement.dataset.blockId;
+            
+            this.blocks = this.blocks.filter(b => b.id !== blockId);
+            blockElement.remove();
+            
+            this.updateEmptyState();
+            this.updateHiddenField();
+        }
     }
 
-    updateBoxOrder() {
-        const container = document.getElementById('contentBoxesList');
-        if (!container) return;
-
-        const boxes = container.querySelectorAll('.content-box-template');
-        boxes.forEach((box, index) => {
-            const boxId = parseInt(box.dataset.boxId);
-            const boxData = this.contentBoxes.find(b => b.id === boxId);
-            if (boxData) {
-                boxData.order = index;
+    insertBlockAbove(blockElement) {
+        // This will be handled by the specific content builder
+        const event = new CustomEvent('insertBlockAbove', {
+            detail: {
+                blockElement: blockElement
             }
         });
+        document.dispatchEvent(event);
     }
 
-    executeTextCommand(editor, command, value = null) {
-        if (!editor) return;
-
-        editor.focus();
-        
-        switch (command) {
-            case 'bold':
-            case 'italic':
-            case 'underline':
-                document.execCommand(command, false, null);
-                break;
-            case 'insertUnorderedList':
-            case 'insertOrderedList':
-                document.execCommand(command, false, null);
-                break;
-            case 'fontSize':
-                if (value) {
-                    document.execCommand('fontSize', false, '7');
-                    const fontElements = editor.querySelectorAll('font[size="7"]');
-                    fontElements.forEach(el => {
-                        el.removeAttribute('size');
-                        el.style.fontSize = value;
-                    });
-                }
-                break;
-            case 'foreColor':
-                if (value) {
-                    document.execCommand('foreColor', false, value);
-                }
-                break;
+    toggleCollapse(blockElement) {
+        if (blockElement.classList.contains('fullscreen')) {
+            return;
         }
-
-        // Update button states
-        this.updateToolbarStates(editor);
+        blockElement.classList.toggle('collapsed');
     }
 
-    updateToolbarStates(editor) {
-        const toolbar = editor.closest('.text-editor-container').querySelector('.text-editor-toolbar');
-        if (!toolbar) return;
+    toggleFullscreen(blockElement) {
+        blockElement.classList.toggle('fullscreen');
+        
+        if (blockElement.classList.contains('fullscreen')) {
+            blockElement.classList.remove('collapsed');
+        }
+    }
 
-        const buttons = toolbar.querySelectorAll('.toolbar-btn');
-        buttons.forEach(btn => {
-            const command = btn.dataset.command;
-            if (command && ['bold', 'italic', 'underline'].includes(command)) {
-                btn.classList.toggle('active', document.queryCommandState(command));
+    handleBlockContentChanged(detail) {
+        const blockElement = detail.blockElement;
+        const blockId = blockElement.dataset.blockId;
+        const block = this.blocks.find(b => b.id === blockId);
+        
+        if (block) {
+            // Update block data with new content
+            if (detail.blockData) {
+                block.data = { ...block.data, ...detail.blockData };
             }
+            if (detail.content !== undefined) {
+                block.data.content = detail.content;
+            }
+            if (detail.textContent !== undefined) {
+                block.data.textContent = detail.textContent;
+            }
+            
+            this.updateHiddenField();
+        }
+    }
+
+    updateBlockSettings(select) {
+        const blockElement = select.closest('.content-block-template');
+        const blockId = blockElement.dataset.blockId;
+        const block = this.blocks.find(b => b.id === blockId);
+        
+        if (block) {
+            const setting = select.dataset.setting;
+            block.data[setting] = select.value;
+            this.updateHiddenField();
+        }
+    }
+
+    updateHiddenField() {
+        const cleanBlocks = this.blocks.map(block => {
+            const cleanBlock = { ...block };
+            const cleanData = { ...block.data };
+            
+            // Remove temporary data
+            delete cleanData.pendingFile;
+            delete cleanData.previewUrl;
+            delete cleanData.originalData;
+            
+            cleanBlock.data = cleanData;
+            return cleanBlock;
         });
-    }
-
-    handleImageUpload(input) {
-        const file = input.files[0];
-        if (!file) return;
-
-        if (!file.type.startsWith('image/')) {
-            this.showError('لطفاً یک فایل تصویری انتخاب کنید.');
-            return;
-        }
-
-        this.uploadFile(file, 'image', input);
-    }
-
-    handleVideoUpload(input) {
-        const file = input.files[0];
-        if (!file) return;
-
-        if (!file.type.startsWith('video/')) {
-            this.showError('لطفاً یک فایل ویدیویی انتخاب کنید.');
-            return;
-        }
-
-        this.uploadFile(file, 'video', input);
-    }
-
-    handleAudioUpload(input) {
-        const file = input.files[0];
-        if (!file) return;
-
-        if (!file.type.startsWith('audio/')) {
-            this.showError('لطفاً یک فایل صوتی انتخاب کنید.');
-            return;
-        }
-
-        this.uploadFile(file, 'audio', input);
-    }
-
-    handleFileDrop(uploadArea, file) {
-        const box = uploadArea.closest('.content-box-template');
-        if (!box) return;
-
-        const type = box.dataset.type;
         
-        if (type === 'image' && !file.type.startsWith('image/')) {
-            this.showError('لطفاً یک فایل تصویری انتخاب کنید.');
+        const content = { type: this.config.contentType, blocks: cleanBlocks };
+        const contentJson = JSON.stringify(content);
+        
+        if (this.hiddenField) {
+            this.hiddenField.value = contentJson;
+        }
+        
+        const mainContentField = document.getElementById('contentJson');
+        if (mainContentField) {
+            mainContentField.value = contentJson;
+        }
+        
+        if (!this.isLoadingExistingContent) {
+            this.updatePreview();
+        }
+    }
+
+    loadExistingContent() {
+        if (!this.hiddenField) {
+            console.error('Hidden field not found');
             return;
         }
         
-        if (type === 'video' && !file.type.startsWith('video/')) {
-            this.showError('لطفاً یک فایل ویدیویی انتخاب کنید.');
-            return;
-        }
+        const existingContent = this.hiddenField.value;
         
-        if (type === 'audio' && !file.type.startsWith('audio/')) {
-            this.showError('لطفاً یک فایل صوتی انتخاب کنید.');
-            return;
-        }
-
-        this.uploadFile(file, type, uploadArea);
-    }
-
-    async uploadFile(file, type, element) {
-        const box = element.closest('.content-box-template');
-        if (!box) return;
-
-        // Show loading state
-        box.classList.add('loading');
-
-        try {
-            const formData = new FormData();
-            formData.append('file', file);
-            formData.append('type', type);
-
-            const response = await fetch('/FileUpload/UploadContentFile', {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
-                }
-            });
-
-            if (!response.ok) {
-                throw new Error('خطا در آپلود فایل');
-            }
-
-            const result = await response.json();
-            
-            if (result.success) {
-                this.showFilePreview(box, result.data, type);
-                this.updateBoxData(box, 'fileId', result.data.id);
-            } else {
-                throw new Error(result.message || 'خطا در آپلود فایل');
-            }
-        } catch (error) {
-            this.showError(error.message);
-        } finally {
-            box.classList.remove('loading');
-        }
-    }
-
-    showFilePreview(box, fileData, type) {
-        const uploadArea = box.querySelector(`.${type}-upload-area`);
-        const preview = box.querySelector(`.${type}-preview`);
-        
-        if (uploadArea) uploadArea.style.display = 'none';
-        if (preview) {
-            preview.style.display = 'block';
-            
-            if (type === 'image') {
-                const img = preview.querySelector('.preview-image');
-                if (img) img.src = fileData.url || '/uploads/' + fileData.fileName;
-            } else if (type === 'video') {
-                const video = preview.querySelector('.preview-video');
-                if (video) {
-                    const source = video.querySelector('source');
-                    if (source) source.src = fileData.url || '/uploads/' + fileData.fileName;
-                    video.load();
-                }
-            } else if (type === 'audio') {
-                const audio = preview.querySelector('.preview-audio');
-                if (audio) {
-                    const source = audio.querySelector('source');
-                    if (source) {
-                        // Use the correct URL format for audio files
-                        const audioUrl = fileData.url || (fileData.fileId ? `/FileUpload/GetFile/${fileData.fileId}` : '/uploads/' + fileData.fileName);
-                        source.src = audioUrl;
-                        audio.load();
+        if (existingContent && existingContent.trim()) {
+            try {
+                this.isLoadingExistingContent = true;
+                
+                const data = JSON.parse(existingContent);
+                
+                if (data.blocks && Array.isArray(data.blocks)) {
+                    const existingBlocks = this.blocksList.querySelectorAll('.content-block');
+                    existingBlocks.forEach(block => block.remove());
+                    
+                    this.blocks = data.blocks;
+                    if (this.blocks.length > 0) {
+                        this.nextBlockId = Math.max(...this.blocks.map(b => parseInt(b.id.split('-')[1]) || 0)) + 1;
+                    } else {
+                        this.nextBlockId = 1;
                     }
+                    
+                    this.blocks.forEach((block, index) => {
+                        this.renderBlock(block);
+                    });
+                    
+                    this.updateEmptyState();
+                    
+                    // Populate content fields after rendering
+                    setTimeout(() => {
+                        this.populateBlockContent();
+                    }, 200);
                 }
+                
+                this.isLoadingExistingContent = false;
+                
+                setTimeout(() => {
+                    this.updatePreview();
+                }, 300);
+                
+            } catch (error) {
+                console.error('Error loading existing content:', error);
+                this.isLoadingExistingContent = false;
             }
         }
     }
 
-    updateBoxData(box, key, value) {
-        const boxId = parseInt(box.dataset.boxId);
-        const boxData = this.contentBoxes.find(b => b.id === boxId);
-        if (boxData) {
-            boxData.data[key] = value;
-        }
-    }
-
-    changeFile(box) {
-        const type = box.dataset.type;
-        const fileInput = box.querySelector(`.${type}-file-input`);
-        if (fileInput) {
-            fileInput.click();
-        }
-    }
-
-    removeFile(box) {
-        const type = box.dataset.type;
-        const uploadArea = box.querySelector(`.${type}-upload-area`);
-        const preview = box.querySelector(`.${type}-preview`);
-        
-        if (uploadArea) uploadArea.style.display = 'block';
-        if (preview) preview.style.display = 'none';
-        
-        this.updateBoxData(box, 'fileId', null);
-    }
-
-    async startRecording() {
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    populateBlockContent() {
+        this.blocks.forEach(block => {
+            const blockElement = document.querySelector(`[data-block-id="${block.id}"]`);
+            if (!blockElement) return;
             
-            // Use the best available format for recording
-            const mimeTypes = [
-                'audio/mp4; codecs=mp4a.40.2', // MP4 audio (widely supported)
-                'audio/webm; codecs=opus',      // WebM with Opus (good quality)
-                'audio/webm',                   // Basic WebM
-                'audio/wav'                     // WAV fallback
-            ];
+            // Update block data attribute
+            blockElement.dataset.blockData = JSON.stringify(block.data);
             
-            let selectedMimeType = null;
-            for (const mimeType of mimeTypes) {
-                if (MediaRecorder.isTypeSupported(mimeType)) {
-                    selectedMimeType = mimeType;
-                    break;
-                }
+            // Use block-specific populate methods
+            this.populateBlockByType(blockElement, block);
+        });
+    }
+
+    populateBlockByType(blockElement, block) {
+        // Dispatch custom event for block-specific managers to handle
+        const event = new CustomEvent('populateBlockContent', {
+            detail: {
+                blockElement: blockElement,
+                block: block,
+                blockType: block.type
             }
-            
-            if (!selectedMimeType) {
-                throw new Error('No supported audio format found');
+        });
+        document.dispatchEvent(event);
+    }
+
+    scrollToNewBlock(blockId) {
+        setTimeout(() => {
+            const blockElement = document.querySelector(`[data-block-id="${blockId}"]`);
+            if (blockElement) {
+                blockElement.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center',
+                    inline: 'nearest'
+                });
+                
+                blockElement.classList.add('highlight');
+                
+                setTimeout(() => {
+                    blockElement.classList.remove('highlight');
+                }, 2000);
             }
-            
-            this.mediaRecorder = new MediaRecorder(stream, {
-                mimeType: selectedMimeType
-            });
-            
-            const chunks = [];
-            this.mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
-            
-            this.mediaRecorder.onstop = () => {
-                const blob = new Blob(chunks, { type: this.mediaRecorder.mimeType });
-                this.handleRecordedAudio(blob);
-                stream.getTracks().forEach(track => track.stop());
-            };
-            
-            this.mediaRecorder.start();
-            this.isRecording = true;
-            this.recordingStartTime = Date.now();
-            
-            // Update UI
-            document.getElementById('recordBtn').style.display = 'none';
-            document.getElementById('recordingControls').style.display = 'flex';
-            
-            // Start timer
-            this.recordingTimer = setInterval(() => {
-                const elapsed = Date.now() - this.recordingStartTime;
-                const minutes = Math.floor(elapsed / 60000);
-                const seconds = Math.floor((elapsed % 60000) / 1000);
-                document.getElementById('recordingTimer').textContent = 
-                    `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-            }, 1000);
-            
-        } catch (error) {
-            this.showError('خطا در دسترسی به میکروفون');
-        }
+        }, 100);
     }
 
-    stopRecording() {
-        if (this.mediaRecorder && this.isRecording) {
-            this.mediaRecorder.stop();
-            this.isRecording = false;
-            
-            if (this.recordingTimer) {
-                clearInterval(this.recordingTimer);
-                this.recordingTimer = null;
+    scrollToBlock(blockId) {
+        setTimeout(() => {
+            const blockElement = document.querySelector(`[data-block-id="${blockId}"]`);
+            if (blockElement) {
+                blockElement.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center',
+                    inline: 'nearest'
+                });
             }
-            
-            // Update UI
-            document.getElementById('recordBtn').style.display = 'flex';
-            document.getElementById('recordingControls').style.display = 'none';
-        }
+        }, 50);
     }
 
-    async handleRecordedAudio(blob) {
-        // Force MP3 format for all recordings
-        const file = new File([blob], `recording.mp3`, { type: 'audio/mpeg' });
-        
-        // Find the current audio box
-        const audioBox = document.querySelector('.content-box-template[data-type="audio"]:last-child');
-        if (audioBox) {
-            await this.uploadFile(file, 'audio', audioBox);
-        }
-    }
-
-    getContentData() {
+    getContent() {
         return {
-            type: 'reminder',
-            boxes: this.contentBoxes.map(box => ({
-                id: box.id,
-                type: box.type,
-                order: box.order || 0,
-                data: box.data
-            }))
+            type: this.config.contentType,
+            blocks: this.blocks
         };
     }
 
-    loadContentData(data) {
-        if (!data || !data.boxes) return;
-
-        this.contentBoxes = [];
-        this.currentBoxId = 0;
-        
-        const container = document.getElementById('contentBoxesList');
-        if (container) {
-            container.innerHTML = '';
-        }
-
-        data.boxes.forEach(boxData => {
-            this.addContentBox(boxData.type);
-            const box = document.querySelector(`[data-box-id="${boxData.id}"]`);
-            if (box) {
-                this.loadBoxData(box, boxData.data);
-            }
-        });
+    // Abstract methods to be implemented by specific content builders
+    updatePreview() {
+        // To be implemented by specific content builders
+        console.warn('updatePreview method should be implemented by specific content builder');
     }
 
-    loadBoxData(box, data) {
-        const type = box.dataset.type;
-        
-        switch (type) {
-            case 'text':
-                const textEditor = box.querySelector('.text-editor-content');
-                if (textEditor && data.content) {
-                    textEditor.innerHTML = data.content;
-                }
-                break;
-            case 'image':
-            case 'video':
-            case 'audio':
-                if (data.fileId) {
-                    // Load file preview
-                    this.loadFilePreview(box, data.fileId, type);
-                }
-                
-                // Load settings
-                if (data.size) {
-                    const sizeSelect = box.querySelector(`.${type}-size-select`);
-                    if (sizeSelect) sizeSelect.value = data.size;
-                }
-                
-                if (data.align) {
-                    const alignSelect = box.querySelector(`.${type}-align-select`);
-                    if (alignSelect) alignSelect.value = data.align;
-                }
-                
-                if (data.caption) {
-                    const captionInput = box.querySelector(`.${type}-caption-input`);
-                    if (captionInput) captionInput.value = data.caption;
-                }
-                
-                if (data.captionPosition) {
-                    const positionSelect = box.querySelector('.caption-position-select');
-                    if (positionSelect) positionSelect.value = data.captionPosition;
-                }
-                break;
-        }
+    showPreviewModal() {
+        // To be implemented by specific content builders
+        console.warn('showPreviewModal method should be implemented by specific content builder');
     }
 
-    //async loadFilePreview(box, fileId, type) {
-    //    try {
-    //        const response = await fetch(`./FileUpload/GetFile/${fileId}`);
-    //        if (response.ok) {
-    //            const fileData = await response.json();
-    //            this.showFilePreview(box, fileData, type);
-    //            this.updateBoxData(box, 'fileId', fileId);
-    //        }
-    //    } catch (error) {
-    //    }
-    //}
-
-    addQuickTemplate(template) {
-        const emptyState = document.getElementById('emptyState');
-        if (emptyState) {
-            emptyState.style.display = 'none';
-        }
-
-        switch (template) {
-            case 'text':
-                this.addContentBox('text');
-                break;
-            case 'image-text':
-                this.addContentBox('image');
-                setTimeout(() => this.addContentBox('text'), 100);
-                break;
-            case 'video-text':
-                this.addContentBox('video');
-                setTimeout(() => this.addContentBox('text'), 100);
-                break;
-            default:
-                this.addContentBox('text');
-        }
-    }
-
-    moveBoxUp(box) {
-        const container = document.getElementById('contentBoxesContainer');
-        const previousSibling = box.previousElementSibling;
-        
-        if (previousSibling && container) {
-            container.insertBefore(box, previousSibling);
-            this.updateBoxOrder();
-        }
-    }
-
-    moveBoxDown(box) {
-        const container = document.getElementById('contentBoxesContainer');
-        const nextSibling = box.nextElementSibling;
-        
-        if (nextSibling && container) {
-            container.insertBefore(nextSibling, box);
-            this.updateBoxOrder();
-        }
-    }
-
-    previewContent() {
-        const contentData = this.getContentData();
-        this.showContentPreview(contentData);
-    }
-
-    saveContent() {
-        const contentData = this.getContentData();
-        const contentJson = JSON.stringify(contentData);
-        
-        // Update the hidden content field
-        const contentField = document.getElementById('contentJson');
-        if (contentField) {
-            contentField.value = contentJson;
-        }
-
-        this.showSuccess('محتوای آموزشی با موفقیت ذخیره شد.');
-    }
-
-    showContentPreview(contentData) {
-        const modal = document.getElementById('previewModal');
-        const previewContent = document.getElementById('previewContent');
-        
-        if (!modal || !previewContent) return;
-
-        // Generate preview HTML
-        let previewHTML = '<div class="content-preview">';
-        
-        contentData.boxes.forEach(box => {
-            switch (box.type) {
-                case 'text':
-                    previewHTML += `<div class="preview-text-box">${box.data.content || ''}</div>`;
-                    break;
-                case 'image':
-                    if (box.data.imageUrl) {
-                        previewHTML += `<div class="preview-image-box">
-                            <img src="${box.data.imageUrl}" alt="${box.data.caption || ''}" style="max-width: 100%; height: auto;">
-                            ${box.data.caption ? `<p class="image-caption">${box.data.caption}</p>` : ''}
-                        </div>`;
-                    }
-                    break;
-                case 'video':
-                    if (box.data.videoUrl) {
-                        previewHTML += `<div class="preview-video-box">
-                            <video controls style="max-width: 100%; height: auto;">
-                                <source src="${box.data.videoUrl}" type="video/mp4">
-                            </video>
-                            ${box.data.caption ? `<p class="video-caption">${box.data.caption}</p>` : ''}
-                        </div>`;
-                    }
-                    break;
-                case 'audio':
-                    if (box.data.audioUrl) {
-                        previewHTML += `<div class="preview-audio-box">
-                            <audio controls preload="none" style="width: 100%;">
-                                <source data-src="${box.data.audioUrl}" type="${box.data.mimeType || 'audio/mpeg'}">
-                            </audio>
-                            ${box.data.caption ? `<p class="audio-caption">${box.data.caption}</p>` : ''}
-                        </div>`;
-                    }
-                    break;
-            }
-        });
-        
-        previewHTML += '</div>';
-        previewContent.innerHTML = previewHTML;
-
-        // Show modal
-        const bsModal = new bootstrap.Modal(modal);
-        bsModal.show();
-    }
-
-    showError(message) {
-        // You can implement a toast notification system here
-        alert(message);
-    }
-
-    showSuccess(message) {
-        // You can implement a toast notification system here
-        // Show a simple success message
-        const successDiv = document.createElement('div');
-        successDiv.className = 'alert alert-success alert-dismissible fade show';
-        successDiv.innerHTML = `
-            ${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        `;
-        
-        const container = document.querySelector('.content-builder');
-        if (container) {
-            container.insertBefore(successDiv, container.firstChild);
-            
-            // Auto remove after 3 seconds
-            setTimeout(() => {
-                if (successDiv.parentNode) {
-                    successDiv.remove();
-                }
-            }, 3000);
-        }
+    generateBlockPreview(block) {
+        // To be implemented by specific content builders
+        console.warn('generateBlockPreview method should be implemented by specific content builder');
+        return '';
     }
 }
 
-// Initialize content builder when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-    window.contentBuilder = new ContentBuilder();
-});
+// Export for use in other files
+if (typeof window !== 'undefined') {
+    window.ContentBuilderBase = ContentBuilderBase;
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = ContentBuilderBase;
+}
