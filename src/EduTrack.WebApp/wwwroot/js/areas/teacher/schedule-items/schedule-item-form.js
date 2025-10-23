@@ -1369,6 +1369,15 @@ class ModernScheduleItemFormManager {
                 requestData.ContentJson = JSON.stringify(requestData.ContentJson);
             }
 
+            // Debug logging for step 4
+            if (this.currentStep === 4) {
+                console.log('=== Step 4 Save Debug ===');
+                console.log('Request Data:', requestData);
+                console.log('ContentJson value:', requestData.ContentJson);
+                console.log('ContentJson type:', typeof requestData.ContentJson);
+                console.log('========================');
+            }
+
             const response = await fetch('/Teacher/ScheduleItem/SaveStep', {
                 method: 'POST',
                 headers: {
@@ -1455,9 +1464,57 @@ class ModernScheduleItemFormManager {
             }
         }
         
-        if (this.currentStep >= 4 && window.step4Manager && typeof window.step4Manager.collectStep4Data === 'function') {
-            const step4Data = await window.step4Manager.collectStep4Data();
-            Object.assign(stepData, step4Data);
+        if (this.currentStep >= 4) {
+            // Make sure step4Manager is available
+            if (!window.step4Manager) {
+                console.warn('Step4Manager not available, attempting to initialize...');
+                if (typeof window.Step4ContentManager !== 'undefined') {
+                    window.step4Manager = new window.Step4ContentManager(this);
+                    console.log('Step4Manager initialized in collectCurrentStepData');
+                }
+            }
+            
+            if (window.step4Manager && typeof window.step4Manager.collectStep4Data === 'function') {
+                try {
+                    const step4Data = await window.step4Manager.collectStep4Data();
+                    Object.assign(stepData, step4Data);
+                    console.log('Step4 data collected successfully:', step4Data);
+                } catch (error) {
+                    console.error('Error collecting step 4 data:', error);
+                    // Fallback: try to get content from hidden fields
+                    const mainContentField = document.getElementById('contentJson');
+                    const reminderField = document.getElementById('reminderContentJson');
+                    const writtenField = document.getElementById('writtenContentJson');
+                    
+                    if (mainContentField && mainContentField.value) {
+                        stepData.ContentJson = mainContentField.value;
+                    } else if (reminderField && reminderField.value) {
+                        stepData.ContentJson = reminderField.value;
+                    } else if (writtenField && writtenField.value) {
+                        stepData.ContentJson = writtenField.value;
+                    } else {
+                        stepData.ContentJson = '{}';
+                    }
+                    console.log('Using fallback content:', stepData.ContentJson);
+                }
+            } else {
+                console.warn('Step4Manager collectStep4Data method not available');
+                // Fallback: try to get content from hidden fields
+                const mainContentField = document.getElementById('contentJson');
+                const reminderField = document.getElementById('reminderContentJson');
+                const writtenField = document.getElementById('writtenContentJson');
+                
+                if (mainContentField && mainContentField.value) {
+                    stepData.ContentJson = mainContentField.value;
+                } else if (reminderField && reminderField.value) {
+                    stepData.ContentJson = reminderField.value;
+                } else if (writtenField && writtenField.value) {
+                    stepData.ContentJson = writtenField.value;
+                } else {
+                    stepData.ContentJson = '{}';
+                }
+                console.log('Using fallback content:', stepData.ContentJson);
+            }
         }
 
         return stepData;
@@ -1729,9 +1786,72 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
     
+    // Debug method to check current step data
+    window.debugCurrentStepData = async () => {
+        if (formManager) {
+            console.log('=== Current Step Data Debug ===');
+            console.log('Current Step:', formManager.currentStep);
+            console.log('Current Item ID:', formManager.currentItemId);
+            console.log('Is Edit Mode:', formManager.isEditMode);
+            
+            try {
+                const stepData = await formManager.collectCurrentStepData();
+                console.log('Collected Step Data:', stepData);
+            } catch (error) {
+                console.error('Error collecting step data:', error);
+            }
+            console.log('===============================');
+        }
+    };
+    
+    // Debug method to manually save current step
+    window.debugSaveCurrentStep = async () => {
+        if (formManager) {
+            console.log('=== Manual Save Debug ===');
+            try {
+                await formManager.saveCurrentStep();
+                console.log('Save completed successfully');
+            } catch (error) {
+                console.error('Save failed:', error);
+            }
+            console.log('========================');
+        }
+    };
+    
+    // Debug method to check step managers status
+    window.debugStepManagers = () => {
+        console.log('=== Step Managers Status ===');
+        console.log('Step 1 Manager:', !!window.step1Manager);
+        console.log('Step 2 Manager:', !!window.step2Manager);
+        console.log('Step 3 Manager:', !!window.step3Manager);
+        console.log('Step 4 Manager:', !!window.step4Manager);
+        console.log('Form Manager:', !!window.formManager);
+        console.log('Current Step:', window.formManager?.currentStep);
+        console.log('============================');
+    };
+    
+    // Force step 4 content sync
+    window.forceStep4Sync = () => {
+        if (window.step4Manager && typeof window.step4Manager.syncContentWithMainField === 'function') {
+            window.step4Manager.syncContentWithMainField();
+        } else {
+            console.warn('Step4 manager not available for sync');
+        }
+    };
+    
     // Wait a bit for step3Manager to be initialized by the form manager
     setTimeout(() => {
         window.step3Manager = formManager.step3Manager;
+        
+        // Also ensure step4Manager is properly initialized
+        if (!window.step4Manager) {
+            console.warn('Step4Manager not initialized, attempting to reinitialize...');
+            // Try to reinitialize step4Manager
+            if (typeof window.Step4ContentManager !== 'undefined') {
+                window.step4Manager = new window.Step4ContentManager(formManager);
+                console.log('Step4Manager reinitialized');
+            }
+        }
     }, 100);
 });
 

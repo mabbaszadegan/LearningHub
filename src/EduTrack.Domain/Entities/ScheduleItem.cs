@@ -107,10 +107,15 @@ public class ScheduleItem
 
     public void UpdateContent(string contentJson)
     {
+        // Allow empty content but ensure it's a valid JSON string
         if (string.IsNullOrWhiteSpace(contentJson))
-            throw new ArgumentException("Content JSON cannot be null or empty", nameof(contentJson));
-
-        ContentJson = contentJson;
+        {
+            ContentJson = "{}";
+        }
+        else
+        {
+            ContentJson = contentJson;
+        }
         UpdatedAt = DateTimeOffset.UtcNow;
     }
 

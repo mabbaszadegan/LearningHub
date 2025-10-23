@@ -39,35 +39,8 @@ class ReminderContentBlockManager extends ContentBuilderBase {
     }
 
     setupReminderSpecificEventListeners() {
-        // Caption changes
-        document.addEventListener('input', (e) => {
-            if (e.target.matches('[data-caption="true"]')) {
-                this.updateBlockCaption(e.target);
-            }
-        });
-
-        // Handle insert block above event
-        document.addEventListener('insertBlockAbove', (e) => {
-            this.handleInsertBlockAbove(e.detail.blockElement);
-        });
-    }
-
-    handleInsertBlockAbove(blockElement) {
-        // Show block type selection modal for inserting above
-        if (window.sharedContentBlockManager) {
-            window.sharedContentBlockManager.showBlockTypeModal('blockTypeModal');
-        }
-    }
-
-    updateBlockCaption(textarea) {
-        const blockElement = textarea.closest('.content-block-template');
-        const blockId = blockElement.dataset.blockId;
-        const block = this.blocks.find(b => b.id === blockId);
-        
-        if (block) {
-            block.data.caption = textarea.value;
-            this.updateHiddenField();
-        }
+        // Reminder-specific event listeners can be added here if needed
+        // Most common functionality is now handled by the base class
     }
 
     updatePreview() {
@@ -171,103 +144,6 @@ class ReminderContentBlockManager extends ContentBuilderBase {
         }
         
         return html;
-    }
-    
-    getSizeClass(size) {
-        const sizes = { 'small': 'size-small', 'medium': 'size-medium', 'large': 'size-large', 'full': 'size-full' };
-        return sizes[size] || 'size-medium';
-    }
-    
-    getPositionClass(position) {
-        const positions = { 'left': 'position-left', 'center': 'position-center', 'right': 'position-right' };
-        return positions[position] || 'position-center';
-    }
-
-    showPreviewModal() {
-        const previewModal = new bootstrap.Modal(document.getElementById('previewModal'));
-        previewModal.show();
-    }
-
-    getContent() {
-        return {
-            type: 'reminder',
-            blocks: this.blocks
-        };
-    }
-
-    // Force reload existing content (called from step4-content.js)
-    loadExistingContent() {
-        if (this.hiddenField) {
-            const existingContent = this.hiddenField.value;
-            
-            if (existingContent && existingContent.trim()) {
-                try {
-                    this.isLoadingExistingContent = true;
-                    
-                    const data = JSON.parse(existingContent);
-                    
-                    if (data.blocks && Array.isArray(data.blocks)) {
-                        // Clear existing blocks
-                        const existingBlocks = this.blocksList.querySelectorAll('.content-block');
-                        existingBlocks.forEach(block => block.remove());
-                        
-                        this.blocks = data.blocks;
-                        if (this.blocks.length > 0) {
-                            this.nextBlockId = Math.max(...this.blocks.map(b => parseInt(b.id.split('-')[1]) || 0)) + 1;
-                        } else {
-                            this.nextBlockId = 1;
-                        }
-                        
-                        // Render blocks
-                        this.blocks.forEach((block, index) => {
-                            this.renderBlock(block);
-                        });
-                        
-                        this.updateEmptyState();
-                        
-                        // Populate content fields after rendering
-                        setTimeout(() => {
-                            this.populateBlockContent();
-                        }, 200);
-                    }
-                    
-                    this.isLoadingExistingContent = false;
-                    
-                    setTimeout(() => {
-                        this.updatePreview();
-                    }, 300);
-                    
-                } catch (error) {
-                    console.error('Error loading existing content in ReminderContentBlockManager:', error);
-                    this.isLoadingExistingContent = false;
-                }
-            }
-        }
-    }
-
-    populateBlockContent() {
-        this.blocks.forEach(block => {
-            const blockElement = document.querySelector(`[data-block-id="${block.id}"]`);
-            if (!blockElement) return;
-            
-            // Update block data attribute
-            blockElement.dataset.blockData = JSON.stringify(block.data);
-            
-            // Use block-specific populate methods
-            this.populateBlockByType(blockElement, block);
-        });
-    }
-
-    populateBlockByType(blockElement, block) {
-        // Dispatch custom event for block-specific managers to handle
-        const event = new CustomEvent('populateBlockContent', {
-            detail: {
-                blockElement: blockElement,
-                block: block,
-                blockType: block.type
-            }
-        });
-        document.dispatchEvent(event);
     }
 }
 

@@ -20,6 +20,12 @@ class ContentBuilderBase {
         this.nextBlockId = 1;
         this.isLoadingExistingContent = false;
         
+        // Initialize shared managers
+        this.fieldManager = new FieldManager();
+        this.eventManager = new EventManager();
+        this.previewManager = new PreviewManager();
+        this.syncManager = new ContentSyncManager(this.fieldManager, this.eventManager);
+        
         // DOM elements
         this.blocksList = document.getElementById(this.config.containerId);
         this.emptyState = document.getElementById(this.config.emptyStateId);
@@ -40,13 +46,52 @@ class ContentBuilderBase {
             return;
         }
         
+        this.setupFieldManager();
         this.setupEventListeners();
+        this.setupSyncManager();
         this.loadExistingContent();
+    }
+
+    setupFieldManager() {
+        // Register fields with validation
+        this.fieldManager.registerField(this.config.hiddenFieldId, this.hiddenField, {
+            required: false,
+            validate: (value) => {
+                try {
+                    JSON.parse(value);
+                    return { isValid: true };
+                } catch (e) {
+                    return { isValid: false, message: 'فرمت JSON نامعتبر است' };
+                }
+            }
+        });
+        
+        this.fieldManager.registerField('contentJson', document.getElementById('contentJson'), {
+            required: false,
+            validate: (value) => {
+                try {
+                    JSON.parse(value);
+                    return { isValid: true };
+                } catch (e) {
+                    return { isValid: false, message: 'فرمت JSON نامعتبر است' };
+                }
+            }
+        });
+    }
+
+    setupSyncManager() {
+        // Register sync callback for updating hidden fields
+        this.syncManager.registerSyncCallback('updateHiddenFields', () => {
+            this.updateHiddenField();
+        });
+        
+        // Setup automatic sync
+        this.syncManager.setupAutoSync();
     }
 
     setupEventListeners() {
         // Block actions (move up, move down, delete)
-        document.addEventListener('click', (e) => {
+        this.eventManager.addListener('click', (e) => {
             if (e.target.matches('[data-action="move-up"]')) {
                 this.moveBlockUp(e.target.closest('.content-block-template'));
             } else if (e.target.matches('[data-action="move-down"]')) {
@@ -64,15 +109,27 @@ class ContentBuilderBase {
         });
 
         // Listen for block content changes from specific block managers
-        document.addEventListener('blockContentChanged', (e) => {
+        this.eventManager.addListener('blockContentChanged', (e) => {
             this.handleBlockContentChanged(e.detail);
         });
 
         // Settings changes
-        document.addEventListener('change', (e) => {
+        this.eventManager.addListener('change', (e) => {
             if (e.target.matches('[data-setting]')) {
                 this.updateBlockSettings(e.target);
             }
+        });
+
+        // Caption changes
+        this.eventManager.addListener('input', (e) => {
+            if (e.target.matches('[data-caption="true"]')) {
+                this.updateBlockCaption(e.target);
+            }
+        });
+
+        // Handle insert block above event
+        this.eventManager.addListener('insertBlockAbove', (e) => {
+            this.handleInsertBlockAbove(e.detail.blockElement);
         });
     }
 
@@ -90,6 +147,13 @@ class ContentBuilderBase {
         this.updateEmptyState();
         this.updateHiddenField();
         this.scrollToNewBlock(blockId);
+        
+        // Dispatch custom event
+        this.eventManager.dispatch('blockAdded', {
+            blockId: blockId, 
+            blockType: type, 
+            contentType: this.config.contentType
+        });
     }
 
     getDefaultBlockData(type) {
@@ -160,8 +224,6 @@ class ContentBuilderBase {
         const blockElement = template.cloneNode(true);
         blockElement.classList.add('content-block');
         blockElement.dataset.blockId = block.id;
-        
-        // Store initial block data
         blockElement.dataset.blockData = JSON.stringify(block.data);
         
         const emptyState = this.blocksList.querySelector('.empty-state');
@@ -199,6 +261,13 @@ class ContentBuilderBase {
             
             this.updateHiddenField();
             this.scrollToBlock(blockId);
+            
+            // Dispatch custom event
+            this.eventManager.dispatch('blockMoved', {
+                blockId: blockId, 
+                direction: 'up', 
+                contentType: this.config.contentType
+            });
         }
     }
 
@@ -221,6 +290,13 @@ class ContentBuilderBase {
             
             this.updateHiddenField();
             this.scrollToBlock(blockId);
+            
+            // Dispatch custom event
+            this.eventManager.dispatch('blockMoved', {
+                blockId: blockId, 
+                direction: 'down', 
+                contentType: this.config.contentType
+            });
         }
     }
 
@@ -247,6 +323,12 @@ class ContentBuilderBase {
             // Update UI
             this.updateEmptyState();
             this.updateHiddenField();
+            
+            // Dispatch custom event
+            this.eventManager.dispatch('blockDeleted', {
+                blockId: blockId, 
+                contentType: this.config.contentType
+            });
         }
     }
 
@@ -257,12 +339,33 @@ class ContentBuilderBase {
         }
         
         // This will be handled by the specific content builder
-        const event = new CustomEvent('insertBlockAbove', {
-            detail: {
-                blockElement: blockElement
-            }
+        this.eventManager.dispatch('insertBlockAbove', {
+            blockElement: blockElement
         });
-        document.dispatchEvent(event);
+    }
+
+    handleInsertBlockAbove(blockElement) {
+        // Show block type selection modal for inserting above
+        if (window.sharedContentBlockManager) {
+            window.sharedContentBlockManager.showBlockTypeModal(this.config.modalId);
+        }
+    }
+
+    updateBlockCaption(textarea) {
+        const blockElement = textarea.closest('.content-block-template');
+        const blockId = blockElement.dataset.blockId;
+        const block = this.blocks.find(b => b.id === blockId);
+        
+        if (block) {
+            block.data.caption = textarea.value;
+            this.updateHiddenField();
+            
+            // Dispatch custom event
+            this.eventManager.dispatch('blockContentChanged', {
+                blockId: blockId, 
+                contentType: this.config.contentType
+            });
+        }
     }
 
     toggleCollapse(blockElement) {
@@ -308,6 +411,12 @@ class ContentBuilderBase {
             }
             
             this.updateHiddenField();
+            
+            // Dispatch custom event
+            this.eventManager.dispatch('blockContentChanged', {
+                blockId: blockId, 
+                contentType: this.config.contentType
+            });
         }
     }
 
@@ -340,14 +449,9 @@ class ContentBuilderBase {
         const content = { type: this.config.contentType, blocks: cleanBlocks };
         const contentJson = JSON.stringify(content);
         
-        if (this.hiddenField) {
-            this.hiddenField.value = contentJson;
-        }
-        
-        const mainContentField = document.getElementById('contentJson');
-        if (mainContentField) {
-            mainContentField.value = contentJson;
-        }
+        // Use field manager to update fields
+        this.fieldManager.updateField(this.config.hiddenFieldId, contentJson);
+        this.fieldManager.updateField('contentJson', contentJson);
         
         if (!this.isLoadingExistingContent) {
             this.updatePreview();
@@ -355,59 +459,64 @@ class ContentBuilderBase {
     }
 
     loadExistingContent() {
-        if (!this.hiddenField) {
-            console.error('Hidden field not found');
+        const hiddenFieldValue = this.fieldManager.getFieldValue(this.config.hiddenFieldId);
+        
+        if (!hiddenFieldValue || !hiddenFieldValue.trim()) {
             return;
         }
         
-        const existingContent = this.hiddenField.value;
-        
-        if (existingContent && existingContent.trim()) {
-            try {
-                this.isLoadingExistingContent = true;
+        try {
+            this.isLoadingExistingContent = true;
+            
+            const data = JSON.parse(hiddenFieldValue);
+            
+            if (data.blocks && Array.isArray(data.blocks)) {
+                const existingBlocks = this.blocksList.querySelectorAll('.content-block');
+                existingBlocks.forEach(block => block.remove());
                 
-                const data = JSON.parse(existingContent);
-                
-                if (data.blocks && Array.isArray(data.blocks)) {
-                    const existingBlocks = this.blocksList.querySelectorAll('.content-block');
-                    existingBlocks.forEach(block => block.remove());
-                    
-                    this.blocks = data.blocks;
-                    if (this.blocks.length > 0) {
-                        this.nextBlockId = Math.max(...this.blocks.map(b => parseInt(b.id.split('-')[1]) || 0)) + 1;
-                    } else {
-                        this.nextBlockId = 1;
-                    }
-                    
-                    this.blocks.forEach((block, index) => {
-                        this.renderBlock(block);
-                    });
-                    
-                    this.updateEmptyState();
-                    
-                    // Populate content fields after rendering
-                    setTimeout(() => {
-                        this.populateBlockContent();
-                    }, 200);
+                this.blocks = data.blocks;
+                if (this.blocks.length > 0) {
+                    this.nextBlockId = Math.max(...this.blocks.map(b => parseInt(b.id.split('-')[1]) || 0)) + 1;
+                } else {
+                    this.nextBlockId = 1;
                 }
                 
-                this.isLoadingExistingContent = false;
+                this.blocks.forEach((block, index) => {
+                    this.renderBlock(block);
+                });
                 
+                this.updateEmptyState();
+                
+                // Populate content fields after rendering
                 setTimeout(() => {
-                    this.updatePreview();
-                }, 300);
-                
-            } catch (error) {
-                console.error('Error loading existing content:', error);
-                this.isLoadingExistingContent = false;
+                    this.populateBlockContent();
+                }, 200);
             }
+            
+            this.isLoadingExistingContent = false;
+            
+            setTimeout(() => {
+                this.updatePreview();
+            }, 300);
+            
+        } catch (error) {
+            console.error('ContentBuilderBase: Error loading existing content:', error);
+            this.isLoadingExistingContent = false;
         }
+    }
+
+    // Force reload existing content (called from step4-content.js)
+    forceReloadExistingContent() {
+        this.loadExistingContent();
     }
 
     populateBlockContent() {
         this.blocks.forEach(block => {
             const blockElement = document.querySelector(`[data-block-id="${block.id}"]`);
-            if (!blockElement) return;
+            if (!blockElement) {
+                console.warn(`ContentBuilderBase: Block element not found for block ${block.id}`);
+                return;
+            }
             
             // Update block data attribute
             blockElement.dataset.blockData = JSON.stringify(block.data);
@@ -419,14 +528,11 @@ class ContentBuilderBase {
 
     populateBlockByType(blockElement, block) {
         // Dispatch custom event for block-specific managers to handle
-        const event = new CustomEvent('populateBlockContent', {
-            detail: {
-                blockElement: blockElement,
-                block: block,
-                blockType: block.type
-            }
+        this.eventManager.dispatch('populateBlockContent', {
+            blockElement: blockElement,
+            block: block,
+            blockType: block.type
         });
-        document.dispatchEvent(event);
     }
 
     scrollToNewBlock(blockId) {
@@ -468,21 +574,38 @@ class ContentBuilderBase {
         };
     }
 
-    // Abstract methods to be implemented by specific content builders
-    updatePreview() {
-        // To be implemented by specific content builders
-        console.warn('updatePreview method should be implemented by specific content builder');
+    getSizeClass(size) {
+        const sizes = { 'small': 'size-small', 'medium': 'size-medium', 'large': 'size-large', 'full': 'size-full' };
+        return sizes[size] || 'size-medium';
+    }
+    
+    getPositionClass(position) {
+        const positions = { 'left': 'position-left', 'center': 'position-center', 'right': 'position-right' };
+        return positions[position] || 'position-center';
     }
 
     showPreviewModal() {
+        this.previewManager.showPreview(this.getContent());
+    }
+
+    // Abstract methods to be implemented by specific content builders
+    updatePreview() {
         // To be implemented by specific content builders
-        console.warn('showPreviewModal method should be implemented by specific content builder');
+        console.warn('ContentBuilderBase: updatePreview method should be implemented by specific content builder');
     }
 
     generateBlockPreview(block) {
-        // To be implemented by specific content builders
-        console.warn('generateBlockPreview method should be implemented by specific content builder');
-        return '';
+        // Use shared preview manager
+        return this.previewManager.generateBlockPreview(block);
+    }
+
+    // Cleanup method
+    destroy() {
+        this.eventManager.removeAllListenersAll();
+        this.syncManager = null;
+        this.fieldManager = null;
+        this.eventManager = null;
+        this.previewManager = null;
     }
 }
 
