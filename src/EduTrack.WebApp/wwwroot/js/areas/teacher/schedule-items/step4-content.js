@@ -190,37 +190,58 @@ class Step4ContentManager {
     }
 
     setupStepHeaderButtons() {
+        console.log('Step4ContentManager: Setting up step header buttons');
+        
         // Add block button in step header
         const addBlockBtn = document.getElementById('addContentBlockBtn');
+        console.log('Step4ContentManager: Add block button found:', !!addBlockBtn);
+        
         if (addBlockBtn) {
-            this.eventManager.addListener('click', (e) => {
-                if (e.target === addBlockBtn) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    this.handleAddBlockFromHeader();
-                }
+            // Remove any existing listeners first
+            addBlockBtn.removeEventListener('click', this.handleAddBlockFromHeader);
+            
+            // Add new listener
+            addBlockBtn.addEventListener('click', (e) => {
+                console.log('Step4ContentManager: Add block button clicked');
+                e.preventDefault();
+                e.stopPropagation();
+                this.handleAddBlockFromHeader();
             });
+            
+            console.log('Step4ContentManager: Add block button event listener attached');
+        } else {
+            console.warn('Step4ContentManager: Add block button not found');
         }
 
         // Preview button in step header
         const previewBtn = document.getElementById('previewReminderBtn');
+        console.log('Step4ContentManager: Preview button found:', !!previewBtn);
+        
         if (previewBtn) {
-            this.eventManager.addListener('click', (e) => {
-                if (e.target === previewBtn) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    this.handlePreviewFromHeader();
-                }
+            previewBtn.addEventListener('click', (e) => {
+                console.log('Step4ContentManager: Preview button clicked');
+                e.preventDefault();
+                e.stopPropagation();
+                this.handlePreviewFromHeader();
             });
+            
+            console.log('Step4ContentManager: Preview button event listener attached');
+        } else {
+            console.warn('Step4ContentManager: Preview button not found');
         }
     }
 
     handleAddBlockFromHeader() {
+        console.log('Step4ContentManager: handleAddBlockFromHeader called');
+        
         const itemTypeSelect = document.getElementById('itemType');
         const selectedType = itemTypeSelect ? itemTypeSelect.value : '0';
 
+        console.log('Step4ContentManager: Selected type:', selectedType);
+
         if (selectedType === '0') {
             // Reminder content
+            console.log('Step4ContentManager: Adding reminder block');
             if (window.sharedContentBlockManager) {
                 window.sharedContentBlockManager.showBlockTypeModal('blockTypeModal');
             } else {
@@ -229,12 +250,15 @@ class Step4ContentManager {
             }
         } else if (selectedType === '1') {
             // Written content
+            console.log('Step4ContentManager: Adding written block');
             if (window.sharedContentBlockManager) {
                 window.sharedContentBlockManager.showBlockTypeModal('questionTypeModal');
             } else {
                 console.warn('Shared Content Block Manager not available');
                 alert('سیستم مدیریت بلاک‌ها هنوز آماده نیست. لطفاً صفحه را رفرش کنید.');
             }
+        } else {
+            console.warn('Step4ContentManager: Unknown content type:', selectedType);
         }
     }
 
@@ -261,6 +285,24 @@ class Step4ContentManager {
                 alert('سیستم پیش‌نمایش هنوز آماده نیست');
             }
         }
+    }
+
+    // Refresh add button handlers after block deletion
+    refreshAddButtonHandlers() {
+        console.log('Step4ContentManager: Refreshing add button handlers');
+        
+        // Re-setup step header buttons
+        this.setupStepHeaderButtons();
+        
+        // Ensure shared content block manager is available
+        if (!window.sharedContentBlockManager) {
+            console.warn('Step4ContentManager: SharedContentBlockManager not available, trying to reinitialize');
+            if (typeof initializeContentBlocks === 'function') {
+                initializeContentBlocks();
+            }
+        }
+        
+        console.log('Step4ContentManager: Add button handlers refreshed');
     }
 
     updateStep4Content() {
@@ -359,6 +401,20 @@ class Step4ContentManager {
 
     // Manual method to sync content with main field
     syncContentWithMainField() {
+        console.log('Step4ContentManager: Syncing content with main field...');
+        
+        // Force sync from reminder block manager if available
+        if (window.reminderBlockManager && typeof window.reminderBlockManager.forceSyncWithMainField === 'function') {
+            console.log('Step4ContentManager: Force syncing reminder block manager');
+            window.reminderBlockManager.forceSyncWithMainField();
+        }
+        
+        // Force sync from written block manager if available
+        if (window.writtenBlockManager && typeof window.writtenBlockManager.forceSyncWithMainField === 'function') {
+            console.log('Step4ContentManager: Force syncing written block manager');
+            window.writtenBlockManager.forceSyncWithMainField();
+        }
+        
         const contentData = this.collectContentData();
         if (contentData) {
             const contentJson = typeof contentData === 'string' ? contentData : JSON.stringify(contentData);
@@ -436,6 +492,10 @@ class Step4ContentManager {
                 throw new Error('خطا در آپلود فایل‌ها: ' + error.message);
             }
         }
+
+        // Force sync before collecting data to ensure all changes are captured
+        console.log('Step4ContentManager: Force syncing before data collection...');
+        this.syncContentWithMainField();
 
         const contentData = this.collectContentData();
         console.log('Step4ContentManager: Collected content data:', contentData);
@@ -558,50 +618,352 @@ window.syncStep4Content = function() {
     }
 };
 
-window.debugStep4Content = function() {
-    if (window.step4Manager && typeof window.step4Manager.debugStep4Elements === 'function') {
-        window.step4Manager.debugStep4Elements();
-    } else {
-        console.warn('Step4 manager not available');
-    }
-};
-
-// Test validation
-window.testStep4Validation = function() {
-    if (window.step4Manager && typeof window.step4Manager.validateStep4 === 'function') {
-        console.log('=== Testing Step 4 Validation ===');
-        const isValid = window.step4Manager.validateStep4();
-        console.log('Validation result:', isValid);
-        console.log('===============================');
-        return isValid;
-    } else {
-        console.warn('Step4 manager not available');
-        return false;
-    }
-};
-
-// Test content sync
-window.testContentSync = function() {
-    console.log('=== Testing Content Sync ===');
+// Debug function to check text block saving
+window.debugTextBlockSaving = function() {
+    console.log('=== Debug Text Block Saving ===');
     
-    // Check current state
+    // Check if TextBlockManager is available
+    console.log('TextBlockManager available:', !!window.TextBlockManager);
+    console.log('textBlockManager instance available:', !!window.textBlockManager);
+    
+    // Check if reminderBlockManager is available
+    console.log('ReminderBlockManager available:', !!window.reminderBlockManager);
+    
+    // Check text blocks in DOM
+    const textBlocks = document.querySelectorAll('.content-block[data-type="text"]');
+    console.log('Text blocks in DOM:', textBlocks.length);
+    
+    if (textBlocks.length > 0) {
+        const textBlock = textBlocks[0];
+        console.log('First text block:', textBlock);
+        
+        // Check for editors
+        const editor = textBlock.querySelector('.rich-text-editor');
+        const textarea = textBlock.querySelector('textarea');
+        
+        console.log('Rich text editor found:', !!editor);
+        console.log('Textarea found:', !!textarea);
+        
+        if (editor) {
+            console.log('Editor element:', editor);
+            console.log('Editor content:', editor.innerHTML);
+            
+            // Check if event listeners are attached
+            console.log('Checking event listeners...');
+            
+            // Try to trigger input manually
+            editor.innerHTML = 'Test content';
+            const inputEvent = new Event('input', { bubbles: true });
+            editor.dispatchEvent(inputEvent);
+            
+            console.log('Input event dispatched');
+        }
+    }
+    
+    // Check hidden fields
     const mainField = document.getElementById('contentJson');
     const reminderField = document.getElementById('reminderContentJson');
-    const writtenField = document.getElementById('writtenContentJson');
     
-    console.log('Main content field:', mainField?.value);
-    console.log('Reminder field:', reminderField?.value);
-    console.log('Written field:', writtenField?.value);
+    console.log('Main field value:', mainField?.value);
+    console.log('Reminder field value:', reminderField?.value);
     
-    // Force sync
-    if (window.step4Manager && typeof window.step4Manager.syncContentWithMainField === 'function') {
-        window.step4Manager.syncContentWithMainField();
-        console.log('Sync completed');
+    console.log('============================');
+};
+
+// Force initialize TextBlockManager
+window.forceInitTextBlockManager = function() {
+    console.log('=== Force Initialize TextBlockManager ===');
+    
+    // Try to initialize TextBlockManager
+    if (typeof window.TextBlockManager !== 'undefined') {
+        if (!window.textBlockManager) {
+            console.log('Creating new TextBlockManager instance...');
+            window.textBlockManager = new window.TextBlockManager();
+        } else {
+            console.log('TextBlockManager already exists, reinitializing...');
+            window.textBlockManager.init();
+        }
+        
+        // Setup event listeners for existing editors
+        const editors = document.querySelectorAll('.rich-text-editor');
+        console.log('Found rich text editors:', editors.length);
+        
+        editors.forEach((editor, index) => {
+            console.log(`Setting up editor ${index}:`, editor);
+            if (window.textBlockManager && typeof window.textBlockManager.setupRichTextEditor === 'function') {
+                window.textBlockManager.setupRichTextEditor(editor);
+            }
+        });
+        
+        console.log('TextBlockManager initialization completed');
     } else {
-        console.warn('Step4 manager sync method not available');
+        console.error('TextBlockManager class not available');
     }
     
     console.log('============================');
 };
+
+// Simple test for text saving
+window.testTextSaving = function() {
+    console.log('=== Simple Text Saving Test ===');
+    
+    // Add a text block first
+    if (window.reminderBlockManager && typeof window.reminderBlockManager.addBlock === 'function') {
+        console.log('Adding text block...');
+        window.reminderBlockManager.addBlock('text');
+        
+        setTimeout(() => {
+            // Find the text block
+            const textBlocks = document.querySelectorAll('.content-block[data-type="text"]');
+            console.log('Text blocks found:', textBlocks.length);
+            
+            if (textBlocks.length > 0) {
+                const textBlock = textBlocks[0];
+                const editor = textBlock.querySelector('.rich-text-editor');
+                
+                if (editor) {
+                    console.log('Adding test text...');
+                    editor.innerHTML = 'متن تست - ' + new Date().toLocaleTimeString();
+                    
+                    // Trigger input event
+                    const inputEvent = new Event('input', { bubbles: true });
+                    editor.dispatchEvent(inputEvent);
+                    
+                    // Check if content is saved
+                    setTimeout(() => {
+                        const reminderField = document.getElementById('reminderContentJson');
+                        console.log('Reminder field value:', reminderField?.value);
+                        
+                        try {
+                            const data = JSON.parse(reminderField?.value || '{}');
+                            const blocks = data.blocks || [];
+                            console.log('Blocks count:', blocks.length);
+                            
+                            if (blocks.length > 0) {
+                                const textBlock = blocks.find(b => b.type === 'text');
+                                if (textBlock) {
+                                    console.log('Text block content:', textBlock.data?.content);
+                                    if (textBlock.data?.content?.includes('تست')) {
+                                        console.log('✅ Text saving works!');
+                                    } else {
+                                        console.log('❌ Text not saved properly');
+                                    }
+                                }
+                            }
+                        } catch (e) {
+                            console.error('Error parsing JSON:', e);
+                        }
+                    }, 1000);
+                }
+            }
+        }, 500);
+    } else {
+        console.warn('ReminderBlockManager not available');
+    }
+    
+    console.log('============================');
+};
+
+// Check if text-block.js is loaded
+window.checkTextBlockLoading = function() {
+    console.log('=== Check Text Block Loading ===');
+    
+    console.log('TextBlockManager class available:', !!window.TextBlockManager);
+    console.log('textBlockManager instance available:', !!window.textBlockManager);
+    
+    // Check if text-block.js script is loaded
+    const scripts = document.querySelectorAll('script[src*="text-block"]');
+    console.log('Text-block.js scripts found:', scripts.length);
+    
+    // Check if SharedContentBlockManager is available
+    console.log('SharedContentBlockManager available:', !!window.sharedContentBlockManager);
+    
+    // Check if text block templates exist
+    const textTemplate = document.querySelector('#contentBlockTemplates .content-block-template[data-type="text"]');
+    console.log('Text block template found:', !!textTemplate);
+    
+    if (textTemplate) {
+        console.log('Text template HTML:', textTemplate.outerHTML.substring(0, 200) + '...');
+    }
+    
+    console.log('============================');
+};
+
+// Direct text saving solution
+window.directTextSave = function() {
+    console.log('=== Direct Text Save Solution ===');
+    
+    // Find all text editors
+    const editors = document.querySelectorAll('.rich-text-editor');
+    console.log('Found text editors:', editors.length);
+    
+    editors.forEach((editor, index) => {
+        console.log(`Setting up direct save for editor ${index}`);
+        
+        // Remove existing listeners
+        editor.removeEventListener('input', editor._textSaveHandler);
+        
+        // Add direct save handler
+        editor._textSaveHandler = function(e) {
+            console.log('Direct text save handler triggered');
+            
+            const blockElement = editor.closest('.content-block');
+            if (blockElement) {
+                const blockId = blockElement.dataset.blockId;
+                console.log('Saving text for block ID:', blockId);
+                
+                // Find the block in reminderBlockManager
+                if (window.reminderBlockManager) {
+                    const block = window.reminderBlockManager.blocks.find(b => b.id === blockId);
+                    if (block) {
+                        block.data.content = editor.innerHTML;
+                        block.data.textContent = editor.textContent;
+                        
+                        console.log('Updated block data:', block.data);
+                        
+                        // Update hidden field
+                        window.reminderBlockManager.updateHiddenField();
+                        
+                        console.log('✅ Text saved directly!');
+                    } else {
+                        console.warn('Block not found in reminderBlockManager');
+                    }
+                }
+            }
+        };
+        
+        editor.addEventListener('input', editor._textSaveHandler);
+        console.log(`Direct save handler added to editor ${index}`);
+    });
+    
+    console.log('============================');
+};
+
+// Test the new direct text saving
+window.testDirectTextSaving = function() {
+    console.log('=== Test Direct Text Saving ===');
+    
+    // Add a text block first
+    if (window.reminderBlockManager && typeof window.reminderBlockManager.addBlock === 'function') {
+        console.log('Adding text block...');
+        window.reminderBlockManager.addBlock('text');
+        
+        setTimeout(() => {
+            // Find the text block
+            const textBlocks = document.querySelectorAll('.content-block[data-type="text"]');
+            console.log('Text blocks found:', textBlocks.length);
+            
+            if (textBlocks.length > 0) {
+                const textBlock = textBlocks[0];
+                const editor = textBlock.querySelector('.rich-text-editor');
+                
+                if (editor) {
+                    console.log('Adding test text...');
+                    editor.innerHTML = 'متن تست مستقیم - ' + new Date().toLocaleTimeString();
+                    
+                    // Trigger input event
+                    const inputEvent = new Event('input', { bubbles: true });
+                    editor.dispatchEvent(inputEvent);
+                    
+                    // Check if content is saved
+                    setTimeout(() => {
+                        const reminderField = document.getElementById('reminderContentJson');
+                        console.log('Reminder field value:', reminderField?.value);
+                        
+                        try {
+                            const data = JSON.parse(reminderField?.value || '{}');
+                            const blocks = data.blocks || [];
+                            console.log('Blocks count:', blocks.length);
+                            
+                            if (blocks.length > 0) {
+                                const textBlock = blocks.find(b => b.type === 'text');
+                                if (textBlock) {
+                                    console.log('Text block content:', textBlock.data?.content);
+                                    if (textBlock.data?.content?.includes('مستقیم')) {
+                                        console.log('✅ Direct text saving works!');
+                                    } else {
+                                        console.log('❌ Direct text saving failed');
+                                    }
+                                }
+                            }
+                        } catch (e) {
+                            console.error('Error parsing JSON:', e);
+                        }
+                    }, 1000);
+                }
+            }
+        }, 500);
+    } else {
+        console.warn('ReminderBlockManager not available');
+    }
+    
+    console.log('============================');
+};
+
+// Check current content and fix empty content
+window.checkAndFixContent = function() {
+    console.log('=== Check and Fix Content ===');
+    
+    // Check current field values
+    const reminderField = document.getElementById('reminderContentJson');
+    console.log('Current reminder field value:', reminderField?.value);
+    
+    try {
+        const data = JSON.parse(reminderField?.value || '{}');
+        const blocks = data.blocks || [];
+        console.log('Current blocks:', blocks.length);
+        
+        // Check each text block
+        blocks.forEach((block, index) => {
+            console.log(`Block ${index}:`, block);
+            if (block.type === 'text') {
+                console.log(`Text block ${index} content:`, block.data?.content);
+                console.log(`Text block ${index} textContent:`, block.data?.textContent);
+                
+                // Find corresponding DOM element
+                const blockElement = document.querySelector(`[data-block-id="${block.id}"]`);
+                if (blockElement) {
+                    const editor = blockElement.querySelector('.rich-text-editor');
+                    const textarea = blockElement.querySelector('textarea');
+                    
+                    if (editor) {
+                        console.log(`DOM editor content:`, editor.innerHTML);
+                        console.log(`DOM editor textContent:`, editor.textContent);
+                        
+                        // If DOM has content but block data is empty, fix it
+                        if (editor.innerHTML && (!block.data.content || block.data.content === '')) {
+                            console.log(`Fixing empty content for block ${index}`);
+                            block.data.content = editor.innerHTML;
+                            block.data.textContent = editor.textContent;
+                        }
+                    }
+                    
+                    if (textarea) {
+                        console.log(`DOM textarea content:`, textarea.value);
+                        
+                        // If DOM has content but block data is empty, fix it
+                        if (textarea.value && (!block.data.content || block.data.content === '')) {
+                            console.log(`Fixing empty content for block ${index}`);
+                            block.data.content = textarea.value;
+                            block.data.textContent = textarea.value;
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Update the field with fixed data
+        reminderField.value = JSON.stringify(data);
+        console.log('Updated reminder field value:', reminderField.value);
+        
+        console.log('✅ Content check and fix completed');
+        
+    } catch (e) {
+        console.error('Error parsing JSON:', e);
+    }
+    
+    console.log('============================');
+};
+
 
 
