@@ -1,0 +1,306 @@
+/* CKEditor Custom Styles */
+
+/* Editor Container */
+.ckeditor-container {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin: 8px 0;
+}
+
+.ckeditor-container .ck-editor {
+    border: none !important;
+    border-radius: 8px !important;
+}
+
+/* Toolbar Customization */
+.ckeditor-container .ck-toolbar {
+    background: #f8f9fa !important;
+    border-bottom: 1px solid #e9ecef !important;
+    padding: 8px !important;
+    border-radius: 8px 8px 0 0 !important;
+}
+
+.ckeditor-container .ck-toolbar__separator {
+    background: #dee2e6 !important;
+}
+
+.ckeditor-container .ck-button {
+    border-radius: 4px !important;
+    margin: 0 2px !important;
+}
+
+.ckeditor-container .ck-button:hover {
+    background: #e9ecef !important;
+}
+
+.ckeditor-container .ck-button.ck-on {
+    background: #007bff !important;
+    color: white !important;
+}
+
+/* Editor Content Area */
+.ckeditor-container .ck-editor__editable {
+    border-radius: 0 0 8px 8px !important;
+    min-height: 200px !important;
+    padding: 16px !important;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+    font-size: 14px !important;
+    line-height: 1.6 !important;
+    direction: rtl !important;
+    text-align: right !important;
+    color: #333 !important;
+}
+
+/* Focus State */
+.ckeditor-container .ck-editor.ck-focused {
+    border-color: #007bff !important;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25) !important;
+}
+
+/* Placeholder */
+.ckeditor-container .ck-editor__editable.ck-placeholder::before {
+    color: #999 !important;
+    font-style: italic !important;
+    direction: rtl !important;
+    text-align: right !important;
+}
+
+/* Dropdown Menus */
+.ckeditor-container .ck-dropdown__panel {
+    border-radius: 6px !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+    border: 1px solid #e9ecef !important;
+}
+
+.ckeditor-container .ck-list__item {
+    border-radius: 4px !important;
+    margin: 2px !important;
+}
+
+.ckeditor-container .ck-list__item:hover {
+    background: #f8f9fa !important;
+}
+
+/* Dialog Customization */
+.ckeditor-container .ck-dialog {
+    border-radius: 8px !important;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.2) !important;
+}
+
+.ckeditor-container .ck-dialog__header {
+    background: #f8f9fa !important;
+    border-bottom: 1px solid #e9ecef !important;
+    border-radius: 8px 8px 0 0 !important;
+}
+
+.ckeditor-container .ck-dialog__body {
+    padding: 20px !important;
+}
+
+.ckeditor-container .ck-dialog__footer {
+    background: #f8f9fa !important;
+    border-top: 1px solid #e9ecef !important;
+    border-radius: 0 0 8px 8px !important;
+    padding: 16px 20px !important;
+}
+
+/* Button Styles */
+.ckeditor-container .ck-button {
+    border-radius: 4px !important;
+    font-weight: 500 !important;
+}
+
+.ckeditor-container .ck-button.ck-button-save {
+    background: #007bff !important;
+    border-color: #007bff !important;
+    color: white !important;
+}
+
+.ckeditor-container .ck-button.ck-button-save:hover {
+    background: #0056b3 !important;
+    border-color: #0056b3 !important;
+}
+
+.ckeditor-container .ck-button.ck-button-cancel {
+    background: #6c757d !important;
+    border-color: #6c757d !important;
+    color: white !important;
+}
+
+.ckeditor-container .ck-button.ck-button-cancel:hover {
+    background: #545b62 !important;
+    border-color: #545b62 !important;
+}
+
+/* Form Elements */
+.ckeditor-container .ck-input {
+    border-radius: 4px !important;
+    border: 1px solid #ced4da !important;
+    padding: 8px 12px !important;
+}
+
+.ckeditor-container .ck-input:focus {
+    border-color: #007bff !important;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25) !important;
+}
+
+.ckeditor-container .ck-dropdown__button {
+    border-radius: 4px !important;
+    border: 1px solid #ced4da !important;
+    padding: 8px 12px !important;
+}
+
+/* Table Styles */
+.ckeditor-container .ck-editor__editable table {
+    border-collapse: collapse !important;
+    width: 100% !important;
+    margin: 16px 0 !important;
+}
+
+.ckeditor-container .ck-editor__editable table td,
+.ckeditor-container .ck-editor__editable table th {
+    border: 1px solid #ddd !important;
+    padding: 8px 12px !important;
+    text-align: right !important;
+}
+
+.ckeditor-container .ck-editor__editable table th {
+    background: #f8f9fa !important;
+    font-weight: bold !important;
+}
+
+/* Block Quote */
+.ckeditor-container .ck-editor__editable blockquote {
+    border-left: 4px solid #007bff !important;
+    border-right: none !important;
+    margin: 16px 0 !important;
+    padding: 16px !important;
+    background: #f8f9fa !important;
+    border-radius: 4px !important;
+    font-style: italic !important;
+}
+
+/* Code Block */
+.ckeditor-container .ck-editor__editable pre {
+    background: #f8f9fa !important;
+    border: 1px solid #e9ecef !important;
+    border-radius: 4px !important;
+    padding: 16px !important;
+    overflow-x: auto !important;
+    font-family: 'Courier New', monospace !important;
+    direction: ltr !important;
+    text-align: left !important;
+}
+
+/* Links */
+.ckeditor-container .ck-editor__editable a {
+    color: #007bff !important;
+    text-decoration: underline !important;
+}
+
+.ckeditor-container .ck-editor__editable a:hover {
+    color: #0056b3 !important;
+}
+
+/* Images */
+.ckeditor-container .ck-editor__editable img {
+    max-width: 100% !important;
+    height: auto !important;
+    border-radius: 4px !important;
+    margin: 8px 0 !important;
+}
+
+/* Lists */
+.ckeditor-container .ck-editor__editable ul,
+.ckeditor-container .ck-editor__editable ol {
+    padding-right: 20px !important;
+    padding-left: 0 !important;
+}
+
+.ckeditor-container .ck-editor__editable li {
+    margin: 4px 0 !important;
+}
+
+/* Headings */
+.ckeditor-container .ck-editor__editable h1,
+.ckeditor-container .ck-editor__editable h2,
+.ckeditor-container .ck-editor__editable h3,
+.ckeditor-container .ck-editor__editable h4,
+.ckeditor-container .ck-editor__editable h5,
+.ckeditor-container .ck-editor__editable h6 {
+    margin: 16px 0 8px 0 !important;
+    font-weight: bold !important;
+    color: #333 !important;
+}
+
+.ckeditor-container .ck-editor__editable h1 { font-size: 24px !important; }
+.ckeditor-container .ck-editor__editable h2 { font-size: 20px !important; }
+.ckeditor-container .ck-editor__editable h3 { font-size: 18px !important; }
+.ckeditor-container .ck-editor__editable h4 { font-size: 16px !important; }
+.ckeditor-container .ck-editor__editable h5 { font-size: 14px !important; }
+.ckeditor-container .ck-editor__editable h6 { font-size: 12px !important; }
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .ckeditor-container .ck-toolbar {
+        flex-wrap: wrap !important;
+    }
+    
+    .ckeditor-container .ck-toolbar__separator {
+        display: none !important;
+    }
+    
+    .ckeditor-container .ck-editor__editable {
+        min-height: 150px !important;
+        padding: 12px !important;
+    }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+    .ckeditor-container {
+        background: #2d3748;
+        border-color: #4a5568;
+    }
+    
+    .ckeditor-container .ck-toolbar {
+        background: #2d3748 !important;
+        border-bottom-color: #4a5568 !important;
+    }
+    
+    .ckeditor-container .ck-editor__editable {
+        background: #2d3748 !important;
+        color: #e2e8f0 !important;
+    }
+    
+    .ckeditor-container .ck-editor__editable h1,
+    .ckeditor-container .ck-editor__editable h2,
+    .ckeditor-container .ck-editor__editable h3,
+    .ckeditor-container .ck-editor__editable h4,
+    .ckeditor-container .ck-editor__editable h5,
+    .ckeditor-container .ck-editor__editable h6 {
+        color: #e2e8f0 !important;
+    }
+    
+    .ckeditor-container .ck-editor__editable blockquote {
+        background: #4a5568 !important;
+        border-left-color: #63b3ed !important;
+    }
+    
+    .ckeditor-container .ck-editor__editable pre {
+        background: #4a5568 !important;
+        border-color: #718096 !important;
+    }
+    
+    .ckeditor-container .ck-editor__editable table th {
+        background: #4a5568 !important;
+    }
+    
+    .ckeditor-container .ck-editor__editable table td,
+    .ckeditor-container .ck-editor__editable table th {
+        border-color: #718096 !important;
+    }
+}

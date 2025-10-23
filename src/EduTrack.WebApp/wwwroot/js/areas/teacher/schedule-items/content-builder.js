@@ -92,28 +92,19 @@ class ContentBuilderBase {
     setupEventListeners() {
         // Block actions (move up, move down, delete)
         this.eventManager.addListener('click', (e) => {
-            console.log('ContentBuilderBase: Click event detected on:', e.target);
-            console.log('ContentBuilderBase: Event target matches delete:', e.target.matches('[data-action="delete"]'));
             
             if (e.target.matches('[data-action="move-up"]')) {
-                console.log('ContentBuilderBase: Move up action detected');
                 this.moveBlockUp(e.target.closest('.content-block-template, .content-block'));
             } else if (e.target.matches('[data-action="move-down"]')) {
-                console.log('ContentBuilderBase: Move down action detected');
                 this.moveBlockDown(e.target.closest('.content-block-template, .content-block'));
             } else if (e.target.matches('[data-action="delete"]')) {
-                console.log('ContentBuilderBase: Delete action detected');
                 const blockElement = e.target.closest('.content-block-template, .content-block');
-                console.log('ContentBuilderBase: Delete button clicked, blockElement:', blockElement);
                 this.deleteBlock(blockElement);
             } else if (e.target.matches('[data-action="toggle-collapse"]')) {
-                console.log('ContentBuilderBase: Toggle collapse action detected');
                 this.toggleCollapse(e.target.closest('.content-block-template, .content-block'));
             } else if (e.target.matches('[data-action="fullscreen"]')) {
-                console.log('ContentBuilderBase: Fullscreen action detected');
                 this.toggleFullscreen(e.target.closest('.content-block-template, .content-block'));
             } else if (e.target.matches('[data-action="insert-above"]')) {
-                console.log('ContentBuilderBase: Insert above action detected');
                 this.insertBlockAbove(e.target.closest('.content-block-template, .content-block'));
             }
         });
@@ -125,14 +116,12 @@ class ContentBuilderBase {
         
         // Also listen on document for blockContentChanged events
         document.addEventListener('blockContentChanged', (e) => {
-            console.log('ContentBuilderBase: Document blockContentChanged event received:', e.detail);
             this.handleBlockContentChanged(e.detail);
         });
         
         // Direct input listener for rich text editors
         document.addEventListener('input', (e) => {
             if (e.target.classList.contains('rich-text-editor')) {
-                console.log('ContentBuilderBase: Rich text editor input detected');
                 this.handleRichTextInput(e.target);
             }
         });
@@ -261,49 +250,17 @@ class ContentBuilderBase {
             this.blocksList.appendChild(blockElement);
         }
         
-        // Initialize TextBlockManager for text blocks
+        // Initialize CKEditor for text blocks
         if (block.type === 'text') {
-            console.log('ContentBuilderBase: Initializing TextBlockManager for text block');
-            if (window.TextBlockManager && !window.textBlockManager) {
-                window.textBlockManager = new window.TextBlockManager();
-            }
             
-            // Setup rich text editor for this specific block
-            const editor = blockElement.querySelector('.rich-text-editor');
-            if (editor && window.textBlockManager) {
-                console.log('ContentBuilderBase: Setting up rich text editor');
-                window.textBlockManager.setupRichTextEditor(editor);
-            }
-            
-            // Add direct input handler for immediate saving
-            const textEditor = blockElement.querySelector('.rich-text-editor');
-            const textarea = blockElement.querySelector('textarea');
-            
-            if (textEditor) {
-                console.log('ContentBuilderBase: Adding direct input handler for rich text editor');
-                textEditor.addEventListener('input', (e) => {
-                    console.log('ContentBuilderBase: Direct input detected on rich text editor');
-                    this.saveTextContentImmediately(blockElement, textEditor);
-                });
-                
-                textEditor.addEventListener('blur', (e) => {
-                    console.log('ContentBuilderBase: Blur detected on rich text editor');
-                    this.saveTextContentImmediately(blockElement, textEditor);
-                });
-            }
-            
-            if (textarea) {
-                console.log('ContentBuilderBase: Adding direct input handler for textarea');
-                textarea.addEventListener('input', (e) => {
-                    console.log('ContentBuilderBase: Direct input detected on textarea');
-                    this.saveTextContentImmediately(blockElement, textarea);
-                });
-                
-                textarea.addEventListener('blur', (e) => {
-                    console.log('ContentBuilderBase: Blur detected on textarea');
-                    this.saveTextContentImmediately(blockElement, textarea);
-                });
-            }
+            // Initialize CKEditor with a delay to ensure DOM is ready
+            setTimeout(() => {
+                const editorElement = blockElement.querySelector('.ckeditor-editor');
+                if (editorElement && window.ckeditorManager) {
+                    window.ckeditorManager.initializeEditor(editorElement);
+                } else {
+                }
+            }, 100);
         }
         
         // Dispatch populate event for specific block managers
@@ -328,7 +285,6 @@ class ContentBuilderBase {
                 e.preventDefault();
                 e.stopPropagation();
                 
-                console.log('ContentBuilderBase: Direct event listener triggered for action:', action);
                 
                 switch (action) {
                     case 'move-up':
@@ -338,7 +294,6 @@ class ContentBuilderBase {
                         this.moveBlockDown(blockElement);
                         break;
                     case 'delete':
-                        console.log('ContentBuilderBase: Direct delete action triggered');
                         this.deleteBlock(blockElement);
                         break;
                     case 'toggle-collapse':
@@ -435,13 +390,9 @@ class ContentBuilderBase {
                 return;
             }
             
-            console.log('ContentBuilderBase: Deleting block with ID:', blockId);
-            console.log('ContentBuilderBase: Blocks before deletion:', this.blocks.length);
-            
             // Remove from blocks array
             this.blocks = this.blocks.filter(b => b.id !== blockId);
             
-            console.log('ContentBuilderBase: Blocks after deletion:', this.blocks.length);
             
             // Remove from DOM
             blockElement.remove();
@@ -465,11 +416,9 @@ class ContentBuilderBase {
             
             // Notify step4Manager to refresh add button handlers
             if (window.step4Manager && typeof window.step4Manager.refreshAddButtonHandlers === 'function') {
-                console.log('ContentBuilderBase: Notifying step4Manager to refresh add button handlers');
                 window.step4Manager.refreshAddButtonHandlers();
             }
             
-            console.log('ContentBuilderBase: Block deletion completed');
         }
     }
 
@@ -535,34 +484,24 @@ class ContentBuilderBase {
     }
 
     handleBlockContentChanged(detail) {
-        console.log('ContentBuilderBase: Block content changed event received:', detail);
-        
         const blockElement = detail.blockElement;
         const blockId = blockElement.dataset.blockId;
         const block = this.blocks.find(b => b.id === blockId);
-        
-        console.log('ContentBuilderBase: Block ID:', blockId);
-        console.log('ContentBuilderBase: Block found:', !!block);
         
         if (block) {
             // Update block data with new content
             if (detail.blockData) {
                 block.data = { ...block.data, ...detail.blockData };
-                console.log('ContentBuilderBase: Updated block data from blockData');
             }
             if (detail.content !== undefined) {
                 block.data.content = detail.content;
-                console.log('ContentBuilderBase: Updated block content:', detail.content);
             }
             if (detail.textContent !== undefined) {
                 block.data.textContent = detail.textContent;
-                console.log('ContentBuilderBase: Updated block textContent:', detail.textContent);
             }
             
             // Update block data attribute
             blockElement.dataset.blockData = JSON.stringify(block.data);
-            
-            console.log('ContentBuilderBase: Updated block data:', block.data);
             
             this.updateHiddenField();
             
@@ -577,8 +516,6 @@ class ContentBuilderBase {
     }
 
     handleRichTextInput(editor) {
-        console.log('ContentBuilderBase: Handling rich text input');
-        
         const blockElement = editor.closest('.content-block');
         if (!blockElement) {
             console.warn('ContentBuilderBase: No block element found for editor');
@@ -588,9 +525,6 @@ class ContentBuilderBase {
         const blockId = blockElement.dataset.blockId;
         const block = this.blocks.find(b => b.id === blockId);
         
-        console.log('ContentBuilderBase: Rich text input - Block ID:', blockId);
-        console.log('ContentBuilderBase: Rich text input - Block found:', !!block);
-        
         if (block) {
             // Update block data with editor content
             block.data.content = editor.innerHTML;
@@ -598,8 +532,6 @@ class ContentBuilderBase {
             
             // Update block data attribute
             blockElement.dataset.blockData = JSON.stringify(block.data);
-            
-            console.log('ContentBuilderBase: Rich text input - Updated block data:', block.data);
             
             this.updateHiddenField();
             
@@ -609,36 +541,34 @@ class ContentBuilderBase {
                 contentType: this.config.contentType
             });
             
-            console.log('ContentBuilderBase: Rich text input - Content saved successfully');
         } else {
             console.warn('ContentBuilderBase: Rich text input - Block not found for ID:', blockId);
         }
     }
 
     saveTextContentImmediately(blockElement, editor) {
-        console.log('ContentBuilderBase: Saving text content immediately');
-        
         const blockId = blockElement.dataset.blockId;
         const block = this.blocks.find(b => b.id === blockId);
         
-        console.log('ContentBuilderBase: Immediate save - Block ID:', blockId);
-        console.log('ContentBuilderBase: Immediate save - Block found:', !!block);
-        
         if (block) {
-            // Get content from editor
+            // Get content from CKEditor
+            const editorElement = blockElement.querySelector('.ckeditor-editor');
             let content = '';
             let textContent = '';
             
-            if (editor.classList.contains('rich-text-editor')) {
+            if (editorElement && window.ckeditorManager) {
+                const editorContent = window.ckeditorManager.getEditorContent(editorElement);
+                if (editorContent) {
+                    content = editorContent.html;
+                    textContent = editorContent.text;
+                }
+            } else if (editor.classList.contains('rich-text-editor')) {
                 content = editor.innerHTML;
                 textContent = editor.textContent;
             } else if (editor.tagName === 'TEXTAREA') {
                 content = editor.value;
                 textContent = editor.value;
             }
-            
-            console.log('ContentBuilderBase: Immediate save - Editor content:', content);
-            console.log('ContentBuilderBase: Immediate save - Editor textContent:', textContent);
             
             // Update block data
             block.data.content = content;
@@ -647,12 +577,9 @@ class ContentBuilderBase {
             // Update block data attribute
             blockElement.dataset.blockData = JSON.stringify(block.data);
             
-            console.log('ContentBuilderBase: Immediate save - Updated block data:', block.data);
-            
             // Update hidden field immediately
             this.updateHiddenField();
             
-            console.log('ContentBuilderBase: Immediate save - Content saved successfully');
         } else {
             console.warn('ContentBuilderBase: Immediate save - Block not found for ID:', blockId);
         }
@@ -671,7 +598,7 @@ class ContentBuilderBase {
     }
 
     updateHiddenField() {
-        console.log('ContentBuilderBase: Updating hidden field with', this.blocks.length, 'blocks');
+        console.log('ContentBuilderBase: Updating hidden field...');
         
         const cleanBlocks = this.blocks.map(block => {
             const cleanBlock = { ...block };
@@ -695,20 +622,18 @@ class ContentBuilderBase {
         const hiddenFieldUpdated = this.fieldManager.updateField(this.config.hiddenFieldId, contentJson);
         const mainFieldUpdated = this.fieldManager.updateField('contentJson', contentJson);
         
-        console.log('ContentBuilderBase: Field update results - Hidden field:', hiddenFieldUpdated, 'Main field:', mainFieldUpdated);
-        
         // Also directly update the fields as a fallback
         const hiddenField = document.getElementById(this.config.hiddenFieldId);
         const mainField = document.getElementById('contentJson');
         
         if (hiddenField) {
             hiddenField.value = contentJson;
-            console.log('ContentBuilderBase: Directly updated hidden field:', this.config.hiddenFieldId);
+            console.log('ContentBuilderBase: Updated hidden field directly');
         }
         
         if (mainField) {
             mainField.value = contentJson;
-            console.log('ContentBuilderBase: Directly updated main field: contentJson');
+            console.log('ContentBuilderBase: Updated main field directly');
         }
         
         if (!this.isLoadingExistingContent) {
@@ -717,9 +642,13 @@ class ContentBuilderBase {
     }
 
     loadExistingContent() {
+        console.log('ContentBuilderBase: Loading existing content...');
+        
         const hiddenFieldValue = this.fieldManager.getFieldValue(this.config.hiddenFieldId);
+        console.log('ContentBuilderBase: Hidden field value:', hiddenFieldValue);
         
         if (!hiddenFieldValue || !hiddenFieldValue.trim()) {
+            console.log('ContentBuilderBase: No hidden field value found');
             return;
         }
         
@@ -727,8 +656,11 @@ class ContentBuilderBase {
             this.isLoadingExistingContent = true;
             
             const data = JSON.parse(hiddenFieldValue);
+            console.log('ContentBuilderBase: Parsed data:', data);
             
             if (data.blocks && Array.isArray(data.blocks)) {
+                console.log('ContentBuilderBase: Found blocks:', data.blocks.length);
+                
                 const existingBlocks = this.blocksList.querySelectorAll('.content-block');
                 existingBlocks.forEach(block => block.remove());
                 
@@ -739,23 +671,28 @@ class ContentBuilderBase {
                     this.nextBlockId = 1;
                 }
                 
+                console.log('ContentBuilderBase: Rendering blocks...');
                 this.blocks.forEach((block, index) => {
+                    console.log(`ContentBuilderBase: Rendering block ${index + 1}:`, block);
                     this.renderBlock(block);
                 });
                 
                 this.updateEmptyState();
                 
-                // Populate content fields after rendering
+                // Populate content fields after rendering with longer delay
                 setTimeout(() => {
+                    console.log('ContentBuilderBase: Populating block content...');
                     this.populateBlockContent();
-                }, 200);
+                }, 500); // Increased delay
+            } else {
+                console.log('ContentBuilderBase: No blocks found in data');
             }
             
             this.isLoadingExistingContent = false;
             
             setTimeout(() => {
                 this.updatePreview();
-            }, 300);
+            }, 800); // Increased delay
             
         } catch (error) {
             console.error('ContentBuilderBase: Error loading existing content:', error);
@@ -770,22 +707,51 @@ class ContentBuilderBase {
 
     // Force sync content with main field (called from step4-content.js)
     forceSyncWithMainField() {
-        console.log('ContentBuilderBase: Force syncing with main field');
+        console.log('ContentBuilderBase: Force syncing with main field...');
+        
+        // Force save all CKEditor content first
+        if (window.ckeditorManager) {
+            const ckeditorElements = document.querySelectorAll('.ckeditor-editor');
+            ckeditorElements.forEach(editorElement => {
+                const editorContent = window.ckeditorManager.getEditorContent(editorElement);
+                if (editorContent) {
+                    const blockElement = editorElement.closest('.content-block');
+                    if (blockElement) {
+                        const blockId = blockElement.dataset.blockId;
+                        const block = this.blocks.find(b => b.id === blockId);
+                        if (block) {
+                            block.data.content = editorContent.html;
+                            block.data.textContent = editorContent.text;
+                            blockElement.dataset.blockData = JSON.stringify(block.data);
+                        }
+                    }
+                }
+            });
+        }
+        
         this.updateHiddenField();
         
         // Also trigger sync manager
         if (this.syncManager) {
             this.syncManager.sync('forceSync');
         }
+        
+        console.log('ContentBuilderBase: Force sync completed');
     }
 
     populateBlockContent() {
-        this.blocks.forEach(block => {
+        console.log('ContentBuilderBase: Populating block content for', this.blocks.length, 'blocks');
+        
+        this.blocks.forEach((block, index) => {
+            console.log(`ContentBuilderBase: Populating block ${index + 1}:`, block);
+            
             const blockElement = document.querySelector(`[data-block-id="${block.id}"]`);
             if (!blockElement) {
                 console.warn(`ContentBuilderBase: Block element not found for block ${block.id}`);
                 return;
             }
+            
+            console.log(`ContentBuilderBase: Found block element for ${block.id}`);
             
             // Update block data attribute
             blockElement.dataset.blockData = JSON.stringify(block.data);
