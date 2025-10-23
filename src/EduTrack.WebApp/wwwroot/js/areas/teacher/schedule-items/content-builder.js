@@ -45,21 +45,15 @@ class ContentBuilderBase {
     }
 
     setupEventListeners() {
-        // Block type selection
-        document.addEventListener('blockTypeSelected', (e) => {
-            if (e.detail.type) {
-                this.addBlock(e.detail.type);
-            }
-        });
-
         // Block actions (move up, move down, delete)
         document.addEventListener('click', (e) => {
             if (e.target.matches('[data-action="move-up"]')) {
-                this.moveBlockUp(e.target);
+                this.moveBlockUp(e.target.closest('.content-block-template'));
             } else if (e.target.matches('[data-action="move-down"]')) {
-                this.moveBlockDown(e.target);
+                this.moveBlockDown(e.target.closest('.content-block-template'));
             } else if (e.target.matches('[data-action="delete"]')) {
-                this.deleteBlock(e.target);
+                console.log('ContentBuilderBase: Delete button clicked, blockElement:', e.target.closest('.content-block-template'));
+                this.deleteBlock(e.target.closest('.content-block-template'));
             } else if (e.target.matches('[data-action="toggle-collapse"]')) {
                 this.toggleCollapse(e.target.closest('.content-block-template'));
             } else if (e.target.matches('[data-action="fullscreen"]')) {
@@ -158,7 +152,10 @@ class ContentBuilderBase {
 
     renderBlock(block) {
         const template = document.querySelector(`#contentBlockTemplates .content-block-template[data-type="${block.type}"]`);
-        if (!template) return;
+        if (!template) {
+            console.error('ContentBuilderBase: Template not found for type:', block.type);
+            return;
+        }
         
         const blockElement = template.cloneNode(true);
         blockElement.classList.add('content-block');
@@ -184,6 +181,11 @@ class ContentBuilderBase {
     }
 
     moveBlockUp(blockElement) {
+        if (!blockElement) {
+            console.error('ContentBuilderBase: moveBlockUp called with null blockElement');
+            return;
+        }
+        
         const blockId = blockElement.dataset.blockId;
         const blockIndex = this.blocks.findIndex(b => b.id === blockId);
         
@@ -201,6 +203,11 @@ class ContentBuilderBase {
     }
 
     moveBlockDown(blockElement) {
+        if (!blockElement) {
+            console.error('ContentBuilderBase: moveBlockDown called with null blockElement');
+            return;
+        }
+        
         const blockId = blockElement.dataset.blockId;
         const blockIndex = this.blocks.findIndex(b => b.id === blockId);
         
@@ -218,18 +225,37 @@ class ContentBuilderBase {
     }
 
     deleteBlock(blockElement) {
+        if (!blockElement) {
+            console.error('ContentBuilderBase: deleteBlock called with null blockElement');
+            return;
+        }
+        
         if (confirm('آیا از حذف این بلاک اطمینان دارید؟')) {
             const blockId = blockElement.dataset.blockId;
             
+            if (!blockId) {
+                console.error('ContentBuilderBase: Block element has no blockId');
+                return;
+            }
+            
+            // Remove from blocks array
             this.blocks = this.blocks.filter(b => b.id !== blockId);
+            
+            // Remove from DOM
             blockElement.remove();
             
+            // Update UI
             this.updateEmptyState();
             this.updateHiddenField();
         }
     }
 
     insertBlockAbove(blockElement) {
+        if (!blockElement) {
+            console.error('ContentBuilderBase: insertBlockAbove called with null blockElement');
+            return;
+        }
+        
         // This will be handled by the specific content builder
         const event = new CustomEvent('insertBlockAbove', {
             detail: {
@@ -240,6 +266,11 @@ class ContentBuilderBase {
     }
 
     toggleCollapse(blockElement) {
+        if (!blockElement) {
+            console.error('ContentBuilderBase: toggleCollapse called with null blockElement');
+            return;
+        }
+        
         if (blockElement.classList.contains('fullscreen')) {
             return;
         }
@@ -247,6 +278,11 @@ class ContentBuilderBase {
     }
 
     toggleFullscreen(blockElement) {
+        if (!blockElement) {
+            console.error('ContentBuilderBase: toggleFullscreen called with null blockElement');
+            return;
+        }
+        
         blockElement.classList.toggle('fullscreen');
         
         if (blockElement.classList.contains('fullscreen')) {

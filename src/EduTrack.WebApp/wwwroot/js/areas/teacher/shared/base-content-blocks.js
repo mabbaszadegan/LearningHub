@@ -99,12 +99,28 @@ class SharedContentBlockManager {
     }
 
     handleBlockTypeSelected(type) {
+        // Find the active content builder
+        let activeBuilder = null;
         
-        // Trigger custom event for specific implementations
-        const event = new CustomEvent('blockTypeSelected', {
-            detail: { type: type }
-        });
-        document.dispatchEvent(event);
+        // Check for reminder content builder
+        if (window.reminderBlockManager && document.getElementById('reminderContentBuilder')?.style.display !== 'none') {
+            activeBuilder = window.reminderBlockManager;
+        }
+        // Check for written content builder
+        else if (window.writtenBlockManager && document.getElementById('writtenContentBuilder')?.style.display !== 'none') {
+            activeBuilder = window.writtenBlockManager;
+        }
+        
+        if (activeBuilder && typeof activeBuilder.addBlock === 'function') {
+            activeBuilder.addBlock(type);
+        } else {
+            console.warn('SharedContentBlockManager: No active content builder found');
+            // Fallback: trigger custom event for specific implementations
+            const event = new CustomEvent('blockTypeSelected', {
+                detail: { type: type }
+            });
+            document.dispatchEvent(event);
+        }
     }
 
     handleBlockContentChanged(detail) {
