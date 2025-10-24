@@ -6,14 +6,6 @@
 
 // Global functions
 
-function updatePreview() {
-    if (window.reminderBlockManager) {
-        window.reminderBlockManager.updatePreview();
-        window.reminderBlockManager.showPreviewModal();
-    } else {
-        alert('سیستم پیش‌نمایش هنوز آماده نیست');
-    }
-}
 
 class ReminderContentBlockManager extends ContentBuilderBase {
     constructor() {
@@ -43,44 +35,8 @@ class ReminderContentBlockManager extends ContentBuilderBase {
         // Most common functionality is now handled by the base class
     }
 
-    updatePreview() {
-        if (this.preview) {
-            let previewHTML = '<div class="reminder-card"><div class="reminder-icon"><i class="fas fa-bell"></i></div><div class="reminder-text">';
-            
-            if (this.blocks.length === 0) {
-                previewHTML += '<p>محتوای یادآوری شما اینجا نمایش داده خواهد شد...</p>';
-            } else {
-                this.blocks.forEach(block => {
-                    previewHTML += this.generateBlockPreview(block);
-                });
-            }
-            
-            previewHTML += '</div></div>';
-            this.preview.innerHTML = previewHTML;
-        }
-        
-        this.updateModalPreview();
-    }
-
-    updateModalPreview() {
-        const modalPreview = document.getElementById('modalReminderPreview');
-        if (!modalPreview) return;
-        
-        let previewHTML = '<div class="reminder-card"><div class="reminder-icon"><i class="fas fa-bell"></i></div><div class="reminder-text">';
-        
-        if (this.blocks.length === 0) {
-            previewHTML += '<p>محتوای یادآوری شما اینجا نمایش داده خواهد شد...</p>';
-        } else {
-            this.blocks.forEach(block => {
-                previewHTML += this.generateBlockPreview(block);
-            });
-        }
-        
-        previewHTML += '</div></div>';
-        modalPreview.innerHTML = previewHTML;
-    }
-
     generateBlockPreview(block) {
+        return
         let html = '';
         
         switch (block.type) {

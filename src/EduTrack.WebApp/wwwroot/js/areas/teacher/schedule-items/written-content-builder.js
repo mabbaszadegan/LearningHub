@@ -1,534 +1,149 @@
 /**
- * Written Content Question Block Manager
- * Handles question block creation, editing, and management for written-type schedule items
+ * Written Content Block Manager
+ * Handles written content creation and management for written-type schedule items
  * Uses specific block managers (text-block.js, image-block.js, etc.) for individual block functionality
  */
 
-// Global functions for onclick handlers
-
-function updateWrittenPreview() {
-    
-    if (window.writtenBlockManager && window.writtenBlockManager.updatePreview) {
-        window.writtenBlockManager.updatePreview();
-        if (window.writtenBlockManager.showPreviewModal) {
-            window.writtenBlockManager.showPreviewModal();
-        }
-    } else {
-        alert('سیستم پیش‌نمایش هنوز آماده نیست. لطفاً صفحه را رفرش کنید.');
-    }
-}
+// Global functions
 
 class WrittenContentBlockManager extends ContentBuilderBase {
     constructor() {
         super({
-            containerId: 'questionBlocksList',
-            emptyStateId: 'emptyQuestionBlocksState',
+            containerId: 'contentBlocksList',
+            emptyStateId: 'emptyBlocksState',
             previewId: 'writtenPreview',
             hiddenFieldId: 'writtenContentJson',
-            modalId: 'questionTypeModal',
+            modalId: 'blockTypeModal',
             contentType: 'written'
         });
-
-        this.questionBlocks = this.blocks; // Alias for backward compatibility
-        this.currentBlockId = this.nextBlockId - 1; // Alias for backward compatibility
-        this.isInitialized = false;
         
-        // Initialize when DOM is ready
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => this.initialize());
-        } else {
-            this.initialize();
-        }
+        this.init();
     }
-
-    initialize() {
-        
-        try {
-            this.setupWrittenSpecificEventListeners();
-            this.isInitialized = true;
-        } catch (error) {
-            console.error('Error initializing WrittenContentQuestionManager:', error);
+    
+    init() {
+        if (!this.blocksList || !this.emptyState || !this.preview || !this.hiddenField) {
+            console.error('Required elements not found!');
+            return;
         }
+        
+        this.setupWrittenSpecificEventListeners();
     }
 
     setupWrittenSpecificEventListeners() {
-        // Modal close events
-        const previewModal = document.getElementById('writtenPreviewModal');
-        if (previewModal) {
-            previewModal.addEventListener('hidden.bs.modal', () => {
-                this.cleanupModalBackdrops();
-            });
-        }
-
-        // Question-specific settings
-        document.addEventListener('change', (e) => {
-            if (e.target.matches('[data-setting="points"]')) {
-                this.updateQuestionPoints(e.target);
-            } else if (e.target.matches('[data-setting="isRequired"]')) {
-                this.updateQuestionRequired(e.target);
-            }
-        });
-
-        // Question hint changes
-        document.addEventListener('input', (e) => {
-            if (e.target.matches('[data-hint="true"]')) {
-                this.updateQuestionHint(e.target);
-            }
-        });
-
-        // Handle insert block above event
-        document.addEventListener('insertBlockAbove', (e) => {
-            this.handleInsertBlockAbove(e.detail.blockElement);
-        });
+        // Written-specific event listeners can be added here if needed
+        // Most common functionality is now handled by the base class
     }
 
-    handleInsertBlockAbove(blockElement) {
-        // Show question type selection modal for inserting above
-        if (window.sharedContentBlockManager) {
-            window.sharedContentBlockManager.showBlockTypeModal('questionTypeModal');
-        }
-    }
-
-    addQuestionBlock(type) {
+    generateBlockPreview(block) {
+        let html = '';
         
-        const blockId = ++this.currentBlockId;
-        const block = this.createQuestionBlock(type, blockId);
-        
-        this.questionBlocks.push(block);
-        this.renderQuestionBlocks();
-        this.updateContentJson();
-        
-    }
-
-    createQuestionBlock(type, blockId) {
-        const block = {
-            id: blockId,
-            type: type,
-            order: this.questionBlocks.length + 1,
-            questionText: '',
-            hint: '',
-            points: 1,
-            isRequired: true,
-            questionData: this.getDefaultQuestionData(type)
-        };
-
-        return block;
-    }
-
-    getDefaultQuestionData(type) {
-        const baseData = {
-            size: 'medium',
-            position: 'center',
-            caption: '',
-            captionPosition: 'bottom'
-        };
-
-        switch (type) {
-            case 'text':
-                return {
-                    ...baseData,
-                    textContent: ''
-                };
-            case 'image':
-                return {
-                    ...baseData,
-                    fileId: null,
-                    fileName: null,
-                    fileUrl: null,
-                    fileSize: null,
-                    mimeType: null
-                };
-            case 'video':
-                return {
-                    ...baseData,
-                    fileId: null,
-                    fileName: null,
-                    fileUrl: null,
-                    fileSize: null,
-                    mimeType: null
-                };
-            case 'audio':
-                return {
-                    ...baseData,
-                    fileId: null,
-                    fileName: null,
-                    fileUrl: null,
-                    fileSize: null,
-                    mimeType: null,
-                    isRecorded: false,
-                    duration: null
-                };
-            case 'code':
-                return {
-                    ...baseData,
-                    codeContent: '',
-                    language: 'plaintext',
-                    theme: 'default',
-                    codeTitle: '',
-                    showLineNumbers: true,
-                    enableCopyButton: true
-                };
-            default:
-                return baseData;
-        }
-    }
-
-    renderQuestionBlocks() {
-        const container = document.getElementById('questionBlocksList');
-        if (!container) return;
-
-        // Clear existing blocks
-        container.innerHTML = '';
-
-        if (this.questionBlocks.length === 0) {
-            container.innerHTML = `
-                <div class="empty-state" id="emptyQuestionBlocksState">
-                    <div class="empty-state-icon">
-                        <i class="fas fa-question-circle"></i>
-                    </div>
-                    <h4>هنوز سوالی اضافه نشده</h4>
-                    <p>برای شروع، روی دکمه "افزودن سوال" کلیک کنید</p>
-                </div>
-            `;
-            return;
-        }
-
-        // Render each question block using shared templates
-        this.questionBlocks.forEach((block, index) => {
-            const blockElement = this.createQuestionBlockElement(block, index);
-            container.appendChild(blockElement);
-        });
-    }
-
-    createQuestionBlockElement(block, index) {
-        const template = document.querySelector(`#questionBlockTemplates .content-block-template[data-type="${block.type}"]`);
-        if (!template) return document.createElement('div');
-
-        const clone = template.cloneNode(true);
-        clone.id = `question-block-${block.id}`;
-        clone.dataset.blockId = block.id;
-        clone.dataset.blockIndex = index;
-
-        // Update block content based on block data
-        this.populateBlockContent(clone, block);
-
-        return clone;
-    }
-
-    populateBlockContent(element, block) {
-        // Update question text
-        const questionEditor = element.querySelector('.rich-text-editor');
-        if (questionEditor) {
-            questionEditor.innerHTML = block.questionText || '';
-        }
-
-        // Update hint
-        const hintTextarea = element.querySelector('[data-hint="true"]');
-        if (hintTextarea) {
-            hintTextarea.value = block.hint || '';
-        }
-
-        // Update points
-        const pointsInput = element.querySelector('[data-setting="points"]');
-        if (pointsInput) {
-            pointsInput.value = block.points || 1;
-        }
-
-        // Update required checkbox
-        const requiredCheckbox = element.querySelector('[data-setting="isRequired"]');
-        if (requiredCheckbox) {
-            requiredCheckbox.checked = block.isRequired !== false;
-        }
-
-        // Update question data based on type
-        this.populateQuestionData(element, block);
-    }
-
-    populateQuestionData(element, block) {
-        const data = block.questionData;
-
         switch (block.type) {
             case 'text':
-                // Text content is already handled in questionText
+                html += `<div class="text-block">${block.data.content || ''}</div>`;
                 break;
             case 'image':
-            case 'video':
-            case 'audio':
-                // Update file information if exists
-                if (data.fileUrl) {
-                    const preview = element.querySelector(`.${block.type}-preview`);
-                    if (preview) {
-                        preview.style.display = 'block';
-                        const mediaElement = preview.querySelector(`.preview-${block.type}`);
-                        if (mediaElement) {
-                            mediaElement.src = data.fileUrl;
-                        }
+                if (block.data.fileUrl || block.data.previewUrl) {
+                    const imageUrl = block.data.fileUrl || block.data.previewUrl;
+                    const sizeClass = this.getSizeClass(block.data.size);
+                    const positionClass = this.getPositionClass(block.data.position);
+                    html += `<div class="image-block ${positionClass}">`;
+                    if (block.data.caption && block.data.captionPosition === 'top') {
+                        html += `<div class="caption caption-top">${block.data.caption}</div>`;
                     }
-                }
-                break;
-            case 'code':
-                // Update code content
-                const codeTextarea = element.querySelector('[data-code-content]');
-                if (codeTextarea) {
-                    codeTextarea.value = data.codeContent || '';
-                }
-
-                // Update language
-                const languageSelect = element.querySelector('[data-setting="language"]');
-                if (languageSelect) {
-                    languageSelect.value = data.language || 'plaintext';
-                }
-
-                // Update theme
-                const themeSelect = element.querySelector('[data-setting="theme"]');
-                if (themeSelect) {
-                    themeSelect.value = data.theme || 'default';
-                }
-
-                // Update code title
-                const titleInput = element.querySelector('[data-setting="title"]');
-                if (titleInput) {
-                    titleInput.value = data.codeTitle || '';
-                }
-
-                // Update checkboxes
-                const lineNumbersCheckbox = element.querySelector('[data-setting="showLineNumbers"]');
-                if (lineNumbersCheckbox) {
-                    lineNumbersCheckbox.checked = data.showLineNumbers !== false;
-                }
-
-                const copyButtonCheckbox = element.querySelector('[data-setting="enableCopyButton"]');
-                if (copyButtonCheckbox) {
-                    copyButtonCheckbox.checked = data.enableCopyButton !== false;
-                }
-                break;
-        }
-    }
-
-    updateQuestionPoints(input) {
-        const blockElement = input.closest('.content-block-template');
-        const blockId = blockElement.dataset.blockId;
-        const block = this.questionBlocks.find(b => b.id === blockId);
-        
-        if (block) {
-            block.points = parseInt(input.value) || 1;
-            this.updateContentJson();
-        }
-    }
-
-    updateQuestionRequired(checkbox) {
-        const blockElement = checkbox.closest('.content-block-template');
-        const blockId = blockElement.dataset.blockId;
-        const block = this.questionBlocks.find(b => b.id === blockId);
-        
-        if (block) {
-            block.isRequired = checkbox.checked;
-            this.updateContentJson();
-        }
-    }
-
-    updateQuestionHint(textarea) {
-        const blockElement = textarea.closest('.content-block-template');
-        const blockId = blockElement.dataset.blockId;
-        const block = this.questionBlocks.find(b => b.id === blockId);
-        
-        if (block) {
-            block.hint = textarea.value;
-            this.updateContentJson();
-        }
-    }
-
-    updateContentJson() {
-        const content = {
-            title: '',
-            description: '',
-            questionBlocks: this.questionBlocks.map(block => ({
-                id: block.id.toString(),
-                order: block.order,
-                questionText: block.questionText,
-                questionType: block.type,
-                questionData: block.questionData,
-                points: block.points,
-                isRequired: block.isRequired,
-                hint: block.hint
-            })),
-            timeLimitMinutes: 0,
-            allowLateSubmission: true,
-            instructions: ''
-        };
-
-        const hiddenInput = document.getElementById('writtenContentJson');
-        if (hiddenInput) {
-            hiddenInput.value = JSON.stringify(content);
-        }
-    }
-
-    loadExistingContent() {
-        const hiddenInput = document.getElementById('writtenContentJson');
-        if (hiddenInput && hiddenInput.value) {
-            try {
-                const content = JSON.parse(hiddenInput.value);
-                if (content.questionBlocks && Array.isArray(content.questionBlocks)) {
-                    this.questionBlocks = content.questionBlocks.map(block => ({
-                        id: parseInt(block.id) || ++this.currentBlockId,
-                        type: block.questionType || 'text',
-                        order: block.order || 1,
-                        questionText: block.questionText || '',
-                        hint: block.hint || '',
-                        points: block.points || 1,
-                        isRequired: block.isRequired !== false,
-                        questionData: block.questionData || this.getDefaultQuestionData(block.questionType || 'text')
-                    }));
-                    
-                    this.currentBlockId = Math.max(...this.questionBlocks.map(b => b.id), 0);
-                    this.renderQuestionBlocks();
-                    
-                    // Populate content fields after rendering
-                    setTimeout(() => {
-                        this.populateAllQuestionBlocks();
-                    }, 200);
-                }
-            } catch (error) {
-                console.error('Error loading existing written content:', error);
-            }
-        }
-    }
-
-    populateAllQuestionBlocks() {
-        this.questionBlocks.forEach(block => {
-            const blockElement = document.querySelector(`[data-question-id="${block.id}"]`);
-            if (blockElement) {
-                this.populateBlockContent(blockElement, block);
-            }
-        });
-    }
-
-    updatePreview() {
-        const previewContainer = document.getElementById('writtenPreview');
-        if (!previewContainer) return;
-
-        if (this.questionBlocks.length === 0) {
-            previewContainer.innerHTML = `
-                <div class="written-exercise-card">
-                    <div class="exercise-icon">
-                        <i class="fas fa-edit"></i>
-                    </div>
-                    <div class="exercise-text">
-                        <p>هنوز سوالی اضافه نشده است</p>
-                    </div>
-                </div>
-            `;
-            return;
-        }
-
-        let previewHtml = '<div class="written-exercise-preview">';
-        
-        this.questionBlocks.forEach((block, index) => {
-            previewHtml += `
-                <div class="preview-question-block">
-                    <div class="question-header">
-                        <span class="question-number">سوال ${index + 1}</span>
-                        <span class="question-points">(${block.points} امتیاز)</span>
-                        ${block.isRequired ? '<span class="required-badge">اجباری</span>' : ''}
-                    </div>
-                    <div class="question-content">
-                        ${this.renderQuestionPreview(block)}
-                    </div>
-                    ${block.hint ? `<div class="question-hint">راهنمایی: ${block.hint}</div>` : ''}
-                </div>
-            `;
-        });
-        
-        previewHtml += '</div>';
-        previewContainer.innerHTML = previewHtml;
-    }
-
-    renderQuestionPreview(block) {
-        let content = `<div class="question-text">${block.questionText || 'متن سوال'}</div>`;
-        
-        switch (block.type) {
-            case 'image':
-                if (block.questionData.fileUrl) {
-                    content += `<div class="question-image"><img src="${block.questionData.fileUrl}" alt="تصویر سوال" style="max-width: 100%; height: auto;"></div>`;
+                    html += `<img src="${imageUrl}" alt="تصویر" class="${sizeClass}" />`;
+                    if (block.data.caption && block.data.captionPosition === 'bottom') {
+                        html += `<div class="caption caption-bottom">${block.data.caption}</div>`;
+                    }
+                    html += '</div>';
                 }
                 break;
             case 'video':
-                if (block.questionData.fileUrl) {
-                    content += `<div class="question-video"><video controls style="max-width: 100%;"><source src="${block.questionData.fileUrl}"></video></div>`;
+                if (block.data.fileUrl || block.data.previewUrl) {
+                    const videoUrl = block.data.fileUrl || block.data.previewUrl;
+                    const sizeClass = this.getSizeClass(block.data.size);
+                    const positionClass = this.getPositionClass(block.data.position);
+                    html += `<div class="video-block ${positionClass}">`;
+                    if (block.data.caption && block.data.captionPosition === 'top') {
+                        html += `<div class="caption caption-top">${block.data.caption}</div>`;
+                    }
+                    html += `<video controls preload="none" class="${sizeClass}"><source data-src="${videoUrl}" type="video/mp4"></video>`;
+                    if (block.data.caption && block.data.captionPosition === 'bottom') {
+                        html += `<div class="caption caption-bottom">${block.data.caption}</div>`;
+                    }
+                    html += '</div>';
                 }
                 break;
             case 'audio':
-                if (block.questionData.fileUrl) {
-                    content += `<div class="question-audio"><audio controls><source src="${block.questionData.fileUrl}"></audio></div>`;
+                if (block.data.fileUrl || block.data.previewUrl) {
+                    const audioUrl = block.data.fileUrl || block.data.previewUrl;
+                    const mimeType = block.data.mimeType || 'audio/mpeg';
+                    html += `<div class="audio-block">`;
+                    if (block.data.caption) {
+                        html += `<div class="caption">${block.data.caption}</div>`;
+                    }
+                    html += `<audio controls preload="none"><source data-src="${audioUrl}" type="${mimeType}"></audio>`;
+                    html += '</div>';
                 }
                 break;
             case 'code':
-                if (block.questionData.codeContent) {
-                    content += `<div class="question-code"><pre><code>${block.questionData.codeContent}</code></pre></div>`;
+                if (block.data.codeContent) {
+                    html += `<div class="code-block-preview">`;
+                    if (block.data.codeTitle) {
+                        html += `<div class="code-title">${block.data.codeTitle}</div>`;
+                    }
+                    html += `<pre><code class="language-${block.data.language || 'plaintext'}">${block.data.codeContent}</code></pre>`;
+                    html += '</div>';
                 }
                 break;
         }
         
-        content += '<div class="answer-area"><textarea placeholder="پاسخ خود را اینجا بنویسید..." rows="4" style="width: 100%;"></textarea></div>';
-        
-        return content;
+        return html;
     }
+}
 
-    showPreviewModal() {
-        const modal = document.getElementById('writtenPreviewModal');
-        if (modal) {
-            const bsModal = new bootstrap.Modal(modal);
-            bsModal.show();
-        } else {
-            console.error('Written preview modal not found');
+// Initialize when DOM is loaded
+function initializeWrittenBlockManager() {
+    try {
+        if (window.writtenBlockManager) {
+            return;
         }
-    }
-
-    cleanupModalBackdrops() {
-        const backdrops = document.querySelectorAll('.modal-backdrop');
-        backdrops.forEach(backdrop => {
-            backdrop.remove();
+        
+        const requiredElements = [
+            'contentBlocksList',
+            'emptyBlocksState', 
+            'writtenPreview',
+            'writtenContentJson'
+        ];
+        
+        let missingElements = [];
+        requiredElements.forEach(id => {
+            if (!document.getElementById(id)) {
+                missingElements.push(id);
+            }
         });
         
-        // Reset body styles
-        document.body.classList.remove('modal-open');
-        document.body.style.paddingRight = '';
-        document.body.style.overflow = '';
-        document.body.style.overflowX = '';
-        document.body.style.overflowY = '';
-        document.documentElement.style.overflow = '';
-        document.documentElement.style.overflowX = '';
-        document.documentElement.style.overflowY = '';
-    }
-
-    getContent() {
-        return {
-            title: '',
-            description: '',
-            questionBlocks: this.questionBlocks,
-            timeLimitMinutes: 0,
-            allowLateSubmission: true,
-            instructions: ''
-        };
-    }
-}
-
-// Initialize the manager when DOM is ready
-function initializeWrittenQuestionManager() {
-    if (window.writtenBlockManager) {
-        return;
-    }
-    
-    try {
+        if (missingElements.length > 0) {
+            console.warn('WrittenContentBlockManager: Missing required elements:', missingElements);
+            return;
+        }
+        
         window.writtenBlockManager = new WrittenContentBlockManager();
+        
     } catch (error) {
-        console.error('Error initializing Written Block Manager:', error);
+        console.error('Error initializing WrittenContentBlockManager:', error);
     }
 }
 
-// Auto-initialize when script loads
+// Initialize when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(initializeWrittenBlockManager, 100);
+});
+
+// Also try to initialize immediately if DOM is already loaded
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializeWrittenQuestionManager);
+    document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(initializeWrittenBlockManager, 100);
+    });
 } else {
-    initializeWrittenQuestionManager();
+    setTimeout(initializeWrittenBlockManager, 100);
 }
