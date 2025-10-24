@@ -26,13 +26,11 @@ let studySession = {
         // Apply automatic code highlighting to all code blocks on page load
         this.applyAutomaticCodeHighlighting();
         
-        console.log('Study session initialized with sessionId:', this.sessionId);
     },
     
     applyAutomaticCodeHighlighting() {
         // Wait for DOM to be fully loaded
         setTimeout(() => {
-            console.log('Applying automatic code highlighting...');
             
             // Find all code blocks in the page
             const codeBlocks = document.querySelectorAll('pre code, .text-content code, .content-description code');
@@ -99,10 +97,8 @@ let studySession = {
                     codeElement.classList.add('highlighted');
                 }
                 
-                console.log(`Applied highlighting to code block ${index + 1} (language: ${language})`);
             });
             
-            console.log(`Applied automatic highlighting to ${codeBlocks.length} code blocks`);
         }, 100); // Small delay to ensure DOM is ready
     },
     
@@ -178,7 +174,6 @@ let studySession = {
         const body = this.createReminderBody(content);
         container.appendChild(body);
         
-        console.log('Reminder content rendered successfully');
     },
     
     createReminderBody(content) {
@@ -832,7 +827,6 @@ let studySession = {
     async startStudySession() {
         // Don't create session in database until user completes study
         // Just track locally for now
-        console.log('Study session tracking started locally (no database record yet)');
         this.sessionId = 0; // No database session yet
     },
     
@@ -856,20 +850,17 @@ let studySession = {
             const handleNavigationClick = function(e) {
                 const target = e.target;
                 
-                console.log('Navigation click detected on:', target.tagName, target.className, target.id, 'timer active:', self.isActive, 'time:', self.getElapsedTime());
                 
                 // Check if timer is active and has enough time
                 if (self.isActive && self.getElapsedTime() > 5) {
                     
                     // Skip if clicking inside the modal
                     if (target.closest('#exitConfirmationModal')) {
-                        console.log('Click inside modal, ignoring');
                         return;
                     }
                     
                     // Skip if clicking on image action buttons
                     if (target.closest('.image-action-btn') || target.closest('.image-overlay')) {
-                        console.log('Image action button clicked, ignoring');
                         return;
                     }
                     
@@ -877,7 +868,6 @@ let studySession = {
                     if (target.closest('.speaker-button') || target.closest('.play-button') || 
                         target.closest('.progress-bar') || target.closest('.audio-controls') ||
                         target.closest('.video-controls')) {
-                        console.log('Media control clicked, ignoring');
                         return;
                     }
                     
@@ -885,7 +875,6 @@ let studySession = {
                     if (target.tagName === 'A') {
                         const href = target.getAttribute('href');
                         if (href && !href.startsWith('#') && !href.startsWith('javascript:')) {
-                            console.log('External link clicked:', href);
                             e.preventDefault();
                             e.stopPropagation();
                             self.showExitConfirmation();
@@ -896,7 +885,6 @@ let studySession = {
                     // Check for navbar/menu clicks - ONLY specific navigation elements
                     if (target.closest('.navbar-brand') || target.closest('.nav-link') || 
                         target.closest('.navbar-toggler') || target.closest('.dropdown-item')) {
-                        console.log('Navigation element clicked:', target);
                         e.preventDefault();
                         e.stopPropagation();
                         self.showExitConfirmation();
@@ -905,7 +893,6 @@ let studySession = {
                     
                     // Check for breadcrumb clicks
                     if (target.closest('.breadcrumb') || target.closest('.breadcrumb-item')) {
-                        console.log('Breadcrumb clicked:', target);
                         e.preventDefault();
                         e.stopPropagation();
                         self.showExitConfirmation();
@@ -914,7 +901,6 @@ let studySession = {
                     
                     // Check for bottom navigation clicks - handle nested elements
                     if (target.closest('.bottom-nav') || target.closest('.nav-item') || target.closest('.fixed-footer')) {
-                        console.log('Bottom navigation clicked:', target);
                         e.preventDefault();
                         e.stopPropagation();
                         self.showExitConfirmation();
@@ -926,7 +912,6 @@ let studySession = {
                         const parentLink = target.closest('a');
                         const parentHref = parentLink.getAttribute('href');
                         if (parentHref && !parentHref.startsWith('#') && !parentHref.startsWith('javascript:')) {
-                            console.log('Parent link clicked:', parentHref);
                             e.preventDefault();
                             e.stopPropagation();
                             self.showExitConfirmation();
@@ -939,7 +924,6 @@ let studySession = {
             // Bind event to document but only handle navigation elements
             document.addEventListener('click', handleNavigationClick, true);
             
-            console.log('Navigation events bound successfully to document');
         }, 1000); // Wait 1 second for DOM to be ready
     },
     
@@ -959,15 +943,12 @@ let studySession = {
                 this.elapsedTime = 0;
             }
             
-            console.log('Timer started at:', new Date(this.startTime).toLocaleTimeString());
-            
             // Timer runs in background, no UI updates needed
             this.updateInterval = setInterval(() => {
                 // Timer runs silently in background
                 this.elapsedTime = Math.floor((Date.now() - this.startTime) / 1000);
             }, 1000);
             
-            console.log('Timer started');
         }
     },
     
@@ -978,17 +959,14 @@ let studySession = {
                 clearInterval(this.updateInterval);
                 this.updateInterval = null;
             }
-            console.log('Timer stopped');
         }
     },
     
     getElapsedTime() {
         if (this.isActive && this.startTime) {
             const elapsed = Math.floor((Date.now() - this.startTime) / 1000);
-            console.log('Elapsed time calculated:', elapsed, 'seconds');
             return elapsed;
         }
-        console.log('Timer not active, returning elapsedTime:', this.elapsedTime);
         return this.elapsedTime;
     },
     
@@ -996,7 +974,6 @@ let studySession = {
         // If we have a fixed end time (modal is open), use it
         if (this.fixedEndTime) {
             const duration = Math.floor((this.fixedEndTime - this.startTime) / 1000);
-            console.log('Using fixed end time, duration:', duration, 'seconds');
             return duration;
         }
         
@@ -1030,7 +1007,6 @@ let studySession = {
         this.fixedEndTime = Date.now();
         
         const currentTime = this.getActualSessionDuration();
-        console.log('Showing exit confirmation, fixed session duration:', currentTime);
         
         // Remove any existing modal first
         const existingModal = document.getElementById('exitConfirmationModal');
@@ -1118,24 +1094,20 @@ let studySession = {
         
         // Bind events
         document.getElementById('cancel-exit').onclick = () => {
-            console.log('Cancel clicked - continuing study');
             this.hideModal();
             this.continueStudy();
         };
         
         document.getElementById('exit-without-saving').onclick = () => {
-            console.log('Exit without saving clicked');
             this.hideModal();
             this.exitWithoutSaving();
         };
         
         document.getElementById('save-and-exit').onclick = () => {
-            console.log('Save and exit clicked');
             this.hideModal();
             this.saveAndExit();
         };
         
-        console.log('Modal created and shown');
         
         // Prevent body scroll
         document.body.style.overflow = 'hidden';
@@ -1166,18 +1138,15 @@ let studySession = {
             document.body.style.overflow = 'hidden';
             document.body.classList.add('modal-open');
             
-            console.log('Modal shown successfully');
         } else {
             console.error('Modal element not found!');
         }
     },
     
     hideModal() {
-        console.log('Hiding modal');
         const modal = document.getElementById('exitConfirmationModal');
         if (modal) {
             modal.remove();
-            console.log('Modal removed');
         }
         
         // Restore body scroll
@@ -1211,13 +1180,6 @@ let studySession = {
     },
     
     async saveStudySession() {
-        console.log('=== SAVING STUDY SESSION ===');
-        console.log('Timer active:', this.isActive);
-        console.log('Start time:', this.startTime ? new Date(this.startTime).toLocaleTimeString() : 'null');
-        console.log('Fixed end time:', this.fixedEndTime ? new Date(this.fixedEndTime).toLocaleTimeString() : 'null');
-        console.log('Current time:', new Date().toLocaleTimeString());
-        console.log('============================');
-        
         try {
             // Create and complete the session in one operation
             const createAndCompleteData = {
@@ -1225,8 +1187,6 @@ let studySession = {
                 StartedAt: new Date(this.startTime).toISOString(),
                 EndedAt: new Date(this.fixedEndTime || Date.now()).toISOString()
             };
-            
-            console.log('Creating and completing session with data:', createAndCompleteData);
             
             const response = await fetch('/Student/EducationalContent/CreateAndCompleteStudySession', {
                 method: 'POST',
@@ -1242,7 +1202,6 @@ let studySession = {
             }
             
             const result = await response.json();
-            console.log('Study session created and completed:', result);
             
             if (!result.success) {
                 throw new Error(result.error || 'خطا در ثبت جلسه مطالعه');
@@ -1256,8 +1215,6 @@ let studySession = {
     },
     
     continueStudy() {
-        console.log('User chose to continue studying');
-        
         // Clear the fixed end time since user cancelled
         this.fixedEndTime = null;
         
@@ -1270,13 +1227,9 @@ let studySession = {
             this.elapsedTime = Math.floor((Date.now() - this.startTime) / 1000);
         }, 1000);
         
-        console.log('Continuing study on same page');
-        console.log('Timer is now active:', this.isActive);
-        console.log('Elapsed time:', this.elapsedTime);
     },
     
     async exitWithoutSaving() {
-        console.log('User chose to exit without saving');
         
         // Stop the timer completely
         this.stopTimer();
@@ -1364,7 +1317,6 @@ let studySession = {
 };
 
 $(document).ready(function() {
-    console.log('Document ready, initializing study session');
     // Initialize study session
     studySession.init();
 });

@@ -1,0 +1,111 @@
+@{
+    var itemType = ViewData["ItemType"]?.ToString() ?? "reminder";
+    var showQuestionBlocks = ViewData["ShowQuestionBlocks"]?.ToString()?.ToLower() == "true";
+    var showRegularBlocks = ViewData["ShowRegularBlocks"]?.ToString()?.ToLower() == "true";
+}
+
+@if (showRegularBlocks)
+{
+    <!-- Regular Content Blocks -->
+    <div class="block-type-option" data-type="text" role="button" tabindex="0" aria-label="افزودن بلاک متن">
+        <div class="option-icon">
+            <i class="fas fa-font"></i>
+        </div>
+        <span class="option-label">متن</span>
+        <small class="text-muted mt-1">محتوای متنی</small>
+    </div>
+    
+    <div class="block-type-option" data-type="image" role="button" tabindex="0" aria-label="افزودن بلاک تصویر">
+        <div class="option-icon">
+            <i class="fas fa-image"></i>
+        </div>
+        <span class="option-label">تصویر</span>
+        <small class="text-muted mt-1">عکس و تصویر</small>
+    </div>
+    
+    <div class="block-type-option" data-type="video" role="button" tabindex="0" aria-label="افزودن بلاک ویدیو">
+        <div class="option-icon">
+            <i class="fas fa-video"></i>
+        </div>
+        <span class="option-label">ویدیو</span>
+        <small class="text-muted mt-1">فیلم آموزشی</small>
+    </div>
+    
+    <div class="block-type-option" data-type="audio" role="button" tabindex="0" aria-label="افزودن بلاک صوت">
+        <div class="option-icon">
+            <i class="fas fa-microphone"></i>
+        </div>
+        <span class="option-label">صوت</span>
+        <small class="text-muted mt-1">فایل صوتی</small>
+    </div>
+    
+    <div class="block-type-option" data-type="code" role="button" tabindex="0" aria-label="افزودن بلاک کد">
+        <div class="option-icon">
+            <i class="fas fa-code"></i>
+        </div>
+        <span class="option-label">کد</span>
+        <small class="text-muted mt-1">کد برنامه‌نویسی</small>
+    </div>
+}
+
+@if (showQuestionBlocks)
+{
+    @if (showRegularBlocks)
+    {
+        <!-- Separator between regular and question blocks -->
+        <div class="block-type-separator">
+            <span>سوالات</span>
+        </div>
+    }
+    
+    <!-- Question Block Types -->
+    <div class="block-type-option" data-type="questionText" role="button" tabindex="0" aria-label="افزودن سوال متنی">
+        <div class="option-icon">
+            <i class="fas fa-question"></i>
+        </div>
+        <span class="option-label">سوال متنی</span>
+        <small class="text-muted mt-1">سوال با پاسخ متنی</small>
+    </div>
+    
+    <div class="block-type-option" data-type="questionImage" role="button" tabindex="0" aria-label="افزودن سوال تصویری">
+        <div class="option-icon">
+            <i class="fas fa-image"></i>
+        </div>
+        <span class="option-label">سوال تصویری</span>
+        <small class="text-muted mt-1">سوال با تصویر</small>
+    </div>
+    
+    <div class="block-type-option" data-type="questionVideo" role="button" tabindex="0" aria-label="افزودن سوال ویدیویی">
+        <div class="option-icon">
+            <i class="fas fa-video"></i>
+        </div>
+        <span class="option-label">سوال ویدیویی</span>
+        <small class="text-muted mt-1">سوال با ویدیو</small>
+    </div>
+    
+    <div class="block-type-option" data-type="questionAudio" role="button" tabindex="0" aria-label="افزودن سوال صوتی">
+        <div class="option-icon">
+            <i class="fas fa-microphone"></i>
+        </div>
+        <span class="option-label">سوال صوتی</span>
+        <small class="text-muted mt-1">سوال با فایل صوتی</small>
+    </div>
+}
+
+@if (itemType == "quiz")
+{
+    @if (showRegularBlocks || showQuestionBlocks)
+    {
+        <div class="block-type-separator">
+            <span>آزمون</span>
+        </div>
+    }
+    
+    <div class="block-type-option" data-type="quiz" role="button" tabindex="0" aria-label="افزودن بلاک آزمون">
+        <div class="option-icon">
+            <i class="fas fa-question-circle"></i>
+        </div>
+        <span class="option-label">آزمون</span>
+        <small class="text-muted mt-1">سوال و پاسخ</small>
+    </div>
+}

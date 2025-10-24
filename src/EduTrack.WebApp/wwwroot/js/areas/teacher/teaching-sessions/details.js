@@ -4,7 +4,7 @@ class TeachingSessionDetailsManager {
         this.sessionId = options.sessionId;
         this.isEditing = false;
         this.currentEditingCard = null;
-        
+
         this.init();
     }
 
@@ -53,7 +53,7 @@ class TeachingSessionDetailsManager {
         // Remove active class from all tabs and panels
         $('.tab-btn').removeClass('active');
         $('.tab-panel').removeClass('active');
-        
+
         // Add active class to clicked tab and corresponding panel
         $(`.tab-btn[data-tab="${tabName}"]`).addClass('active');
         $(`#${tabName}`).addClass('active');
@@ -66,14 +66,14 @@ class TeachingSessionDetailsManager {
 
         this.isEditing = true;
         this.currentEditingCard = card;
-        
+
         // Hide card content and show edit form
         card.find('.card-content').hide();
         card.find('.edit-form').show();
-        
+
         // Add editing class
         card.addClass('editing');
-        
+
         // Focus on first input
         card.find('.form-control').first().focus();
     }
@@ -83,14 +83,14 @@ class TeachingSessionDetailsManager {
 
         this.isEditing = false;
         this.currentEditingCard = null;
-        
+
         // Show card content and hide edit form
         card.find('.card-content').show();
         card.find('.edit-form').hide();
-        
+
         // Remove editing class
         card.removeClass('editing');
-        
+
         // Reset form to original values
         this.resetForm(card);
     }
@@ -98,7 +98,7 @@ class TeachingSessionDetailsManager {
     resetForm(card) {
         const form = card.find('.attendance-edit-form');
         const studentId = form.data('student-id');
-        
+
         // Reset form to original values
         // This would need to be implemented based on the original data
         // For now, we'll just hide the form
@@ -108,24 +108,22 @@ class TeachingSessionDetailsManager {
         const card = form.closest('.student-card');
         const studentId = form.data('student-id');
         const attendanceId = form.data('attendance-id');
-        
+
         // Show loading state
         const saveBtn = form.find('.btn-save');
         const originalText = saveBtn.html();
         saveBtn.html('<i class="fas fa-spinner fa-spin"></i> در حال ذخیره...').prop('disabled', true);
 
         try {
-        // Collect form data
-        const formData = {
-            studentId: studentId, // This is now a GUID string
-            attendanceId: attendanceId,
-            sessionId: this.sessionId,
-            status: parseInt(form.find('[name="status"]').val()),
-            participationScore: form.find('[name="participationScore"]').val() ? parseFloat(form.find('[name="participationScore"]').val()) : null,
-            comment: form.find('[name="comment"]').val() || null
-        };
-
-            console.log('Saving attendance:', formData);
+            // Collect form data
+            const formData = {
+                studentId: studentId, // This is now a GUID string
+                attendanceId: attendanceId,
+                sessionId: this.sessionId,
+                status: parseInt(form.find('[name="status"]').val()),
+                participationScore: form.find('[name="participationScore"]').val() ? parseFloat(form.find('[name="participationScore"]').val()) : null,
+                comment: form.find('[name="comment"]').val() || null
+            };
 
             // Send to server
             const response = await fetch('/Teacher/TeachingSessions/UpdateAttendance', {
@@ -142,10 +140,10 @@ class TeachingSessionDetailsManager {
             if (result.success) {
                 // Update the card with new data
                 this.updateCardData(card, formData);
-                
+
                 // Show success message
                 this.showMessage('حضور و غیاب با موفقیت ذخیره شد', 'success');
-                
+
                 // Exit edit mode
                 this.cancelEdit(card);
             } else {
@@ -164,22 +162,22 @@ class TeachingSessionDetailsManager {
         // Update status badge
         const statusTexts = {
             0: 'غایب',
-            1: 'حاضر', 
+            1: 'حاضر',
             2: 'تأخیر',
             3: 'معذور'
         };
-        
+
         const statusClasses = {
             0: 'bg-danger',
             1: 'bg-success',
-            2: 'bg-warning', 
+            2: 'bg-warning',
             3: 'bg-info'
         };
 
         const statusBadge = card.find('.status-badge');
         statusBadge.removeClass('bg-success bg-danger bg-warning bg-info')
-                  .addClass(statusClasses[data.status])
-                  .text(statusTexts[data.status]);
+            .addClass(statusClasses[data.status])
+            .text(statusTexts[data.status]);
 
         // Update participation score
         const scoreElement = card.find('.score-value');
@@ -210,9 +208,9 @@ class TeachingSessionDetailsManager {
 
     showMessage(message, type = 'info') {
         // Create toast notification
-        const toastClass = type === 'success' ? 'alert-success' : 
-                          type === 'error' ? 'alert-danger' : 'alert-info';
-        
+        const toastClass = type === 'success' ? 'alert-success' :
+            type === 'error' ? 'alert-danger' : 'alert-info';
+
         const toast = $(`
             <div class="alert ${toastClass} alert-dismissible fade show position-fixed" 
                  style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
@@ -231,11 +229,11 @@ class TeachingSessionDetailsManager {
 }
 
 // Initialize when document is ready
-$(document).ready(function() {
+$(document).ready(function () {
     // Get session ID from data attribute or URL
-    const sessionId = $('body').data('session-id') || 
-                     window.location.pathname.split('/').pop();
-    
+    const sessionId = $('body').data('session-id') ||
+        window.location.pathname.split('/').pop();
+
     if (sessionId) {
         window.teachingSessionDetailsManager = new TeachingSessionDetailsManager({
             sessionId: sessionId

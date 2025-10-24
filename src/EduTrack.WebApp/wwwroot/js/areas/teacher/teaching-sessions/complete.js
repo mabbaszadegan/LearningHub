@@ -189,17 +189,6 @@ class StepCompletionManager {
         navContainer.empty();
         contentContainer.empty();
 
-        console.log('Groups data:', this.groups);
-        
-        // Debug: Log existing attendance data
-        this.groups.forEach((group, groupIndex) => {
-            console.log(`Group ${groupIndex}: ${group.name}`);
-            group.members.forEach((member, memberIndex) => {
-                console.log(`  Member ${memberIndex}: ${member.studentName} (${member.studentId})`);
-                console.log(`    ExistingAttendance:`, member.existingAttendance);
-            });
-        });
-
         if (this.groups.length === 0) {
             contentContainer.html(`
                 <div class="attendance-loading">
@@ -983,13 +972,6 @@ class StepCompletionManager {
 
             const tabData = this.collectTabAttendanceData(tabIndex, groupId);
             
-            console.log('Saving tab data:', {
-                sessionId: this.sessionId,
-                groupId: groupId,
-                tabIndex: tabIndex,
-                tabData: tabData
-            });
-            
             const response = await fetch(`/Teacher/TeachingSessions/SaveTabCompletion`, {
                 method: 'POST',
                 headers: {
@@ -1004,15 +986,11 @@ class StepCompletionManager {
                 })
             });
 
-            console.log('Response status:', response.status);
-            console.log('Response headers:', response.headers);
-
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
 
             const result = await response.json();
-            console.log('Save tab response:', result);
 
             if (result.success) {
                 this.showNotification(`حضور و غیاب گروه ${group.name} با موفقیت ذخیره شد`, 'success');
@@ -1354,7 +1332,6 @@ class StepCompletionManager {
                     });
                 }
             } catch (e) {
-                console.log('Error parsing feedback data:', e);
             }
         }
     }

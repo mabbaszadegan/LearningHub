@@ -565,4 +565,23 @@ public class ScheduleItemController : BaseTeacherController
             .Select(id => id!.Value)
             .ToList();
     }
+
+    // POST: ScheduleItem/GetBlockTypeOptions
+    [HttpPost]
+    public IActionResult GetBlockTypeOptions(string itemType, bool showRegularBlocks, bool showQuestionBlocks)
+    {
+        try
+        {
+            ViewData["ItemType"] = itemType;
+            ViewData["ShowRegularBlocks"] = showRegularBlocks;
+            ViewData["ShowQuestionBlocks"] = showQuestionBlocks;
+            
+            return PartialView("_BlockTypeOptions");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error loading block type options for item type: {ItemType}", itemType);
+            return Content("<div class='alert alert-danger'>خطا در بارگذاری گزینه‌های بلاک</div>");
+        }
+    }
 }

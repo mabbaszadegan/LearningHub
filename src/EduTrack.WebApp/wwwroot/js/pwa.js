@@ -3,10 +3,9 @@ if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('/js/sw.js')
             .then(registration => {
-                console.log('SW registered: ', registration);
             })
             .catch(registrationError => {
-                console.log('SW registration failed: ', registrationError);
+                console.error('SW registration failed: ', registrationError);
             });
     });
 }
@@ -16,7 +15,6 @@ let deferredPrompt;
 let installButton;
 
 window.addEventListener('beforeinstallprompt', (e) => {
-    console.log('PWA install prompt triggered');
     e.preventDefault();
     deferredPrompt = e;
     
@@ -28,7 +26,6 @@ window.addEventListener('beforeinstallprompt', (e) => {
             if (deferredPrompt) {
                 deferredPrompt.prompt();
                 const { outcome } = await deferredPrompt.userChoice;
-                console.log(`User ${outcome} the install prompt`);
                 deferredPrompt = null;
                 installButton.style.display = 'none';
             }
@@ -38,7 +35,6 @@ window.addEventListener('beforeinstallprompt', (e) => {
 
 // Handle app installed event
 window.addEventListener('appinstalled', () => {
-    console.log('PWA was installed');
     if (installButton) {
         installButton.style.display = 'none';
     }
@@ -106,7 +102,6 @@ class OfflineSubmissionQueue {
 
                     if (response.ok) {
                         await this.removeSubmission(submission.id);
-                        console.log('Offline submission processed:', submission.id);
                     }
                 } catch (error) {
                     console.error('Failed to process offline submission:', error);
@@ -145,7 +140,6 @@ const offlineQueue = new OfflineSubmissionQueue();
 
 // Process queue when back online
 window.addEventListener('online', () => {
-    console.log('Back online, processing offline submissions...');
     offlineQueue.processQueue();
 });
 

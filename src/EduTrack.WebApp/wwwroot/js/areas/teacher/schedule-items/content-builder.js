@@ -147,9 +147,6 @@ class ContentBuilderBase {
     }
 
     addBlock(type) {
-        console.log('ContentBuilderBase: Adding block of type:', type);
-        console.log('ContentBuilderBase: Current blocks count:', this.blocks.length);
-        
         const blockId = `block-${this.nextBlockId++}`;
         const block = {
             id: blockId,
@@ -158,15 +155,11 @@ class ContentBuilderBase {
             data: this.getDefaultBlockData(type)
         };
         
-        console.log('ContentBuilderBase: Created block:', block);
-        
         this.blocks.push(block);
         this.renderBlock(block);
         this.updateEmptyState();
         this.updateHiddenField();
         this.scrollToNewBlock(blockId);
-        
-        console.log('ContentBuilderBase: Block added successfully. New blocks count:', this.blocks.length);
         
         // Dispatch custom event
         this.eventManager.dispatch('blockAdded', {
@@ -229,20 +222,70 @@ class ContentBuilderBase {
                     showLineNumbers: true,
                     enableCopyButton: true
                 };
+            // Question block types
+            case 'questionText':
+                return {
+                    content: '',
+                    textContent: '',
+                    points: 1,
+                    isRequired: true,
+                    teacherGuidance: ''
+                };
+            case 'questionImage':
+                return {
+                    ...baseData,
+                    fileId: null,
+                    fileName: null,
+                    fileUrl: null,
+                    fileSize: null,
+                    mimeType: null,
+                    points: 1,
+                    isRequired: true,
+                    teacherGuidance: ''
+                };
+            case 'questionVideo':
+                return {
+                    ...baseData,
+                    fileId: null,
+                    fileName: null,
+                    fileUrl: null,
+                    fileSize: null,
+                    mimeType: null,
+                    points: 1,
+                    isRequired: true,
+                    teacherGuidance: ''
+                };
+            case 'questionAudio':
+                return {
+                    ...baseData,
+                    fileId: null,
+                    fileName: null,
+                    fileUrl: null,
+                    fileSize: null,
+                    mimeType: null,
+                    isRecorded: false,
+                    duration: null,
+                    points: 1,
+                    isRequired: true,
+                    teacherGuidance: ''
+                };
             default:
                 return baseData;
         }
     }
 
     renderBlock(block) {
-        // Look for templates in both possible containers
-        let template = document.querySelector(`#contentBlockTemplates .content-block-template[data-type="${block.type}"]`);
-        if (!template) {
-            template = document.querySelector(`#questionBlockTemplates .content-block-template[data-type="${block.type}"]`);
+        // Determine the base template type for question blocks
+        let templateType = block.type;
+        if (block.type.startsWith('question')) {
+            templateType = block.type.replace('question', '').toLowerCase();
         }
         
+        // Look for template in contentBlockTemplates
+        let template = document.querySelector(`#contentBlockTemplates .content-block-template[data-type="${templateType}"]`);
+        
         if (!template) {
-            console.error('ContentBuilderBase: Template not found for type:', block.type);
+            console.error('ContentBuilderBase: Template not found for type:', templateType);
             return;
         }
         
@@ -250,7 +293,13 @@ class ContentBuilderBase {
         blockElement.classList.add('content-block');
         blockElement.dataset.blockId = block.id;
         blockElement.dataset.blockData = JSON.stringify(block.data);
-        blockElement.dataset.type = block.type;
+        blockElement.dataset.type = block.type; // Keep original type (e.g., questionText)
+        blockElement.dataset.templateType = templateType; // Store template type (e.g., text)
+        
+        // Configure template for question blocks
+        if (block.type.startsWith('question')) {
+            this.configureQuestionBlock(blockElement, block);
+        }
         
         // Add direct event listeners to this specific block
         this.addDirectEventListeners(blockElement);
@@ -263,7 +312,7 @@ class ContentBuilderBase {
         }
         
         // Initialize CKEditor for text blocks
-        if (block.type === 'text') {
+        if (block.type === 'text' || block.type === 'questionText') {
             
             // Initialize CKEditor with a delay to ensure DOM is ready
             setTimeout(() => {
@@ -286,6 +335,63 @@ class ContentBuilderBase {
         document.dispatchEvent(populateEvent);
         
         return blockElement;
+    }
+
+    configureQuestionBlock(blockElement, block) {
+        // Update block title to show it's a question
+        const blockTypeElement = blockElement.querySelector('.block-type span');
+        if (blockTypeElement) {
+            const originalText = blockTypeElement.textContent;
+            blockTypeElement.textContent = `سوال ${originalText}`;
+        }
+
+        // Show question settings if they exist
+        const questionSettings = blockElement.querySelector('.question-settings');
+        if (questionSettings) {
+            questionSettings.style.display = 'block';
+            
+            // Set points value
+            const pointsInput = questionSettings.querySelector('[data-setting="points"]');
+            if (pointsInput) {
+                pointsInput.value = block.data.points || 1;
+            }
+            
+            // Set required checkbox
+            const requiredCheckbox = questionSettings.querySelector('[data-setting="isRequired"]');
+            if (requiredCheckbox) {
+                requiredCheckbox.checked = block.data.isRequired !== false;
+            }
+        }
+
+        // Show question text editor if it exists
+        const questionTextEditor = blockElement.querySelector('.question-text-editor');
+        if (questionTextEditor) {
+            questionTextEditor.style.display = 'block';
+            
+            // Set question text content
+            const textEditor = questionTextEditor.querySelector('.rich-text-editor');
+            if (textEditor && block.data.content) {
+                textEditor.innerHTML = block.data.content;
+            }
+        }
+
+        // Show question hint if it exists
+        const questionHint = blockElement.querySelector('.question-hint');
+        if (questionHint) {
+            questionHint.style.display = 'block';
+            
+            // Set teacher guidance
+            const hintTextarea = questionHint.querySelector('[data-hint="true"]');
+            if (hintTextarea && block.data.teacherGuidance) {
+                hintTextarea.value = block.data.teacherGuidance;
+            }
+        }
+
+        // Hide regular content editor for question blocks
+        const regularEditor = blockElement.querySelector('.ckeditor-container');
+        if (regularEditor) {
+            regularEditor.style.display = 'none';
+        }
     }
 
     addDirectEventListeners(blockElement) {
@@ -610,8 +716,6 @@ class ContentBuilderBase {
     }
 
     updateHiddenField() {
-        console.log('ContentBuilderBase: Updating hidden field...');
-        
         const cleanBlocks = this.blocks.map(block => {
             const cleanBlock = { ...block };
             const cleanData = { ...block.data };
@@ -628,8 +732,6 @@ class ContentBuilderBase {
         const content = { type: this.config.contentType, blocks: cleanBlocks };
         const contentJson = JSON.stringify(content);
         
-        console.log('ContentBuilderBase: Generated content JSON:', contentJson);
-        
         // Use field manager to update fields
         const hiddenFieldUpdated = this.fieldManager.updateField(this.config.hiddenFieldId, contentJson);
         const mainFieldUpdated = this.fieldManager.updateField('contentJson', contentJson);
@@ -640,12 +742,10 @@ class ContentBuilderBase {
         
         if (hiddenField) {
             hiddenField.value = contentJson;
-            console.log('ContentBuilderBase: Updated hidden field directly');
         }
         
         if (mainField) {
             mainField.value = contentJson;
-            console.log('ContentBuilderBase: Updated main field directly');
         }
         
         if (!this.isLoadingExistingContent) {
@@ -654,13 +754,10 @@ class ContentBuilderBase {
     }
 
     loadExistingContent() {
-        console.log('ContentBuilderBase: Loading existing content...');
         
         const hiddenFieldValue = this.fieldManager.getFieldValue(this.config.hiddenFieldId);
-        console.log('ContentBuilderBase: Hidden field value:', hiddenFieldValue);
         
         if (!hiddenFieldValue || !hiddenFieldValue.trim()) {
-            console.log('ContentBuilderBase: No hidden field value found');
             return;
         }
         
@@ -668,10 +765,8 @@ class ContentBuilderBase {
             this.isLoadingExistingContent = true;
             
             const data = JSON.parse(hiddenFieldValue);
-            console.log('ContentBuilderBase: Parsed data:', data);
             
             if (data.blocks && Array.isArray(data.blocks)) {
-                console.log('ContentBuilderBase: Found blocks:', data.blocks.length);
                 
                 const existingBlocks = this.blocksList.querySelectorAll('.content-block');
                 existingBlocks.forEach(block => block.remove());
@@ -683,9 +778,7 @@ class ContentBuilderBase {
                     this.nextBlockId = 1;
                 }
                 
-                console.log('ContentBuilderBase: Rendering blocks...');
                 this.blocks.forEach((block, index) => {
-                    console.log(`ContentBuilderBase: Rendering block ${index + 1}:`, block);
                     this.renderBlock(block);
                 });
                 
@@ -693,11 +786,9 @@ class ContentBuilderBase {
                 
                 // Populate content fields after rendering with longer delay
                 setTimeout(() => {
-                    console.log('ContentBuilderBase: Populating block content...');
                     this.populateBlockContent();
                 }, 500); // Increased delay
             } else {
-                console.log('ContentBuilderBase: No blocks found in data');
             }
             
             this.isLoadingExistingContent = false;
@@ -719,7 +810,6 @@ class ContentBuilderBase {
 
     // Force sync content with main field (called from step4-content.js)
     forceSyncWithMainField() {
-        console.log('ContentBuilderBase: Force syncing with main field...');
         
         // Force save all CKEditor content first
         if (window.ckeditorManager) {
@@ -748,14 +838,11 @@ class ContentBuilderBase {
             this.syncManager.sync('forceSync');
         }
         
-        console.log('ContentBuilderBase: Force sync completed');
     }
 
     populateBlockContent() {
-        console.log('ContentBuilderBase: Populating block content for', this.blocks.length, 'blocks');
         
         this.blocks.forEach((block, index) => {
-            console.log(`ContentBuilderBase: Populating block ${index + 1}:`, block);
             
             const blockElement = document.querySelector(`[data-block-id="${block.id}"]`);
             if (!blockElement) {
@@ -763,7 +850,6 @@ class ContentBuilderBase {
                 return;
             }
             
-            console.log(`ContentBuilderBase: Found block element for ${block.id}`);
             
             // Update block data attribute
             blockElement.dataset.blockData = JSON.stringify(block.data);

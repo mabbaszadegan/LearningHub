@@ -155,29 +155,23 @@ class WorkingPersianDate {
 }
 
 // Test the working implementation
-console.log('=== Testing Working Persian Date ===');
 const workingDate = new WorkingPersianDate();
 
 // Test today
 const today = new Date();
 const todayPersian = workingDate.getTodayPersian();
-console.log('Today Gregorian:', today.toDateString());
-console.log('Today Persian:', todayPersian);
 
 // Test known date: March 21, 2024 should be 1403/01/01
 const nowruz2024 = new Date(2024, 2, 21);
 const nowruzPersian = workingDate.gregorianDateToPersianString(nowruz2024);
-console.log('March 21, 2024 (Nowruz):', nowruzPersian);
 
 // Test October 2, 2024
 const oct2024 = new Date(2024, 9, 2);
 const oct2024Persian = workingDate.gregorianDateToPersianString(oct2024);
-console.log('October 2, 2024:', oct2024Persian);
 
 // Test reverse conversion
 const testPersian = '1403/07/15';
 const testGregorian = workingDate.persianStringToGregorianDate(testPersian);
-console.log('1403/07/15 back to Gregorian:', testGregorian ? testGregorian.toDateString() : 'Failed');
 
 // Replace global instance
 window.persianDate = workingDate;

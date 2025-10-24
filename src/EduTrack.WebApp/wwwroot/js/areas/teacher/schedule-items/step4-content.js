@@ -219,12 +219,29 @@ class Step4ContentManager {
     }
 
     handleAddBlockFromHeader() {
+        if (window.sharedContentBlockManager) {
+            const itemTypeSelect = document.getElementById('itemType');
+            const selectedType = itemTypeSelect ? itemTypeSelect.value : '0';
+            const itemTypeName = this.getItemTypeName(selectedType);
+            
+            window.sharedContentBlockManager.showBlockTypeModal('blockTypeModal', itemTypeName);
+        }
+    }
 
-        const itemTypeSelect = document.getElementById('itemType');
-        const selectedType = itemTypeSelect ? itemTypeSelect.value : '0';
-
-        if (window.sharedContentBlockManager)
-            window.sharedContentBlockManager.showBlockTypeModal('blockTypeModal');
+    getItemTypeName(typeValue) {
+        const typeMap = {
+            '0': 'reminder',      // Reminder
+            '1': 'writing',       // Writing
+            '2': 'audio',         // Audio
+            '3': 'gapfill',       // Gap Fill
+            '4': 'multiplechoice', // Multiple Choice
+            '5': 'match',         // Match
+            '6': 'errorfinding',  // Error Finding
+            '7': 'codeexercise',  // Code Exercise
+            '8': 'quiz'           // Quiz
+        };
+        
+        return typeMap[typeValue] || 'reminder';
     }
 
     handlePreviewFromHeader() {
@@ -364,21 +381,17 @@ class Step4ContentManager {
 
     // Force save all CKEditor content before collecting data
     forceSaveAllCKEditorContent() {
-        console.log('Step4ContentManager: Force saving all CKEditor content...');
-
         // Find all CKEditor instances and force save their content
         const ckeditorElements = document.querySelectorAll('.ckeditor-editor');
         ckeditorElements.forEach(editorElement => {
             if (window.ckeditorManager) {
                 const editorContent = window.ckeditorManager.getEditorContent(editorElement);
                 if (editorContent) {
-                    console.log('Step4ContentManager: Saving CKEditor content for:', editorElement);
 
                     // Find the block element
                     const blockElement = editorElement.closest('.content-block');
                     if (blockElement) {
                         const blockId = blockElement.dataset.blockId;
-                        console.log('Step4ContentManager: Block ID:', blockId);
 
                         // Update block data attribute
                         if (blockElement.dataset.blockData) {
@@ -387,7 +400,6 @@ class Step4ContentManager {
                                 blockData.content = editorContent.html;
                                 blockData.textContent = editorContent.text;
                                 blockElement.dataset.blockData = JSON.stringify(blockData);
-                                console.log('Step4ContentManager: Updated block data:', blockData);
 
                                 // Update the block in the content builder
                                 this.updateBlockInContentBuilder(blockElement, blockData);
@@ -423,7 +435,6 @@ class Step4ContentManager {
             const blockIndex = window.reminderBlockManager.blocks.findIndex(b => b.id === blockId);
             if (blockIndex !== -1) {
                 contentBuilder = window.reminderBlockManager;
-                console.log('Step4ContentManager: Found block in reminderBlockManager');
             }
         }
 
@@ -432,7 +443,6 @@ class Step4ContentManager {
             const blockIndex = window.writtenBlockManager.blocks.findIndex(b => b.id === blockId);
             if (blockIndex !== -1) {
                 contentBuilder = window.writtenBlockManager;
-                console.log('Step4ContentManager: Found block in writtenBlockManager');
             }
         }
 
@@ -440,12 +450,10 @@ class Step4ContentManager {
             const blockIndex = contentBuilder.blocks.findIndex(b => b.id === blockId);
             if (blockIndex !== -1) {
                 contentBuilder.blocks[blockIndex].data = { ...contentBuilder.blocks[blockIndex].data, ...blockData };
-                console.log('Step4ContentManager: Updated block in content builder:', contentBuilder.blocks[blockIndex]);
 
                 // Force update hidden field
                 if (typeof contentBuilder.updateHiddenField === 'function') {
                     contentBuilder.updateHiddenField();
-                    console.log('Step4ContentManager: Called content builder updateHiddenField');
                 }
             }
         }
@@ -453,8 +461,6 @@ class Step4ContentManager {
 
     // Manual method to sync content with main field
     syncContentWithMainField() {
-        console.log('Step4ContentManager: Syncing content with main field...');
-
         // Force sync from reminder block manager if available
         if (window.reminderBlockManager && typeof window.reminderBlockManager.forceSyncWithMainField === 'function') {
             window.reminderBlockManager.forceSyncWithMainField();
@@ -469,7 +475,6 @@ class Step4ContentManager {
         if (contentData) {
             const contentJson = typeof contentData === 'string' ? contentData : JSON.stringify(contentData);
             this.fieldManager.updateField('contentJson', contentJson);
-            console.log('Step4ContentManager: Updated main content field with:', contentJson);
         }
     }
 
@@ -507,8 +512,6 @@ class Step4ContentManager {
 
     // Collect step 4 data for saving
     async collectStep4Data() {
-        console.log('Step4ContentManager: Starting to collect step 4 data...');
-
         // First upload all pending files
         if (window.reminderBlockManager && typeof window.reminderBlockManager.uploadAllPendingFiles === 'function') {
             try {
@@ -526,8 +529,6 @@ class Step4ContentManager {
         this.forceSaveAllCKEditorContent();
 
         const contentData = this.collectContentData();
-
-        console.log('Step4ContentManager: Collected content data:', contentData);
 
         // Handle null or undefined content data
         if (!contentData) {
@@ -551,8 +552,6 @@ class Step4ContentManager {
             contentJson = '{}';
         }
 
-        console.log('Step4ContentManager: Final content JSON:', contentJson);
-
         return {
             ContentJson: contentJson
         };
@@ -560,22 +559,14 @@ class Step4ContentManager {
 
     // Load step 4 data from existing item
     async loadStepData() {
-        console.log('Step4ContentManager: Starting to load step data...');
-
         // Try to load data with retry mechanism
         let retryCount = 0;
         const maxRetries = 15;
 
         const tryLoadData = () => {
-            console.log('Step4ContentManager: Attempting to load data, retry:', retryCount);
-
             if (this.formManager && typeof this.formManager.getExistingItemData === 'function') {
                 const existingData = this.formManager.getExistingItemData();
-                console.log('Step4ContentManager: Existing data:', existingData);
-
                 if (existingData && existingData.contentJson) {
-                    console.log('Step4ContentManager: Found existing content JSON:', existingData.contentJson);
-
                     // Use field manager to set values
                     this.fieldManager.updateField('contentJson', existingData.contentJson);
                     this.fieldManager.updateField('reminderContentJson', existingData.contentJson);
@@ -583,23 +574,19 @@ class Step4ContentManager {
                     // Notify reminder block manager to reload content
                     const notifyReminderManager = () => {
                         if (window.reminderBlockManager && typeof window.reminderBlockManager.loadExistingContent === 'function') {
-                            console.log('Step4ContentManager: Notifying reminder block manager to reload content');
                             // Force reload the content
                             window.reminderBlockManager.loadExistingContent();
                             return true;
                         }
-                        console.log('Step4ContentManager: Reminder block manager not available');
                         return false;
                     };
 
                     // Also notify written block manager if it exists
                     const notifyWrittenManager = () => {
                         if (window.writtenBlockManager && typeof window.writtenBlockManager.loadExistingContent === 'function') {
-                            console.log('Step4ContentManager: Notifying written block manager to reload content');
                             window.writtenBlockManager.loadExistingContent();
                             return true;
                         }
-                        console.log('Step4ContentManager: Written block manager not available');
                         return false;
                     };
 
@@ -607,24 +594,19 @@ class Step4ContentManager {
                     const writtenSuccess = notifyWrittenManager();
 
                     if (!reminderSuccess && !writtenSuccess) {
-                        console.log('Step4ContentManager: Neither block manager was available');
                         return false;
                     }
 
-                    console.log('Step4ContentManager: Successfully loaded existing content');
                     return true;
                 } else {
-                    console.log('Step4ContentManager: No existing content JSON found');
                 }
             } else {
-                console.log('Step4ContentManager: FormManager not ready');
             }
             return false;
         };
 
         // Try immediately
         if (tryLoadData()) {
-            console.log('Step4ContentManager: Data loaded immediately');
             return;
         }
 
@@ -637,7 +619,6 @@ class Step4ContentManager {
                 if (retryCount >= maxRetries) {
                     console.warn('Step4ContentManager: Failed to load existing content after maximum retries');
                 } else {
-                    console.log('Step4ContentManager: Data loaded after retries');
                 }
             }
         }, 300);

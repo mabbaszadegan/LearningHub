@@ -68,6 +68,8 @@ class SharedContentBlockManager {
             }));
         }
 
+        // Question blocks reuse existing managers - no need for separate managers
+
         // Initialize block type selection modal
         if (typeof BlockTypeSelectionModal !== 'undefined') {
             this.blockManagers.set('modal', new BlockTypeSelectionModal({
@@ -111,11 +113,8 @@ class SharedContentBlockManager {
             activeBuilder = window.writtenBlockManager;
         }
         
-        console.log('SharedContentBlockManager: Active builder found:', activeBuilder ? activeBuilder.constructor.name : 'none');
-        console.log('SharedContentBlockManager: Block type to add:', type);
-        
+      
         if (activeBuilder && typeof activeBuilder.addBlock === 'function') {
-            console.log('SharedContentBlockManager: Calling addBlock on', activeBuilder.constructor.name);
             activeBuilder.addBlock(type);
         } else {
             console.warn('SharedContentBlockManager: No active content builder found');
@@ -145,7 +144,9 @@ class SharedContentBlockManager {
         if (!blockElement) return;
 
         const blockType = blockElement.dataset.type;
-        const manager = this.blockManagers.get(blockType);
+        // For question blocks, use the base template type for manager lookup
+        const managerType = blockType.startsWith('question') ? blockType.replace('question', '').toLowerCase() : blockType;
+        const manager = this.blockManagers.get(managerType);
         
         // Try to delegate to specific block manager first
         if (manager && typeof manager.handleAction === 'function') {
@@ -242,7 +243,9 @@ class SharedContentBlockManager {
 
     initializeNewBlock(blockElement) {
         const blockType = blockElement.dataset.type;
-        const manager = this.blockManagers.get(blockType);
+        // For question blocks, use the base template type for manager lookup
+        const managerType = blockType.startsWith('question') ? blockType.replace('question', '').toLowerCase() : blockType;
+        const manager = this.blockManagers.get(managerType);
         
         if (manager && typeof manager.initializeBlock === 'function') {
             manager.initializeBlock(blockElement);
@@ -260,7 +263,9 @@ class SharedContentBlockManager {
         
         blocks.forEach((block, index) => {
             const type = block.dataset.type;
-            const manager = this.blockManagers.get(type);
+            // For question blocks, use the base template type for manager lookup
+            const managerType = type.startsWith('question') ? type.replace('question', '').toLowerCase() : type;
+            const manager = this.blockManagers.get(managerType);
             
             if (manager && typeof manager.getBlockData === 'function') {
                 allData[`block_${index}`] = {
@@ -275,7 +280,9 @@ class SharedContentBlockManager {
 
     setBlockData(blockElement, data) {
         const blockType = blockElement.dataset.type;
-        const manager = this.blockManagers.get(blockType);
+        // For question blocks, use the base template type for manager lookup
+        const managerType = blockType.startsWith('question') ? blockType.replace('question', '').toLowerCase() : blockType;
+        const manager = this.blockManagers.get(managerType);
         
         if (manager && typeof manager.setBlockData === 'function') {
             manager.setBlockData(blockElement, data);
@@ -284,25 +291,27 @@ class SharedContentBlockManager {
 
     clearBlock(blockElement) {
         const blockType = blockElement.dataset.type;
-        const manager = this.blockManagers.get(blockType);
+        // For question blocks, use the base template type for manager lookup
+        const managerType = blockType.startsWith('question') ? blockType.replace('question', '').toLowerCase() : blockType;
+        const manager = this.blockManagers.get(managerType);
         
         if (manager && typeof manager.clearBlock === 'function') {
             manager.clearBlock(blockElement);
         }
     }
 
-    showBlockTypeModal(modalId) {
+    showBlockTypeModal(modalId, itemType = null) {
         const modalManager = this.blockManagers.get('modal');
         if (modalManager) {
             modalManager.modalId = modalId || modalManager.modalId;
-            modalManager.showModal();
+            modalManager.showModal(itemType);
         } else {
             // Try to reinitialize if modal manager is not found
             this.reinitialize();
             const retryModalManager = this.blockManagers.get('modal');
             if (retryModalManager) {
                 retryModalManager.modalId = modalId || retryModalManager.modalId;
-                retryModalManager.showModal();
+                retryModalManager.showModal(itemType);
             }
         }
     }
@@ -317,7 +326,9 @@ class SharedContentBlockManager {
     // Utility methods
     validateBlockData(blockElement) {
         const blockType = blockElement.dataset.type;
-        const manager = this.blockManagers.get(blockType);
+        // For question blocks, use the base template type for manager lookup
+        const managerType = blockType.startsWith('question') ? blockType.replace('question', '').toLowerCase() : blockType;
+        const manager = this.blockManagers.get(managerType);
         
         if (manager && typeof manager.validateData === 'function') {
             return manager.validateData(blockElement);

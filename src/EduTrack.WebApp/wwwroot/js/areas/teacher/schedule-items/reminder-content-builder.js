@@ -36,7 +36,6 @@ class ReminderContentBlockManager extends ContentBuilderBase {
     }
 
     generateBlockPreview(block) {
-        return
         let html = '';
         
         switch (block.type) {
@@ -94,6 +93,86 @@ class ReminderContentBlockManager extends ContentBuilderBase {
                         html += `<div class="code-title">${block.data.codeTitle}</div>`;
                     }
                     html += `<pre><code class="language-${block.data.language || 'plaintext'}">${block.data.codeContent}</code></pre>`;
+                    html += '</div>';
+                }
+                break;
+            // Question block types - reuse existing block previews with question styling
+            case 'questionText':
+                html += `<div class="question-block question-text">`;
+                html += `<div class="question-header">`;
+                html += `<span class="question-type">سوال متنی</span>`;
+                html += `<span class="question-points">${block.data.points || 1} نمره</span>`;
+                html += `</div>`;
+                html += `<div class="question-content">${block.data.content || ''}</div>`;
+                if (block.data.teacherGuidance) {
+                    html += `<div class="teacher-guidance">راهنمایی معلم: ${block.data.teacherGuidance}</div>`;
+                }
+                html += `<div class="answer-field">پاسخ دانش آموز: [فیلد متنی]</div>`;
+                html += '</div>';
+                break;
+            case 'questionImage':
+                if (block.data.fileUrl || block.data.previewUrl) {
+                    const imageUrl = block.data.fileUrl || block.data.previewUrl;
+                    const sizeClass = this.getSizeClass(block.data.size);
+                    html += `<div class="question-block question-image">`;
+                    html += `<div class="question-header">`;
+                    html += `<span class="question-type">سوال تصویری</span>`;
+                    html += `<span class="question-points">${block.data.points || 1} نمره</span>`;
+                    html += `</div>`;
+                    html += `<div class="question-content">`;
+                    html += `<img src="${imageUrl}" alt="تصویر سوال" class="${sizeClass}" />`;
+                    if (block.data.caption) {
+                        html += `<div class="caption">${block.data.caption}</div>`;
+                    }
+                    html += `</div>`;
+                    if (block.data.teacherGuidance) {
+                        html += `<div class="teacher-guidance">راهنمایی معلم: ${block.data.teacherGuidance}</div>`;
+                    }
+                    html += `<div class="answer-field">پاسخ دانش آموز: [فیلد متنی]</div>`;
+                    html += '</div>';
+                }
+                break;
+            case 'questionVideo':
+                if (block.data.fileUrl || block.data.previewUrl) {
+                    const videoUrl = block.data.fileUrl || block.data.previewUrl;
+                    const sizeClass = this.getSizeClass(block.data.size);
+                    html += `<div class="question-block question-video">`;
+                    html += `<div class="question-header">`;
+                    html += `<span class="question-type">سوال ویدیویی</span>`;
+                    html += `<span class="question-points">${block.data.points || 1} نمره</span>`;
+                    html += `</div>`;
+                    html += `<div class="question-content">`;
+                    html += `<video controls preload="none" class="${sizeClass}"><source data-src="${videoUrl}" type="video/mp4"></video>`;
+                    if (block.data.caption) {
+                        html += `<div class="caption">${block.data.caption}</div>`;
+                    }
+                    html += `</div>`;
+                    if (block.data.teacherGuidance) {
+                        html += `<div class="teacher-guidance">راهنمایی معلم: ${block.data.teacherGuidance}</div>`;
+                    }
+                    html += `<div class="answer-field">پاسخ دانش آموز: [فیلد متنی]</div>`;
+                    html += '</div>';
+                }
+                break;
+            case 'questionAudio':
+                if (block.data.fileUrl || block.data.previewUrl) {
+                    const audioUrl = block.data.fileUrl || block.data.previewUrl;
+                    const mimeType = block.data.mimeType || 'audio/mpeg';
+                    html += `<div class="question-block question-audio">`;
+                    html += `<div class="question-header">`;
+                    html += `<span class="question-type">سوال صوتی</span>`;
+                    html += `<span class="question-points">${block.data.points || 1} نمره</span>`;
+                    html += `</div>`;
+                    html += `<div class="question-content">`;
+                    html += `<audio controls preload="none"><source data-src="${audioUrl}" type="${mimeType}"></audio>`;
+                    if (block.data.caption) {
+                        html += `<div class="caption">${block.data.caption}</div>`;
+                    }
+                    html += `</div>`;
+                    if (block.data.teacherGuidance) {
+                        html += `<div class="teacher-guidance">راهنمایی معلم: ${block.data.teacherGuidance}</div>`;
+                    }
+                    html += `<div class="answer-field">پاسخ دانش آموز: [فیلد متنی]</div>`;
                     html += '</div>';
                 }
                 break;

@@ -218,6 +218,49 @@ public class ReminderContent
     public string Priority { get; set; } = "normal"; // low, normal, high
     public bool SendNotification { get; set; }
     public List<ContentBlock> Blocks { get; set; } = new();
+    public List<ReminderQuestionBlock> QuestionBlocks { get; set; } = new();
+}
+
+public class ReminderQuestionBlock
+{
+    public string Id { get; set; } = Guid.NewGuid().ToString();
+    public int Order { get; set; }
+    public ReminderQuestionType QuestionType { get; set; }
+    public ReminderQuestionData QuestionData { get; set; } = new();
+    public decimal Points { get; set; } = 1;
+    public bool IsRequired { get; set; } = true;
+    public string? TeacherGuidance { get; set; }
+}
+
+public class ReminderQuestionData
+{
+    // Text question data
+    public string? TextContent { get; set; }
+    
+    // Media question data (image, video, audio)
+    public string? FileId { get; set; }
+    public string? FileName { get; set; }
+    public string? FileUrl { get; set; }
+    public long? FileSize { get; set; }
+    public string? MimeType { get; set; }
+    
+    // Image/Video specific settings
+    public string? Size { get; set; } = "medium"; // small, medium, large, full
+    public string? Position { get; set; } = "center"; // left, center, right
+    public string? Caption { get; set; }
+    public string? CaptionPosition { get; set; } = "bottom"; // top, bottom, overlay
+    
+    // Audio specific settings
+    public bool IsRecorded { get; set; } = false;
+    public int? Duration { get; set; } // in seconds
+}
+
+public enum ReminderQuestionType
+{
+    Text = 0,
+    Image = 1,
+    Video = 2,
+    Audio = 3
 }
 
 public class WrittenContent
@@ -314,6 +357,38 @@ public enum WrittenAnswerStatus
     Returned = 2
 }
 
+// Student Answer Models for Reminder Questions
+public class ReminderContentAnswer
+{
+    public int Id { get; set; }
+    public int ScheduleItemId { get; set; }
+    public string StudentId { get; set; } = string.Empty;
+    public List<ReminderQuestionAnswer> QuestionAnswers { get; set; } = new();
+    public DateTimeOffset SubmittedAt { get; set; }
+    public DateTimeOffset? GradedAt { get; set; }
+    public decimal? TotalScore { get; set; }
+    public decimal? MaxPossibleScore { get; set; }
+    public string? TeacherFeedback { get; set; }
+    public ReminderAnswerStatus Status { get; set; } = ReminderAnswerStatus.Submitted;
+}
+
+public class ReminderQuestionAnswer
+{
+    public int StudentAnswerId { get; set; }
+    public string QuestionBlockId { get; set; } = string.Empty;
+    public string AnswerText { get; set; } = string.Empty;
+    public decimal? Score { get; set; }
+    public string? TeacherFeedback { get; set; }
+    public bool IsGraded { get; set; } = false;
+}
+
+public enum ReminderAnswerStatus
+{
+    Submitted = 0,
+    Graded = 1,
+    Returned = 2
+}
+
 public class ContentBlock
 {
     public string Id { get; set; } = Guid.NewGuid().ToString();
@@ -352,6 +427,11 @@ public class ContentBlockData
     public string? CodeTitle { get; set; }
     public bool ShowLineNumbers { get; set; } = true;
     public bool EnableCopyButton { get; set; } = true;
+    
+    // Question block specific settings
+    public decimal Points { get; set; } = 1;
+    public bool IsRequired { get; set; } = true;
+    public string? TeacherGuidance { get; set; }
 }
 
 public enum ContentBlockType
@@ -360,7 +440,11 @@ public enum ContentBlockType
     Image = 1,
     Video = 2,
     Audio = 3,
-    Code = 4
+    Code = 4,
+    QuestionText = 5,
+    QuestionImage = 6,
+    QuestionVideo = 7,
+    QuestionAudio = 8
 }
 
 // Stats DTO

@@ -507,8 +507,6 @@ class ContentSyncManager {
         }
 
         this.isSyncing = true;
-        console.log(`ContentSyncManager: Syncing content from ${source}`);
-
         try {
             // Execute all registered sync callbacks
             for (const [key, callback] of this.syncCallbacks) {

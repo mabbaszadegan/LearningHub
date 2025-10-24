@@ -124,7 +124,6 @@ class PageTitleSection {
         }
 
         // Log for debugging
-        console.log(`Breadcrumb clicked: ${breadcrumbText} (index: ${index})`);
     }
 
     /**

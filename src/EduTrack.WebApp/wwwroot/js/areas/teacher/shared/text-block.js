@@ -168,14 +168,10 @@ window.TextBlockManager = class TextBlockManager {
     }
 
     handleEditorInput(editor) {
-        console.log('TextBlockManager: Editor input detected');
         
         // Trigger change event for the block
         const blockElement = editor.closest('.content-block-template, .content-block');
         if (blockElement) {
-            console.log('TextBlockManager: Block element found:', blockElement);
-            console.log('TextBlockManager: Editor content:', editor.innerHTML);
-            
             // Dispatch event on document instead of blockElement
             const event = new CustomEvent('blockContentChanged', {
                 detail: {
@@ -186,7 +182,6 @@ window.TextBlockManager = class TextBlockManager {
             });
             document.dispatchEvent(event);
             
-            console.log('TextBlockManager: blockContentChanged event dispatched');
         } else {
             console.warn('TextBlockManager: Block element not found for editor');
         }

@@ -21,11 +21,6 @@ class SubChapterCoverageManager {
         this.chapters = chapters;
         this.isInitialized = true;
         
-        console.log('SubChapterCoverageManager initialized:', {
-            sessionId: this.sessionId,
-            groupsCount: this.groups.length,
-            chaptersCount: this.chapters.length
-        });
         
         this.loadExistingData();
         this.setupGroupSelection();

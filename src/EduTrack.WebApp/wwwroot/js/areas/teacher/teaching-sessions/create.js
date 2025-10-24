@@ -8,7 +8,6 @@ $(document).ready(function () {
         if (submitBtn.length > 0) {
             submitBtn.prop('disabled', false);
             submitBtn.html(originalButtonContent);
-            console.log('Submit button restored');
         }
     }
 
@@ -81,7 +80,6 @@ $(document).ready(function () {
         // Update the hidden field after initialization
         setTimeout(function () {
             updateSessionDateTime();
-            console.log('Persian date picker initialized with current date');
         }, 50);
     }, 100);
 

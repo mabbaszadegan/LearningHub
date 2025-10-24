@@ -133,7 +133,7 @@ class DesktopHeader {
                 this.showHelp();
                 break;
             default:
-                console.log('Unknown user action:', action);
+                console.warn('Unknown user action:', action);
         }
     }
 
@@ -152,15 +152,13 @@ class DesktopHeader {
                 this.toggleFullscreen();
                 break;
             default:
-                console.log('Unknown header action:', action);
+                console.warn('Unknown header action:', action);
         }
     }
 
 
     showNotifications() {
         // Implement notifications panel
-        console.log('Showing notifications');
-        // You can create a modal or dropdown for notifications
         this.showNotificationPanel();
     }
 
@@ -222,12 +220,9 @@ class DesktopHeader {
     }
 
     showMessages() {
-        console.log('Showing messages');
-        // Implement messages functionality
     }
 
     showHelp() {
-        console.log('Showing help');
         // Implement help functionality
         window.open('/Help', '_blank');
     }

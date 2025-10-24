@@ -28,19 +28,11 @@ class PersianDatePicker {
             if (parsedDate) {
                 this.selectedDate = { ...parsedDate };
                 this.viewDate = { ...parsedDate };
-                console.log('PersianDatePicker constructor: Initial date set', {
-                    initialDate: this.options.initialDate,
-                    parsedDate: parsedDate,
-                    selectedDate: this.selectedDate,
-                    viewDate: this.viewDate
-                });
             } else {
                 this.viewDate = this.getTodayPersian();
-                console.log('PersianDatePicker constructor: Failed to parse initial date', this.options.initialDate);
             }
         } else {
             this.viewDate = this.getTodayPersian();
-            console.log('PersianDatePicker constructor: No initial date, using today', this.viewDate);
         }
         
         this.init();
@@ -53,13 +45,10 @@ class PersianDatePicker {
         
         // Check if input has a value and no initialDate is provided
         if (this.options.initialDate) {
-            console.log('PersianDatePicker init: Setting initial date from options', this.options.initialDate);
             this.setDate(this.options.initialDate);
         } else if (this.input.value && this.input.value.trim() !== '') {
-            console.log('PersianDatePicker init: Setting date from input value', this.input.value);
             this.setDate(this.input.value);
         } else {
-            console.log('PersianDatePicker init: No initial date or input value');
         }
     }
     
@@ -484,11 +473,6 @@ class PersianDatePicker {
             // Check if it's selected
             if (this.selectedDate && this.isSameDate(currentDate, this.selectedDate)) {
                 dayElement.classList.add('selected');
-                console.log('PersianDatePicker: Day selected', {
-                    currentDate: currentDate,
-                    selectedDate: this.selectedDate,
-                    isSame: this.isSameDate(currentDate, this.selectedDate)
-                });
             }
             
             // Check if it's disabled
@@ -637,12 +621,6 @@ class PersianDatePicker {
             this.selectedDate = date;
             this.viewDate = { ...date };
             this.input.value = dateString;
-            console.log('PersianDatePicker setDate:', {
-                dateString: dateString,
-                parsedDate: date,
-                selectedDate: this.selectedDate,
-                viewDate: this.viewDate
-            });
             this.updateCalendar();
         } else {
             console.warn('PersianDatePicker setDate failed to parse:', dateString);
@@ -798,7 +776,6 @@ class PersianDatePicker {
         if (jDay < 1) jDay = 1;
         if (jDay > 31) jDay = 31;
         
-        console.log('Today Persian (calculated):', { year: jYear, month: jMonth, day: jDay });
         return { year: jYear, month: jMonth, day: jDay };
     }
     

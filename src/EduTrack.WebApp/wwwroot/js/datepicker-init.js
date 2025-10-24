@@ -66,13 +66,6 @@ function initializeAllDatePickers() {
             try {
                 const existingDate = new Date(hiddenField.value);
                 let persianDate;
-                
-                console.log('datepicker-init: Found existing date', {
-                    hiddenFieldValue: hiddenField.value,
-                    existingDate: existingDate,
-                    inputId: input.id
-                });
-                
                 // Use jalaali-js for accurate conversion
                 if (typeof window.jalaali !== 'undefined') {
                     const jalaali = window.jalaali.toJalaali(existingDate);
@@ -82,13 +75,10 @@ function initializeAllDatePickers() {
                     persianDate = window.persianDate.gregorianDateToPersianString(existingDate);
                 }
                 
-                console.log('datepicker-init: Converted to Persian date', persianDate);
-                
                 input.value = persianDate;
                 
                 // Update the datepicker's selected date
                 if (input.datePicker) {
-                    console.log('datepicker-init: Updating datepicker with Persian date', persianDate);
                     input.datePicker.setDate(persianDate);
                 } else {
                     console.warn('datepicker-init: DatePicker not found on input');
@@ -97,11 +87,6 @@ function initializeAllDatePickers() {
                 console.warn('Could not parse existing date:', hiddenField.value, e);
             }
         } else {
-            console.log('datepicker-init: No existing date found', {
-                hasHiddenField: !!hiddenField,
-                hiddenFieldValue: hiddenField ? hiddenField.value : 'N/A',
-                inputId: input.id
-            });
         }
     });
 }
