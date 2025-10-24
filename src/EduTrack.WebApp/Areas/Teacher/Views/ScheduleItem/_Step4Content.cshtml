@@ -29,18 +29,24 @@
             </button>
         </div>
     </div>
-    
+
     <div class="step-content">
-        <!-- Reminder Content Builder -->
-        <div id="reminderContentBuilder" style="display: none;">
-            @await Html.PartialAsync("_Step4ReminderContent", Model)
-        </div>
-        
-        <!-- Written Content Builder -->
-        <div id="writtenContentBuilder" style="display: none;">
-            @await Html.PartialAsync("_Step4WrittenContent", Model)
-        </div>
-        
+        @if (Model.Type == ScheduleItemType.Reminder)
+        {
+            <!-- Reminder Content Builder -->
+            <div id="reminderContentBuilder" style="display: none;">
+                @await Html.PartialAsync("_Step4ReminderContent", Model)
+            </div>
+        }
+
+        @if (Model.Type == ScheduleItemType.Writing)
+        {
+            <!-- Written Content Builder -->
+            <div id="writtenContentBuilder" style="display: none;">
+                @await Html.PartialAsync("_Step4WrittenContent", Model)
+            </div>
+        }
+
         <!-- Content Builder for Other Types -->
         <div class="content-builder" id="contentBuilder" style="display: none;">
             <div class="builder-header">
@@ -63,7 +69,7 @@
                     </button>
                 </div>
             </div>
-            
+
             <div class="builder-content">
                 <div class="content-boxes-container" id="contentBoxesContainer">
                     <!-- Content boxes will be added here dynamically -->
@@ -101,7 +107,7 @@
                 <i class="fas fa-magic"></i>
                 <span>انتخاب نوع محتوا</span>
             </div>
-            
+
             <div class="selector-content">
                 <div class="content-types-grid">
                     <div class="content-type-card" data-type="text">
@@ -113,7 +119,7 @@
                             <p>محتوای متنی با قابلیت فرمت‌بندی</p>
                         </div>
                     </div>
-                    
+
                     <div class="content-type-card" data-type="image">
                         <div class="type-icon">
                             <i class="fas fa-image"></i>
@@ -123,7 +129,7 @@
                             <p>آپلود تصویر با توضیحات</p>
                         </div>
                     </div>
-                    
+
                     <div class="content-type-card" data-type="video">
                         <div class="type-icon">
                             <i class="fas fa-video"></i>
@@ -133,7 +139,7 @@
                             <p>آپلود ویدیو آموزشی</p>
                         </div>
                     </div>
-                    
+
                     <div class="content-type-card" data-type="audio">
                         <div class="type-icon">
                             <i class="fas fa-microphone"></i>

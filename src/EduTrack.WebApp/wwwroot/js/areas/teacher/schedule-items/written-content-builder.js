@@ -9,8 +9,8 @@
 class WrittenContentBlockManager extends ContentBuilderBase {
     constructor() {
         super({
-            containerId: 'questionBlocksList',
-            emptyStateId: 'emptyQuestionBlocksState',
+            containerId: 'contentBlocksList',
+            emptyStateId: 'emptyBlocksState',
             previewId: 'writtenPreview',
             hiddenFieldId: 'writtenContentJson',
             modalId: 'blockTypeModal',
@@ -22,7 +22,12 @@ class WrittenContentBlockManager extends ContentBuilderBase {
     
     init() {
         if (!this.blocksList || !this.emptyState || !this.preview || !this.hiddenField) {
-            console.error('WrittenContentBlockManager: Required elements not found!');
+            console.error('WrittenContentBlockManager: Required elements not found!', {
+                blocksList: !!this.blocksList,
+                emptyState: !!this.emptyState,
+                preview: !!this.preview,
+                hiddenField: !!this.hiddenField
+            });
             return;
         }
         
@@ -32,6 +37,73 @@ class WrittenContentBlockManager extends ContentBuilderBase {
     setupWrittenSpecificEventListeners() {
         // Written-specific event listeners can be added here if needed
         // Most common functionality is now handled by the base class
+    }
+
+    renderBlock(block) {
+        // Determine the base template type for question blocks
+        let templateType = block.type;
+        if (block.type.startsWith('question')) {
+            templateType = block.type.replace('question', '').toLowerCase();
+        }
+        
+        // Look for template in questionBlockTemplates (for written content)
+        let template = document.querySelector(`#questionBlockTemplates .content-block-template[data-type="${templateType}"]`);
+        
+        if (!template) {
+            console.error('WrittenContentBlockManager: Template not found for type:', templateType);
+            return;
+        }
+        
+        const blockElement = template.cloneNode(true);
+        blockElement.classList.add('content-block');
+        blockElement.dataset.blockId = block.id;
+        blockElement.dataset.blockData = JSON.stringify(block.data);
+        blockElement.dataset.type = block.type; // Keep original type (e.g., questionText)
+        blockElement.dataset.templateType = templateType; // Store template type (e.g., text)
+        
+        // Configure template for question blocks
+        if (block.type.startsWith('question')) {
+            this.configureQuestionBlock(blockElement, block);
+        }
+        
+        // Add direct event listeners to this specific block
+        this.addDirectEventListeners(blockElement);
+        
+        const emptyState = this.blocksList.querySelector('.empty-state');
+        if (emptyState) {
+            this.blocksList.insertBefore(blockElement, emptyState);
+        } else {
+            this.blocksList.appendChild(blockElement);
+        }
+        
+        // Initialize CKEditor only for text blocks
+        if (block.type === 'text' || block.type === 'questionText') {
+            
+            // Initialize CKEditor with a delay to ensure DOM is ready
+            setTimeout(() => {
+                const editorElement = blockElement.querySelector('.ckeditor-editor');
+                if (editorElement && window.ckeditorManager) {
+                    window.ckeditorManager.initializeEditor(editorElement);
+                } else {
+                    console.warn('WrittenContentBlockManager: CKEditor element or manager not found', {
+                        editorElement: !!editorElement,
+                        ckeditorManager: !!window.ckeditorManager
+                    });
+                }
+            }, 100);
+        }
+        
+        // Dispatch populate event for specific block managers
+        const populateEvent = new CustomEvent('populateBlockContent', {
+            detail: {
+                blockElement: blockElement,
+                block: block,
+                blockType: block.type
+            }
+        });
+        document.dispatchEvent(populateEvent);
+        
+        return blockElement;
     }
 
     generateBlockPreview(block) {

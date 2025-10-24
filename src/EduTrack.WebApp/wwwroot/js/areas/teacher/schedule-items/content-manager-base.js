@@ -415,6 +415,73 @@ class PreviewManager {
                     <pre><code class="language-${block.data.language || 'plaintext'}">${block.data.codeContent || ''}</code></pre>
                 </div>`;
                 break;
+            // Question block types
+            case 'questionText':
+                html += `<div class="question-content">
+                    <div class="question-meta">
+                        <span class="question-points">امتیاز: ${block.data.points || 1}</span>
+                        <span class="question-difficulty difficulty-${block.data.difficulty || 'medium'}">سختی: ${this.getDifficultyLabel(block.data.difficulty || 'medium')}</span>
+                        ${block.data.isRequired ? '<span class="question-required">اجباری</span>' : ''}
+                    </div>
+                    <div class="question-text">${block.data.content || block.data.textContent || ''}</div>
+                    ${block.data.teacherGuidance ? `<div class="question-guidance">راهنمایی: ${block.data.teacherGuidance}</div>` : ''}
+                </div>`;
+                break;
+            case 'questionImage':
+                if (block.data.fileId || block.data.fileUrl) {
+                    const imageUrl = block.data.fileUrl || `/uploads/${block.data.fileId}`;
+                    html += `<div class="question-content">
+                        <div class="question-meta">
+                            <span class="question-points">امتیاز: ${block.data.points || 1}</span>
+                            <span class="question-difficulty difficulty-${block.data.difficulty || 'medium'}">سختی: ${this.getDifficultyLabel(block.data.difficulty || 'medium')}</span>
+                            ${block.data.isRequired ? '<span class="question-required">اجباری</span>' : ''}
+                        </div>
+                        <div class="question-image" style="text-align: ${block.data.position || 'center'};">
+                            <img src="${imageUrl}" alt="تصویر سوال" style="max-width: ${this.getImageSize(block.data.size)};" />
+                            ${block.data.caption ? `<div class="image-caption">${block.data.caption}</div>` : ''}
+                        </div>
+                        ${block.data.teacherGuidance ? `<div class="question-guidance">راهنمایی: ${block.data.teacherGuidance}</div>` : ''}
+                    </div>`;
+                }
+                break;
+            case 'questionVideo':
+                if (block.data.fileId || block.data.fileUrl) {
+                    const videoUrl = block.data.fileUrl || `/uploads/${block.data.fileId}`;
+                    html += `<div class="question-content">
+                        <div class="question-meta">
+                            <span class="question-points">امتیاز: ${block.data.points || 1}</span>
+                            <span class="question-difficulty difficulty-${block.data.difficulty || 'medium'}">سختی: ${this.getDifficultyLabel(block.data.difficulty || 'medium')}</span>
+                            ${block.data.isRequired ? '<span class="question-required">اجباری</span>' : ''}
+                        </div>
+                        <div class="question-video" style="text-align: ${block.data.position || 'center'};">
+                            <video controls style="max-width: ${this.getVideoSize(block.data.size)};">
+                                <source src="${videoUrl}" type="${block.data.mimeType || 'video/mp4'}">
+                            </video>
+                            ${block.data.caption ? `<div class="video-caption">${block.data.caption}</div>` : ''}
+                        </div>
+                        ${block.data.teacherGuidance ? `<div class="question-guidance">راهنمایی: ${block.data.teacherGuidance}</div>` : ''}
+                    </div>`;
+                }
+                break;
+            case 'questionAudio':
+                if (block.data.fileId || block.data.fileUrl) {
+                    const audioUrl = block.data.fileUrl || `/FileUpload/GetFile/${block.data.fileId}`;
+                    html += `<div class="question-content">
+                        <div class="question-meta">
+                            <span class="question-points">امتیاز: ${block.data.points || 1}</span>
+                            <span class="question-difficulty difficulty-${block.data.difficulty || 'medium'}">سختی: ${this.getDifficultyLabel(block.data.difficulty || 'medium')}</span>
+                            ${block.data.isRequired ? '<span class="question-required">اجباری</span>' : ''}
+                        </div>
+                        <div class="question-audio">
+                            <audio controls preload="none">
+                                <source src="${audioUrl}" type="${block.data.mimeType || 'audio/mpeg'}">
+                            </audio>
+                            ${block.data.caption ? `<div class="audio-caption">${block.data.caption}</div>` : ''}
+                        </div>
+                        ${block.data.teacherGuidance ? `<div class="question-guidance">راهنمایی: ${block.data.teacherGuidance}</div>` : ''}
+                    </div>`;
+                }
+                break;
             default:
                 html += `<div class="unknown-content">نوع بلاک ناشناخته: ${block.type}</div>`;
         }
@@ -473,6 +540,20 @@ class PreviewManager {
             'full': '100%'
         };
         return sizes[size] || '600px';
+    }
+
+    /**
+     * Get difficulty label in Persian
+     * @param {string} difficulty - Difficulty level
+     * @returns {string} - Persian label
+     */
+    getDifficultyLabel(difficulty) {
+        const labels = {
+            'easy': 'آسان',
+            'medium': 'متوسط',
+            'hard': 'سخت'
+        };
+        return labels[difficulty] || 'متوسط';
     }
 }
 

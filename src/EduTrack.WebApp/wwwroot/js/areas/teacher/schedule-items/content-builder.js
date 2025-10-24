@@ -119,9 +119,11 @@ class ContentBuilderBase {
             this.handleBlockContentChanged(e.detail);
         });
         
-        // Direct input listener for rich text editors
+        // Direct input listener for CKEditor and rich-text-editor
         document.addEventListener('input', (e) => {
-            if (e.target.classList.contains('rich-text-editor')) {
+            if (e.target.classList.contains('ckeditor-editor')) {
+                this.handleCKEditorInput(e.target);
+            } else if (e.target.classList.contains('rich-text-editor')) {
                 this.handleRichTextInput(e.target);
             }
         });
@@ -137,6 +139,13 @@ class ContentBuilderBase {
         this.eventManager.addListener('input', (e) => {
             if (e.target.matches('[data-caption="true"]')) {
                 this.updateBlockCaption(e.target);
+            }
+        });
+
+        // Question hint changes
+        this.eventManager.addListener('input', (e) => {
+            if (e.target.matches('[data-hint="true"]')) {
+                this.updateQuestionHint(e.target);
             }
         });
 
@@ -228,6 +237,7 @@ class ContentBuilderBase {
                     content: '',
                     textContent: '',
                     points: 1,
+                    difficulty: 'medium',
                     isRequired: true,
                     teacherGuidance: ''
                 };
@@ -240,6 +250,7 @@ class ContentBuilderBase {
                     fileSize: null,
                     mimeType: null,
                     points: 1,
+                    difficulty: 'medium',
                     isRequired: true,
                     teacherGuidance: ''
                 };
@@ -252,6 +263,7 @@ class ContentBuilderBase {
                     fileSize: null,
                     mimeType: null,
                     points: 1,
+                    difficulty: 'medium',
                     isRequired: true,
                     teacherGuidance: ''
                 };
@@ -266,6 +278,7 @@ class ContentBuilderBase {
                     isRecorded: false,
                     duration: null,
                     points: 1,
+                    difficulty: 'medium',
                     isRequired: true,
                     teacherGuidance: ''
                 };
@@ -356,6 +369,12 @@ class ContentBuilderBase {
                 pointsInput.value = block.data.points || 1;
             }
             
+            // Set difficulty value
+            const difficultySelect = questionSettings.querySelector('[data-setting="difficulty"]');
+            if (difficultySelect) {
+                difficultySelect.value = block.data.difficulty || 'medium';
+            }
+            
             // Set required checkbox
             const requiredCheckbox = questionSettings.querySelector('[data-setting="isRequired"]');
             if (requiredCheckbox) {
@@ -368,7 +387,7 @@ class ContentBuilderBase {
         if (questionTextEditor) {
             questionTextEditor.style.display = 'block';
             
-            // Set question text content
+            // Set question text content for rich-text-editor
             const textEditor = questionTextEditor.querySelector('.rich-text-editor');
             if (textEditor && block.data.content) {
                 textEditor.innerHTML = block.data.content;
@@ -387,8 +406,8 @@ class ContentBuilderBase {
             }
         }
 
-        // Hide regular content editor for question blocks
-        const regularEditor = blockElement.querySelector('.ckeditor-container');
+        // Hide regular content editor for question blocks (but not question text editor)
+        const regularEditor = blockElement.querySelector('.ckeditor-container:not(.question-text-editor .ckeditor-container)');
         if (regularEditor) {
             regularEditor.style.display = 'none';
         }
@@ -576,6 +595,23 @@ class ContentBuilderBase {
         }
     }
 
+    updateQuestionHint(textarea) {
+        const blockElement = textarea.closest('.content-block-template, .content-block');
+        const blockId = blockElement.dataset.blockId;
+        const block = this.blocks.find(b => b.id === blockId);
+        
+        if (block) {
+            block.data.teacherGuidance = textarea.value;
+            this.updateHiddenField();
+            
+            // Dispatch custom event
+            this.eventManager.dispatch('blockContentChanged', {
+                blockId: blockId, 
+                contentType: this.config.contentType
+            });
+        }
+    }
+
     toggleCollapse(blockElement) {
         if (!blockElement) {
             console.error('ContentBuilderBase: toggleCollapse called with null blockElement');
@@ -664,6 +700,51 @@ class ContentBuilderBase {
         }
     }
 
+    handleCKEditorInput(editor) {
+        const blockElement = editor.closest('.content-block');
+        if (!blockElement) {
+            console.warn('ContentBuilderBase: No block element found for editor');
+            return;
+        }
+        
+        const blockId = blockElement.dataset.blockId;
+        const block = this.blocks.find(b => b.id === blockId);
+        
+        if (block) {
+            // Get content from CKEditor
+            let content = '';
+            let textContent = '';
+            
+            if (window.ckeditorManager) {
+                const editorContent = window.ckeditorManager.getEditorContent(editor);
+                content = editorContent.html;
+                textContent = editorContent.text;
+            } else {
+                // Fallback if CKEditor manager is not available
+                content = editor.innerHTML;
+                textContent = editor.textContent;
+            }
+            
+            // Update block data with editor content
+            block.data.content = content;
+            block.data.textContent = textContent;
+            
+            // Update block data attribute
+            blockElement.dataset.blockData = JSON.stringify(block.data);
+            
+            this.updateHiddenField();
+            
+            // Dispatch custom event
+            this.eventManager.dispatch('blockContentChanged', {
+                blockId: blockId, 
+                contentType: this.config.contentType
+            });
+            
+        } else {
+            console.warn('ContentBuilderBase: CKEditor input - Block not found for ID:', blockId);
+        }
+    }
+
     saveTextContentImmediately(blockElement, editor) {
         const blockId = blockElement.dataset.blockId;
         const block = this.blocks.find(b => b.id === blockId);
@@ -710,7 +791,14 @@ class ContentBuilderBase {
         
         if (block) {
             const setting = select.dataset.setting;
-            block.data[setting] = select.value;
+            
+            // Handle different input types
+            if (select.type === 'checkbox') {
+                block.data[setting] = select.checked;
+            } else {
+                block.data[setting] = select.value;
+            }
+            
             this.updateHiddenField();
         }
     }
@@ -768,8 +856,10 @@ class ContentBuilderBase {
             
             if (data.blocks && Array.isArray(data.blocks)) {
                 
-                const existingBlocks = this.blocksList.querySelectorAll('.content-block');
-                existingBlocks.forEach(block => block.remove());
+                if (this.blocksList) {
+                    const existingBlocks = this.blocksList.querySelectorAll('.content-block');
+                    existingBlocks.forEach(block => block.remove());
+                }
                 
                 this.blocks = data.blocks;
                 if (this.blocks.length > 0) {
