@@ -98,7 +98,8 @@ window.AudioBlockManager = class AudioBlockManager {
 
         // Handle populate block content events
         document.addEventListener('populateBlockContent', (e) => {
-            if (e.detail.blockType === 'audio') {
+            // Handle both regular audio blocks and question audio blocks
+            if (e.detail.blockType === 'audio' || e.detail.blockType === 'questionAudio') {
                 if (window.audioBlockManager && typeof window.audioBlockManager.populateAudioBlock === 'function') {
                     window.audioBlockManager.populateAudioBlock(e.detail.blockElement, e.detail.block.data);
                 } else {
@@ -538,12 +539,62 @@ window.AudioBlockManager = class AudioBlockManager {
         const sizeSelect = blockElement.querySelector('select[data-setting="size"]');
         if (sizeSelect) sizeSelect.value = data.size || 'medium';
         
+        // Populate question-specific fields if this is a question block
+        this.populateQuestionFields(blockElement, data);
+        
         // Update block data with proper file URL
         const updatedData = { ...data };
         if (data.fileId && !updatedData.fileUrl) {
             updatedData.fileUrl = `/FileUpload/GetFile/${data.fileId}`;
         }
         this.updateBlockData(blockElement, updatedData);
+    }
+
+    // Helper method to populate question-specific fields
+    populateQuestionFields(blockElement, data) {
+        // Check if this is a question block by looking for question settings
+        const questionSettings = blockElement.querySelector('.question-settings');
+        if (!questionSettings) return;
+
+        // Populate points field
+        const pointsInput = questionSettings.querySelector('[data-setting="points"]');
+        if (pointsInput && data.points !== undefined) {
+            pointsInput.value = data.points;
+        }
+
+        // Populate difficulty field
+        const difficultySelect = questionSettings.querySelector('[data-setting="difficulty"]');
+        if (difficultySelect && data.difficulty !== undefined) {
+            difficultySelect.value = data.difficulty;
+        }
+
+        // Populate required checkbox
+        const requiredCheckbox = questionSettings.querySelector('[data-setting="isRequired"]');
+        if (requiredCheckbox && data.isRequired !== undefined) {
+            requiredCheckbox.checked = data.isRequired;
+        }
+
+        // Populate teacher guidance (hint)
+        const hintTextarea = blockElement.querySelector('[data-hint="true"]');
+        if (hintTextarea && data.teacherGuidance !== undefined) {
+            hintTextarea.value = data.teacherGuidance;
+        }
+
+        // Populate question text content
+        this.populateQuestionText(blockElement, data);
+    }
+
+    // Helper method to populate question text content
+    populateQuestionText(blockElement, data) {
+        // Try rich text editor (for image/video/audio blocks)
+        const richTextEditor = blockElement.querySelector('.rich-text-editor');
+        if (richTextEditor && data.content) {
+            richTextEditor.innerHTML = data.content;
+            // Update toolbar state if text block manager is available
+            if (window.textBlockManager && typeof window.textBlockManager.updateToolbarState === 'function') {
+                window.textBlockManager.updateToolbarState(richTextEditor);
+            }
+        }
     }
 }
 

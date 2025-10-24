@@ -77,8 +77,9 @@ window.TextBlockManager = class TextBlockManager {
         });
 
         // Handle populate block content events
-        document.addEventListener('populateBlockContent', (e) => {
-            if (e.detail.blockType === 'text') {
+        document.addEventListener('populateBlockContent', (e) => {      
+            // Handle both regular text blocks and question text blocks
+            if (e.detail.blockType === 'text' || e.detail.blockType === 'questionText') {
                 if (window.textBlockManager && typeof window.textBlockManager.populateTextBlock === 'function') {
                     window.textBlockManager.populateTextBlock(e.detail.blockElement, e.detail.block.data);
                 } else {
@@ -261,6 +262,67 @@ window.TextBlockManager = class TextBlockManager {
             this.updateToolbarState(editor);
         } else if (textarea) {
             textarea.value = data.content || '';
+        }
+
+        // Populate question-specific fields if this is a question block
+        this.populateQuestionFields(blockElement, data);
+    }
+
+    // Helper method to populate question-specific fields
+    populateQuestionFields(blockElement, data) {
+        // Check if this is a question block by looking for question settings
+        const questionSettings = blockElement.querySelector('.question-settings');
+        if (!questionSettings) return;
+
+        // Populate points field
+        const pointsInput = questionSettings.querySelector('[data-setting="points"]');
+        if (pointsInput && data.points !== undefined) {
+            pointsInput.value = data.points;
+        }
+
+        // Populate difficulty field
+        const difficultySelect = questionSettings.querySelector('[data-setting="difficulty"]');
+        if (difficultySelect && data.difficulty !== undefined) {
+            difficultySelect.value = data.difficulty;
+        }
+
+        // Populate required checkbox
+        const requiredCheckbox = questionSettings.querySelector('[data-setting="isRequired"]');
+        if (requiredCheckbox && data.isRequired !== undefined) {
+            requiredCheckbox.checked = data.isRequired;
+        }
+
+        // Populate teacher guidance (hint)
+        const hintTextarea = blockElement.querySelector('[data-hint="true"]');
+        if (hintTextarea && data.teacherGuidance !== undefined) {
+            hintTextarea.value = data.teacherGuidance;
+        }
+
+        // Populate question text content for different editor types
+        this.populateQuestionText(blockElement, data);
+    }
+
+    // Helper method to populate question text content
+    populateQuestionText(blockElement, data) {
+        // Try CKEditor first (for text blocks)
+        const ckEditor = blockElement.querySelector('.ckeditor-editor');
+        if (ckEditor && data.content) {
+            // For CKEditor, we need to wait for it to be initialized
+            // The CKEditor manager will handle this
+            return;
+        }
+
+        // Try rich text editor (for image/video/audio blocks)
+        const richTextEditor = blockElement.querySelector('.rich-text-editor');
+        if (richTextEditor && data.content) {
+            richTextEditor.innerHTML = data.content;
+            this.updateToolbarState(richTextEditor);
+        }
+
+        // Try textarea as fallback
+        const textarea = blockElement.querySelector('textarea');
+        if (textarea && data.content && !textarea.hasAttribute('data-hint')) {
+            textarea.value = data.content;
         }
     }
 }

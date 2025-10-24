@@ -171,6 +171,144 @@ class WrittenContentBlockManager extends ContentBuilderBase {
         
         return html;
     }
+
+    // Override getContent to return questionBlocks instead of blocks
+    getContent() {
+        // Collect current data from DOM before returning
+        this.collectCurrentBlockData();
+        
+        return {
+            type: this.config.contentType,
+            questionBlocks: this.blocks // Return as questionBlocks for written content
+        };
+    }
+
+    // Collect current data from DOM elements
+    collectCurrentBlockData() {
+        this.blocks.forEach(block => {
+            const blockElement = document.querySelector(`[data-block-id="${block.id}"]`);
+            if (blockElement) {
+                // Collect question-specific fields
+                this.collectQuestionFields(blockElement, block);
+            }
+        });
+    }
+
+    // Collect question-specific fields from DOM
+    collectQuestionFields(blockElement, block) {
+        // Check if this is a question block
+        const questionSettings = blockElement.querySelector('.question-settings');
+        if (!questionSettings) return;
+
+        // Collect points
+        const pointsInput = questionSettings.querySelector('[data-setting="points"]');
+        if (pointsInput) {
+            block.data.points = parseFloat(pointsInput.value) || 1;
+        }
+
+        // Collect difficulty
+        const difficultySelect = questionSettings.querySelector('[data-setting="difficulty"]');
+        if (difficultySelect) {
+            block.data.difficulty = difficultySelect.value || 'medium';
+        }
+
+        // Collect required status
+        const requiredCheckbox = questionSettings.querySelector('[data-setting="isRequired"]');
+        if (requiredCheckbox) {
+            block.data.isRequired = requiredCheckbox.checked;
+        }
+
+        // Collect teacher guidance
+        const hintTextarea = blockElement.querySelector('[data-hint="true"]');
+        if (hintTextarea) {
+            block.data.teacherGuidance = hintTextarea.value || '';
+        }
+
+        // Collect question text content
+        this.collectQuestionTextContent(blockElement, block);
+    }
+
+    // Collect question text content from different editor types
+    collectQuestionTextContent(blockElement, block) {
+        // Try CKEditor first (for text blocks)
+        const ckEditor = blockElement.querySelector('.ckeditor-editor');
+        if (ckEditor && window.ckeditorManager) {
+            const editorContent = window.ckeditorManager.getEditorContent(ckEditor);
+            if (editorContent) {
+                block.data.content = editorContent.html;
+                block.data.textContent = editorContent.text;
+            }
+            return;
+        }
+
+        // Try rich text editor (for image/video/audio blocks)
+        const richTextEditor = blockElement.querySelector('.rich-text-editor');
+        if (richTextEditor) {
+            block.data.content = richTextEditor.innerHTML;
+            block.data.textContent = richTextEditor.textContent;
+            return;
+        }
+
+        // Try textarea as fallback
+        const textarea = blockElement.querySelector('textarea');
+        if (textarea && !textarea.hasAttribute('data-hint')) {
+            block.data.content = textarea.value;
+            block.data.textContent = textarea.value;
+        }
+    }
+
+    // Override loadExistingContent to handle questionBlocks
+    loadExistingContent() {
+        const hiddenFieldValue = this.fieldManager.getFieldValue(this.config.hiddenFieldId);
+        
+        if (!hiddenFieldValue || !hiddenFieldValue.trim()) {
+            return;
+        }
+        
+        try {
+            this.isLoadingExistingContent = true;
+            
+            const data = JSON.parse(hiddenFieldValue);
+            
+            // Handle questionBlocks for written content
+            if (data.questionBlocks && Array.isArray(data.questionBlocks)) {
+                if (this.blocksList) {
+                    const existingBlocks = this.blocksList.querySelectorAll('.content-block');
+                    existingBlocks.forEach(block => block.remove());
+                }
+                
+                this.blocks = data.questionBlocks;
+                if (this.blocks.length > 0) {
+                    this.nextBlockId = Math.max(...this.blocks.map(b => parseInt(b.id.split('-')[1]) || 0)) + 1;
+                } else {
+                    this.nextBlockId = 1;
+                }
+                
+                this.blocks.forEach((block, index) => {
+                    this.renderBlock(block);
+                });
+                
+                this.updateEmptyState();
+                
+                // Populate content fields after rendering with longer delay
+                setTimeout(() => {
+                    this.populateBlockContent();
+                }, 500);
+            } else {
+                console.warn('WrittenContentBlockManager: No questionBlocks found in data');
+            }
+            
+            this.isLoadingExistingContent = false;
+            
+            setTimeout(() => {
+                this.updatePreview();
+            }, 800);
+            
+        } catch (error) {
+            console.error('WrittenContentBlockManager: Error loading existing content:', error);
+            this.isLoadingExistingContent = false;
+        }
+    }
 }
 
 // Initialize when DOM is loaded
