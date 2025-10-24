@@ -299,7 +299,7 @@ window.BlockTypeSelectionModal = class BlockTypeSelectionModal {
         }
     }
 
-    showModal() {
+    showModal(scheduleItemType) {
         const modal = document.getElementById(this.modalId);
         if (modal) {
             // Clean up any existing backdrops first
