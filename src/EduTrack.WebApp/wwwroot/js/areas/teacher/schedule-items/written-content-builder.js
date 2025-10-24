@@ -9,8 +9,8 @@
 class WrittenContentBlockManager extends ContentBuilderBase {
     constructor() {
         super({
-            containerId: 'contentBlocksList',
-            emptyStateId: 'emptyBlocksState',
+            containerId: 'questionBlocksList',
+            emptyStateId: 'emptyQuestionBlocksState',
             previewId: 'writtenPreview',
             hiddenFieldId: 'writtenContentJson',
             modalId: 'blockTypeModal',
@@ -21,12 +21,19 @@ class WrittenContentBlockManager extends ContentBuilderBase {
     }
     
     init() {
+        console.log('WrittenContentBlockManager: Initializing...');
+        console.log('WrittenContentBlockManager: blocksList:', this.blocksList);
+        console.log('WrittenContentBlockManager: emptyState:', this.emptyState);
+        console.log('WrittenContentBlockManager: preview:', this.preview);
+        console.log('WrittenContentBlockManager: hiddenField:', this.hiddenField);
+        
         if (!this.blocksList || !this.emptyState || !this.preview || !this.hiddenField) {
-            console.error('Required elements not found!');
+            console.error('WrittenContentBlockManager: Required elements not found!');
             return;
         }
         
         this.setupWrittenSpecificEventListeners();
+        console.log('WrittenContentBlockManager: Initialization completed');
     }
 
     setupWrittenSpecificEventListeners() {

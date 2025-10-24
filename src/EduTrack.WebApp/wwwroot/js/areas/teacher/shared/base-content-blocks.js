@@ -111,7 +111,11 @@ class SharedContentBlockManager {
             activeBuilder = window.writtenBlockManager;
         }
         
+        console.log('SharedContentBlockManager: Active builder found:', activeBuilder ? activeBuilder.constructor.name : 'none');
+        console.log('SharedContentBlockManager: Block type to add:', type);
+        
         if (activeBuilder && typeof activeBuilder.addBlock === 'function') {
+            console.log('SharedContentBlockManager: Calling addBlock on', activeBuilder.constructor.name);
             activeBuilder.addBlock(type);
         } else {
             console.warn('SharedContentBlockManager: No active content builder found');

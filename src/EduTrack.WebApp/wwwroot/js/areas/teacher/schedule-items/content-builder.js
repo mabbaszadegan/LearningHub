@@ -147,6 +147,9 @@ class ContentBuilderBase {
     }
 
     addBlock(type) {
+        console.log('ContentBuilderBase: Adding block of type:', type);
+        console.log('ContentBuilderBase: Current blocks count:', this.blocks.length);
+        
         const blockId = `block-${this.nextBlockId++}`;
         const block = {
             id: blockId,
@@ -155,11 +158,15 @@ class ContentBuilderBase {
             data: this.getDefaultBlockData(type)
         };
         
+        console.log('ContentBuilderBase: Created block:', block);
+        
         this.blocks.push(block);
         this.renderBlock(block);
         this.updateEmptyState();
         this.updateHiddenField();
         this.scrollToNewBlock(blockId);
+        
+        console.log('ContentBuilderBase: Block added successfully. New blocks count:', this.blocks.length);
         
         // Dispatch custom event
         this.eventManager.dispatch('blockAdded', {
@@ -228,7 +235,12 @@ class ContentBuilderBase {
     }
 
     renderBlock(block) {
-        const template = document.querySelector(`#contentBlockTemplates .content-block-template[data-type="${block.type}"]`);
+        // Look for templates in both possible containers
+        let template = document.querySelector(`#contentBlockTemplates .content-block-template[data-type="${block.type}"]`);
+        if (!template) {
+            template = document.querySelector(`#questionBlockTemplates .content-block-template[data-type="${block.type}"]`);
+        }
+        
         if (!template) {
             console.error('ContentBuilderBase: Template not found for type:', block.type);
             return;
