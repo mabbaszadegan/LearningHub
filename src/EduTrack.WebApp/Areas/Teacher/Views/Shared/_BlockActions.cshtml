@@ -1,0 +1,23 @@
+@{
+    var isQuestionBlock = ViewData["IsQuestionBlock"]?.ToString() == "true";
+    var insertText = isQuestionBlock ? "درج سوال بالا" : "درج بلاک بالا";
+}
+
+<div class="block-actions">
+    <button type="button" class="btn-icon" data-action="move-up" title="انتقال به بالا">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+    <button type="button" class="btn-icon" data-action="move-down" title="انتقال به پایین">
+        <i class="fas fa-arrow-down"></i>
+    </button>
+    <button type="button" class="btn-icon success" data-action="insert-above" title="@insertText">
+        <i class="fas fa-plus"></i>
+    </button>
+    <button type="button" class="btn-icon" data-action="fullscreen" title="تمام صفحه">
+        <i class="fas fa-expand"></i>
+    </button>
+    <button type="button" class="btn-icon danger" data-action="delete" title="حذف">
+        <i class="fas fa-trash"></i>
+    </button>
+</div>
+<i class="fas fa-chevron-down collapse-icon" data-action="toggle-collapse"></i>

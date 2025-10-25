@@ -85,12 +85,22 @@ class SharedContentBlockManager {
             this.handleBlockContentChanged(e.detail);
         });
 
-        // Handle block actions
+        // Handle block actions - use capture phase to avoid conflicts with direct listeners
         document.addEventListener('click', (e) => {
             if (e.target.closest('[data-action]')) {
+                // Check if there's an active content builder that should handle this
+                const activeBuilder = this.getActiveContentBuilder();
+                if (activeBuilder) {
+                    console.log('SharedContentBlockManager: Active content builder found, delegating to direct listeners');
+                    // Let the active content builder handle it through its direct listeners
+                    return;
+                }
+                
+                console.log('SharedContentBlockManager: No active content builder, handling action directly');
+                // Only handle if no active content builder is present
                 this.handleBlockAction(e);
             }
-        });
+        }, true); // Use capture phase
 
         // Handle dynamic content loading
         document.addEventListener('DOMNodeInserted', (e) => {
@@ -100,20 +110,59 @@ class SharedContentBlockManager {
         });
     }
 
-    handleBlockTypeSelected(type) {
-        // Find the active content builder
-        let activeBuilder = null;
+    getActiveContentBuilder() {
+        console.log('SharedContentBlockManager: Checking for active content builder...');
         
         // Check for reminder content builder
-        if (window.reminderBlockManager && document.getElementById('reminderContentBuilder')?.style.display !== 'none') {
-            activeBuilder = window.reminderBlockManager;
-        }
-        // Check for written content builder
-        else if (window.writtenBlockManager && document.getElementById('writtenContentBuilder')?.style.display !== 'none') {
-            activeBuilder = window.writtenBlockManager;
+        const reminderBuilder = document.getElementById('reminderContentBuilder');
+        const reminderVisible = reminderBuilder && reminderBuilder.style.display !== 'none';
+        console.log('Reminder builder check:', {
+            element: !!reminderBuilder,
+            visible: reminderVisible,
+            manager: !!window.reminderBlockManager
+        });
+        
+        if (window.reminderBlockManager && reminderVisible) {
+            console.log('SharedContentBlockManager: Found active reminder builder');
+            return window.reminderBlockManager;
         }
         
-      
+        // Check for written content builder
+        const writtenBuilder = document.getElementById('writtenContentBuilder');
+        const writtenVisible = writtenBuilder && writtenBuilder.style.display !== 'none';
+        console.log('Written builder check:', {
+            element: !!writtenBuilder,
+            visible: writtenVisible,
+            manager: !!window.writtenBlockManager
+        });
+        
+        if (window.writtenBlockManager && writtenVisible) {
+            console.log('SharedContentBlockManager: Found active written builder');
+            return window.writtenBlockManager;
+        }
+        
+        // Check for other content builders
+        const contentBuilder = document.getElementById('contentBuilder');
+        const contentVisible = contentBuilder && contentBuilder.style.display !== 'none';
+        console.log('Content builder check:', {
+            element: !!contentBuilder,
+            visible: contentVisible,
+            manager: !!window.contentBlockManager
+        });
+        
+        if (window.contentBlockManager && contentVisible) {
+            console.log('SharedContentBlockManager: Found active content builder');
+            return window.contentBlockManager;
+        }
+        
+        console.log('SharedContentBlockManager: No active content builder found');
+        return null;
+    }
+
+    handleBlockTypeSelected(type) {
+        // Find the active content builder
+        const activeBuilder = this.getActiveContentBuilder();
+        
         if (activeBuilder && typeof activeBuilder.addBlock === 'function') {
             activeBuilder.addBlock(type);
         } else {
@@ -137,11 +186,54 @@ class SharedContentBlockManager {
     handleBlockAction(e) {
         const actionButton = e.target.closest('[data-action]');
         if (!actionButton) return;
-        
         const action = actionButton.dataset.action;
-        const blockElement = actionButton.closest('.content-block-template, .question-block-template');
+        const blockElement = actionButton.closest('.content-block-template, .question-block-template, .content-block');
         
         if (!blockElement) return;
+
+        // First, try to delegate to the active content builder
+        const activeBuilder = this.getActiveContentBuilder();
+        if (activeBuilder) {
+            // Use the content builder's method for proper data management
+            switch (action) {
+                case 'move-up':
+                    if (typeof activeBuilder.moveBlockUp === 'function') {
+                        activeBuilder.moveBlockUp(blockElement);
+                        return;
+                    }
+                    break;
+                case 'move-down':
+                    if (typeof activeBuilder.moveBlockDown === 'function') {
+                        activeBuilder.moveBlockDown(blockElement);
+                        return;
+                    }
+                    break;
+                case 'delete':
+                    if (typeof activeBuilder.deleteBlock === 'function') {
+                        activeBuilder.deleteBlock(blockElement);
+                        return;
+                    }
+                    break;
+                case 'toggle-collapse':
+                    if (typeof activeBuilder.toggleCollapse === 'function') {
+                        activeBuilder.toggleCollapse(blockElement);
+                        return;
+                    }
+                    break;
+                case 'fullscreen':
+                    if (typeof activeBuilder.toggleFullscreen === 'function') {
+                        activeBuilder.toggleFullscreen(blockElement);
+                        return;
+                    }
+                    break;
+                case 'insert-above':
+                    if (typeof activeBuilder.insertBlockAbove === 'function') {
+                        activeBuilder.insertBlockAbove(blockElement);
+                        return;
+                    }
+                    break;
+            }
+        }
 
         const blockType = blockElement.dataset.type;
         // For question blocks, use the base template type for manager lookup
@@ -154,7 +246,7 @@ class SharedContentBlockManager {
             return;
         }
         
-        // Handle common block actions directly
+        // Handle common block actions directly as fallback
         this.handleCommonBlockAction(action, blockElement);
     }
 

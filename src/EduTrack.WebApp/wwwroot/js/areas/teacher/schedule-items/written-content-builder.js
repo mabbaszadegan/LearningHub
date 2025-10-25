@@ -40,17 +40,24 @@ class WrittenContentBlockManager extends ContentBuilderBase {
     }
 
     renderBlock(block) {
+        console.log('WrittenContentBlockManager: Rendering block:', block);
+        
         // Determine the base template type for question blocks
         let templateType = block.type;
         if (block.type.startsWith('question')) {
             templateType = block.type.replace('question', '').toLowerCase();
         }
         
+        console.log('WrittenContentBlockManager: Looking for template type:', templateType);
+        
         // Look for template in questionBlockTemplates (for written content)
         let template = document.querySelector(`#questionBlockTemplates .content-block-template[data-type="${templateType}"]`);
         
+        console.log('WrittenContentBlockManager: Template found:', !!template);
+        
         if (!template) {
             console.error('WrittenContentBlockManager: Template not found for type:', templateType);
+            console.log('Available templates:', document.querySelectorAll('#questionBlockTemplates .content-block-template'));
             return;
         }
         
@@ -61,12 +68,15 @@ class WrittenContentBlockManager extends ContentBuilderBase {
         blockElement.dataset.type = block.type; // Keep original type (e.g., questionText)
         blockElement.dataset.templateType = templateType; // Store template type (e.g., text)
         
+        console.log('WrittenContentBlockManager: Created block element:', blockElement);
+        
         // Configure template for question blocks
         if (block.type.startsWith('question')) {
             this.configureQuestionBlock(blockElement, block);
         }
         
         // Add direct event listeners to this specific block
+        console.log('WrittenContentBlockManager: Adding direct event listeners...');
         this.addDirectEventListeners(blockElement);
         
         const emptyState = this.blocksList.querySelector('.empty-state');
@@ -75,6 +85,8 @@ class WrittenContentBlockManager extends ContentBuilderBase {
         } else {
             this.blocksList.appendChild(blockElement);
         }
+        
+        console.log('WrittenContentBlockManager: Block added to DOM');
         
         // Initialize CKEditor only for text blocks
         if (block.type === 'text' || block.type === 'questionText') {
@@ -314,7 +326,10 @@ class WrittenContentBlockManager extends ContentBuilderBase {
 // Initialize when DOM is loaded
 function initializeWrittenBlockManager() {
     try {
+        console.log('WrittenContentBlockManager: Attempting to initialize...');
+        
         if (window.writtenBlockManager) {
+            console.log('WrittenContentBlockManager: Already initialized');
             return;
         }
         
@@ -327,7 +342,9 @@ function initializeWrittenBlockManager() {
         
         let missingElements = [];
         requiredElements.forEach(id => {
-            if (!document.getElementById(id)) {
+            const element = document.getElementById(id);
+            console.log(`WrittenContentBlockManager: Checking element ${id}:`, !!element);
+            if (!element) {
                 missingElements.push(id);
             }
         });
@@ -337,7 +354,9 @@ function initializeWrittenBlockManager() {
             return;
         }
         
+        console.log('WrittenContentBlockManager: All required elements found, creating manager...');
         window.writtenBlockManager = new WrittenContentBlockManager();
+        console.log('WrittenContentBlockManager: Successfully initialized', window.writtenBlockManager);
         
     } catch (error) {
         console.error('Error initializing WrittenContentBlockManager:', error);

@@ -414,14 +414,21 @@ class ContentBuilderBase {
     }
 
     addDirectEventListeners(blockElement) {
+        console.log('ContentBuilderBase: Adding direct event listeners to block:', blockElement.dataset.blockId);
+        
         // Add direct event listeners to action buttons
         const actionButtons = blockElement.querySelectorAll('[data-action]');
-        actionButtons.forEach(button => {
+        console.log('ContentBuilderBase: Found action buttons:', actionButtons.length);
+        
+        actionButtons.forEach((button, index) => {
             const action = button.dataset.action;
+            console.log(`ContentBuilderBase: Adding listener for button ${index}: ${action}`);
+            
             button.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 
+                console.log(`ContentBuilderBase: Handling ${action} action for block`, blockElement.dataset.blockId);
                 
                 switch (action) {
                     case 'move-up':
@@ -445,6 +452,8 @@ class ContentBuilderBase {
                 }
             });
         });
+        
+        console.log('ContentBuilderBase: Direct event listeners added successfully');
     }
 
     updateEmptyState() {
