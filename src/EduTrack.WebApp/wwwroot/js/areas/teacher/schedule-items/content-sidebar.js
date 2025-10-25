@@ -381,10 +381,29 @@ if (typeof window !== 'undefined' && !window.ContentSidebarManager) {
         const blockElement = document.querySelector(`[data-block-id="${blockId}"]`);
         if (!blockElement) return;
 
-        blockElement.scrollIntoView({
-            behavior: 'smooth',
-            block: 'center',
-            inline: 'nearest'
+        // Get the main content area (scrollable container)
+        const mainContentArea = this.mainContentArea || document.querySelector('.main-content-area');
+        if (!mainContentArea) {
+            // Fallback to window scroll if main content area not found
+            blockElement.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center',
+                inline: 'nearest'
+            });
+            return;
+        }
+
+        // Calculate the position of the block relative to the main content area
+        const blockRect = blockElement.getBoundingClientRect();
+        const containerRect = mainContentArea.getBoundingClientRect();
+        
+        // Calculate the scroll position to center the block
+        const scrollTop = mainContentArea.scrollTop + (blockRect.top - containerRect.top) - (containerRect.height / 2) + (blockRect.height / 2);
+        
+        // Smooth scroll within the main content area
+        mainContentArea.scrollTo({
+            top: scrollTop,
+            behavior: 'smooth'
         });
 
         // Highlight the block briefly
