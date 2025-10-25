@@ -447,8 +447,9 @@ if (typeof window !== 'undefined' && !window.ContentSidebarManager) {
     }
 
     updateSidebar() {
-        // Clear existing sidebar items
+        // Clear existing sidebar items and blocks array
         this.sidebar.innerHTML = '';
+        this.blocks = [];
 
         // Rebuild sidebar from current blocks
         const blockElements = document.querySelectorAll('.content-block, .question-block-template');
@@ -547,7 +548,8 @@ if (typeof window !== 'undefined' && !window.ContentSidebarManager) {
             blocksInDOM: blockElements.length,
             sidebarItems: sidebarItems.length,
             sidebarExists: !!this.sidebar,
-            sidebarCount: this.blocks.length
+            sidebarCount: this.blocks.length,
+            sidebarCountElement: this.sidebarCount ? this.sidebarCount.textContent : 'N/A'
         });
         
         if (blockElements.length > 0) {
@@ -557,6 +559,8 @@ if (typeof window !== 'undefined' && !window.ContentSidebarManager) {
         if (sidebarItems.length > 0) {
             console.log('Sidebar item IDs:', Array.from(sidebarItems).map(el => el.dataset.blockId));
         }
+        
+        console.log('Blocks array:', this.blocks.map(b => ({ id: b.id, type: b.type })));
     }
 
     // Cleanup method
