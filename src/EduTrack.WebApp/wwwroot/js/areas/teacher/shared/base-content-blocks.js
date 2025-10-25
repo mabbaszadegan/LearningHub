@@ -104,7 +104,7 @@ class SharedContentBlockManager {
 
         // Handle dynamic content loading
         document.addEventListener('DOMNodeInserted', (e) => {
-            if (e.target.classList && e.target.classList.contains('content-block-template')) {
+            if (e.target.classList && (e.target.classList.contains('content-block-template') || e.target.classList.contains('question-block-template') || e.target.classList.contains('content-block'))) {
                 this.initializeNewBlock(e.target);
             }
         });
@@ -277,7 +277,7 @@ class SharedContentBlockManager {
 
     moveBlockUp(blockElement) {
         const previousBlock = blockElement.previousElementSibling;
-        if (previousBlock && previousBlock.classList.contains('content-block-template')) {
+        if (previousBlock && (previousBlock.classList.contains('content-block-template') || previousBlock.classList.contains('question-block-template') || previousBlock.classList.contains('content-block'))) {
             blockElement.parentNode.insertBefore(blockElement, previousBlock);
             this.triggerBlockReorder();
         }
@@ -285,7 +285,7 @@ class SharedContentBlockManager {
 
     moveBlockDown(blockElement) {
         const nextBlock = blockElement.nextElementSibling;
-        if (nextBlock && nextBlock.classList.contains('content-block-template')) {
+        if (nextBlock && (nextBlock.classList.contains('content-block-template') || nextBlock.classList.contains('question-block-template') || nextBlock.classList.contains('content-block'))) {
             blockElement.parentNode.insertBefore(nextBlock, blockElement);
             this.triggerBlockReorder();
         }
@@ -351,7 +351,7 @@ class SharedContentBlockManager {
 
     getAllBlockData() {
         const allData = {};
-        const blocks = document.querySelectorAll('.content-block-template, .question-block-template');
+        const blocks = document.querySelectorAll('.content-block-template, .question-block-template, .content-block');
         
         blocks.forEach((block, index) => {
             const type = block.dataset.type;

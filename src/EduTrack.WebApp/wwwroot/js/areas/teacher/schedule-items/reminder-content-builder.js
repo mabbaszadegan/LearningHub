@@ -31,8 +31,23 @@ class ReminderContentBlockManager extends ContentBuilderBase {
     }
 
     setupReminderSpecificEventListeners() {
-        // Reminder-specific event listeners can be added here if needed
-        // Most common functionality is now handled by the base class
+        // Listen for insert-above events
+        this.eventManager.addListener('insertBlockAbove', (e) => {
+            console.log('ReminderContentBlockManager: insertBlockAbove event received', e.detail);
+            this.handleInsertBlockAbove(e.detail.blockElement);
+        });
+    }
+
+    handleInsertBlockAbove(blockElement) {
+        console.log('ReminderContentBlockManager: handleInsertBlockAbove called for block:', blockElement.dataset.blockId);
+        
+        // Store the reference to the block above which we want to insert
+        this.insertAboveBlock = blockElement;
+        
+        // Show block type selection modal for inserting above
+        if (window.sharedContentBlockManager) {
+            window.sharedContentBlockManager.showBlockTypeModal(this.config.modalId, 'reminder');
+        }
     }
 
     generateBlockPreview(block) {

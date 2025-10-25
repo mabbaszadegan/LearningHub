@@ -94,18 +94,18 @@ class ContentBuilderBase {
         this.eventManager.addListener('click', (e) => {
             
             if (e.target.matches('[data-action="move-up"]')) {
-                this.moveBlockUp(e.target.closest('.content-block-template, .content-block'));
+                this.moveBlockUp(e.target.closest('.content-block-template, .content-block, .question-block-template'));
             } else if (e.target.matches('[data-action="move-down"]')) {
-                this.moveBlockDown(e.target.closest('.content-block-template, .content-block'));
+                this.moveBlockDown(e.target.closest('.content-block-template, .content-block, .question-block-template'));
             } else if (e.target.matches('[data-action="delete"]')) {
-                const blockElement = e.target.closest('.content-block-template, .content-block');
+                const blockElement = e.target.closest('.content-block-template, .content-block, .question-block-template');
                 this.deleteBlock(blockElement);
             } else if (e.target.matches('[data-action="toggle-collapse"]')) {
-                this.toggleCollapse(e.target.closest('.content-block-template, .content-block'));
+                this.toggleCollapse(e.target.closest('.content-block-template, .content-block, .question-block-template'));
             } else if (e.target.matches('[data-action="fullscreen"]')) {
-                this.toggleFullscreen(e.target.closest('.content-block-template, .content-block'));
+                this.toggleFullscreen(e.target.closest('.content-block-template, .content-block, .question-block-template'));
             } else if (e.target.matches('[data-action="insert-above"]')) {
-                this.insertBlockAbove(e.target.closest('.content-block-template, .content-block'));
+                this.insertBlockAbove(e.target.closest('.content-block-template, .content-block, .question-block-template'));
             }
         });
 
@@ -477,7 +477,7 @@ class ContentBuilderBase {
             [this.blocks[blockIndex], this.blocks[blockIndex - 1]] = [this.blocks[blockIndex - 1], this.blocks[blockIndex]];
             
             const prevBlock = blockElement.previousElementSibling;
-            if (prevBlock && (prevBlock.classList.contains('content-block') || prevBlock.classList.contains('content-block-template'))) {
+            if (prevBlock && (prevBlock.classList.contains('content-block') || prevBlock.classList.contains('content-block-template') || prevBlock.classList.contains('question-block-template'))) {
                 this.blocksList.insertBefore(blockElement, prevBlock);
             }
             
@@ -506,7 +506,7 @@ class ContentBuilderBase {
             [this.blocks[blockIndex], this.blocks[blockIndex + 1]] = [this.blocks[blockIndex + 1], this.blocks[blockIndex]];
             
             const nextBlock = blockElement.nextElementSibling;
-            if (nextBlock && (nextBlock.classList.contains('content-block') || nextBlock.classList.contains('content-block-template'))) {
+            if (nextBlock && (nextBlock.classList.contains('content-block') || nextBlock.classList.contains('content-block-template') || nextBlock.classList.contains('question-block-template'))) {
                 this.blocksList.insertBefore(nextBlock, blockElement);
             }
             
@@ -588,7 +588,7 @@ class ContentBuilderBase {
     }
 
     updateBlockCaption(textarea) {
-        const blockElement = textarea.closest('.content-block-template, .content-block');
+        const blockElement = textarea.closest('.content-block-template, .content-block, .question-block-template');
         const blockId = blockElement.dataset.blockId;
         const block = this.blocks.find(b => b.id === blockId);
         
@@ -605,7 +605,7 @@ class ContentBuilderBase {
     }
 
     updateQuestionHint(textarea) {
-        const blockElement = textarea.closest('.content-block-template, .content-block');
+        const blockElement = textarea.closest('.content-block-template, .content-block, .question-block-template');
         const blockId = blockElement.dataset.blockId;
         const block = this.blocks.find(b => b.id === blockId);
         
@@ -794,7 +794,7 @@ class ContentBuilderBase {
     }
 
     updateBlockSettings(select) {
-        const blockElement = select.closest('.content-block-template, .content-block');
+        const blockElement = select.closest('.content-block-template, .content-block, .question-block-template');
         const blockId = blockElement.dataset.blockId;
         const block = this.blocks.find(b => b.id === blockId);
         
@@ -866,7 +866,7 @@ class ContentBuilderBase {
             if (data.blocks && Array.isArray(data.blocks)) {
                 
                 if (this.blocksList) {
-                    const existingBlocks = this.blocksList.querySelectorAll('.content-block');
+                    const existingBlocks = this.blocksList.querySelectorAll('.content-block, .question-block-template');
                     existingBlocks.forEach(block => block.remove());
                 }
                 

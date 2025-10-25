@@ -35,8 +35,23 @@ class WrittenContentBlockManager extends ContentBuilderBase {
     }
 
     setupWrittenSpecificEventListeners() {
-        // Written-specific event listeners can be added here if needed
-        // Most common functionality is now handled by the base class
+        // Listen for insert-above events
+        this.eventManager.addListener('insertBlockAbove', (e) => {
+            console.log('WrittenContentBlockManager: insertBlockAbove event received', e.detail);
+            this.handleInsertBlockAbove(e.detail.blockElement);
+        });
+    }
+
+    handleInsertBlockAbove(blockElement) {
+        console.log('WrittenContentBlockManager: handleInsertBlockAbove called for block:', blockElement.dataset.blockId);
+        
+        // Store the reference to the block above which we want to insert
+        this.insertAboveBlock = blockElement;
+        
+        // Show block type selection modal for inserting above
+        if (window.sharedContentBlockManager) {
+            window.sharedContentBlockManager.showBlockTypeModal(this.config.modalId, 'written');
+        }
     }
 
     renderBlock(block) {
@@ -285,7 +300,7 @@ class WrittenContentBlockManager extends ContentBuilderBase {
             // Handle questionBlocks for written content
             if (data.questionBlocks && Array.isArray(data.questionBlocks)) {
                 if (this.blocksList) {
-                    const existingBlocks = this.blocksList.querySelectorAll('.content-block');
+                    const existingBlocks = this.blocksList.querySelectorAll('.content-block, .question-block-template');
                     existingBlocks.forEach(block => block.remove());
                 }
                 

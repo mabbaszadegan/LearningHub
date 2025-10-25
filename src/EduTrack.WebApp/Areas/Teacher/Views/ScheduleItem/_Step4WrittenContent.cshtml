@@ -56,3 +56,11 @@
 
 <script src="~/js/areas/teacher/schedule-items/written-content-builder.js" asp-append-version="true"></script>
 
+<!-- Block Type Selection Modal -->
+@{
+    ViewData["ModalId"] = "blockTypeModal";
+    ViewData["ModalTitle"] = "انتخاب نوع سوال";
+    ViewData["ModalLabel"] = "blockTypeModalLabel";
+}
+@await Html.PartialAsync("_BlockTypeSelectionModal")
+

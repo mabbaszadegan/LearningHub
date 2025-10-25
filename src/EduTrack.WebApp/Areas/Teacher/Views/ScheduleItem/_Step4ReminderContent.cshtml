@@ -55,3 +55,11 @@
 <input type="hidden" id="reminderContentJson" name="ReminderContentJson" value="@Model.ContentJson" />
 
 <script src="~/js/areas/teacher/schedule-items/reminder-content-builder.js" asp-append-version="true"></script>
+
+<!-- Block Type Selection Modal -->
+@{
+    ViewData["ModalId"] = "blockTypeModal";
+    ViewData["ModalTitle"] = "انتخاب نوع بلاک";
+    ViewData["ModalLabel"] = "blockTypeModalLabel";
+}
+@await Html.PartialAsync("_BlockTypeSelectionModal")
