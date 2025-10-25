@@ -4,8 +4,9 @@
 @model EduTrack.Application.Common.Models.ScheduleItems.CreateScheduleItemRequest
 
 <div class="reminder-content-builder">
-    <div class="content-builder-container">
-        <div class="blocks-section">
+    <div class="builder-content-layout">
+        <!-- Main Content Area -->
+        <div class="main-content-area">
             <div class="blocks-list" id="contentBlocksList">
                 <!-- Content blocks will be added here dynamically -->
                 <div class="empty-state" id="emptyBlocksState">
@@ -17,21 +18,38 @@
                 </div>
             </div>
         </div>
-        
-        <div class="preview-section" style="display: none;">
-            <div class="content-preview">
-                <div class="preview-header">
-                    <h4>پیش‌نمایش یادآوری</h4>
+
+        <!-- Fixed Sidebar -->
+        <div class="content-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-title">
+                    <i class="fas fa-list"></i>
+                    <span>فهرست بلاک‌ها</span>
                 </div>
-                <div class="preview-content" id="reminderPreview">
-                    <div class="reminder-card">
-                        <div class="reminder-icon">
-                            <i class="fas fa-bell"></i>
-                        </div>
-                        <div class="reminder-text">
-                            <p>محتوای یادآوری شما اینجا نمایش داده خواهد شد...</p>
-                        </div>
-                    </div>
+                <div class="sidebar-count" id="sidebarBlockCount">0</div>
+            </div>
+            <div class="sidebar-content">
+                <div class="blocks-navigation" id="blocksNavigation">
+                    <!-- Block navigation items will be added here dynamically -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Preview Section (hidden by default) -->
+<div class="preview-section" id="reminderPreview" style="display: none;">
+    <div class="content-preview">
+        <div class="preview-header">
+            <h4>پیش‌نمایش محتوای یادآوری</h4>
+        </div>
+        <div class="preview-content">
+            <div class="reminder-card">
+                <div class="reminder-icon">
+                    <i class="fas fa-bell"></i>
+                </div>
+                <div class="reminder-text">
+                    <p>محتوای یادآوری شما اینجا نمایش داده خواهد شد...</p>
                 </div>
             </div>
         </div>
@@ -54,6 +72,8 @@
 <!-- Hidden field for content -->
 <input type="hidden" id="reminderContentJson" name="ReminderContentJson" value="@Model.ContentJson" />
 
+<script src="~/js/areas/teacher/schedule-items/content-sidebar.js" asp-append-version="true"></script>
+<script src="~/js/areas/teacher/schedule-items/unified-content-loader.js" asp-append-version="true"></script>
 <script src="~/js/areas/teacher/schedule-items/reminder-content-builder.js" asp-append-version="true"></script>
 
 <!-- Block Type Selection Modal -->

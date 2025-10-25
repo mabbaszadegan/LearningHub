@@ -4,8 +4,9 @@
 @model EduTrack.Application.Common.Models.ScheduleItems.CreateScheduleItemRequest
 
 <div class="written-content-builder">
-    <div class="content-builder-container">
-        <div class="blocks-section">
+    <div class="builder-content-layout">
+        <!-- Main Content Area -->
+        <div class="main-content-area">
             <div class="blocks-list" id="contentBlocksList">
                 <!-- Question blocks will be added here dynamically -->
                 <div class="empty-state" id="emptyBlocksState">
@@ -17,21 +18,38 @@
                 </div>
             </div>
         </div>
-        
-        <div class="preview-section" style="display: none;">
-            <div class="content-preview">
-                <div class="preview-header">
-                    <h4>پیش‌نمایش تمرین نوشتاری</h4>
+
+        <!-- Fixed Sidebar -->
+        <div class="content-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-title">
+                    <i class="fas fa-list"></i>
+                    <span>فهرست سوالات</span>
                 </div>
-                <div class="preview-content" id="writtenPreview">
-                    <div class="written-exercise-card">
-                        <div class="exercise-icon">
-                            <i class="fas fa-edit"></i>
-                        </div>
-                        <div class="exercise-text">
-                            <p>تمرین نوشتاری شما اینجا نمایش داده خواهد شد...</p>
-                        </div>
-                    </div>
+                <div class="sidebar-count" id="sidebarBlockCount">0</div>
+            </div>
+            <div class="sidebar-content">
+                <div class="blocks-navigation" id="blocksNavigation">
+                    <!-- Block navigation items will be added here dynamically -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Preview Section (hidden by default) -->
+<div class="preview-section" id="writtenPreview" style="display: none;">
+    <div class="content-preview">
+        <div class="preview-header">
+            <h4>پیش‌نمایش تمرین نوشتاری</h4>
+        </div>
+        <div class="preview-content">
+            <div class="written-exercise-card">
+                <div class="exercise-icon">
+                    <i class="fas fa-edit"></i>
+                </div>
+                <div class="exercise-text">
+                    <p>تمرین نوشتاری شما اینجا نمایش داده خواهد شد...</p>
                 </div>
             </div>
         </div>
@@ -54,6 +72,8 @@
 <!-- Hidden field for content -->
 <input type="hidden" id="writtenContentJson" name="WrittenContentJson" value="@Model.ContentJson" />
 
+<script src="~/js/areas/teacher/schedule-items/content-sidebar.js" asp-append-version="true"></script>
+<script src="~/js/areas/teacher/schedule-items/unified-content-loader.js" asp-append-version="true"></script>
 <script src="~/js/areas/teacher/schedule-items/written-content-builder.js" asp-append-version="true"></script>
 
 <!-- Block Type Selection Modal -->

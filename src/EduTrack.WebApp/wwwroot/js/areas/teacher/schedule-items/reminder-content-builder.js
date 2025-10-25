@@ -23,11 +23,19 @@ class ReminderContentBlockManager extends ContentBuilderBase {
     
     init() {
         if (!this.blocksList || !this.emptyState || !this.preview || !this.hiddenField) {
-            console.error('Required elements not found!');
+            console.error('ReminderContentBlockManager: Required elements not found!');
             return;
         }
         
         this.setupReminderSpecificEventListeners();
+        
+        // Force load existing content after initialization
+        setTimeout(() => {
+            if (typeof this.loadExistingContent === 'function') {
+                console.log('ReminderContentBlockManager: Force loading existing content...');
+                this.loadExistingContent();
+            }
+        }, 500);
     }
 
     setupReminderSpecificEventListeners() {
@@ -195,12 +203,86 @@ class ReminderContentBlockManager extends ContentBuilderBase {
         
         return html;
     }
+    
+    // Override loadExistingContent to add debugging
+    loadExistingContent() {
+        console.log('ReminderContentBlockManager: loadExistingContent called');
+        const hiddenFieldValue = this.fieldManager.getFieldValue(this.config.hiddenFieldId);
+        
+        console.log('ReminderContentBlockManager: Hidden field value:', hiddenFieldValue);
+        
+        if (!hiddenFieldValue || !hiddenFieldValue.trim()) {
+            console.log('ReminderContentBlockManager: No hidden field value found');
+            return;
+        }
+        
+        try {
+            this.isLoadingExistingContent = true;
+            
+            const data = JSON.parse(hiddenFieldValue);
+            
+            // Handle blocks for reminder content
+            if (data.blocks && Array.isArray(data.blocks)) {
+                console.log('ReminderContentBlockManager: Found', data.blocks.length, 'blocks');
+                
+                if (this.blocksList) {
+                    const existingBlocks = this.blocksList.querySelectorAll('.content-block, .question-block-template');
+                    existingBlocks.forEach(block => block.remove());
+                }
+                
+                this.blocks = data.blocks;
+                if (this.blocks.length > 0) {
+                    this.nextBlockId = Math.max(...this.blocks.map(b => parseInt(b.id.split('-')[1]) || 0)) + 1;
+                } else {
+                    this.nextBlockId = 1;
+                }
+                
+                console.log('ReminderContentBlockManager: Rendering', this.blocks.length, 'blocks');
+                this.blocks.forEach((block, index) => {
+                    console.log('ReminderContentBlockManager: Rendering block', block.id, 'of type', block.type);
+                    this.renderBlock(block);
+                });
+                
+                this.updateEmptyState();
+                
+                // Populate content fields after rendering with longer delay
+                setTimeout(() => {
+                    this.populateBlockContent();
+                }, 500);
+                
+                // Notify sidebar manager to refresh
+                setTimeout(() => {
+                    if (window.contentSidebarManager) {
+                        window.contentSidebarManager.forceRefresh();
+                    }
+                }, 1000);
+            } else {
+                console.warn('ReminderContentBlockManager: No blocks found in data');
+            }
+            
+            this.isLoadingExistingContent = false;
+            
+            setTimeout(() => {
+                this.updatePreview();
+                
+                // Dispatch content loaded event for sidebar
+                document.dispatchEvent(new CustomEvent('contentLoaded', {
+                    detail: { contentType: this.config.contentType }
+                }));
+            }, 800);
+            
+        } catch (error) {
+            console.error('ReminderContentBlockManager: Error loading existing content:', error);
+            this.isLoadingExistingContent = false;
+        }
+    }
 }
 
 // Initialize when DOM is loaded
 function initializeReminderBlockManager() {
     try {
         if (window.reminderBlockManager) {
+            console.log('ReminderContentBlockManager: Already initialized');
             return;
         }
         
@@ -208,12 +290,15 @@ function initializeReminderBlockManager() {
             'contentBlocksList',
             'emptyBlocksState', 
             'reminderPreview',
-            'reminderContentJson'
+            'reminderContentJson',
+            'contentBlockTemplates'
         ];
         
         let missingElements = [];
         requiredElements.forEach(id => {
-            if (!document.getElementById(id)) {
+            const element = document.getElementById(id);
+            console.log(`ReminderContentBlockManager: Checking element ${id}:`, !!element);
+            if (!element) {
                 missingElements.push(id);
             }
         });
@@ -223,7 +308,9 @@ function initializeReminderBlockManager() {
             return;
         }
         
+        console.log('ReminderContentBlockManager: All required elements found, creating manager...');
         window.reminderBlockManager = new ReminderContentBlockManager();
+        console.log('ReminderContentBlockManager: Successfully initialized', window.reminderBlockManager);
         
     } catch (error) {
         console.error('Error initializing ReminderContentBlockManager:', error);
@@ -243,3 +330,55 @@ if (document.readyState === 'loading') {
 } else {
     setTimeout(initializeReminderBlockManager, 100);
 }
+
+// Make initialization function available globally for manual triggering
+window.initializeReminderBlockManager = initializeReminderBlockManager;
+
+// Also make force load function available
+window.forceLoadReminderContent = () => {
+    if (window.reminderBlockManager && typeof window.reminderBlockManager.loadExistingContent === 'function') {
+        console.log('Force loading reminder content...');
+        window.reminderBlockManager.loadExistingContent();
+    } else {
+        console.log('ReminderBlockManager not available, trying to initialize...');
+        initializeReminderBlockManager();
+        
+        // Try to load content after initialization
+        setTimeout(() => {
+            if (window.reminderBlockManager && typeof window.reminderBlockManager.loadExistingContent === 'function') {
+                window.reminderBlockManager.loadExistingContent();
+            }
+        }, 500);
+    }
+};
+
+// Check initialization status
+window.checkReminderContentSetup = () => {
+    console.log('=== Checking Reminder Content Setup ===');
+    console.log('Required elements:');
+    const requiredElements = [
+        'contentBlocksList',
+        'emptyBlocksState', 
+        'reminderPreview',
+        'reminderContentJson',
+        'contentBlockTemplates'
+    ];
+    
+    requiredElements.forEach(id => {
+        const element = document.getElementById(id);
+        console.log(`- ${id}:`, element ? '✓' : '✗');
+    });
+    
+    console.log('Manager status:', {
+        exists: !!window.reminderBlockManager,
+        hasBlocks: window.reminderBlockManager ? window.reminderBlockManager.blocks?.length || 0 : 0
+    });
+    
+    return {
+        elements: requiredElements.map(id => ({
+            id,
+            exists: !!document.getElementById(id)
+        })),
+        manager: !!window.reminderBlockManager
+    };
+};

@@ -170,12 +170,21 @@ class ContentBuilderBase {
         this.updateHiddenField();
         this.scrollToNewBlock(blockId);
         
-        // Dispatch custom event
+        // Dispatch custom event for sidebar
         this.eventManager.dispatch('blockAdded', {
             blockId: blockId, 
             blockType: type, 
             contentType: this.config.contentType
         });
+        
+        // Notify sidebar manager
+        if (window.contentSidebarManager) {
+            window.contentSidebarManager.addBlockToSidebar({
+                blockId: blockId,
+                blockType: type,
+                contentType: this.config.contentType
+            });
+        }
     }
 
     getDefaultBlockData(type) {
@@ -560,6 +569,11 @@ class ContentBuilderBase {
                 contentType: this.config.contentType
             });
             
+            // Notify sidebar manager
+            if (window.contentSidebarManager) {
+                window.contentSidebarManager.removeBlockFromSidebar(blockId);
+            }
+            
             // Notify step4Manager to refresh add button handlers
             if (window.step4Manager && typeof window.step4Manager.refreshAddButtonHandlers === 'function') {
                 window.step4Manager.refreshAddButtonHandlers();
@@ -673,6 +687,11 @@ class ContentBuilderBase {
                 blockId: blockId, 
                 contentType: this.config.contentType
             });
+            
+            // Notify sidebar manager
+            if (window.contentSidebarManager) {
+                window.contentSidebarManager.updateBlockInSidebar(blockId);
+            }
         } else {
             console.warn('ContentBuilderBase: Block not found for ID:', blockId);
         }
@@ -887,6 +906,13 @@ class ContentBuilderBase {
                 setTimeout(() => {
                     this.populateBlockContent();
                 }, 500); // Increased delay
+                
+                // Notify sidebar manager to refresh
+                setTimeout(() => {
+                    if (window.contentSidebarManager) {
+                        window.contentSidebarManager.forceRefresh();
+                    }
+                }, 1000);
             } else {
             }
             
@@ -894,6 +920,11 @@ class ContentBuilderBase {
             
             setTimeout(() => {
                 this.updatePreview();
+                
+                // Dispatch content loaded event for sidebar
+                document.dispatchEvent(new CustomEvent('contentLoaded', {
+                    detail: { contentType: this.config.contentType }
+                }));
             }, 800); // Increased delay
             
         } catch (error) {

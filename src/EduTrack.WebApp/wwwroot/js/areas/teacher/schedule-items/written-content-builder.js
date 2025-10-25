@@ -73,6 +73,7 @@ class WrittenContentBlockManager extends ContentBuilderBase {
         if (!template) {
             console.error('WrittenContentBlockManager: Template not found for type:', templateType);
             console.log('Available templates:', document.querySelectorAll('#questionBlockTemplates .content-block-template'));
+            console.log('Looking for:', `#questionBlockTemplates .content-block-template[data-type="${templateType}"]`);
             return;
         }
         
@@ -130,6 +131,7 @@ class WrittenContentBlockManager extends ContentBuilderBase {
         });
         document.dispatchEvent(populateEvent);
         
+        console.log('WrittenContentBlockManager: Block rendering completed for', block.id);
         return blockElement;
     }
 
@@ -286,9 +288,13 @@ class WrittenContentBlockManager extends ContentBuilderBase {
 
     // Override loadExistingContent to handle questionBlocks
     loadExistingContent() {
+        console.log('WrittenContentBlockManager: loadExistingContent called');
         const hiddenFieldValue = this.fieldManager.getFieldValue(this.config.hiddenFieldId);
         
+        console.log('WrittenContentBlockManager: Hidden field value:', hiddenFieldValue);
+        
         if (!hiddenFieldValue || !hiddenFieldValue.trim()) {
+            console.log('WrittenContentBlockManager: No hidden field value found');
             return;
         }
         
@@ -299,6 +305,8 @@ class WrittenContentBlockManager extends ContentBuilderBase {
             
             // Handle questionBlocks for written content
             if (data.questionBlocks && Array.isArray(data.questionBlocks)) {
+                console.log('WrittenContentBlockManager: Found', data.questionBlocks.length, 'question blocks');
+                
                 if (this.blocksList) {
                     const existingBlocks = this.blocksList.querySelectorAll('.content-block, .question-block-template');
                     existingBlocks.forEach(block => block.remove());
@@ -311,7 +319,9 @@ class WrittenContentBlockManager extends ContentBuilderBase {
                     this.nextBlockId = 1;
                 }
                 
+                console.log('WrittenContentBlockManager: Rendering', this.blocks.length, 'blocks');
                 this.blocks.forEach((block, index) => {
+                    console.log('WrittenContentBlockManager: Rendering block', block.id, 'of type', block.type);
                     this.renderBlock(block);
                 });
                 
@@ -321,6 +331,13 @@ class WrittenContentBlockManager extends ContentBuilderBase {
                 setTimeout(() => {
                     this.populateBlockContent();
                 }, 500);
+                
+                // Notify sidebar manager to refresh
+                setTimeout(() => {
+                    if (window.contentSidebarManager) {
+                        window.contentSidebarManager.forceRefresh();
+                    }
+                }, 1000);
             } else {
                 console.warn('WrittenContentBlockManager: No questionBlocks found in data');
             }
@@ -329,6 +346,11 @@ class WrittenContentBlockManager extends ContentBuilderBase {
             
             setTimeout(() => {
                 this.updatePreview();
+                
+                // Dispatch content loaded event for sidebar
+                document.dispatchEvent(new CustomEvent('contentLoaded', {
+                    detail: { contentType: this.config.contentType }
+                }));
             }, 800);
             
         } catch (error) {
@@ -352,7 +374,8 @@ function initializeWrittenBlockManager() {
             'contentBlocksList',
             'emptyBlocksState', 
             'writtenPreview',
-            'writtenContentJson'
+            'writtenContentJson',
+            'questionBlockTemplates'
         ];
         
         let missingElements = [];
@@ -373,6 +396,22 @@ function initializeWrittenBlockManager() {
         window.writtenBlockManager = new WrittenContentBlockManager();
         console.log('WrittenContentBlockManager: Successfully initialized', window.writtenBlockManager);
         
+        // Force load existing content after initialization
+        setTimeout(() => {
+            if (window.writtenBlockManager && typeof window.writtenBlockManager.loadExistingContent === 'function') {
+                console.log('WrittenContentBlockManager: Force loading existing content...');
+                window.writtenBlockManager.loadExistingContent();
+            }
+        }, 500);
+        
+        // Also try to load content after a longer delay
+        setTimeout(() => {
+            if (window.writtenBlockManager && typeof window.writtenBlockManager.loadExistingContent === 'function') {
+                console.log('WrittenContentBlockManager: Second attempt to load existing content...');
+                window.writtenBlockManager.loadExistingContent();
+            }
+        }, 2000);
+        
     } catch (error) {
         console.error('Error initializing WrittenContentBlockManager:', error);
     }
@@ -391,3 +430,17 @@ if (document.readyState === 'loading') {
 } else {
     setTimeout(initializeWrittenBlockManager, 100);
 }
+
+// Make initialization function available globally for manual triggering
+window.initializeWrittenBlockManager = initializeWrittenBlockManager;
+
+// Also make force load function available
+window.forceLoadWrittenContent = () => {
+    if (window.writtenBlockManager && typeof window.writtenBlockManager.loadExistingContent === 'function') {
+        console.log('Force loading written content...');
+        window.writtenBlockManager.loadExistingContent();
+    } else {
+        console.log('WrittenBlockManager not available, trying to initialize...');
+        initializeWrittenBlockManager();
+    }
+};

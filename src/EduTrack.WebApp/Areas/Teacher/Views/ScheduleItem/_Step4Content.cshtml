@@ -71,31 +71,50 @@
                 </div>
             </div>
 
-            <div class="builder-content">
-                <div class="content-boxes-container" id="contentBoxesContainer">
-                    <!-- Content boxes will be added here dynamically -->
-                    <div class="empty-state" id="emptyState">
-                        <div class="empty-state-icon">
-                            <i class="fas fa-plus-circle"></i>
-                        </div>
-                        <h4>هنوز محتوایی اضافه نشده</h4>
-                        <p>برای شروع، روی دکمه "افزودن محتوا" کلیک کنید</p>
-                        <div class="quick-templates">
-                            <h5>قالب‌های سریع:</h5>
-                            <div class="template-buttons">
-                                <button type="button" class="btn-teacher btn-secondary" data-template="text">
-                                    <i class="fas fa-font"></i>
-                                    <span>متن ساده</span>
-                                </button>
-                                <button type="button" class="btn-teacher btn-secondary" data-template="image-text">
-                                    <i class="fas fa-image"></i>
-                                    <span>تصویر + متن</span>
-                                </button>
-                                <button type="button" class="btn-teacher btn-secondary" data-template="video-text">
-                                    <i class="fas fa-video"></i>
-                                    <span>ویدیو + متن</span>
-                                </button>
+            <div class="builder-content-layout">
+                <!-- Main Content Area -->
+                <div class="main-content-area">
+                    <div class="content-boxes-container" id="contentBoxesContainer">
+                        <!-- Content boxes will be added here dynamically -->
+                        <div class="empty-state" id="emptyState">
+                            <div class="empty-state-icon">
+                                <i class="fas fa-plus-circle"></i>
                             </div>
+                            <h4>هنوز محتوایی اضافه نشده</h4>
+                            <p>برای شروع، روی دکمه "افزودن محتوا" کلیک کنید</p>
+                            <div class="quick-templates">
+                                <h5>قالب‌های سریع:</h5>
+                                <div class="template-buttons">
+                                    <button type="button" class="btn-teacher btn-secondary" data-template="text">
+                                        <i class="fas fa-font"></i>
+                                        <span>متن ساده</span>
+                                    </button>
+                                    <button type="button" class="btn-teacher btn-secondary" data-template="image-text">
+                                        <i class="fas fa-image"></i>
+                                        <span>تصویر + متن</span>
+                                    </button>
+                                    <button type="button" class="btn-teacher btn-secondary" data-template="video-text">
+                                        <i class="fas fa-video"></i>
+                                        <span>ویدیو + متن</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Fixed Sidebar -->
+                <div class="content-sidebar">
+                    <div class="sidebar-header">
+                        <div class="sidebar-title">
+                            <i class="fas fa-list"></i>
+                            <span>فهرست بلاک‌ها</span>
+                        </div>
+                        <div class="sidebar-count" id="sidebarBlockCount">0</div>
+                    </div>
+                    <div class="sidebar-content">
+                        <div class="blocks-navigation" id="blocksNavigation">
+                            <!-- Block navigation items will be added here dynamically -->
                         </div>
                     </div>
                 </div>
@@ -184,4 +203,6 @@
 <script src="~/js/areas/teacher/shared/block-type-selection-modal.js" asp-append-version="true"></script>
 <script src="~/js/areas/teacher/shared/base-content-blocks.js" asp-append-version="true"></script>
 <script src="~/js/areas/teacher/schedule-items/content-manager-base.js" asp-append-version="true"></script>
+<script src="~/js/areas/teacher/schedule-items/content-sidebar.js" asp-append-version="true"></script>
+<script src="~/js/areas/teacher/schedule-items/unified-content-loader.js" asp-append-version="true"></script>
 <script src="~/js/areas/teacher/schedule-items/step4-content.js" asp-append-version="true"></script>
