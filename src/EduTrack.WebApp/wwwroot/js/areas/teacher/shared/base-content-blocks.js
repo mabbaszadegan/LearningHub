@@ -88,6 +88,27 @@ class SharedContentBlockManager {
         // Handle block actions - use capture phase to avoid conflicts with direct listeners
         document.addEventListener('click', (e) => {
             if (e.target.closest('[data-action]')) {
+                const actionButton = e.target.closest('[data-action]');
+                const action = actionButton.dataset.action;
+                
+                // Skip block-specific actions - let individual block managers handle them
+                const blockSpecificActions = [
+                    // Audio block actions
+                    'start-recording', 'stop-recording', 'play-recording', 
+                    'change-audio', 'audio-upload',
+                    // Image block actions
+                    'change-image', 'image-upload',
+                    // Video block actions
+                    'change-video', 'video-upload',
+                    // Text block actions
+                    'text-formatting', 'create-link', 'insert-code'
+                ];
+                
+                if (blockSpecificActions.includes(action)) {
+                    console.log('SharedContentBlockManager: Skipping block-specific action:', action);
+                    return;
+                }
+                
                 // Check if there's an active content builder that should handle this
                 const activeBuilder = this.getActiveContentBuilder();
                 if (activeBuilder) {
@@ -187,6 +208,25 @@ class SharedContentBlockManager {
         const actionButton = e.target.closest('[data-action]');
         if (!actionButton) return;
         const action = actionButton.dataset.action;
+        
+        // Skip block-specific actions - let individual block managers handle them
+        const blockSpecificActions = [
+            // Audio block actions
+            'start-recording', 'stop-recording', 'play-recording', 
+            'change-audio', 'audio-upload',
+            // Image block actions
+            'change-image', 'image-upload',
+            // Video block actions
+            'change-video', 'video-upload',
+            // Text block actions
+            'text-formatting', 'create-link', 'insert-code'
+        ];
+        
+        if (blockSpecificActions.includes(action)) {
+            console.log('SharedContentBlockManager: Skipping block-specific action in handleBlockAction:', action);
+            return;
+        }
+        
         const blockElement = actionButton.closest('.content-block-template, .question-block-template, .content-block');
         
         if (!blockElement) return;

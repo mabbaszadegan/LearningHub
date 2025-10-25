@@ -429,8 +429,21 @@ class ContentBuilderBase {
         const actionButtons = blockElement.querySelectorAll('[data-action]');
         console.log('ContentBuilderBase: Found action buttons:', actionButtons.length);
         
+        // Define general block actions that ContentBuilderBase should handle
+        const generalBlockActions = [
+            'move-up', 'move-down', 'delete', 'toggle-collapse', 'fullscreen', 'insert-above'
+        ];
+        
         actionButtons.forEach((button, index) => {
             const action = button.dataset.action;
+            console.log(`ContentBuilderBase: Checking button ${index}: ${action}`);
+            
+            // Only handle general block actions, skip block-specific actions
+            if (!generalBlockActions.includes(action)) {
+                console.log(`ContentBuilderBase: Skipping block-specific action: ${action}`);
+                return;
+            }
+            
             console.log(`ContentBuilderBase: Adding listener for button ${index}: ${action}`);
             
             button.addEventListener('click', (e) => {
