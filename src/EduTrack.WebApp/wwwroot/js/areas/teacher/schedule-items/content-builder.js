@@ -170,21 +170,12 @@ class ContentBuilderBase {
         this.updateHiddenField();
         this.scrollToNewBlock(blockId);
         
-        // Dispatch custom event for sidebar
+        // Dispatch custom event for sidebar (event-driven approach - no direct call needed)
         this.eventManager.dispatch('blockAdded', {
             blockId: blockId, 
             blockType: type, 
             contentType: this.config.contentType
         });
-        
-        // Notify sidebar manager
-        if (window.contentSidebarManager) {
-            window.contentSidebarManager.addBlockToSidebar({
-                blockId: blockId,
-                blockType: type,
-                contentType: this.config.contentType
-            });
-        }
     }
 
     getDefaultBlockData(type) {

@@ -131,6 +131,13 @@ if (typeof window !== 'undefined' && !window.ContentSidebarManager) {
         const blockId = blockDetail.blockId;
         const blockType = blockDetail.blockType;
         
+        // Check if block is already in sidebar to prevent duplicates
+        const existingItem = this.sidebar.querySelector(`[data-block-id="${blockId}"]`);
+        if (existingItem) {
+            console.log('ContentSidebarManager: Block', blockId, 'already in sidebar, skipping');
+            return;
+        }
+        
         // Find the actual block element to get more details
         const blockElement = document.querySelector(`[data-block-id="${blockId}"]`);
         if (!blockElement) return;
