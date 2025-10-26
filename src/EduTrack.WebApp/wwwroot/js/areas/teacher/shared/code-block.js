@@ -31,16 +31,20 @@ window.CodeBlockManager = class CodeBlockManager {
             if (e.target.closest('.code-block-settings [data-setting]')) {
                 const setting = e.target.dataset.setting;
                 const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
-                const blockElement = e.target.closest('.content-block-template');
-                this.updateCodeSettings(blockElement, setting, value);
+                const blockElement = e.target.closest('.content-block-template, .content-block');
+                if (blockElement) {
+                    this.updateCodeSettings(blockElement, setting, value);
+                }
             }
         });
 
         // Handle code content changes
         document.addEventListener('input', (e) => {
             if (e.target.classList.contains('code-textarea')) {
-                const blockElement = e.target.closest('.content-block-template');
-                this.handleCodeContentChange(blockElement, e.target.value);
+                const blockElement = e.target.closest('.content-block-template, .content-block');
+                if (blockElement) {
+                    this.handleCodeContentChange(blockElement, e.target.value);
+                }
             }
         });
 
@@ -148,6 +152,41 @@ window.CodeBlockManager = class CodeBlockManager {
         
         this.updateBlockData(blockElement, { [setting]: value });
         this.triggerBlockChange(blockElement);
+        
+        // Also directly sync with content builder
+        this.syncWithContentBuilder(blockElement);
+    }
+    
+    syncWithContentBuilder(blockElement) {
+        // Find the active content builder (reminderBlockManager or writtenBlockManager)
+        const blockId = blockElement.dataset.blockId;
+        const blockData = this.getBlockData(blockElement);
+        
+        // Try reminderBlockManager first
+        if (window.reminderBlockManager && window.reminderBlockManager.blocks) {
+            const blockIndex = window.reminderBlockManager.blocks.findIndex(b => b.id === blockId);
+            if (blockIndex !== -1) {
+                window.reminderBlockManager.blocks[blockIndex].data = {
+                    ...window.reminderBlockManager.blocks[blockIndex].data,
+                    ...blockData
+                };
+                window.reminderBlockManager.updateHiddenField();
+                return;
+            }
+        }
+        
+        // Try writtenBlockManager
+        if (window.writtenBlockManager && window.writtenBlockManager.blocks) {
+            const blockIndex = window.writtenBlockManager.blocks.findIndex(b => b.id === blockId);
+            if (blockIndex !== -1) {
+                window.writtenBlockManager.blocks[blockIndex].data = {
+                    ...window.writtenBlockManager.blocks[blockIndex].data,
+                    ...blockData
+                };
+                window.writtenBlockManager.updateHiddenField();
+                return;
+            }
+        }
     }
 
     updateLanguageBadge(editorContainer, language) {
@@ -326,6 +365,9 @@ window.CodeBlockManager = class CodeBlockManager {
         
         this.updateBlockData(blockElement, { codeContent: content });
         this.triggerBlockChange(blockElement);
+        
+        // Also directly sync with content builder
+        this.syncWithContentBuilder(blockElement);
     }
 
     updateCodeStats(textarea) {
@@ -458,13 +500,16 @@ window.CodeBlockManager = class CodeBlockManager {
     }
 
     triggerBlockChange(blockElement) {
+        const blockData = this.getBlockData(blockElement);
         const event = new CustomEvent('blockContentChanged', {
             detail: {
                 blockElement: blockElement,
-                blockData: this.getBlockData(blockElement)
+                blockData: blockData
             }
         });
+        // Dispatch on both element and document so all listeners can catch it
         blockElement.dispatchEvent(event);
+        document.dispatchEvent(event);
     }
 
     showSuccess(message) {

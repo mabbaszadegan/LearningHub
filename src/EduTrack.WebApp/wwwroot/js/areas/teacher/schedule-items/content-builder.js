@@ -20,6 +20,9 @@ class ContentBuilderBase {
         this.nextBlockId = 1;
         this.isLoadingExistingContent = false;
         
+        // Store pending files separately (File objects can't be JSON stringified)
+        this.pendingFiles = new Map(); // blockId -> File object
+        
         // Initialize shared managers
         this.fieldManager = new FieldManager();
         this.eventManager = new EventManager();
@@ -1064,6 +1067,165 @@ class ContentBuilderBase {
     generateBlockPreview(block) {
         // Use shared preview manager
         return this.previewManager.generateBlockPreview(block);
+    }
+
+    // Upload all pending files to server (works for all content types)
+    async uploadAllPendingFiles() {
+        const pendingBlocks = [];
+        
+        // Find all blocks with pending files
+        for (const block of this.blocks) {
+            const blockElement = document.querySelector(`[data-block-id="${block.id}"]`);
+            if (blockElement) {
+                try {
+                    const blockData = JSON.parse(blockElement.dataset.blockData || '{}');
+                    // Check if we have a pending file for this block
+                    if (this.pendingFiles.has(block.id) || blockData.isPending) {
+                        pendingBlocks.push({ blockElement, blockData, block });
+                    }
+                } catch (e) {
+                    console.error('ContentBuilderBase: Error parsing block data:', e);
+                }
+            }
+        }
+        
+        if (pendingBlocks.length === 0) {
+            return; // No pending files
+        }
+        
+        console.log(`ContentBuilderBase: Uploading ${pendingBlocks.length} pending files...`);
+        
+        // Upload all files
+        for (const { blockElement, blockData, block } of pendingBlocks) {
+            try {
+                const fileId = await this.uploadBlockFile(blockElement, blockData, block.id);
+                if (fileId) {
+                    block.data.fileId = fileId;
+                    block.data.isPending = false;
+                    // Remove from pending files map
+                    this.pendingFiles.delete(block.id);
+                }
+            } catch (error) {
+                console.error('ContentBuilderBase: Error uploading file for block', block.id, error);
+                throw new Error(`خطا در آپلود فایل بلاک ${block.id}: ${error.message}`);
+            }
+        }
+        
+        // Update hidden field after all uploads
+        this.updateHiddenField();
+    }
+    
+    // Helper method to upload a single block's file
+    async uploadBlockFile(blockElement, blockData, blockId) {
+        // Get the file from pending files map
+        let fileToUpload = this.pendingFiles.get(blockId);
+        
+        if (!fileToUpload && blockData.isPending) {
+            console.warn(`ContentBuilderBase: No file found for pending block ${blockId}`);
+            return null;
+        }
+        
+        if (!fileToUpload) return null;
+        
+        this.showUploadProgress(blockElement);
+        
+        try {
+            const formData = new FormData();
+            formData.append('file', fileToUpload);
+            
+            // Determine file type based on block type
+            let fileType = 'image';
+            const blockType = blockElement.dataset.type || '';
+            if (blockType.includes('video')) fileType = 'video';
+            if (blockType.includes('audio')) fileType = 'audio';
+            
+            formData.append('type', fileType);
+            
+            const progressFill = blockElement.querySelector('.progress-fill');
+            
+            const response = await new Promise((resolve, reject) => {
+                const xhr = new XMLHttpRequest();
+                
+                xhr.upload.addEventListener('progress', (e) => {
+                    if (e.lengthComputable && progressFill) {
+                        const percentComplete = (e.loaded / e.total) * 100;
+                        progressFill.style.width = percentComplete + '%';
+                    }
+                });
+                
+                xhr.onload = () => {
+                    if (xhr.status === 200) {
+                        try {
+                            const result = JSON.parse(xhr.responseText);
+                            resolve(result);
+                        } catch (e) {
+                            reject(e);
+                        }
+                    } else {
+                        reject(new Error('Upload failed'));
+                    }
+                };
+                
+                xhr.onerror = () => reject(new Error('Network error'));
+                
+                xhr.open('POST', '/FileUpload/UploadContentFile');
+                xhr.send(formData);
+            });
+            
+            if (response.success) {
+                // Update block data
+                const updatedData = {
+                    fileId: response.data.id,
+                    fileName: response.data.fileName || response.data.originalFileName,
+                    fileUrl: response.data.url,
+                    fileSize: response.data.size,
+                    mimeType: response.data.mimeType,
+                    isPending: false
+                };
+                
+                // Clean old data and update with new data
+                const oldData = JSON.parse(blockElement.dataset.blockData || '{}');
+                delete oldData.localFile;
+                delete oldData.pendingUpload;
+                
+                blockElement.dataset.blockData = JSON.stringify({ ...oldData, ...updatedData });
+                
+                const blockIndex = this.blocks.findIndex(b => b.id === blockElement.dataset.blockId);
+                if (blockIndex !== -1) {
+                    delete this.blocks[blockIndex].data.localFile;
+                    delete this.blocks[blockIndex].data.pendingUpload;
+                    this.blocks[blockIndex].data = { ...this.blocks[blockIndex].data, ...updatedData };
+                }
+                
+                this.hideUploadProgress(blockElement);
+                return response.data.id;
+            } else {
+                throw new Error(response.message || 'Upload failed');
+            }
+        } catch (error) {
+            this.hideUploadProgress(blockElement);
+            throw error;
+        }
+    }
+    
+    // Helper methods for upload progress
+    showUploadProgress(blockElement) {
+        const progressContainer = blockElement.querySelector('.upload-progress');
+        const uploadPlaceholder = blockElement.querySelector('.upload-placeholder');
+        
+        if (progressContainer) {
+            progressContainer.style.display = 'flex';
+        }
+        if (uploadPlaceholder) {
+            uploadPlaceholder.style.display = 'none';
+        }
+    }
+    
+    hideUploadProgress(blockElement) {
+        const progressContainer = blockElement.querySelector('.upload-progress');
+        if (progressContainer) {
+            progressContainer.style.display = 'none';
+        }
     }
 
     // Cleanup method

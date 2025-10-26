@@ -335,6 +335,7 @@ class Step4ContentManager {
 
     // Collect reminder content data
     collectReminderContentData() {
+        debugger
         if (window.reminderBlockManager && typeof window.reminderBlockManager.getContent === 'function') {
             const content = window.reminderBlockManager.getContent();
             // Ensure we return a valid object, not null
@@ -512,13 +513,19 @@ class Step4ContentManager {
 
     // Collect step 4 data for saving
     async collectStep4Data() {
-        // First upload all pending files
-        if (window.reminderBlockManager && typeof window.reminderBlockManager.uploadAllPendingFiles === 'function') {
-            try {
-                await window.reminderBlockManager.uploadAllPendingFiles();
-            } catch (error) {
-                console.error('Error uploading files:', error);
-                throw new Error('خطا در آپلود فایل‌ها: ' + error.message);
+        // First upload all pending files from both reminder and written managers
+        const managers = [];
+        if (window.reminderBlockManager) managers.push(window.reminderBlockManager);
+        if (window.writtenBlockManager) managers.push(window.writtenBlockManager);
+        
+        for (const manager of managers) {
+            if (manager && typeof manager.uploadAllPendingFiles === 'function') {
+                try {
+                    await manager.uploadAllPendingFiles();
+                } catch (error) {
+                    console.error('Error uploading files:', error);
+                    throw new Error('خطا در آپلود فایل‌ها: ' + error.message);
+                }
             }
         }
 

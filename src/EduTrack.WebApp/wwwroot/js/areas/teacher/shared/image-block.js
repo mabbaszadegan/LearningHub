@@ -36,10 +36,12 @@ window.ImageBlockManager = class ImageBlockManager {
             if (e.target.closest('[data-action="change-image"]')) {
                 e.preventDefault();
                 const button = e.target.closest('[data-action="change-image"]');
-                const blockElement = button.closest('.content-block-template');
-                const fileInput = blockElement.querySelector('.file-input');
-                if (fileInput) {
-                    fileInput.click();
+                const blockElement = button.closest('.content-block-template, .content-block');
+                if (blockElement) {
+                    const fileInput = blockElement.querySelector('.file-input');
+                    if (fileInput) {
+                        fileInput.click();
+                    }
                 }
             }
         });
@@ -49,16 +51,20 @@ window.ImageBlockManager = class ImageBlockManager {
             if (e.target.closest('.image-settings [data-setting]')) {
                 const setting = e.target.dataset.setting;
                 const value = e.target.value;
-                const blockElement = e.target.closest('.content-block-template');
-                this.updateImageSettings(blockElement, setting, value);
+                const blockElement = e.target.closest('.content-block-template, .content-block');
+                if (blockElement) {
+                    this.updateImageSettings(blockElement, setting, value);
+                }
             }
         });
 
         // Handle caption changes
         document.addEventListener('input', (e) => {
             if (e.target.closest('.image-caption textarea[data-caption="true"]')) {
-                const blockElement = e.target.closest('.content-block-template');
-                this.updateImageCaption(blockElement, e.target.value);
+                const blockElement = e.target.closest('.content-block-template, .content-block');
+                if (blockElement) {
+                    this.updateImageCaption(blockElement, e.target.value);
+                }
             }
         });
 
@@ -101,12 +107,15 @@ window.ImageBlockManager = class ImageBlockManager {
                 e.preventDefault();
                 e.target.closest('.upload-placeholder').classList.remove('drag-over');
                 
-                const files = e.dataTransfer.files;
-                if (files.length > 0) {
-                    const fileInput = e.target.closest('.content-block-template').querySelector('.file-input');
-                    if (fileInput) {
-                        fileInput.files = files;
-                        this.handleFileUpload(fileInput);
+                const blockElement = e.target.closest('.content-block-template, .content-block');
+                if (blockElement) {
+                    const files = e.dataTransfer.files;
+                    if (files.length > 0) {
+                        const fileInput = blockElement.querySelector('.file-input');
+                        if (fileInput) {
+                            fileInput.files = files;
+                            this.handleFileUpload(fileInput);
+                        }
                     }
                 }
             }
@@ -122,11 +131,14 @@ window.ImageBlockManager = class ImageBlockManager {
             return;
         }
 
-        const blockElement = fileInput.closest('.content-block-template');
-        this.showUploadProgress(blockElement);
+        const blockElement = fileInput.closest('.content-block-template, .content-block');
+        if (!blockElement) {
+            console.error('ImageBlockManager: Block element not found for file upload');
+            return;
+        }
         
-        // Simulate upload process (replace with actual upload)
-        this.simulateUpload(file, blockElement);
+        // Store file locally and show preview (will be uploaded later when save is clicked)
+        this.handleLocalFile(file, blockElement);
     }
 
     validateFile(file) {
@@ -166,48 +178,55 @@ window.ImageBlockManager = class ImageBlockManager {
         }
     }
 
-    simulateUpload(file, blockElement) {
-        // Simulate upload progress
-        const progressFill = blockElement.querySelector('.progress-fill');
-        let progress = 0;
-        
-        const progressInterval = setInterval(() => {
-            progress += Math.random() * 20;
-            if (progress > 100) progress = 100;
-            
-            if (progressFill) {
-                progressFill.style.width = progress + '%';
-            }
-            
-            if (progress >= 100) {
-                clearInterval(progressInterval);
-                this.handleUploadSuccess(file, blockElement);
-            }
-        }, 200);
-    }
-
-    handleUploadSuccess(file, blockElement) {
-        // Create object URL for preview
+    handleLocalFile(file, blockElement) {
+        // Create local object URL for preview
         const objectUrl = URL.createObjectURL(file);
+        const blockId = blockElement.dataset.blockId;
         
-        // Update block data
+        // Update block data (without localFile - will be stored separately)
         this.updateBlockData(blockElement, {
-            fileId: `file_${Date.now()}`,
             fileName: file.name,
             fileUrl: objectUrl,
             fileSize: file.size,
-            mimeType: file.type
+            mimeType: file.type,
+            isPending: true,
+            fileId: null
         });
+        
+        // Store file in content builder's pendingFiles map
+        const activeBuilder = this.findActiveContentBuilder(blockElement);
+        if (activeBuilder && activeBuilder.pendingFiles) {
+            activeBuilder.pendingFiles.set(blockId, file);
+        }
 
         // Show preview
         this.showImagePreview(blockElement, objectUrl);
         
-        // Hide progress
-        this.hideUploadProgress(blockElement);
+        // Sync with content builder
+        this.syncWithContentBuilder(blockElement);
         
         // Trigger change event
         this.triggerBlockChange(blockElement);
     }
+    
+    findActiveContentBuilder(blockElement) {
+        const blockId = blockElement.dataset.blockId;
+        // Try reminderBlockManager first
+        if (window.reminderBlockManager && window.reminderBlockManager.pendingFiles) {
+            if (window.reminderBlockManager.blocks.find(b => b.id === blockId)) {
+                return window.reminderBlockManager;
+            }
+        }
+        // Try writtenBlockManager
+        if (window.writtenBlockManager && window.writtenBlockManager.pendingFiles) {
+            if (window.writtenBlockManager.blocks.find(b => b.id === blockId)) {
+                return window.writtenBlockManager;
+            }
+        }
+        return null;
+    }
+    
+
 
     showImagePreview(blockElement, imageUrl) {
         const previewContainer = blockElement.querySelector('.image-preview');
@@ -217,6 +236,12 @@ window.ImageBlockManager = class ImageBlockManager {
         if (previewContainer && imageElement) {
             imageElement.src = imageUrl;
             previewContainer.style.display = 'block';
+            
+            // Also update the data if not already set
+            const currentData = this.getBlockData(blockElement);
+            if (!currentData.fileUrl) {
+                this.updateBlockData(blockElement, { fileUrl: imageUrl });
+            }
         }
         
         if (uploadPlaceholder) {
@@ -229,6 +254,7 @@ window.ImageBlockManager = class ImageBlockManager {
         
         if (!previewContainer) return;
         
+        // Update the visual preview
         switch (setting) {
             case 'size':
                 previewContainer.className = previewContainer.className.replace(/size-\w+/g, '');
@@ -243,13 +269,59 @@ window.ImageBlockManager = class ImageBlockManager {
                 break;
         }
         
+        // IMPORTANT: Update the block data with the new setting value
+        this.updateBlockData(blockElement, { [setting]: value });
+        
+        // Trigger change event to notify content builder immediately
         this.triggerBlockChange(blockElement);
+        
+        // Also directly update content builder to ensure data is saved in blocks array
+        this.syncWithContentBuilder(blockElement);
+    }
+    
+    syncWithContentBuilder(blockElement) {
+        // Find the active content builder (reminderBlockManager or writtenBlockManager)
+        const blockId = blockElement.dataset.blockId;
+        const blockData = this.getBlockData(blockElement);
+        
+        // Try reminderBlockManager first
+        if (window.reminderBlockManager && window.reminderBlockManager.blocks) {
+            const blockIndex = window.reminderBlockManager.blocks.findIndex(b => b.id === blockId);
+            if (blockIndex !== -1) {
+                // Update the block data in the array
+                window.reminderBlockManager.blocks[blockIndex].data = {
+                    ...window.reminderBlockManager.blocks[blockIndex].data,
+                    ...blockData
+                };
+                // Update hidden field immediately
+                window.reminderBlockManager.updateHiddenField();
+                return;
+            }
+        }
+        
+        // Try writtenBlockManager
+        if (window.writtenBlockManager && window.writtenBlockManager.blocks) {
+            const blockIndex = window.writtenBlockManager.blocks.findIndex(b => b.id === blockId);
+            if (blockIndex !== -1) {
+                // Update the block data in the array
+                window.writtenBlockManager.blocks[blockIndex].data = {
+                    ...window.writtenBlockManager.blocks[blockIndex].data,
+                    ...blockData
+                };
+                // Update hidden field immediately
+                window.writtenBlockManager.updateHiddenField();
+                return;
+            }
+        }
     }
 
     updateImageCaption(blockElement, caption) {
         // Update caption in block data
         this.updateBlockData(blockElement, { caption: caption });
         this.triggerBlockChange(blockElement);
+        
+        // Also directly sync with content builder
+        this.syncWithContentBuilder(blockElement);
     }
 
     updateBlockData(blockElement, data) {
@@ -277,13 +349,16 @@ window.ImageBlockManager = class ImageBlockManager {
     }
 
     triggerBlockChange(blockElement) {
+        const blockData = this.getBlockData(blockElement);
         const event = new CustomEvent('blockContentChanged', {
             detail: {
                 blockElement: blockElement,
-                blockData: this.getBlockData(blockElement)
+                blockData: blockData
             }
         });
+        // Dispatch on both element and document so all listeners can catch it
         blockElement.dispatchEvent(event);
+        document.dispatchEvent(event);
     }
 
     showError(message) {

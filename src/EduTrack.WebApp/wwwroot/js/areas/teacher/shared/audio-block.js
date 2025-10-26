@@ -43,10 +43,12 @@ window.AudioBlockManager = class AudioBlockManager {
             if (e.target.closest('[data-action="change-audio"]')) {
                 e.preventDefault();
                 const button = e.target.closest('[data-action="change-audio"]');
-                const blockElement = button.closest('.content-block-template');
-                const fileInput = blockElement.querySelector('.file-input');
-                if (fileInput) {
-                    fileInput.click();
+                const blockElement = button.closest('.content-block-template, .content-block');
+                if (blockElement) {
+                    const fileInput = blockElement.querySelector('.file-input');
+                    if (fileInput) {
+                        fileInput.click();
+                    }
                 }
             }
         });
@@ -56,30 +58,38 @@ window.AudioBlockManager = class AudioBlockManager {
             if (e.target.closest('[data-action="start-recording"]')) {
                 e.preventDefault();
                 const button = e.target.closest('[data-action="start-recording"]');
-                const blockElement = button.closest('.content-block-template');
-                this.startRecording(blockElement);
+                const blockElement = button.closest('.content-block-template, .content-block');
+                if (blockElement) {
+                    this.startRecording(blockElement);
+                }
             }
             
             if (e.target.closest('[data-action="stop-recording"]')) {
                 e.preventDefault();
                 const button = e.target.closest('[data-action="stop-recording"]');
-                const blockElement = button.closest('.content-block-template');
-                this.stopRecording(blockElement);
+                const blockElement = button.closest('.content-block-template, .content-block');
+                if (blockElement) {
+                    this.stopRecording(blockElement);
+                }
             }
             
             if (e.target.closest('[data-action="play-recording"]')) {
                 e.preventDefault();
                 const button = e.target.closest('[data-action="play-recording"]');
-                const blockElement = button.closest('.content-block-template');
-                this.playRecording(blockElement);
+                const blockElement = button.closest('.content-block-template, .content-block');
+                if (blockElement) {
+                    this.playRecording(blockElement);
+                }
             }
         });
 
         // Handle caption changes
         document.addEventListener('input', (e) => {
             if (e.target.closest('.audio-caption textarea[data-caption="true"]')) {
-                const blockElement = e.target.closest('.content-block-template');
-                this.updateAudioCaption(blockElement, e.target.value);
+                const blockElement = e.target.closest('.content-block-template, .content-block');
+                if (blockElement) {
+                    this.updateAudioCaption(blockElement, e.target.value);
+                }
             }
         });
 
@@ -135,12 +145,15 @@ window.AudioBlockManager = class AudioBlockManager {
                 e.preventDefault();
                 e.target.closest('.audio-upload-area .upload-placeholder').classList.remove('drag-over');
                 
-                const files = e.dataTransfer.files;
-                if (files.length > 0) {
-                    const fileInput = e.target.closest('.content-block-template').querySelector('.file-input');
-                    if (fileInput) {
-                        fileInput.files = files;
-                        this.handleFileUpload(fileInput);
+                const blockElement = e.target.closest('.content-block-template, .content-block');
+                if (blockElement) {
+                    const files = e.dataTransfer.files;
+                    if (files.length > 0) {
+                        const fileInput = blockElement.querySelector('.file-input');
+                        if (fileInput) {
+                            fileInput.files = files;
+                            this.handleFileUpload(fileInput);
+                        }
                     }
                 }
             }
@@ -156,13 +169,63 @@ window.AudioBlockManager = class AudioBlockManager {
             return;
         }
 
-        const blockElement = fileInput.closest('.content-block-template');
-        this.showUploadProgress(blockElement);
+        const blockElement = fileInput.closest('.content-block-template, .content-block');
+        if (!blockElement) {
+            console.error('AudioBlockManager: Block element not found for file upload');
+            return;
+        }
         
-        // Simulate upload process (replace with actual upload)
-        this.simulateUpload(file, blockElement);
+        // Store file locally and show preview (will be uploaded later when save is clicked)
+        this.handleLocalFile(file, blockElement);
     }
+    
+    handleLocalFile(file, blockElement) {
+        // Create local object URL for preview
+        const objectUrl = URL.createObjectURL(file);
+        const blockId = blockElement.dataset.blockId;
+        
+        // Update block data (without localFile - will be stored separately)
+        this.updateBlockData(blockElement, {
+            fileName: file.name,
+            fileUrl: objectUrl,
+            fileSize: file.size,
+            mimeType: file.type,
+            isRecorded: false,
+            isPending: true,
+            fileId: null
+        });
+        
+        // Store file in content builder's pendingFiles map
+        const activeBuilder = this.findActiveContentBuilder(blockElement);
+        if (activeBuilder && activeBuilder.pendingFiles) {
+            activeBuilder.pendingFiles.set(blockId, file);
+        }
 
+        // Show preview
+        this.showAudioPreview(blockElement, objectUrl);
+        
+        // Sync with content builder
+        this.syncWithContentBuilder(blockElement);
+        
+        // Trigger change event
+        this.triggerBlockChange(blockElement);
+    }
+    
+    findActiveContentBuilder(blockElement) {
+        const blockId = blockElement.dataset.blockId;
+        if (window.reminderBlockManager && window.reminderBlockManager.pendingFiles) {
+            if (window.reminderBlockManager.blocks.find(b => b.id === blockId)) {
+                return window.reminderBlockManager;
+            }
+        }
+        if (window.writtenBlockManager && window.writtenBlockManager.pendingFiles) {
+            if (window.writtenBlockManager.blocks.find(b => b.id === blockId)) {
+                return window.writtenBlockManager;
+            }
+        }
+        return null;
+    }
+    
     validateFile(file) {
         // Check file type
         if (!this.allowedTypes.includes(file.type)) {
@@ -200,49 +263,6 @@ window.AudioBlockManager = class AudioBlockManager {
         }
     }
 
-    simulateUpload(file, blockElement) {
-        // Simulate upload progress
-        const progressFill = blockElement.querySelector('.progress-fill');
-        let progress = 0;
-        
-        const progressInterval = setInterval(() => {
-            progress += Math.random() * 20;
-            if (progress > 100) progress = 100;
-            
-            if (progressFill) {
-                progressFill.style.width = progress + '%';
-            }
-            
-            if (progress >= 100) {
-                clearInterval(progressInterval);
-                this.handleUploadSuccess(file, blockElement);
-            }
-        }, 200);
-    }
-
-    handleUploadSuccess(file, blockElement) {
-        // Create object URL for preview
-        const objectUrl = URL.createObjectURL(file);
-        
-        // Update block data
-        this.updateBlockData(blockElement, {
-            fileId: `file_${Date.now()}`,
-            fileName: file.name,
-            fileUrl: objectUrl,
-            fileSize: file.size,
-            mimeType: file.type,
-            isRecorded: false
-        });
-
-        // Show preview
-        this.showAudioPreview(blockElement, objectUrl);
-        
-        // Hide progress
-        this.hideUploadProgress(blockElement);
-        
-        // Trigger change event
-        this.triggerBlockChange(blockElement);
-    }
 
     showAudioPreview(blockElement, audioUrl) {
         const previewContainer = blockElement.querySelector('.audio-preview');
@@ -260,7 +280,7 @@ window.AudioBlockManager = class AudioBlockManager {
     }
 
     handleAudioLoaded(audioElement) {
-        const blockElement = audioElement.closest('.content-block-template');
+        const blockElement = audioElement.closest('.content-block-template, .content-block');
         const blockData = this.getBlockData(blockElement);
         
         // Update block data with audio metadata
@@ -294,19 +314,34 @@ window.AudioBlockManager = class AudioBlockManager {
                 const audioBlob = new Blob(this.audioChunks, { type: 'audio/wav' });
                 const audioUrl = URL.createObjectURL(audioBlob);
                 
-                // Update block data
+                // Create a File object from the blob
+                const recordingFile = new File([audioBlob], `recording_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.wav`, { type: 'audio/wav' });
+                
+                const blockId = blockElement.dataset.blockId;
+                
+                // Update block data (without localFile - will be stored separately)
                 this.updateBlockData(blockElement, {
-                    fileId: `recording_${Date.now()}`,
                     fileName: `recording_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.wav`,
                     fileUrl: audioUrl,
                     fileSize: audioBlob.size,
                     mimeType: 'audio/wav',
                     isRecorded: true,
+                    isPending: true,
+                    fileId: null,
                     duration: (Date.now() - this.recordingStartTime) / 1000
                 });
                 
+                // Store file in content builder's pendingFiles map
+                const activeBuilder = this.findActiveContentBuilder(blockElement);
+                if (activeBuilder && activeBuilder.pendingFiles) {
+                    activeBuilder.pendingFiles.set(blockId, recordingFile);
+                }
+                
                 // Show preview
                 this.showAudioPreview(blockElement, audioUrl);
+                
+                // Sync with content builder
+                this.syncWithContentBuilder(blockElement);
                 
                 // Trigger change event
                 this.triggerBlockChange(blockElement);
@@ -386,6 +421,41 @@ window.AudioBlockManager = class AudioBlockManager {
         // Update caption in block data
         this.updateBlockData(blockElement, { caption: caption });
         this.triggerBlockChange(blockElement);
+        
+        // Also directly sync with content builder
+        this.syncWithContentBuilder(blockElement);
+    }
+    
+    syncWithContentBuilder(blockElement) {
+        // Find the active content builder (reminderBlockManager or writtenBlockManager)
+        const blockId = blockElement.dataset.blockId;
+        const blockData = this.getBlockData(blockElement);
+        
+        // Try reminderBlockManager first
+        if (window.reminderBlockManager && window.reminderBlockManager.blocks) {
+            const blockIndex = window.reminderBlockManager.blocks.findIndex(b => b.id === blockId);
+            if (blockIndex !== -1) {
+                window.reminderBlockManager.blocks[blockIndex].data = {
+                    ...window.reminderBlockManager.blocks[blockIndex].data,
+                    ...blockData
+                };
+                window.reminderBlockManager.updateHiddenField();
+                return;
+            }
+        }
+        
+        // Try writtenBlockManager
+        if (window.writtenBlockManager && window.writtenBlockManager.blocks) {
+            const blockIndex = window.writtenBlockManager.blocks.findIndex(b => b.id === blockId);
+            if (blockIndex !== -1) {
+                window.writtenBlockManager.blocks[blockIndex].data = {
+                    ...window.writtenBlockManager.blocks[blockIndex].data,
+                    ...blockData
+                };
+                window.writtenBlockManager.updateHiddenField();
+                return;
+            }
+        }
     }
 
     updateBlockData(blockElement, data) {
@@ -413,13 +483,16 @@ window.AudioBlockManager = class AudioBlockManager {
     }
 
     triggerBlockChange(blockElement) {
+        const blockData = this.getBlockData(blockElement);
         const event = new CustomEvent('blockContentChanged', {
             detail: {
                 blockElement: blockElement,
-                blockData: this.getBlockData(blockElement)
+                blockData: blockData
             }
         });
+        // Dispatch on both element and document so all listeners can catch it
         blockElement.dispatchEvent(event);
+        document.dispatchEvent(event);
     }
 
     showError(message) {
