@@ -18,8 +18,13 @@ window.ImageBlockManager = class ImageBlockManager {
     init() {
         if (this.isInitialized) return;
         
-        this.setupEventListeners();
-        this.setupDragAndDrop();
+        // Only setup global listeners once
+        if (!window._imageBlockListenersSetup) {
+            this.setupEventListeners();
+            this.setupDragAndDrop();
+            window._imageBlockListenersSetup = true;
+        }
+        
         this.isInitialized = true;
     }
 

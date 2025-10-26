@@ -54,6 +54,32 @@ class ContentBuilderBase {
         this.setupSyncManager();
         this.loadExistingContent();
     }
+    
+    // Setup global document listeners only once
+    static setupGlobalDocumentListeners() {
+        if (window._contentBuilderGlobalListenersSetup) {
+            return;
+        }
+        
+        window._contentBuilderGlobalListenersSetup = true;
+        
+        // Setup global blockContentChanged listener
+        document.addEventListener('blockContentChanged', (e) => {
+            // Forward to all active content builders
+            if (window.reminderBlockManager && e.detail.blockElement) {
+                const blockId = e.detail.blockElement.dataset?.blockId;
+                if (window.reminderBlockManager.blocks?.find(b => b.id === blockId)) {
+                    window.reminderBlockManager.handleBlockContentChanged(e.detail);
+                }
+            }
+            if (window.writtenBlockManager && e.detail.blockElement) {
+                const blockId = e.detail.blockElement.dataset?.blockId;
+                if (window.writtenBlockManager.blocks?.find(b => b.id === blockId)) {
+                    window.writtenBlockManager.handleBlockContentChanged(e.detail);
+                }
+            }
+        });
+    }
 
     setupFieldManager() {
         // Register fields with validation
@@ -93,6 +119,9 @@ class ContentBuilderBase {
     }
 
     setupEventListeners() {
+        // Setup global document listeners once
+        ContentBuilderBase.setupGlobalDocumentListeners();
+        
         // Block actions (move up, move down, delete)
         this.eventManager.addListener('click', (e) => {
             
@@ -115,20 +144,6 @@ class ContentBuilderBase {
         // Listen for block content changes from specific block managers
         this.eventManager.addListener('blockContentChanged', (e) => {
             this.handleBlockContentChanged(e.detail);
-        });
-        
-        // Also listen on document for blockContentChanged events
-        document.addEventListener('blockContentChanged', (e) => {
-            this.handleBlockContentChanged(e.detail);
-        });
-        
-        // Direct input listener for CKEditor and rich-text-editor
-        document.addEventListener('input', (e) => {
-            if (e.target.classList.contains('ckeditor-editor')) {
-                this.handleCKEditorInput(e.target);
-            } else if (e.target.classList.contains('rich-text-editor')) {
-                this.handleRichTextInput(e.target);
-            }
         });
 
         // Settings changes

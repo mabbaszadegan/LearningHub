@@ -25,8 +25,13 @@ window.AudioBlockManager = class AudioBlockManager {
     init() {
         if (this.isInitialized) return;
         
-        this.setupEventListeners();
-        this.setupDragAndDrop();
+        // Only setup global listeners once
+        if (!window._audioBlockListenersSetup) {
+            this.setupEventListeners();
+            this.setupDragAndDrop();
+            window._audioBlockListenersSetup = true;
+        }
+        
         this.isInitialized = true;
     }
 

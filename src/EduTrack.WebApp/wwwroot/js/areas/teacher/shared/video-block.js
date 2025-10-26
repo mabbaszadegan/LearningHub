@@ -18,8 +18,13 @@ window.VideoBlockManager = class VideoBlockManager {
     init() {
         if (this.isInitialized) return;
         
-        this.setupEventListeners();
-        this.setupDragAndDrop();
+        // Only setup global listeners once
+        if (!window._videoBlockListenersSetup) {
+            this.setupEventListeners();
+            this.setupDragAndDrop();
+            window._videoBlockListenersSetup = true;
+        }
+        
         this.isInitialized = true;
     }
 

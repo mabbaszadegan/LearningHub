@@ -8,6 +8,7 @@ class Step4ContentManager {
         this.formManager = formManager;
         this.contentBuilder = null;
         this.selectedContentType = null;
+        this.isSyncingContent = false; // Flag to prevent recursive syncing
 
         // Initialize shared managers
         this.fieldManager = new FieldManager();
@@ -54,9 +55,18 @@ class Step4ContentManager {
     }
 
     setupSyncManager() {
-        // Register sync callback for content synchronization
+        // Only sync on significant events, not on every content change
+        // This prevents excessive calls to collectReminderContentData
+        
+        // Register sync callback for content synchronization with debouncing
         this.syncManager.registerSyncCallback('syncContentWithMainField', () => {
-            this.syncContentWithMainField();
+            // Debounce the sync to prevent excessive calls
+            if (this.syncTimeout) {
+                clearTimeout(this.syncTimeout);
+            }
+            this.syncTimeout = setTimeout(() => {
+                this.syncContentWithMainField();
+            }, 300); // Wait 300ms before syncing
         });
 
         // Setup automatic sync
@@ -335,7 +345,6 @@ class Step4ContentManager {
 
     // Collect reminder content data
     collectReminderContentData() {
-        debugger
         if (window.reminderBlockManager && typeof window.reminderBlockManager.getContent === 'function') {
             const content = window.reminderBlockManager.getContent();
             // Ensure we return a valid object, not null
@@ -462,20 +471,28 @@ class Step4ContentManager {
 
     // Manual method to sync content with main field
     syncContentWithMainField() {
-        // Force sync from reminder block manager if available
-        if (window.reminderBlockManager && typeof window.reminderBlockManager.forceSyncWithMainField === 'function') {
-            window.reminderBlockManager.forceSyncWithMainField();
-        }
+        // Skip if already syncing to prevent infinite loops
+        if (this.isSyncingContent) return;
+        
+        this.isSyncingContent = true;
+        try {
+            // Force sync from reminder block manager if available
+            if (window.reminderBlockManager && typeof window.reminderBlockManager.forceSyncWithMainField === 'function') {
+                window.reminderBlockManager.forceSyncWithMainField();
+            }
 
-        // Force sync from written block manager if available
-        if (window.writtenBlockManager && typeof window.writtenBlockManager.forceSyncWithMainField === 'function') {
-            window.writtenBlockManager.forceSyncWithMainField();
-        }
+            // Force sync from written block manager if available
+            if (window.writtenBlockManager && typeof window.writtenBlockManager.forceSyncWithMainField === 'function') {
+                window.writtenBlockManager.forceSyncWithMainField();
+            }
 
-        const contentData = this.collectContentData();
-        if (contentData) {
-            const contentJson = typeof contentData === 'string' ? contentData : JSON.stringify(contentData);
-            this.fieldManager.updateField('contentJson', contentJson);
+            const contentData = this.collectContentData();
+            if (contentData) {
+                const contentJson = typeof contentData === 'string' ? contentData : JSON.stringify(contentData);
+                this.fieldManager.updateField('contentJson', contentJson);
+            }
+        } finally {
+            this.isSyncingContent = false;
         }
     }
 
