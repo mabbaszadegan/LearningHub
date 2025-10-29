@@ -89,42 +89,41 @@
     padding: 1rem;
 }
 
-/* Question Settings */
+/* Question Settings - aligned with shared minimal styles */
 .question-settings {
-    margin-bottom: 1rem;
-    padding: 0.75rem;
-    background: #f8f9fa;
+    margin-bottom: 12px;
+    padding: 10px;
+    background: #f9fafb;
     border-radius: 6px;
-    border: 1px solid #e9ecef;
+    border: 1px solid #e5e7eb;
 }
 
 .settings-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 1rem;
-    align-items: center;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 8px 12px;
+    align-items: end;
 }
 
 .setting-item {
     display: flex;
-    align-items: center;
-    gap: 0.5rem;
+    flex-direction: column;
+    gap: 4px;
 }
 
 .setting-item label {
-    font-size: 0.875rem;
+    font-size: 12px;
     font-weight: 500;
-    color: #495057;
+    color: #374151;
     margin: 0;
-    white-space: nowrap;
 }
 
 .checkbox-label {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 6px;
     cursor: pointer;
-    font-size: 0.875rem;
+    font-size: 12px;
 }
 
 .checkbox-label input[type="checkbox"] {
@@ -132,16 +131,17 @@
 }
 
 .form-control-sm {
-    padding: 0.375rem 0.5rem;
-    font-size: 0.875rem;
-    border: 1px solid #ced4da;
+    padding: 6px 8px;
+    font-size: 0.9rem;
+    border: 1px solid #e5e7eb;
     border-radius: 4px;
-    width: 80px;
+    width: 100%;
 }
 
 .form-control-sm:focus {
-    border-color: #007bff;
-    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    border-color: #667eea;
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+    outline: none;
 }
 
 /* Text Editor */

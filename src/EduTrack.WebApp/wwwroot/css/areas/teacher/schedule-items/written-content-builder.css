@@ -83,18 +83,20 @@
     transition: all 0.2s ease;
 }
 
-/* Question Settings - Compact */
+/* Question Settings - Minimal */
 .question-settings {
-    background: #f8fafc;
-    padding: 12px;
-    border-radius: 4px;
+    background: #f9fafb;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #e5e7eb;
     margin-bottom: 12px;
 }
 
 .settings-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 8px 12px;
+    align-items: end;
 }
 
 .setting-item {
@@ -333,9 +335,10 @@
 .form-select-sm {
     padding: 6px 8px;
     font-size: 0.9rem;
-    border: 1px solid #e9ecef;
+    border: 1px solid #e5e7eb;
     border-radius: 4px;
     outline: none;
+    width: 100%;
 }
 
 .form-control-sm:focus,
