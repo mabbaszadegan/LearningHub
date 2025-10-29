@@ -93,7 +93,6 @@ if (typeof window !== 'undefined' && !window.ContentSidebarManager) {
         
         // Listen for content loaded events
         document.addEventListener('contentLoaded', (e) => {
-            console.log('ContentSidebarManager: Content loaded event received');
             setTimeout(() => {
                 this.updateSidebar();
             }, 200);
@@ -134,7 +133,6 @@ if (typeof window !== 'undefined' && !window.ContentSidebarManager) {
         // Check if block is already in sidebar to prevent duplicates
         const existingItem = this.sidebar.querySelector(`[data-block-id="${blockId}"]`);
         if (existingItem) {
-            console.log('ContentSidebarManager: Block', blockId, 'already in sidebar, skipping');
             return;
         }
         
@@ -461,8 +459,6 @@ if (typeof window !== 'undefined' && !window.ContentSidebarManager) {
         // Rebuild sidebar from current blocks
         const blockElements = document.querySelectorAll('.content-block, .question-block-template');
         
-        console.log('ContentSidebarManager: Found', blockElements.length, 'blocks to add to sidebar');
-        
         if (blockElements.length === 0) {
             this.showEmptyState();
             this.updateSidebarCount();
@@ -480,8 +476,6 @@ if (typeof window !== 'undefined' && !window.ContentSidebarManager) {
         sortedBlocks.forEach((blockElement, index) => {
             const blockId = blockElement.dataset.blockId;
             const blockType = blockElement.dataset.type;
-            
-            console.log('ContentSidebarManager: Processing block', blockId, 'of type', blockType);
             
             if (blockId && blockType) {
                 const blockData = this.extractBlockData(blockElement, blockType);
@@ -504,7 +498,6 @@ if (typeof window !== 'undefined' && !window.ContentSidebarManager) {
         });
 
         this.updateSidebarCount();
-        console.log('ContentSidebarManager: Sidebar updated with', addedCount, 'blocks');
     }
 
     showEmptyState() {
@@ -538,10 +531,8 @@ if (typeof window !== 'undefined' && !window.ContentSidebarManager) {
         const sidebarItems = this.sidebar.querySelectorAll('.block-nav-item');
         
         if (blockElements.length > 0 && sidebarItems.length === 0) {
-            console.log('ContentSidebarManager: Blocks exist but sidebar is empty, refreshing...');
             this.updateSidebar();
         } else if (blockElements.length > 0 && sidebarItems.length !== blockElements.length) {
-            console.log('ContentSidebarManager: Block count mismatch, refreshing...');
             this.updateSidebar();
         }
     }
@@ -550,24 +541,14 @@ if (typeof window !== 'undefined' && !window.ContentSidebarManager) {
     debugSidebarState() {
         const blockElements = document.querySelectorAll('.content-block, .question-block-template');
         const sidebarItems = this.sidebar.querySelectorAll('.block-nav-item');
-        
-        console.log('ContentSidebarManager Debug:', {
-            blocksInDOM: blockElements.length,
-            sidebarItems: sidebarItems.length,
-            sidebarExists: !!this.sidebar,
-            sidebarCount: this.blocks.length,
-            sidebarCountElement: this.sidebarCount ? this.sidebarCount.textContent : 'N/A'
-        });
+     
         
         if (blockElements.length > 0) {
-            console.log('Block IDs in DOM:', Array.from(blockElements).map(el => el.dataset.blockId));
         }
         
         if (sidebarItems.length > 0) {
-            console.log('Sidebar item IDs:', Array.from(sidebarItems).map(el => el.dataset.blockId));
         }
         
-        console.log('Blocks array:', this.blocks.map(b => ({ id: b.id, type: b.type })));
     }
 
     // Cleanup method
@@ -596,7 +577,6 @@ function initializeContentSidebar() {
         }
 
         window.contentSidebarManager = new ContentSidebarManager();
-        console.log('ContentSidebarManager: Successfully initialized');
         
     } catch (error) {
         console.error('Error initializing ContentSidebarManager:', error);

@@ -32,7 +32,6 @@ class ReminderContentBlockManager extends ContentBuilderBase {
         // Force load existing content after initialization
         setTimeout(() => {
             if (typeof this.loadExistingContent === 'function') {
-                console.log('ReminderContentBlockManager: Force loading existing content...');
                 this.loadExistingContent();
             }
         }, 500);
@@ -41,14 +40,11 @@ class ReminderContentBlockManager extends ContentBuilderBase {
     setupReminderSpecificEventListeners() {
         // Listen for insert-above events
         this.eventManager.addListener('insertBlockAbove', (e) => {
-            console.log('ReminderContentBlockManager: insertBlockAbove event received', e.detail);
             this.handleInsertBlockAbove(e.detail.blockElement);
         });
     }
 
     handleInsertBlockAbove(blockElement) {
-        console.log('ReminderContentBlockManager: handleInsertBlockAbove called for block:', blockElement.dataset.blockId);
-        
         // Store the reference to the block above which we want to insert
         this.insertAboveBlock = blockElement;
         
@@ -206,13 +202,10 @@ class ReminderContentBlockManager extends ContentBuilderBase {
     
     // Override loadExistingContent to add debugging
     loadExistingContent() {
-        console.log('ReminderContentBlockManager: loadExistingContent called');
         const hiddenFieldValue = this.fieldManager.getFieldValue(this.config.hiddenFieldId);
         
-        console.log('ReminderContentBlockManager: Hidden field value:', hiddenFieldValue);
         
         if (!hiddenFieldValue || !hiddenFieldValue.trim()) {
-            console.log('ReminderContentBlockManager: No hidden field value found');
             return;
         }
         
@@ -223,7 +216,6 @@ class ReminderContentBlockManager extends ContentBuilderBase {
             
             // Handle blocks for reminder content
             if (data.blocks && Array.isArray(data.blocks)) {
-                console.log('ReminderContentBlockManager: Found', data.blocks.length, 'blocks');
                 
                 if (this.blocksList) {
                     const existingBlocks = this.blocksList.querySelectorAll('.content-block, .question-block-template');
@@ -237,9 +229,7 @@ class ReminderContentBlockManager extends ContentBuilderBase {
                     this.nextBlockId = 1;
                 }
                 
-                console.log('ReminderContentBlockManager: Rendering', this.blocks.length, 'blocks');
                 this.blocks.forEach((block, index) => {
-                    console.log('ReminderContentBlockManager: Rendering block', block.id, 'of type', block.type);
                     this.renderBlock(block);
                 });
                 
@@ -282,7 +272,6 @@ class ReminderContentBlockManager extends ContentBuilderBase {
 function initializeReminderBlockManager() {
     try {
         if (window.reminderBlockManager) {
-            console.log('ReminderContentBlockManager: Already initialized');
             return;
         }
         
@@ -297,7 +286,6 @@ function initializeReminderBlockManager() {
         let missingElements = [];
         requiredElements.forEach(id => {
             const element = document.getElementById(id);
-            console.log(`ReminderContentBlockManager: Checking element ${id}:`, !!element);
             if (!element) {
                 missingElements.push(id);
             }
@@ -308,9 +296,7 @@ function initializeReminderBlockManager() {
             return;
         }
         
-        console.log('ReminderContentBlockManager: All required elements found, creating manager...');
         window.reminderBlockManager = new ReminderContentBlockManager();
-        console.log('ReminderContentBlockManager: Successfully initialized', window.reminderBlockManager);
         
     } catch (error) {
         console.error('Error initializing ReminderContentBlockManager:', error);
@@ -337,10 +323,8 @@ window.initializeReminderBlockManager = initializeReminderBlockManager;
 // Also make force load function available
 window.forceLoadReminderContent = () => {
     if (window.reminderBlockManager && typeof window.reminderBlockManager.loadExistingContent === 'function') {
-        console.log('Force loading reminder content...');
         window.reminderBlockManager.loadExistingContent();
     } else {
-        console.log('ReminderBlockManager not available, trying to initialize...');
         initializeReminderBlockManager();
         
         // Try to load content after initialization
@@ -354,8 +338,6 @@ window.forceLoadReminderContent = () => {
 
 // Check initialization status
 window.checkReminderContentSetup = () => {
-    console.log('=== Checking Reminder Content Setup ===');
-    console.log('Required elements:');
     const requiredElements = [
         'contentBlocksList',
         'emptyBlocksState', 
@@ -366,13 +348,8 @@ window.checkReminderContentSetup = () => {
     
     requiredElements.forEach(id => {
         const element = document.getElementById(id);
-        console.log(`- ${id}:`, element ? '✓' : '✗');
     });
     
-    console.log('Manager status:', {
-        exists: !!window.reminderBlockManager,
-        hasBlocks: window.reminderBlockManager ? window.reminderBlockManager.blocks?.length || 0 : 0
-    });
     
     return {
         elements: requiredElements.map(id => ({

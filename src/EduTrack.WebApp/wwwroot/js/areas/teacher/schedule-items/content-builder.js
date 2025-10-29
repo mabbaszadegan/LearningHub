@@ -432,12 +432,8 @@ class ContentBuilderBase {
     }
 
     addDirectEventListeners(blockElement) {
-        console.log('ContentBuilderBase: Adding direct event listeners to block:', blockElement.dataset.blockId);
-        
         // Add direct event listeners to action buttons
         const actionButtons = blockElement.querySelectorAll('[data-action]');
-        console.log('ContentBuilderBase: Found action buttons:', actionButtons.length);
-        
         // Define general block actions that ContentBuilderBase should handle
         const generalBlockActions = [
             'move-up', 'move-down', 'delete', 'toggle-collapse', 'fullscreen', 'insert-above'
@@ -445,21 +441,14 @@ class ContentBuilderBase {
         
         actionButtons.forEach((button, index) => {
             const action = button.dataset.action;
-            console.log(`ContentBuilderBase: Checking button ${index}: ${action}`);
-            
             // Only handle general block actions, skip block-specific actions
             if (!generalBlockActions.includes(action)) {
-                console.log(`ContentBuilderBase: Skipping block-specific action: ${action}`);
                 return;
             }
-            
-            console.log(`ContentBuilderBase: Adding listener for button ${index}: ${action}`);
             
             button.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                
-                console.log(`ContentBuilderBase: Handling ${action} action for block`, blockElement.dataset.blockId);
                 
                 switch (action) {
                     case 'move-up':
@@ -484,7 +473,6 @@ class ContentBuilderBase {
             });
         });
         
-        console.log('ContentBuilderBase: Direct event listeners added successfully');
     }
 
     updateEmptyState() {
@@ -1107,8 +1095,6 @@ class ContentBuilderBase {
         if (pendingBlocks.length === 0) {
             return; // No pending files
         }
-        
-        console.log(`ContentBuilderBase: Uploading ${pendingBlocks.length} pending files...`);
         
         // Upload all files
         for (const { blockElement, blockData, block } of pendingBlocks) {
