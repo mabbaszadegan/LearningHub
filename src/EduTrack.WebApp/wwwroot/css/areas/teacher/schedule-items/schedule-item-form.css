@@ -3711,3 +3711,21 @@
     margin-top: 0.25rem;
     display: block;
 }
+
+/* CKEditor - Description editor (fixed height + RTL toolbar) */
+.rich-editor-container .ck-editor {
+    direction: rtl;
+}
+.rich-editor-container .ck.ck-toolbar {
+    direction: rtl;
+    justify-content: flex-end;
+}
+.rich-editor-container .ck-editor__editable,
+.rich-editor-container .ck.ck-content {
+    min-height: 300px;
+    height: 300px;
+    max-height: 300px;
+    overflow: auto;
+    direction: rtl;
+    text-align: right;
+}

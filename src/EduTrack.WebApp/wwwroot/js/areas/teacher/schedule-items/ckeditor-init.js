@@ -66,12 +66,16 @@
     };
 
     // Initialize description editor if container exists
-    document.addEventListener('DOMContentLoaded', () => {
+    const initializeDescriptionEditor = () => {
         const descriptionEditorElement = document.querySelector('#descriptionEditorContainer');
         if (!descriptionEditorElement) return;
 
         ClassicEditor.create(descriptionEditorElement, {
             licenseKey: 'GPL',
+            language: {
+                ui: 'fa',
+                content: 'fa'
+            },
             plugins: [
                 Base64UploadAdapter, Essentials, Paragraph, Bold, Italic, Font,
                 Image, ImageToolbar, ImageUpload, ImageCaption, ImageStyle, ImageResize,
@@ -153,8 +157,23 @@
                 if (hiddenTextarea.value) editor.setData(hiddenTextarea.value);
                 editor.model.document.on('change:data', () => {
                     hiddenTextarea.value = editor.getData();
+                    try {
+                        // Trigger native input event so global change detection picks it up
+                        const evt = new Event('input', { bubbles: true, cancelable: true });
+                        hiddenTextarea.dispatchEvent(evt);
+                    } catch {}
+                    // Also directly mark step 1 as changed if form manager exists
+                    if (window.scheduleItemForm && typeof window.scheduleItemForm.markStepAsChanged === 'function') {
+                        window.scheduleItemForm.markStepAsChanged(1);
+                    }
                 });
             }
         }).catch(console.error);
-    });
+    };
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initializeDescriptionEditor);
+    } else {
+        initializeDescriptionEditor();
+    }
 })();
