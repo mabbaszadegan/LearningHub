@@ -40,7 +40,7 @@
             </div>
         }
 
-        @if (Model.Type == ScheduleItemType.Writing)
+        @if (Model.Type == ScheduleItemType.Writing || Model.Type == ScheduleItemType.Audio)
         {
             <!-- Written Content Builder -->
             <div id="writtenContentBuilder" style="display: none;">
