@@ -118,27 +118,39 @@
 
 
 
-/* Step Progress Container */
+/* Step Progress Container - Minimal Design */
 .step-progress-container {
     background: #ffffff;
     border-bottom: 1px solid #e9ecef;
-    padding: 1.5rem 0;
+    padding: 0.75rem 0;
     margin-bottom: 0;
+}
+
+/* Compact variant to force minimal footprint */
+.step-progress-container.compact {
+    padding: 0.4rem 0;
 }
 
 .step-progress {
     max-width: 1200px;
     margin: 0 auto;
     padding: 0 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.step-progress.compact {
+    gap: 0.375rem;
 }
 
 .step-progress-bar {
     width: 100%;
-    height: 4px;
+    height: 2px;
     background: #e9ecef;
     border-radius: 2px;
     overflow: hidden;
-    margin-bottom: 1.5rem;
+    order: 2;
 }
 
 .step-progress-fill {
@@ -154,92 +166,86 @@
     justify-content: space-between;
     align-items: center;
     position: relative;
+    order: 1;
+    gap: 0.5rem;
+    padding: 0;
 }
 
+.step-progress.compact .step-indicator,
 .step-indicator {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
     position: relative;
     flex: 1;
-    max-width: 200px;
+    gap: 0.5rem;
     cursor: pointer;
     transition: all 0.2s ease;
+    padding: 0.25rem 0.375rem;
+    border-radius: 6px;
 }
 
-    .step-indicator::before {
-        content: '';
-        position: absolute;
-        top: 20px;
-        left: 50%;
-        right: -50%;
-        height: 2px;
-        background: #e9ecef;
-        z-index: 1;
+    .step-indicator:hover {
+        background: #f8f9fa;
     }
 
-    .step-indicator:last-child::before {
-        display: none;
-    }
-
-    .step-indicator.completed::before {
-        background: #667eea;
-    }
-
+.step-progress.compact .step-indicator-icon,
 .step-indicator-icon {
-    width: 40px;
-    height: 40px;
+    width: 22px;
+    height: 22px;
     border-radius: 50%;
     background: #e9ecef;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 0.5rem;
     position: relative;
     z-index: 2;
     transition: all 0.3s ease;
+    flex-shrink: 0;
+}
+
+.step-progress.compact .step-number,
+.step-number {
+    font-size: 0.7rem;
+    font-weight: 600;
     color: #6c757d;
-    font-size: 0.875rem;
+    transition: color 0.3s ease;
 }
 
 .step-indicator.completed .step-indicator-icon {
     background: #667eea;
+}
+
+.step-indicator.completed .step-number {
     color: white;
 }
 
 .step-indicator.current .step-indicator-icon {
     background: #667eea;
-    color: white;
-    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.2);
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.15);
 }
 
-.step-indicator:hover .step-indicator-icon {
-    background: #6c757d;
+.step-indicator.current .step-number {
     color: white;
 }
 
-.step-indicator-text {
-    text-align: center;
-}
-
-.step-indicator-title {
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: #495057;
-    margin-bottom: 0.25rem;
-}
-
-.step-indicator-desc {
+.step-progress.compact .step-indicator-label,
+.step-indicator-label {
     font-size: 0.75rem;
+    font-weight: 500;
     color: #6c757d;
-    line-height: 1.2;
+    transition: color 0.3s ease;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-.step-indicator.current .step-indicator-title {
+.step-indicator.current .step-indicator-label {
     color: #667eea;
+    font-weight: 600;
 }
 
-.step-indicator.completed .step-indicator-title {
+.step-indicator.completed .step-indicator-label {
     color: #667eea;
 }
 
@@ -941,11 +947,30 @@
     }
 
     .step-progress-container {
-        padding: 1rem 0;
+        padding: 0.5rem 0;
     }
 
     .step-progress {
         padding: 0 0.5rem;
+        gap: 0.375rem;
+    }
+    
+    .step-indicator {
+        padding: 0.25rem 0.375rem;
+        gap: 0.375rem;
+    }
+    
+    .step-indicator-icon {
+        width: 24px;
+        height: 24px;
+    }
+    
+    .step-number {
+        font-size: 0.7rem;
+    }
+    
+    .step-indicator-label {
+        font-size: 0.75rem;
     }
 
     .form-navigation {
