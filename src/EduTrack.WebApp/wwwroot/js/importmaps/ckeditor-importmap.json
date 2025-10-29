@@ -1,0 +1,6 @@
+{
+  "imports": {
+    "ckeditor5": "/lib/ckeditor/ckeditor5.js",
+    "ckeditor5/": "/lib/ckeditor/"
+  }
+}

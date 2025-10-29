@@ -14,8 +14,8 @@ if (typeof window.CKEditorManager === 'undefined') {
     init() {
         if (this.isInitialized) return;
         
-        // Wait for CKEditor to be loaded
-        if (typeof ClassicEditor === 'undefined') {
+        // Wait for CKEditor to be loaded (now via ES6 modules)
+        if (typeof window.ClassicEditor === 'undefined') {
             console.warn('CKEditor not loaded yet, retrying...');
             setTimeout(() => this.init(), 1000);
             return;
@@ -54,31 +54,60 @@ if (typeof window.CKEditorManager === 'undefined') {
         const blockElement = editorElement.closest('.content-block');
         const blockId = blockElement ? blockElement.dataset.blockId : 'unknown';
 
-        // Check if ClassicEditor is available
-        if (typeof ClassicEditor === 'undefined') {
-            console.error('CKEditorManager: ClassicEditor not available');
+        // Check if ClassicEditor is available (now loaded via ES6 modules)
+        if (typeof window.ClassicEditor === 'undefined') {
+            console.warn('CKEditorManager: ClassicEditor not available, waiting...');
+            // Wait a bit and try again
+            setTimeout(() => this.initializeEditor(editorElement), 500);
+            return;
+        }
+
+        // Get plugins from global window object (set by ES6 module in CreateOrEdit.cshtml)
+        const Plugins = window.CKEditorPlugins;
+        if (!Plugins) {
+            console.error('CKEditorManager: CKEditorPlugins not available');
             return;
         }
 
         try {
-            const editor = await ClassicEditor.create(editorElement, {
-                toolbar: {
-                    items: [
-                        'heading', '|',
-                        'bold', 'italic', 'underline', 'strikethrough', '|',
-                        'fontSize', 'fontFamily', 'fontColor', 'fontBackgroundColor', '|',
-                        'alignment', '|',
-                        'numberedList', 'bulletedList', '|',
-                        'outdent', 'indent', '|',
-                        'link', 'insertImage', 'insertTable', '|',
-                        'codeBlock', 'blockQuote', '|',
-                        'undo', 'redo', '|',
-                        'findAndReplace', 'selectAll', '|',
-                        'fullScreen'
-                    ],
-                    shouldNotGroupWhenFull: true
-                },
-                language: 'fa',
+            const editor = await window.ClassicEditor.create(editorElement, {
+                licenseKey: 'GPL',
+                plugins: [
+                    Plugins.Base64UploadAdapter,
+                    Plugins.Essentials,
+                    Plugins.Paragraph,
+                    Plugins.Bold,
+                    Plugins.Italic,
+                    Plugins.Font,
+                    Plugins.Image,
+                    Plugins.ImageToolbar,
+                    Plugins.ImageUpload,
+                    Plugins.ImageCaption,
+                    Plugins.ImageStyle,
+                    Plugins.ImageResize,
+                    Plugins.LinkImage,
+                    Plugins.SourceEditing,
+                    Plugins.Autoformat,
+                    Plugins.BlockQuote,
+                    Plugins.Heading,
+                    Plugins.List,
+                    Plugins.Table,
+                    Plugins.TableToolbar,
+                    Plugins.Clipboard,
+                    Plugins.MediaEmbed,
+                    Plugins.GeneralHtmlSupport,
+                    Plugins.HtmlEmbed
+                ],
+                toolbar: [
+                    'undo', 'redo', '|',
+                    'bold', 'italic', '|',
+                    'fontSize', 'fontFamily', 'fontColor', 'fontBackgroundColor', '|',
+                    'numberedList', 'bulletedList', '|',
+                    'link', 'imageUpload', 'insertTable', '|',
+                    'blockQuote', '|',
+                    'heading', 'mediaEmbed', '|',
+                    'sourceEditing'
+                ],
                 placeholder: editorElement.dataset.placeholder || 'متن خود را اینجا تایپ کنید...',
                 heading: {
                     options: [
@@ -146,9 +175,80 @@ if (typeof window.CKEditorManager === 'undefined') {
                 alignment: {
                     options: ['left', 'center', 'right', 'justify']
                 },
+                image: {
+                    toolbar: [
+                        'toggleImageCaption', 'imageTextAlternative',
+                    ]
+                },
+                htmlSupport: {
+                    allow: [
+                        {
+                            name: /^(div|span|p|h[1-6]|img|table|thead|tbody|tr|td|th|ul|ol|li|a|blockquote|hr|pre|code)$/i,
+                            attributes: true,   
+                            classes: true,     
+                            styles: {
+                                'text-align': true,
+                                'direction': true,
+                                'color': true,
+                                'background-color': true,
+                                'font-size': true,
+                                'font-weight': true,
+                                'font-style': true,
+                                'text-decoration': true,
+                                'white-space': true,
+                                'width': true,
+                                'height': true,
+                                'max-width': true,
+                                'max-height': true,
+                                'margin': true,
+                                'margin-left': true,
+                                'margin-right': true,
+                                'margin-top': true,
+                                'margin-bottom': true,
+                                'padding': true,
+                                'padding-left': true,
+                                'padding-right': true,
+                                'padding-top': true,
+                                'padding-bottom': true,
+                                'border': true,
+                                'border-left': true,
+                                'border-right': true,
+                                'border-top': true,
+                                'border-bottom': true,
+                                'border-color': true,
+                                'border-width': true,
+                                'border-style': true,
+                                'float': true,
+                                'display': true
+                            }
+                        },
+                        {
+                            name: 'img',
+                            attributes: {
+                                'src': true, 'alt': true, 'title': true, 'width': true, 'height': true, 'style': true
+                            },
+                            classes: true,
+                            styles: true
+                        },
+                        {
+                            name: 'a',
+                            attributes: { 'href': true, 'target': true, 'rel': true, 'title': true },
+                            classes: true,
+                            styles: true
+                        }
+                    ],
+                },
                 link: {
                     addTargetToExternalLinks: true,
-                    defaultProtocol: 'https://'
+                    defaultProtocol: 'https://',
+                    decorators: [
+                        {
+                            mode: 'manual',
+                            label: 'Nofollow',
+                            attributes: { rel: 'nofollow' },
+                            defaultValue: false
+                        }
+                    ]
                 },
                 table: {
                     contentToolbar: [

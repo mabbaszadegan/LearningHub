@@ -105,68 +105,47 @@ class Step1BasicsManager {
     }
 
     setupRichEditor() {
-        const editor = document.getElementById('descriptionEditor');
-        if (!editor) return;
+        // CKEditor 5 is initialized in CreateOrEdit.cshtml as a module
+        // Wait for it to be available
+        if (window.descriptionEditor) {
+            // Editor is already initialized
+            this.setupCKEditorListeners();
+        } else {
+            // Wait for editor to be initialized
+            const checkEditor = setInterval(() => {
+                if (window.descriptionEditor) {
+                    clearInterval(checkEditor);
+                    this.setupCKEditorListeners();
+                }
+            }, 100);
 
-        // Set up basic editor functionality
-        editor.addEventListener('paste', (e) => {
-            e.preventDefault();
-            const text = e.clipboardData.getData('text/plain');
-            document.execCommand('insertText', false, text);
-        });
-
-        // Setup rich editor listeners
-        this.setupRichEditorListeners();
+            // Stop checking after 5 seconds
+            setTimeout(() => clearInterval(checkEditor), 5000);
+        }
     }
 
-    setupRichEditorListeners() {
-        const editor = document.getElementById('descriptionEditor');
+    setupCKEditorListeners() {
+        const editor = window.descriptionEditor;
         if (!editor) return;
 
-        // Toolbar buttons
-        document.querySelectorAll('.toolbar-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.executeEditorCommand(e.currentTarget.dataset.command);
-            });
-        });
-
-        // Editor content changes
-        editor.addEventListener('input', () => {
-            this.updateHiddenDescription();
+        // Editor content changes are handled by CreateOrEdit.cshtml module
+        // which syncs to descriptionHidden. We can validate here if needed.
+        editor.model.document.on('change:data', () => {
             if (this.formManager && typeof this.formManager.validateField === 'function') {
-                this.formManager.validateField('description', editor.innerHTML);
+                const content = editor.getData();
+                this.formManager.validateField('description', content);
             }
-        });
-
-        // Editor focus/blur
-        editor.addEventListener('focus', () => {
-            editor.parentElement.classList.add('focused');
-        });
-
-        editor.addEventListener('blur', () => {
-            editor.parentElement.classList.remove('focused');
-        });
-    }
-
-    executeEditorCommand(command) {
-        document.execCommand(command, false, null);
-        this.updateToolbarState();
-    }
-
-    updateToolbarState() {
-        document.querySelectorAll('.toolbar-btn').forEach(btn => {
-            const command = btn.dataset.command;
-            btn.classList.toggle('active', document.queryCommandState(command));
         });
     }
 
     updateHiddenDescription() {
-        const editor = document.getElementById('descriptionEditor');
+        // This is now handled automatically by the CKEditor module in CreateOrEdit.cshtml
+        // But we can still update it here if needed for validation
+        const editor = window.descriptionEditor;
         const hiddenField = document.getElementById('descriptionHidden');
 
         if (editor && hiddenField) {
-            hiddenField.value = editor.innerHTML;
+            hiddenField.value = editor.getData();
         }
     }
 
@@ -268,13 +247,25 @@ class Step1BasicsManager {
             }
         }
         if (data.description) {
-            const descriptionEditor = document.getElementById('descriptionEditor');
             const descriptionHidden = document.getElementById('descriptionHidden');
-            if (descriptionEditor) {
-                descriptionEditor.innerHTML = data.description;
-            }
             if (descriptionHidden) {
                 descriptionHidden.value = data.description;
+            }
+            
+            // Set CKEditor content if available
+            if (window.descriptionEditor) {
+                window.descriptionEditor.setData(data.description);
+            } else {
+                // Wait for editor to be initialized
+                const checkEditor = setInterval(() => {
+                    if (window.descriptionEditor) {
+                        clearInterval(checkEditor);
+                        window.descriptionEditor.setData(data.description);
+                    }
+                }, 100);
+                
+                // Stop checking after 5 seconds
+                setTimeout(() => clearInterval(checkEditor), 5000);
             }
         }
     }

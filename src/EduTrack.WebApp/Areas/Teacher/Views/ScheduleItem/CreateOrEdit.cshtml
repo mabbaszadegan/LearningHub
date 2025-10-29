@@ -74,7 +74,7 @@
                         <input type="hidden" id="selectedStudentIds" name="StudentIds" />
                         <!-- Hidden field for content JSON -->
                         <input type="hidden" id="contentJson" name="ContentJson" value="@Model.ContentJson" />
-                        
+
                         <!-- Step 1: Basic Information -->
                         @await Html.PartialAsync("_Step1BasicInfo", Model)
 
@@ -143,14 +143,15 @@
 
 @section Styles {
     <link rel="stylesheet" href="~/css/areas/teacher/schedule-items/schedule-item-form.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/lib/ckeditor/ckeditor5.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/lib/ckeditor/ckeditor5-content.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/lib/ckeditor/ckeditor5-editor.css" asp-append-version="true" />
 }
-
 @section Scripts {
-    <!-- CKEditor Rich Text Editor -->
-    <script src="~/lib/ckeditor/ckeditor.js" asp-append-version="true"></script>
-    
+    <script type="importmap" src="~/js/importmaps/ckeditor-importmap.json" asp-append-version="true"></script>
+    <script type="module" src="~/js/areas/teacher/schedule-items/ckeditor-init.js" asp-append-version="true"></script>
+
     <script src="~/js/lazy-loading.js" asp-append-version="true"></script>
-    
     <!-- Step Managers -->
     <script src="~/js/areas/teacher/schedule-items/step1-basics.js" asp-append-version="true"></script>
     <script src="~/js/areas/teacher/schedule-items/step2-timing.js" asp-append-version="true"></script>

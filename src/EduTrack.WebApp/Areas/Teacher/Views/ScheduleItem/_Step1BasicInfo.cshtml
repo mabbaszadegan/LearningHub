@@ -71,30 +71,7 @@
                 <span>توضیحات آیتم</span>
             </label>
             <div class="rich-editor-container">
-                <div class="editor-toolbar">
-                    <button type="button" class="toolbar-btn" data-command="bold">
-                        <i class="fas fa-bold"></i>
-                    </button>
-                    <button type="button" class="toolbar-btn" data-command="italic">
-                        <i class="fas fa-italic"></i>
-                    </button>
-                    <button type="button" class="toolbar-btn" data-command="underline">
-                        <i class="fas fa-underline"></i>
-                    </button>
-                    <div class="toolbar-separator"></div>
-                    <button type="button" class="toolbar-btn" data-command="insertUnorderedList">
-                        <i class="fas fa-list-ul"></i>
-                    </button>
-                    <button type="button" class="toolbar-btn" data-command="insertOrderedList">
-                        <i class="fas fa-list-ol"></i>
-                    </button>
-                    <div class="toolbar-separator"></div>
-                    <button type="button" class="toolbar-btn" data-command="createLink">
-                        <i class="fas fa-link"></i>
-                    </button>
-                </div>
-                <div class="editor-content" contenteditable="true" id="descriptionEditor" 
-                     placeholder="توضیحات کامل و مفید در مورد آیتم آموزشی، اهداف یادگیری و نحوه انجام آن..."></div>
+                <div id="descriptionEditorContainer" placeholder="توضیحات کامل و مفید در مورد آیتم آموزشی، اهداف یادگیری و نحوه انجام آن..."></div>
             </div>
             <textarea asp-for="Description" class="d-none" id="descriptionHidden"></textarea>
             <span asp-validation-for="Description" class="validation-error-modern"></span>
