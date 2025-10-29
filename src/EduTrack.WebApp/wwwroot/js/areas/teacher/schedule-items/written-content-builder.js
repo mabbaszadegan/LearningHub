@@ -131,6 +131,26 @@ class WrittenContentBlockManager extends ContentBuilderBase {
         });
         document.dispatchEvent(populateEvent);
         
+        // Enhance question settings if present (modern controls)
+        // Wait longer to ensure values are set and DOM is ready
+        setTimeout(() => {
+            const questionSettings = blockElement.querySelector('.question-settings');
+            if (questionSettings && typeof window.enhanceQuestionSettings === 'function') {
+                // Make sure values are set before enhancing
+                if (block.type.startsWith('question')) {
+                    const pointsInput = questionSettings.querySelector('[data-setting="points"]');
+                    const difficultySelect = questionSettings.querySelector('[data-setting="difficulty"]');
+                    if (pointsInput && block.data && block.data.points !== undefined) {
+                        pointsInput.value = block.data.points;
+                    }
+                    if (difficultySelect && block.data && block.data.difficulty) {
+                        difficultySelect.value = block.data.difficulty;
+                    }
+                }
+                window.enhanceQuestionSettings(questionSettings);
+            }
+        }, 150);
+        
         console.log('WrittenContentBlockManager: Block rendering completed for', block.id);
         return blockElement;
     }

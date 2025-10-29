@@ -254,6 +254,8 @@
     background: #f5f6fa;
     min-height: calc(100vh - 200px);
     padding: 2rem 0;
+    /* Ensure space for fixed bottom navigation */
+    padding-bottom: 220px;
 }
 
 
@@ -870,7 +872,12 @@
     justify-content: space-between;
     align-items: center;
     box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.06);
-    position: relative;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    z-index: 1050;
     overflow: hidden;
 }
 

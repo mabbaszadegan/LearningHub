@@ -56,6 +56,19 @@ window.AudioBlockManager = class AudioBlockManager {
                     }
                 }
             }
+
+            // Handle upload audio icon button clicks (next to recorder controls)
+            if (e.target.closest('[data-action="upload-audio"]')) {
+                e.preventDefault();
+                const button = e.target.closest('[data-action="upload-audio"]');
+                const blockElement = button.closest('.content-block-template, .content-block');
+                if (blockElement) {
+                    const fileInput = blockElement.querySelector('.file-input');
+                    if (fileInput) {
+                        fileInput.click();
+                    }
+                }
+            }
         });
 
         // Handle recording controls
@@ -270,15 +283,33 @@ window.AudioBlockManager = class AudioBlockManager {
 
 
     showAudioPreview(blockElement, audioUrl) {
+        if (!audioUrl) return;
+        
         const previewContainer = blockElement.querySelector('.audio-preview');
         const uploadPlaceholder = blockElement.querySelector('.upload-placeholder');
         const audioElement = blockElement.querySelector('.preview-audio');
-        
-        if (previewContainer && audioElement) {
+        const sourceElement = audioElement ? audioElement.querySelector('source') : null;
+
+        if (audioElement && audioUrl) {
+            // Set both <audio src> and <source src> for maximum compatibility
+            if (sourceElement) {
+                sourceElement.src = audioUrl;
+                sourceElement.type = audioUrl.match(/\.mp3/i) ? 'audio/mpeg' : 
+                                   audioUrl.match(/\.wav/i) ? 'audio/wav' : 
+                                   audioUrl.match(/\.ogg/i) ? 'audio/ogg' : 'audio/mpeg';
+            }
             audioElement.src = audioUrl;
-            previewContainer.style.display = 'block';
+            
+            // Force the browser to re-evaluate sources
+            if (typeof audioElement.load === 'function') {
+                audioElement.load();
+            }
         }
-        
+
+        if (previewContainer) {
+            previewContainer.style.display = 'flex';
+        }
+
         if (uploadPlaceholder) {
             uploadPlaceholder.style.display = 'none';
         }
@@ -584,7 +615,9 @@ window.AudioBlockManager = class AudioBlockManager {
 
     // Public method to populate audio block content (for edit mode)
     populateAudioBlock(blockElement, data) {
-        // Populate file info if available
+        // Populate file info if available (check both fileId and fileUrl)
+        let fileUrl = data.fileUrl;
+        
         if (data.fileId) {
             const fileIdInput = blockElement.querySelector('input[name="fileId"]');
             if (fileIdInput) fileIdInput.value = data.fileId;
@@ -594,17 +627,18 @@ window.AudioBlockManager = class AudioBlockManager {
                 fileNameSpan.textContent = data.fileName;
             }
             
-            // Construct proper file URL for existing files
-            let fileUrl = data.fileUrl;
+            // Construct proper file URL for existing files if not provided
             if (!fileUrl && data.fileId) {
-                // If no URL is provided but we have a fileId, construct the URL
                 fileUrl = `/FileUpload/GetFile/${data.fileId}`;
             }
-            
-            // Show preview if file URL exists
-            if (fileUrl) {
+        }
+        
+        // Show preview if file URL exists (regardless of whether we have fileId)
+        if (fileUrl) {
+            // Use setTimeout to ensure DOM is ready
+            setTimeout(() => {
                 this.showAudioPreview(blockElement, fileUrl);
-            }
+            }, 50);
         }
         
         // Populate caption

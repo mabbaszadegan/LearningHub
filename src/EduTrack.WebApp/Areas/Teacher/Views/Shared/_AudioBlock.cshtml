@@ -20,15 +20,36 @@
     <div class="block-content">
         @if (isQuestionBlock)
         {
-            <div class="question-settings">
+            <div class="question-settings inline">
                 <div class="settings-grid">
                     <div class="setting-item">
                         <label>امتیاز:</label>
-                        <input type="number" class="form-control-sm" data-setting="points" value="1" min="0" max="100">
+                        <select class="form-select-sm" data-setting="points">
+                            <option value="1" selected>1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                            <option value="6">6</option>
+                            <option value="7">7</option>
+                            <option value="8">8</option>
+                            <option value="9">9</option>
+                            <option value="10">10</option>
+                            <option value="11">11</option>
+                            <option value="12">12</option>
+                            <option value="13">13</option>
+                            <option value="14">14</option>
+                            <option value="15">15</option>
+                            <option value="16">16</option>
+                            <option value="17">17</option>
+                            <option value="18">18</option>
+                            <option value="19">19</option>
+                            <option value="20">20</option>
+                        </select>
                     </div>
                     <div class="setting-item">
                         <label>میزان سختی:</label>
-                        <select class="form-control-sm" data-setting="difficulty">
+                        <select class="form-select-sm" data-setting="difficulty">
                             <option value="easy">آسان</option>
                             <option value="medium" selected>متوسط</option>
                             <option value="hard">سخت</option>
@@ -50,34 +71,18 @@
             </div>
         }
         
-        <div class="audio-upload-area">
-            <input type="file" accept="audio/*" class="file-input" data-action="audio-upload">
-            <div class="upload-placeholder">
-                <i class="fas fa-cloud-upload-alt"></i>
-                <span>@uploadText</span>
-                <small>فرمت‌های پشتیبانی شده: MP3, WAV, OGG (حداکثر 10MB)</small>
-            </div>
-            <div class="upload-progress" style="display: none;">
-                <div class="progress-bar">
-                    <div class="progress-fill"></div>
-                </div>
-                <span class="progress-text">در حال آپلود...</span>
-            </div>
-        </div>
+        <!-- Hidden file input for upload (triggered by icon button) -->
+        <input type="file" accept="audio/*" class="file-input" data-action="audio-upload" style="display:none;">
         
         <div class="audio-preview" style="display: none;">
             <audio controls class="preview-audio">
                 <source src="" type="audio/mpeg">
             </audio>
-            <button type="button" class="btn-teacher btn-secondary btn-sm" data-action="change-audio">
-                <i class="fas fa-edit"></i>
-                <span>تغییر فایل صوتی</span>
-            </button>
         </div>
         
         <div class="audio-recorder">
             <div class="recorder-header">
-                <h5>یا صدای خود را ضبط کنید:</h5>
+                <h5>ذخیره فایل صوتی به دو روش: ضبط یا آپلود</h5>
             </div>
             <div class="recorder-controls">
                 <button type="button" class="btn-teacher btn-danger" data-action="start-recording">
@@ -91,6 +96,10 @@
                 <button type="button" class="btn-teacher btn-success" data-action="play-recording" disabled>
                     <i class="fas fa-play"></i>
                     <span>پخش</span>
+                </button>
+                <button type="button" class="btn-teacher btn-secondary" data-action="upload-audio" title="آپلود فایل صوتی">
+                    <i class="fas fa-file-audio"></i>
+                    <span>آپلود</span>
                 </button>
             </div>
             <div class="recorder-status">

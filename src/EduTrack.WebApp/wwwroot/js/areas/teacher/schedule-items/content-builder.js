@@ -146,8 +146,13 @@ class ContentBuilderBase {
             this.handleBlockContentChanged(e.detail);
         });
 
-        // Settings changes
+        // Settings changes (change and input to support sliders)
         this.eventManager.addListener('change', (e) => {
+            if (e.target.matches('[data-setting]')) {
+                this.updateBlockSettings(e.target);
+            }
+        });
+        this.eventManager.addListener('input', (e) => {
             if (e.target.matches('[data-setting]')) {
                 this.updateBlockSettings(e.target);
             }
@@ -365,6 +370,53 @@ class ContentBuilderBase {
         });
         document.dispatchEvent(populateEvent);
         
+        // Enhance question settings if present (modern controls)
+        // Wait longer to ensure values are set and DOM is ready
+        setTimeout(() => {
+            const questionSettings = blockElement.querySelector('.question-settings');
+            if (questionSettings && typeof window.enhanceQuestionSettings === 'function') {
+                // Make sure values are set before enhancing
+                if (block.type.startsWith('question')) {
+                    const pointsInput = questionSettings.querySelector('[data-setting="points"]');
+                    const difficultySelect = questionSettings.querySelector('[data-setting="difficulty"]');
+                    if (pointsInput && block.data && block.data.points !== undefined) {
+                        // Set value and trigger input event to ensure it's recognized
+                        pointsInput.value = String(block.data.points);
+                        pointsInput.dispatchEvent(new Event('input', { bubbles: true }));
+                    }
+                    if (difficultySelect && block.data && block.data.difficulty) {
+                        difficultySelect.value = block.data.difficulty;
+                        difficultySelect.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                }
+                
+                // Enhance the settings
+                window.enhanceQuestionSettings(questionSettings);
+                
+                // After enhancement, update the bubble position if slider was created
+                // This ensures the bubble shows the correct value after page reload
+                setTimeout(() => {
+                    if (block.type.startsWith('question') && block.data && block.data.points !== undefined) {
+                        const pointsInput = questionSettings.querySelector('[data-setting="points"]');
+                        if (pointsInput) {
+                            const slider = questionSettings.querySelector('.points-range');
+                            const bubble = questionSettings.querySelector('.points-bubble');
+                            if (slider && bubble) {
+                                const value = parseInt(block.data.points, 10);
+                                if (!isNaN(value)) {
+                                    slider.value = String(value);
+                                    pointsInput.value = String(value);
+                                    // Update bubble using the enhance function's updateBubble if available
+                                    // Trigger input event on slider to update bubble
+                                    slider.dispatchEvent(new Event('input', { bubbles: true }));
+                                }
+                            }
+                        }
+                    }
+                }, 50);
+            }
+        }, 150);
+        
         return blockElement;
     }
 
@@ -373,7 +425,7 @@ class ContentBuilderBase {
         const blockTypeElement = blockElement.querySelector('.block-type span');
         if (blockTypeElement) {
             const originalText = blockTypeElement.textContent;
-            blockTypeElement.textContent = `سوال ${originalText}`;
+            blockTypeElement.textContent = `${originalText}`;
         }
 
         // Show question settings if they exist
@@ -391,6 +443,7 @@ class ContentBuilderBase {
             const difficultySelect = questionSettings.querySelector('[data-setting="difficulty"]');
             if (difficultySelect) {
                 difficultySelect.value = block.data.difficulty || 'medium';
+                difficultySelect.dispatchEvent(new Event('change', { bubbles: true }));
             }
             
             // Set required checkbox
@@ -994,9 +1047,66 @@ class ContentBuilderBase {
             // Update block data attribute
             blockElement.dataset.blockData = JSON.stringify(block.data);
             
+            // Configure question blocks with their settings
+            if (block.type.startsWith('question')) {
+                this.configureQuestionBlock(blockElement, block);
+            }
+            
             // Use block-specific populate methods
             this.populateBlockByType(blockElement, block);
         });
+        
+        // After populating, update enhanced question settings (sliders, etc.)
+        setTimeout(() => {
+            this.blocks.forEach((block) => {
+                if (block.type.startsWith('question')) {
+                    const blockElement = document.querySelector(`[data-block-id="${block.id}"]`);
+                    if (blockElement) {
+                        const questionSettings = blockElement.querySelector('.question-settings');
+                        if (questionSettings) {
+                            // Update points slider
+                            if (block.data && block.data.points !== undefined) {
+                                const slider = questionSettings.querySelector('.points-range');
+                                const bubble = questionSettings.querySelector('.points-bubble');
+                                const pointsInput = questionSettings.querySelector('[data-setting="points"]');
+                                
+                                if (slider && bubble && pointsInput) {
+                                    const value = parseInt(block.data.points, 10);
+                                    if (!isNaN(value)) {
+                                        slider.value = String(value);
+                                        pointsInput.value = String(value);
+                                        slider.dispatchEvent(new Event('input', { bubbles: true }));
+                                    }
+                                }
+                            }
+                            
+                            // Update difficulty slider
+                            if (block.data && block.data.difficulty) {
+                                const difficultySlider = questionSettings.querySelector('.difficulty-range');
+                                const difficultySelect = questionSettings.querySelector('[data-setting="difficulty"]');
+                                
+                                if (difficultySelect) {
+                                    const options = [
+                                        { value: 'easy', label: 'آسان', index: 0 },
+                                        { value: 'medium', label: 'متوسط', index: 1 },
+                                        { value: 'hard', label: 'سخت', index: 2 }
+                                    ];
+                                    const selectedOption = options.find(opt => opt.value === block.data.difficulty) || options[1];
+                                    
+                                    difficultySelect.value = selectedOption.value;
+                                    difficultySelect.dispatchEvent(new Event('change', { bubbles: true }));
+                                    
+                                    if (difficultySlider) {
+                                        difficultySlider.value = String(selectedOption.index);
+                                        difficultySlider.dispatchEvent(new Event('input', { bubbles: true }));
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }, 200);
     }
 
     populateBlockByType(blockElement, block) {
@@ -1134,12 +1244,16 @@ class ContentBuilderBase {
             const formData = new FormData();
             formData.append('file', fileToUpload);
             
-            // Determine file type based on block type
+            // Determine file type robustly
             let fileType = 'image';
-            const blockType = blockElement.dataset.type || '';
-            if (blockType.includes('video')) fileType = 'video';
-            if (blockType.includes('audio')) fileType = 'audio';
-            
+            const blockType = (blockElement.dataset.type || '').toLowerCase();
+            const templateType = (blockElement.dataset.templateType || '').toLowerCase();
+            const mime = (fileToUpload.type || '').toLowerCase();
+            if (mime.startsWith('audio/') || blockType.includes('audio') || templateType.includes('audio')) {
+                fileType = 'audio';
+            } else if (mime.startsWith('video/') || blockType.includes('video') || templateType.includes('video')) {
+                fileType = 'video';
+            }
             formData.append('type', fileType);
             
             const progressFill = blockElement.querySelector('.progress-fill');
