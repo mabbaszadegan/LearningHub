@@ -58,6 +58,7 @@ class Step4ContentManager {
         this.fieldManager.registerField('reminderContentJson', document.getElementById('reminderContentJson'));
         this.fieldManager.registerField('writtenContentJson', document.getElementById('writtenContentJson'));
         this.fieldManager.registerField('gapFillContentJson', document.getElementById('gapFillContentJson'));
+        this.fieldManager.registerField('multipleChoiceContentJson', document.getElementById('multipleChoiceContentJson'));
         this.fieldManager.registerField('itemType', document.getElementById('itemType'));
     }
 
@@ -123,6 +124,13 @@ class Step4ContentManager {
             const gaps = Array.isArray(gapData.Gaps) ? gapData.Gaps : [];
             if (!hasText || gaps.length === 0) {
                 this.fieldManager.showFieldError('contentJson', 'برای جای‌خالی، متن و حداقل یک جای‌خالی لازم است');
+                return false;
+            }
+        } else if (selectedType === '4') {
+            // Multiple Choice now uses written-style block builder; reuse validation similar to written
+            const writtenData = this.collectWrittenContentData();
+            if (!writtenData || !writtenData.blocks || writtenData.blocks.length === 0) {
+                this.fieldManager.showFieldError('contentJson', 'حداقل یک بلاک محتوا الزامی است');
                 return false;
             }
         }
@@ -349,8 +357,26 @@ class Step4ContentManager {
             if (reminderContentBuilder) {
                 reminderContentBuilder.style.display = 'block';
             }
-        } else if (selectedType === '1') {
-            // Writing type
+        } else if (selectedType === '1' || selectedType === '4') {
+            // Writing and Multiple Choice use the written builder path
+            // Mark global mode for builders
+            if (selectedType === '4') {
+                window.multipleChoiceMode = true;
+                if (window.writtenBlockManager && window.writtenBlockManager.config) {
+                    window.writtenBlockManager.config.contentType = 'multipleChoice';
+                    if (typeof window.writtenBlockManager.updateHiddenField === 'function') {
+                        window.writtenBlockManager.updateHiddenField();
+                    }
+                }
+            } else {
+                window.multipleChoiceMode = false;
+                if (window.writtenBlockManager && window.writtenBlockManager.config) {
+                    window.writtenBlockManager.config.contentType = 'written';
+                    if (typeof window.writtenBlockManager.updateHiddenField === 'function') {
+                        window.writtenBlockManager.updateHiddenField();
+                    }
+                }
+            }
             if (writtenContentBuilder) {
                 writtenContentBuilder.style.display = 'block';
             }
@@ -399,6 +425,24 @@ class Step4ContentManager {
 
         // Return empty content structure
         return { type: 'reminder', blocks: [] };
+    }
+
+    // Collect Multiple Choice content data
+    collectMultipleChoiceContentData() {
+        const hiddenField = document.getElementById('multipleChoiceContentJson');
+        if (hiddenField && hiddenField.value) {
+            try {
+                const parsed = JSON.parse(hiddenField.value);
+                if (parsed && typeof parsed === 'object') return parsed;
+            } catch (e) {
+                console.warn('Failed to parse multiple-choice content from hidden field:', e);
+            }
+        }
+        // Try to read from builder global state if available
+        if (window.multipleChoiceBuilder && typeof window.multipleChoiceBuilder.getContent === 'function') {
+            return window.multipleChoiceBuilder.getContent();
+        }
+        return null;
     }
 
     // Collect written content data
@@ -551,6 +595,10 @@ class Step4ContentManager {
             // Written content type - collect from written editor
             const writtenData = this.collectWrittenContentData();
             return writtenData;
+        } else if (selectedType === '4') {
+            // Multiple Choice uses written builder path in MC mode
+            const writtenData = this.collectWrittenContentData();
+            return writtenData || {};
         } else if (selectedType === '3') {
             // Gap Fill
             const gapData = this.collectGapFillContentData();

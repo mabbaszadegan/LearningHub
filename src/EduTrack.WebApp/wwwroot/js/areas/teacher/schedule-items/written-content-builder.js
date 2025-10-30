@@ -31,6 +31,13 @@ class WrittenContentBlockManager extends ContentBuilderBase {
             return;
         }
         
+        // If we are in multiple-choice mode, adjust content type label for serialization
+        if (window.multipleChoiceMode) {
+            this.config.contentType = 'multipleChoice';
+            // Force an initial hidden field update so ContentJson mirrors type
+            setTimeout(() => this.updateHiddenField(), 0);
+        }
+
         this.setupWrittenSpecificEventListeners();
     }
 
@@ -130,6 +137,11 @@ class WrittenContentBlockManager extends ContentBuilderBase {
             }
         });
         document.dispatchEvent(populateEvent);
+
+        // If in Multiple Choice mode, attach MCQ editor to this block
+        if (window.multipleChoiceMode) {
+            this.attachMcqEditor(blockElement, block);
+        }
         
         // Enhance question settings if present (modern controls)
         // Wait longer to ensure values are set and DOM is ready
@@ -153,6 +165,157 @@ class WrittenContentBlockManager extends ContentBuilderBase {
         
         console.log('WrittenContentBlockManager: Block rendering completed for', block.id);
         return blockElement;
+    }
+
+    attachMcqEditor(blockElement, block) {
+        // Create MCQ container
+        const mcqContainer = document.createElement('div');
+        mcqContainer.className = 'mcq-editor-section';
+        mcqContainer.innerHTML = `
+            <div class="mcq-header">
+                <div class="title">سوالات چندگزینه‌ای این بلاک</div>
+                <div class="actions">
+                    <button type="button" class="btn-teacher btn-secondary btn-sm" data-action="mcq-add-q">افزودن سوال</button>
+                </div>
+            </div>
+            <div class="mcq-list" data-role="mcq-list"></div>
+        `;
+        blockElement.appendChild(mcqContainer);
+
+        // Ensure data structure
+        if (!Array.isArray(block.data.mcQuestions)) {
+            block.data.mcQuestions = [];
+        }
+
+        const list = mcqContainer.querySelector('[data-role="mcq-list"]');
+        const addBtn = mcqContainer.querySelector('[data-action="mcq-add-q"]');
+        addBtn.addEventListener('click', () => {
+            const qId = (block.data.mcQuestions[block.data.mcQuestions.length - 1]?.id || 0) + 1;
+            block.data.mcQuestions.push({ id: qId, stem: '', answerType: 'single', randomize: false, options: [
+                { index: 0, text: '', correct: false }, { index: 1, text: '', correct: false }
+            ]});
+            this.renderMcqList(list, block);
+            this.updateHiddenField();
+        });
+
+        this.renderMcqList(list, block);
+    }
+
+    renderMcqList(container, block) {
+        container.innerHTML = '';
+        block.data.mcQuestions.forEach(q => {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'mcq-item';
+            wrapper.innerHTML = `
+                <div class="mcq-item-header">
+                    <div class="title">سوال ${q.id}</div>
+                    <div class="actions">
+                        <button type="button" class="btn-teacher btn-danger btn-sm" data-action="remove-q">حذف</button>
+                    </div>
+                </div>
+                <div class="mcq-item-body">
+                    <div class="mb-2">
+                        <label class="form-label">صورت سوال</label>
+                        <textarea class="form-control" rows="2" data-role="stem"></textarea>
+                    </div>
+                    <div class="mcq-settings">
+                        <div class="setting-item">
+                            <label class="form-label">نوع پاسخ</label>
+                            <select class="form-select form-select-sm" data-role="atype">
+                                <option value="single">تک‌گزینه‌ای</option>
+                                <option value="multiple">چندپاسخه</option>
+                            </select>
+                        </div>
+                        <div class="setting-item">
+                            <label class="form-label">به‌هم‌ریختن گزینه‌ها</label>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" data-role="rand">
+                                <label class="form-check-label">فعال</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mcq-options">
+                        <div class="mcq-options-header">
+                            <div class="title">گزینه‌ها</div>
+                            <button type="button" class="btn-teacher btn-secondary btn-sm" data-action="add-opt">افزودن گزینه</button>
+                        </div>
+                        <div class="mcq-options-list" data-role="opts"></div>
+                    </div>
+                </div>
+            `;
+
+            // Bind controls
+            const stem = wrapper.querySelector('[data-role="stem"]');
+            stem.value = q.stem || '';
+            stem.addEventListener('input', (e) => { q.stem = e.target.value; this.updateHiddenField(); });
+
+            const atype = wrapper.querySelector('[data-role="atype"]');
+            atype.value = q.answerType || 'single';
+            atype.addEventListener('change', (e) => {
+                q.answerType = e.target.value === 'multiple' ? 'multiple' : 'single';
+                if (q.answerType === 'single') {
+                    let found = false; q.options = q.options.map(o => { if (o.correct && !found) { found = true; return o; } return { ...o, correct: false }; });
+                }
+                this.renderMcqOptions(wrapper.querySelector('[data-role="opts"]'), q);
+                this.updateHiddenField();
+            });
+
+            const rand = wrapper.querySelector('[data-role="rand"]');
+            rand.checked = !!q.randomize;
+            rand.addEventListener('change', (e) => { q.randomize = !!e.target.checked; this.updateHiddenField(); });
+
+            const removeQ = wrapper.querySelector('[data-action="remove-q"]');
+            removeQ.addEventListener('click', () => {
+                block.data.mcQuestions = block.data.mcQuestions.filter(x => x.id !== q.id);
+                this.renderMcqList(container, block);
+                this.updateHiddenField();
+            });
+
+            const optsList = wrapper.querySelector('[data-role="opts"]');
+            const addOpt = wrapper.querySelector('[data-action="add-opt"]');
+            addOpt.addEventListener('click', () => {
+                const idx = q.options.length;
+                q.options.push({ index: idx, text: '', correct: false });
+                this.renderMcqOptions(optsList, q);
+                this.updateHiddenField();
+            });
+
+            this.renderMcqOptions(optsList, q);
+            container.appendChild(wrapper);
+        });
+    }
+
+    renderMcqOptions(container, q) {
+        container.innerHTML = '';
+        q.options.forEach(opt => {
+            const row = document.createElement('div');
+            row.className = 'mcq-option-row';
+            row.innerHTML = `
+                <div class="opt-correct">${q.answerType === 'single' ? '<input type="radio" />' : '<input type="checkbox" />'}</div>
+                <div class="opt-text"><input type="text" class="form-control form-control-sm" /></div>
+                <div class="opt-actions"><button type="button" class="btn-teacher btn-danger btn-sm">حذف</button></div>
+            `;
+            const correctInput = row.querySelector('input[type="radio"], input[type="checkbox"]');
+            correctInput.checked = !!opt.correct;
+            correctInput.addEventListener('change', (e) => {
+                if (q.answerType === 'single') {
+                    q.options = q.options.map(o => ({ ...o, correct: o.index === opt.index }));
+                } else {
+                    opt.correct = !!e.target.checked;
+                }
+                this.updateHiddenField();
+            });
+            const textInput = row.querySelector('input.form-control');
+            textInput.value = opt.text || '';
+            textInput.addEventListener('input', (e) => { opt.text = e.target.value; this.updateHiddenField(); });
+            const delBtn = row.querySelector('.btn-danger');
+            delBtn.addEventListener('click', () => {
+                q.options = q.options.filter(o => o.index !== opt.index).map((o, i) => ({ index: i, text: o.text, correct: o.correct }));
+                this.renderMcqOptions(container, q);
+                this.updateHiddenField();
+            });
+            container.appendChild(row);
+        });
     }
 
     generateBlockPreview(block) {

@@ -74,6 +74,19 @@
     gap: 0.25rem;
 }
 
+/* MCQ editor (per-block) */
+.mcq-editor-section { margin-top: 12px; padding-top: 12px; border-top: 1px dashed #e9ecef; }
+.mcq-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.mcq-list .mcq-item { border: 1px solid #e9ecef; border-radius: 8px; padding: 8px; margin-bottom: 8px; background: #fff; }
+.mcq-item-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.mcq-settings { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; align-items: start; margin-bottom: 8px; }
+.mcq-settings .setting-item { display: flex; flex-direction: column; min-width: 0; }
+.mcq-settings .setting-item label.form-label { margin-bottom: 4px; }
+.mcq-settings .setting-item .form-select { width: 100%; }
+.mcq-settings .form-check.form-switch { display: inline-flex; align-items: center; gap: 8px; }
+.mcq-options-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.mcq-option-row { display: grid; grid-template-columns: 28px 1fr auto; gap: 8px; align-items: center; margin-bottom: 6px; }
+
     .breadcrumb-item:hover {
         color: #495057;
         text-decoration: none;

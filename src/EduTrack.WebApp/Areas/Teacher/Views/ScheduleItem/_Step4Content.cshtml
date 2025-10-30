@@ -48,7 +48,9 @@
             </div>
         }
 
-        @if (Model.Type == ScheduleItemType.Writing || Model.Type == ScheduleItemType.Audio)
+        
+
+        @if (Model.Type == ScheduleItemType.Writing || Model.Type == ScheduleItemType.Audio || Model.Type == ScheduleItemType.MultipleChoice)
         {
             <!-- Written Content Builder -->
             <div id="writtenContentBuilder" style="display: none;">

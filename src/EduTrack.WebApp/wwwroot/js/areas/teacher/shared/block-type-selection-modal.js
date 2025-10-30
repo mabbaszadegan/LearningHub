@@ -175,6 +175,12 @@ window.BlockTypeSelectionModal = class BlockTypeSelectionModal {
                 showQuestionBlocks: true,
                 itemType: 'multiplechoice'
             },
+            // Special mode for selecting only media (regular) blocks for MC question-level attachments
+            'multiplechoice-media': {
+                showRegularBlocks: true,
+                showQuestionBlocks: false,
+                itemType: 'multiplechoice-media'
+            },
             'gapfill': {
                 showRegularBlocks: false,
                 showQuestionBlocks: true,
