@@ -37,6 +37,12 @@ class Step4ContentManager {
         this.fieldManager.registerField('contentJson', document.getElementById('contentJson'), {
             required: true,
             validate: (value) => {
+                // Only enforce content validation when user is on step 4
+                const fm = window.formManager;
+                if (!fm || fm.currentStep !== 4) {
+                    return { isValid: true };
+                }
+
                 if (!value || value.trim() === '' || value === '{}') {
                     return { isValid: false, message: 'محتوای آموزشی الزامی است' };
                 }
@@ -51,6 +57,7 @@ class Step4ContentManager {
 
         this.fieldManager.registerField('reminderContentJson', document.getElementById('reminderContentJson'));
         this.fieldManager.registerField('writtenContentJson', document.getElementById('writtenContentJson'));
+        this.fieldManager.registerField('gapFillContentJson', document.getElementById('gapFillContentJson'));
         this.fieldManager.registerField('itemType', document.getElementById('itemType'));
     }
 
@@ -103,6 +110,19 @@ class Step4ContentManager {
 
             if (!writtenData || !writtenData.questionBlocks || writtenData.questionBlocks.length === 0) {
                 this.fieldManager.showFieldError('contentJson', 'حداقل یک سوال برای تمرین نوشتاری الزامی است');
+                return false;
+            }
+        } else if (selectedType === '3') {
+            // Gap Fill validation
+            const gapData = this.collectGapFillContentData();
+            if (!gapData) {
+                this.fieldManager.showFieldError('contentJson', 'محتوای آموزشی الزامی است');
+                return false;
+            }
+            const hasText = !!(gapData.Text && gapData.Text.trim());
+            const gaps = Array.isArray(gapData.Gaps) ? gapData.Gaps : [];
+            if (!hasText || gaps.length === 0) {
+                this.fieldManager.showFieldError('contentJson', 'برای جای‌خالی، متن و حداقل یک جای‌خالی لازم است');
                 return false;
             }
         }
@@ -301,6 +321,7 @@ class Step4ContentManager {
         const contentBuilder = document.getElementById('contentBuilder');
         const reminderContentBuilder = document.getElementById('reminderContentBuilder');
         const writtenContentBuilder = document.getElementById('writtenContentBuilder');
+        const gapFillContentBuilder = document.getElementById('gapFillContentBuilder');
         const contentTemplates = document.getElementById('contentTemplates');
 
         // Hide all content builders first
@@ -309,6 +330,7 @@ class Step4ContentManager {
         if (contentBuilder) contentBuilder.style.display = 'none';
         if (reminderContentBuilder) reminderContentBuilder.style.display = 'none';
         if (writtenContentBuilder) writtenContentBuilder.style.display = 'none';
+        if (gapFillContentBuilder) gapFillContentBuilder.style.display = 'none';
         if (contentTemplates) contentTemplates.style.display = 'none';
 
         const itemTypeSelect = document.getElementById('itemType');
@@ -323,6 +345,11 @@ class Step4ContentManager {
             // Writing type
             if (writtenContentBuilder) {
                 writtenContentBuilder.style.display = 'block';
+            }
+        } else if (selectedType === '3') {
+            // Gap Fill type
+            if (gapFillContentBuilder) {
+                gapFillContentBuilder.style.display = 'block';
             }
         } else {
             // Other types
@@ -516,6 +543,10 @@ class Step4ContentManager {
             // Written content type - collect from written editor
             const writtenData = this.collectWrittenContentData();
             return writtenData;
+        } else if (selectedType === '3') {
+            // Gap Fill
+            const gapData = this.collectGapFillContentData();
+            return gapData || {};
         } else {
             // Other types - collect from content designer
             const container = document.getElementById('contentDesignContainer');
@@ -526,6 +557,28 @@ class Step4ContentManager {
             });
             return JSON.stringify(contentData);
         }
+    }
+
+    // Collect gap fill content data
+    collectGapFillContentData() {
+        const hiddenField = document.getElementById('gapFillContentJson');
+        if (hiddenField && hiddenField.value) {
+            try {
+                const parsed = JSON.parse(hiddenField.value);
+                return parsed || {};
+            } catch (e) {
+                console.warn('Failed to parse gap fill content from hidden field:', e);
+            }
+        }
+        // As a fallback, try main field
+        const mainField = document.getElementById('contentJson');
+        if (mainField && mainField.value) {
+            try {
+                const parsed = JSON.parse(mainField.value);
+                if (parsed && (parsed.Text || parsed.Gaps)) return parsed;
+            } catch {}
+        }
+        return null;
     }
 
     // Collect step 4 data for saving

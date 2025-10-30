@@ -40,6 +40,14 @@
             </div>
         }
 
+        @if (Model.Type == ScheduleItemType.GapFill)
+        {
+            <!-- Gap Fill Content Builder -->
+            <div id="gapFillContentBuilder" style="display: none;">
+                @await Html.PartialAsync("_Step4GapFillContent", Model)
+            </div>
+        }
+
         @if (Model.Type == ScheduleItemType.Writing || Model.Type == ScheduleItemType.Audio)
         {
             <!-- Written Content Builder -->

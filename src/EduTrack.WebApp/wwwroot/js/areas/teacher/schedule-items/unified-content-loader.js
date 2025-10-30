@@ -82,16 +82,22 @@ class UnifiedContentLoader {
         const elements = [
             'contentBoxesContainer',
             'emptyState',
-            'contentJson'
+            'contentJson',
+            'contentPreview'
         ];
-        
-        // Check if at least the basic elements exist
-        const hasBasicElements = elements.every(id => document.getElementById(id) !== null);
-        
+
+        // Do NOT treat as regular if Gap Fill builder is present
+        if (document.getElementById('gapFillContentBuilder')) {
+            return false;
+        }
+
+        // Check if all required elements exist
+        const hasAllElements = elements.every(id => document.getElementById(id) !== null);
+
         // Also check if we're in a regular content context (not written or reminder)
         const isRegularContext = !this.checkForWrittenContent() && !this.checkForReminderContent();
-        
-        return hasBasicElements && isRegularContext;
+
+        return hasAllElements && isRegularContext;
     }
 
     setupWrittenContentManager() {

@@ -239,23 +239,8 @@ public class ScheduleItemController : BaseTeacherController
         {
             return NotFound("آیتم آموزشی یافت نشد.");
         }
-
-        var request = new UpdateScheduleItemRequest
-        {
-            Id = scheduleItem.Value.Id,
-            Title = scheduleItem.Value.Title,
-            Description = scheduleItem.Value.Description,
-            StartDate = scheduleItem.Value.StartDate,
-            DueDate = scheduleItem.Value.DueDate,
-            IsMandatory = scheduleItem.Value.IsMandatory,
-            ContentJson = scheduleItem.Value.ContentJson,
-            MaxScore = scheduleItem.Value.MaxScore
-        };
-
-        ViewBag.ScheduleItemTypes = Enum.GetValues<ScheduleItemType>()
-            .Select(type => new { Value = (int)type, Text = type.GetDisplayName(), Description = type.GetDescription() })
-            .ToList();
-        return View(request);
+        // Redirect all edit traffic to the unified CreateOrEdit view to ensure consistent UI (form-navigation, steps, etc.)
+        return RedirectToAction(nameof(CreateOrEdit), new { teachingPlanId = scheduleItem.Value.TeachingPlanId, id });
     }
 
     // POST: ScheduleItem/Edit

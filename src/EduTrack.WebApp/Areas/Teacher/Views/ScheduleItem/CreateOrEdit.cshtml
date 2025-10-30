@@ -75,29 +75,7 @@
                         <!-- Step 4: Content Design Section -->
                         @await Html.PartialAsync("_Step4Content", Model)
 
-                        <!-- Form Navigation -->
-                        <div class="form-navigation">
-                            <div class="nav-buttons">
-                                <button type="button" class="btn-teacher btn-nav-prev" id="prevStepBtn" style="display: none;" title="مرحله قبلی">
-                                    <i class="fas fa-chevron-right"></i>
-                                    <span>مرحله قبلی</span>
-                                </button>
-                                <button type="button" class="btn-teacher btn-nav-next" id="nextStepBtn" title="ثبت مرحله و ادامه">
-                                    <span>ادامه</span>
-                                    <i class="fas fa-chevron-left"></i>
-                                </button>
-                                <button type="submit" class="btn-teacher btn-nav-submit" id="submitBtn" style="display: none;" title="ثبت نهایی">
-                                    <span>ثبت نهایی</span>
-                                    <i class="fas fa-check"></i>
-                                </button>
-                            </div>
-                            <div class="nav-progress">
-                                <div class="progress-bar">
-                                    <div class="progress-fill" id="progressFill"></div>
-                                </div>
-                                <span class="progress-text" id="progressText">مرحله 1 از 4</span>
-                            </div>
-                        </div>
+                        
                     </form>
                 </div>
             </div>
@@ -127,6 +105,33 @@
             </div>
         </div>
     </div>
+</div>
+
+<!-- Global Form Navigation (fixed at bottom; placed outside form and steps to avoid nesting issues) -->
+<div class="form-navigation">
+    <div class="nav-buttons">
+        <button type="button" class="btn-teacher btn-nav-prev" id="prevStepBtn" style="display: none;" title="مرحله قبلی">
+            <i class="fas fa-chevron-right"></i>
+            <span>مرحله قبلی</span>
+        </button>
+        <button type="button" class="btn-teacher btn-nav-next" id="nextStepBtn" title="ثبت مرحله و ادامه">
+            <span>ادامه</span>
+            <i class="fas fa-chevron-left"></i>
+        </button>
+        <button type="submit" class="btn-teacher btn-nav-submit" id="submitBtn" style="display: none;" title="ثبت نهایی">
+            <span>ثبت نهایی</span>
+            <i class="fas fa-check"></i>
+        </button>
+    </div>
+    <div class="nav-progress">
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <span class="progress-text" id="progressText">مرحله 1 از 4</span>
+    </div>
+    
+    <!-- Hidden real submit button to trigger form submit programmatically if needed -->
+    <button type="submit" form="createItemForm" style="display:none"></button>
 </div>
 
 @section Styles {
