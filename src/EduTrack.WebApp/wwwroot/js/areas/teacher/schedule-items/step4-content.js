@@ -700,9 +700,11 @@ class Step4ContentManager {
             if (this.formManager && typeof this.formManager.getExistingItemData === 'function') {
                 const existingData = this.formManager.getExistingItemData();
                 if (existingData && existingData.contentJson) {
-                    // Use field manager to set values
+                    // Use field manager to set values for all related hidden fields
                     this.fieldManager.updateField('contentJson', existingData.contentJson);
                     this.fieldManager.updateField('reminderContentJson', existingData.contentJson);
+                    this.fieldManager.updateField('writtenContentJson', existingData.contentJson);
+                    this.fieldManager.updateField('multipleChoiceContentJson', existingData.contentJson);
 
                     // Notify reminder block manager to reload content
                     const notifyReminderManager = () => {
