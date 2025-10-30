@@ -27,7 +27,6 @@
 /* Make the gap-fill CKEditor RTL with fixed height */
 .gap-fill-content-builder .ck.ck-editor__editable {
     direction: rtl;
-    text-align: right;
     min-height: 240px;
     max-height: 240px;
     overflow: auto;

@@ -37,8 +37,9 @@
         if (!els.contextContainer || !els.gapText) return;
 
         bindEvents();
-        initializeCKEditor();
+        // Load existing first so editor picks initial content
         loadExisting();
+        initializeCKEditor();
         renderSidebar();
         updateHidden();
     }
@@ -56,8 +57,11 @@
 
         // If shared modal manager exists use it to pick block type
         document.addEventListener('blockTypeSelected', (e) => {
-            if (!e.detail || !e.detail.scope || e.detail.scope !== 'gapfill') return;
-            const type = e.detail.type;
+            if (!e.detail) return;
+            const scope = e.detail.scope;
+            // Accept when scope is gapfill/context or when no scope provided
+            if (scope && scope !== 'gapfill' && scope !== 'context') return;
+            const type = (e.detail.type || '').toLowerCase();
             addContextBlock(type);
         });
     }
@@ -75,6 +79,7 @@
     }
 
     function addContextBlock(type) {
+        type = (type || '').toLowerCase();
         if (state.contextBlock) {
             state.contextBlock.remove();
             state.contextBlock = null;
@@ -294,6 +299,16 @@
         try {
             const data = JSON.parse(raw);
             els.gapText.value = data.Text || '';
+            // Also set CKEditor if ready (or retry shortly)
+            if (state.editor) {
+                state.editor.setData(data.Text || '');
+            } else {
+                setTimeout(() => {
+                    if (state.editor) {
+                        state.editor.setData(data.Text || '');
+                    }
+                }, 300);
+            }
             state.answerType = data.AnswerType || 'exact';
             state.caseSensitive = !!data.CaseSensitive;
             if (els.answerType) els.answerType.value = state.answerType;
