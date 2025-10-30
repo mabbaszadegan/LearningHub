@@ -42,20 +42,11 @@ class Step3AssignmentManager {
     }
 
     showErrorMessage(message) {
-        // Remove existing error messages
-        const existingErrors = document.querySelectorAll('.step3-error');
-        existingErrors.forEach(error => error.remove());
-        
-        // Add new error message
-        const errorDiv = document.createElement('div');
-        errorDiv.className = 'step3-error alert alert-danger mt-3';
-        errorDiv.textContent = message;
-        
-        // Insert error message at the top of step 3 content
-        const step3Content = document.querySelector('.step-content');
-        if (step3Content) {
-            step3Content.insertBefore(errorDiv, step3Content.firstChild);
+        if (typeof window.toastError === 'function') {
+            window.toastError(message);
+            return;
         }
+        try { alert(message); } catch (_) {}
     }
 
     // Initialize step 3 content when entering step 3

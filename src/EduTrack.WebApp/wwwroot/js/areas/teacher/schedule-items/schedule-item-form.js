@@ -1226,7 +1226,11 @@ class ModernScheduleItemFormManager {
         // Show validation errors to user
         const errors = Object.values(this.validationErrors).filter(error => error);
         if (errors.length > 0) {
-            alert('لطفاً خطاهای فرم را برطرف کنید:\n' + errors.join('\n'));
+            if (typeof window.toastError === 'function') {
+                window.toastError('لطفاً خطاهای فرم را برطرف کنید');
+            } else {
+                alert('لطفاً خطاهای فرم را برطرف کنید:\n' + errors.join('\n'));
+            }
         }
     }
 
@@ -1281,29 +1285,25 @@ class ModernScheduleItemFormManager {
     }
 
     showSuccessMessage(message = 'عملیات با موفقیت انجام شد') {
-        // Show success message using Toastr
+        if (typeof window.toastSuccess === 'function') {
+            window.toastSuccess(message);
+            return;
+        }
         if (typeof toastr !== 'undefined') {
-            toastr.success(message, 'موفقیت', {
-                timeOut: 3000,
-                closeButton: true,
-                progressBar: true
-            });
+            toastr.success(message, 'موفقیت', { timeOut: 3000, closeButton: true, progressBar: true });
         } else {
-            // Fallback to alert if toastr is not available
             alert('موفق: ' + message);
         }
     }
 
     showErrorMessage(message) {
-        // Show error message using Toastr
+        if (typeof window.toastError === 'function') {
+            window.toastError(message);
+            return;
+        }
         if (typeof toastr !== 'undefined') {
-            toastr.error(message, 'خطا', {
-                timeOut: 5000,
-                closeButton: true,
-                progressBar: true
-            });
+            toastr.error(message, 'خطا', { timeOut: 5000, closeButton: true, progressBar: true });
         } else {
-            // Fallback to alert if toastr is not available
             alert('خطا: ' + message);
         }
     }

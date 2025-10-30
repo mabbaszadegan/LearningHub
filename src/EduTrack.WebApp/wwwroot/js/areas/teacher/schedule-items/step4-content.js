@@ -284,8 +284,12 @@ class Step4ContentManager {
                 window.reminderBlockManager.updatePreview();
                 window.reminderBlockManager.showPreviewModal();
             } else {
-                console.warn('Reminder Block Manager not available');
+            console.warn('Reminder Block Manager not available');
+            if (typeof window.toastWarning === 'function') {
+                window.toastWarning('سیستم پیش‌نمایش هنوز آماده نیست');
+            } else {
                 alert('سیستم پیش‌نمایش هنوز آماده نیست');
+            }
             }
         } else if (selectedType === '1') {
             // Written content
@@ -293,8 +297,12 @@ class Step4ContentManager {
                 window.writtenBlockManager.updatePreview();
                 window.writtenBlockManager.showPreviewModal();
             } else {
-                console.warn('Written Block Manager not available');
+            console.warn('Written Block Manager not available');
+            if (typeof window.toastWarning === 'function') {
+                window.toastWarning('سیستم پیش‌نمایش هنوز آماده نیست');
+            } else {
                 alert('سیستم پیش‌نمایش هنوز آماده نیست');
+            }
             }
         }
     }
