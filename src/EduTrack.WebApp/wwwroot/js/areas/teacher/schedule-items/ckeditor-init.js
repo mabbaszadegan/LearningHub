@@ -28,6 +28,7 @@
         BlockQuote,
         Heading,
         List,
+        Alignment,
         Table,
         TableToolbar,
         Clipboard,
@@ -57,6 +58,7 @@
         BlockQuote,
         Heading,
         List,
+        Alignment,
         Table,
         TableToolbar,
         Clipboard,
@@ -79,12 +81,12 @@
             plugins: [
                 Base64UploadAdapter, Essentials, Paragraph, Bold, Italic, Font,
                 Image, ImageToolbar, ImageUpload, ImageCaption, ImageStyle, ImageResize,
-                LinkImage, SourceEditing, Autoformat, BlockQuote, Heading, List,
+                LinkImage, SourceEditing, Autoformat, BlockQuote, Heading, List, Alignment,
                 Table, TableToolbar, Clipboard, MediaEmbed,
                 GeneralHtmlSupport, HtmlEmbed
             ],
             toolbar: [
-                'undo', 'redo', '|', 'bold', 'italic', '|',
+                'undo', 'redo', '|', 'bold', 'italic', '|', 'alignment', '|',
                 'fontSize', 'fontFamily', 'fontColor', 'fontBackgroundColor', '|',
                 'imageUpload', 'blockQuote', 'numberedList', 'bulletedList', '|',
                 'heading', 'mediaEmbed', '|', 'sourceEditing'

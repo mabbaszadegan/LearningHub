@@ -13,7 +13,8 @@
         contextBlock: null, // DOM element for context block
         gaps: [], // { index: number, correctAnswer: string, alternativeAnswers: string[], hint: string }
         answerType: 'exact',
-        caseSensitive: false
+        caseSensitive: false,
+        editor: null
     };
 
     const els = {
@@ -36,6 +37,7 @@
         if (!els.contextContainer || !els.gapText) return;
 
         bindEvents();
+        initializeCKEditor();
         loadExisting();
         renderSidebar();
         updateHidden();
@@ -116,15 +118,32 @@
     }
 
     function insertBlankAtCursor() {
-        const ta = els.gapText;
-        if (!ta) return;
         const nextIndex = getNextBlankIndex();
         const token = `[[blank${nextIndex}]]`;
+        const tokenWithSpaces = ` ${token} `;
+
+        // Prefer CKEditor insertion when available
+        if (state.editor) {
+            state.editor.model.change(writer => {
+                const pos = state.editor.model.document.selection.getFirstPosition();
+                writer.insertText(tokenWithSpaces, pos);
+                const endPos = pos.getShiftedBy(tokenWithSpaces.length);
+                writer.setSelection(endPos);
+            });
+            // Focus editor and sync underlying value/state
+            state.editor.editing.view.focus();
+            syncFromEditor();
+            return;
+        }
+
+        // Fallback to textarea
+        const ta = els.gapText;
+        if (!ta) return;
         const start = ta.selectionStart || 0;
         const end = ta.selectionEnd || 0;
         const value = ta.value || '';
-        ta.value = value.substring(0, start) + token + value.substring(end);
-        ta.selectionStart = ta.selectionEnd = start + token.length;
+        ta.value = value.substring(0, start) + tokenWithSpaces + value.substring(end);
+        ta.selectionStart = ta.selectionEnd = start + tokenWithSpaces.length;
         ta.focus();
         handleGapTextChange();
     }
@@ -137,7 +156,7 @@
     }
 
     function handleGapTextChange() {
-        const text = els.gapText.value || '';
+        const text = (els.gapText.value || '');
         const tokens = [...text.matchAll(/\[\[blank(\d+)\]\]/gi)].map(m => parseInt(m[1], 10)).filter(n => !isNaN(n));
         const unique = Array.from(new Set(tokens)).sort((a, b) => a - b);
 
@@ -208,13 +227,39 @@
     function renderSidebar() {
         if (!els.sidebar) return;
         const hasContext = !!state.contextBlock;
-        const blanks = state.gaps.map(g => `جای‌خالی ${g.index}`).join('، ');
+        const items = state.gaps.map(g => `<button type="button" class="btn btn-link p-0 text-start gap-jump" data-index="${g.index}">جای‌خالی ${g.index}</button>`).join('');
         els.sidebar.innerHTML = `
             <div class="sidebar-section">
                 <div class="sidebar-row"><i class="fas fa-layer-group"></i><span>بلاک زمینه: ${hasContext ? 'دارد' : 'ندارد'}</span></div>
                 <div class="sidebar-row"><i class="fas fa-square"></i><span>تعداد جای‌خالی: ${state.gaps.length}</span></div>
-                ${state.gaps.length ? `<div class="sidebar-plain">${blanks}</div>` : ''}
+                ${state.gaps.length ? `<div class="sidebar-plain d-flex flex-column gap-1">${items}</div>` : ''}
             </div>`;
+
+        // Bind jump handlers
+        els.sidebar.querySelectorAll('.gap-jump').forEach(btn => {
+            btn.addEventListener('click', () => focusBlank(parseInt(btn.dataset.index, 10)));
+        });
+    }
+
+    function focusBlank(index) {
+        // Bring editor into view
+        els.gapText?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        // If CKEditor exists, just focus editor (full token selection is non-trivial)
+        if (state.editor) {
+            state.editor.editing.view.focus();
+            return;
+        }
+
+        // Fallback: move caret to first occurrence in textarea
+        const token = `[[blank${index}]]`;
+        const value = els.gapText.value || '';
+        const pos = value.indexOf(token);
+        if (pos >= 0) {
+            els.gapText.focus();
+            els.gapText.selectionStart = pos;
+            els.gapText.selectionEnd = pos + token.length;
+        }
     }
 
     function buildContentJson() {
@@ -224,16 +269,6 @@
             AnswerType: state.answerType,
             CaseSensitive: !!state.caseSensitive
         };
-
-        // If context exists, embed as first content block to enable student rendering reuse
-        if (state.contextBlock) {
-            const data = getBlockData(state.contextBlock);
-            // Store minimal, student-side renderer already supports these types
-            content.ContextBlock = {
-                Type: state.contextBlock.dataset.type,
-                Data: data || {}
-            };
-        }
         return content;
     }
 
@@ -269,18 +304,7 @@
                 renderGapsList();
             }
 
-            if (data.ContextBlock && data.ContextBlock.Type) {
-                addContextBlock((data.ContextBlock.Type || '').toLowerCase());
-                // After creation, merge data
-                if (state.contextBlock) {
-                    state.contextBlock.dataset.blockData = JSON.stringify(data.ContextBlock.Data || {});
-                    // Let specific managers hydrate preview
-                    const populateEvent = new CustomEvent('populateBlockContent', {
-                        detail: { blockElement: state.contextBlock, block: { id: state.contextBlock.dataset.blockId, type: state.contextBlock.dataset.type, data: data.ContextBlock.Data || {} }, blockType: state.contextBlock.dataset.type }
-                    });
-                    document.dispatchEvent(populateEvent);
-                }
-            }
+            // No context persistence in GapFillContent per standard
         } catch {}
         renderSidebar();
         updateHidden();
@@ -290,6 +314,52 @@
         const div = document.createElement('div');
         div.textContent = str || '';
         return div.innerHTML;
+    }
+
+    function initializeCKEditor() {
+        if (!els.gapText) return;
+        // Reuse existing CKEditor manager used elsewhere to avoid duplicated configs
+        if (!window.ckeditorManager) {
+            setTimeout(initializeCKEditor, 500);
+            return;
+        }
+
+        // Create a div editor next to textarea and let ckeditorManager initialize it
+        const editorEl = document.createElement('div');
+        editorEl.className = 'ckeditor-editor';
+        editorEl.dataset.placeholder = 'متن تمرین را بنویسید و با [[blank1]] جای‌خالی درج کنید';
+        editorEl.innerHTML = els.gapText.value || '';
+
+        // Insert before textarea and hide textarea (kept for value syncing)
+        els.gapText.style.display = 'none';
+        els.gapText.parentNode.insertBefore(editorEl, els.gapText);
+
+        // Initialize via manager
+        window.ckeditorManager.initializeEditor(editorEl);
+
+        // Wait until editor instance is registered
+        const waitEditor = () => {
+            const editor = window.ckeditorManager.editors.get(editorEl);
+            if (editor) {
+                state.editor = editor;
+                // Sync from editor to textarea and state
+                editor.model.document.on('change:data', () => {
+                    syncFromEditor();
+                });
+                // Initial sync
+                syncFromEditor();
+            } else {
+                setTimeout(waitEditor, 100);
+            }
+        };
+        waitEditor();
+    }
+
+    function syncFromEditor() {
+        if (!state.editor) return;
+        const data = state.editor.getData();
+        els.gapText.value = data;
+        handleGapTextChange();
     }
 
     // Kickoff after DOM

@@ -72,6 +72,10 @@ if (typeof window.CKEditorManager === 'undefined') {
         try {
             const editor = await window.ClassicEditor.create(editorElement, {
                 licenseKey: 'GPL',
+                language: {
+                    ui: 'fa',
+                    content: 'fa'
+                },
                 plugins: [
                     Plugins.Base64UploadAdapter,
                     Plugins.Essentials,
@@ -101,6 +105,7 @@ if (typeof window.CKEditorManager === 'undefined') {
                 toolbar: [
                     'undo', 'redo', '|',
                     'bold', 'italic', '|',
+                    'alignment', '|',
                     'fontSize', 'fontFamily', 'fontColor', 'fontBackgroundColor', '|',
                     'numberedList', 'bulletedList', '|',
                     'link', 'imageUpload', 'insertTable', '|',
