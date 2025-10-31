@@ -46,6 +46,11 @@
             <div id="gapFillContentBuilder" style="display: none;">
                 @await Html.PartialAsync("_Step4GapFillContent", Model)
             </div>
+            
+            <!-- Written Content Builder (also needed for GapFill mode) -->
+            <div id="writtenContentBuilder" style="display: none;">
+                @await Html.PartialAsync("_Step4WrittenContent", Model)
+            </div>
         }
 
         

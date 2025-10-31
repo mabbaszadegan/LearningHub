@@ -353,10 +353,19 @@ if (typeof window.CKEditorManager === 'undefined') {
 
     updateBlockInContentBuilder(blockElement, blockData) {
         // Find the content builder that owns this block
-        const blocksList = blockElement.closest('.content-blocks-list');
+        // Try multiple methods to find blocksList
+        let blocksList = blockElement.closest('.content-blocks-list');
+        
         if (!blocksList) {
-            console.warn('CKEditorManager: No blocks list found');
-            return;
+            // Try to find by ID
+            blocksList = document.getElementById('contentBlocksList');
+        }
+        
+        if (!blocksList) {
+            // Try to find via writtenBlockManager
+            if (window.writtenBlockManager && window.writtenBlockManager.blocksList) {
+                blocksList = window.writtenBlockManager.blocksList;
+            }
         }
         
         // Find the content builder instance
@@ -365,26 +374,39 @@ if (typeof window.CKEditorManager === 'undefined') {
         // Try to find the content builder through various methods
         let contentBuilder = null;
         
-        // Method 1: Look for reminderBlockManager
-        if (window.reminderBlockManager) {
-            contentBuilder = window.reminderBlockManager;
+        // Method 1: Look for reminderBlockManager and check if block belongs to it
+        if (window.reminderBlockManager && window.reminderBlockManager.blocks) {
+            const blockExists = window.reminderBlockManager.blocks.find(b => b.id === blockId);
+            if (blockExists) {
+                contentBuilder = window.reminderBlockManager;
+            }
         }
         
-        // Method 2: Look for writtenBlockManager
-        if (!contentBuilder && window.writtenBlockManager) {
-            contentBuilder = window.writtenBlockManager;
+        // Method 2: Look for writtenBlockManager and check if block belongs to it
+        if (!contentBuilder && window.writtenBlockManager && window.writtenBlockManager.blocks) {
+            const blockExists = window.writtenBlockManager.blocks.find(b => b.id === blockId);
+            if (blockExists) {
+                contentBuilder = window.writtenBlockManager;
+            }
         }
         
-        // Method 3: Look for step4Manager
-        if (!contentBuilder && window.step4Manager) {
-            // Check if this is a reminder or written block
-            const isReminderBlock = blocksList.closest('#reminderContent');
-            const isWrittenBlock = blocksList.closest('#writtenContent');
+        // Method 3: Fallback - if no match found, try to determine by context
+        if (!contentBuilder) {
+            // Check if blockElement is inside writtenContentBuilder
+            const isInWrittenBuilder = blockElement.closest('#writtenContentBuilder') !== null;
+            const isInReminderBuilder = blockElement.closest('#reminderContentBuilder') !== null;
             
-            if (isReminderBlock && window.step4Manager.reminderBlockManager) {
-                contentBuilder = window.step4Manager.reminderBlockManager;
-            } else if (isWrittenBlock && window.step4Manager.writtenBlockManager) {
-                contentBuilder = window.step4Manager.writtenBlockManager;
+            if (isInWrittenBuilder && window.writtenBlockManager) {
+                contentBuilder = window.writtenBlockManager;
+            } else if (isInReminderBuilder && window.reminderBlockManager) {
+                contentBuilder = window.reminderBlockManager;
+            } else {
+                // Last resort: check gapFillMode or multipleChoiceMode
+                if (window.gapFillMode || window.multipleChoiceMode) {
+                    contentBuilder = window.writtenBlockManager;
+                } else {
+                    contentBuilder = window.reminderBlockManager;
+                }
             }
         }
         
@@ -399,10 +421,18 @@ if (typeof window.CKEditorManager === 'undefined') {
                     contentBuilder.updateHiddenField();
                 }
             } else {
-                console.warn('CKEditorManager: Block not found in content builder blocks array');
+                console.warn('CKEditorManager: Block not found in content builder blocks array', {
+                    blockId: blockId,
+                    builderType: contentBuilder.constructor.name,
+                    blocksCount: contentBuilder.blocks.length
+                });
             }
         } else {
-            console.warn('CKEditorManager: Content builder not found or has no blocks array');
+            console.warn('CKEditorManager: Content builder not found or has no blocks array', {
+                contentBuilder: !!contentBuilder,
+                hasBlocks: contentBuilder?.blocks ? !!contentBuilder.blocks : false,
+                blockId: blockId
+            });
         }
     }
 

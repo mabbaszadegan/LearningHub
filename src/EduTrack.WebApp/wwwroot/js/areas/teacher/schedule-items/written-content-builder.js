@@ -21,19 +21,46 @@ class WrittenContentBlockManager extends ContentBuilderBase {
     }
     
     init() {
+        console.log('WrittenContentBlockManager: Initializing...', {
+            blocksList: !!this.blocksList,
+            blocksListId: this.config.containerId,
+            emptyState: !!this.emptyState,
+            emptyStateId: this.config.emptyStateId,
+            preview: !!this.preview,
+            previewId: this.config.previewId,
+            hiddenField: !!this.hiddenField,
+            hiddenFieldId: this.config.hiddenFieldId
+        });
+        
         if (!this.blocksList || !this.emptyState || !this.preview || !this.hiddenField) {
             console.error('WrittenContentBlockManager: Required elements not found!', {
                 blocksList: !!this.blocksList,
+                blocksListElement: this.blocksList ? this.blocksList.id : 'missing',
                 emptyState: !!this.emptyState,
                 preview: !!this.preview,
                 hiddenField: !!this.hiddenField
             });
+            // Log which elements are missing
+            if (!this.blocksList) {
+                const blocksListElement = document.getElementById(this.config.containerId);
+                console.error('WrittenContentBlockManager: blocksList element not found. Looking for:', this.config.containerId, 'Found:', !!blocksListElement);
+            }
+            if (!this.emptyState) {
+                const emptyStateElement = document.getElementById(this.config.emptyStateId);
+                console.error('WrittenContentBlockManager: emptyState element not found. Looking for:', this.config.emptyStateId, 'Found:', !!emptyStateElement);
+            }
             return;
         }
         
-        // If we are in multiple-choice mode, adjust content type label for serialization
+        console.log('WrittenContentBlockManager: All required elements found, initialization successful');
+        
+        // Adjust content type based on global mode
         if (window.multipleChoiceMode) {
             this.config.contentType = 'multipleChoice';
+            // Force an initial hidden field update so ContentJson mirrors type
+            setTimeout(() => this.updateHiddenField(), 0);
+        } else if (window.gapFillMode) {
+            this.config.contentType = 'gapfill';
             // Force an initial hidden field update so ContentJson mirrors type
             setTimeout(() => this.updateHiddenField(), 0);
         }
@@ -49,15 +76,53 @@ class WrittenContentBlockManager extends ContentBuilderBase {
         });
     }
 
+    // Override addBlock to convert regular block types to question types
+    addBlock(type) {
+        console.log('WrittenContentBlockManager: addBlock called with type:', type, 'contentType:', this.config.contentType, 'gapFillMode:', window.gapFillMode);
+        
+        // Convert regular block types to question types for written/gapfill/multipleChoice content
+        // This ensures that when user selects 'text', 'image', etc. from modal,
+        // they become 'questionText', 'questionImage', etc.
+        let questionType = type;
+        
+        if (!type.startsWith('question')) {
+            // Map regular types to question types
+            const typeMap = {
+                'text': 'questionText',
+                'image': 'questionImage',
+                'video': 'questionVideo',
+                'audio': 'questionAudio'
+            };
+            
+            questionType = typeMap[type.toLowerCase()] || type;
+            console.log('WrittenContentBlockManager: Converted block type from', type, 'to', questionType);
+        }
+        
+        // Call parent addBlock with the converted type
+        if (typeof ContentBuilderBase.prototype.addBlock === 'function') {
+            ContentBuilderBase.prototype.addBlock.call(this, questionType);
+        } else {
+            console.error('WrittenContentBlockManager: Parent addBlock method not available');
+        }
+    }
+
     handleInsertBlockAbove(blockElement) {
         console.log('WrittenContentBlockManager: handleInsertBlockAbove called for block:', blockElement.dataset.blockId);
         
         // Store the reference to the block above which we want to insert
         this.insertAboveBlock = blockElement;
         
+        // Determine the item type name based on current mode
+        let itemTypeName = 'written';
+        if (window.gapFillMode || this.config.contentType === 'gapfill') {
+            itemTypeName = 'gapfill';
+        } else if (window.multipleChoiceMode || this.config.contentType === 'multipleChoice') {
+            itemTypeName = 'multiplechoice';
+        }
+        
         // Show block type selection modal for inserting above
         if (window.sharedContentBlockManager) {
-            window.sharedContentBlockManager.showBlockTypeModal(this.config.modalId, 'written');
+            window.sharedContentBlockManager.showBlockTypeModal(this.config.modalId, itemTypeName);
         }
     }
 
@@ -71,6 +136,20 @@ class WrittenContentBlockManager extends ContentBuilderBase {
         }
         
         console.log('WrittenContentBlockManager: Looking for template type:', templateType);
+        console.log('WrittenContentBlockManager: blocksList available:', !!this.blocksList);
+        console.log('WrittenContentBlockManager: GapFillMode:', window.gapFillMode);
+        
+        if (!this.blocksList) {
+            console.error('WrittenContentBlockManager: blocksList not available!');
+            return null;
+        }
+        
+        // Check if questionBlockTemplates exists
+        const templatesContainer = document.getElementById('questionBlockTemplates');
+        if (!templatesContainer) {
+            console.error('WrittenContentBlockManager: questionBlockTemplates container not found!');
+            return null;
+        }
         
         // Look for template in questionBlockTemplates (for written content)
         let template = document.querySelector(`#questionBlockTemplates .content-block-template[data-type="${templateType}"]`);
@@ -79,9 +158,13 @@ class WrittenContentBlockManager extends ContentBuilderBase {
         
         if (!template) {
             console.error('WrittenContentBlockManager: Template not found for type:', templateType);
-            console.log('Available templates:', document.querySelectorAll('#questionBlockTemplates .content-block-template'));
+            const allTemplates = document.querySelectorAll('#questionBlockTemplates .content-block-template');
+            console.log('Available templates:', Array.from(allTemplates).map(t => ({
+                type: t.dataset.type,
+                element: t
+            })));
             console.log('Looking for:', `#questionBlockTemplates .content-block-template[data-type="${templateType}"]`);
-            return;
+            return null;
         }
         
         const blockElement = template.cloneNode(true);
@@ -103,29 +186,51 @@ class WrittenContentBlockManager extends ContentBuilderBase {
         this.addDirectEventListeners(blockElement);
         
         const emptyState = this.blocksList.querySelector('.empty-state');
+        console.log('WrittenContentBlockManager: emptyState found:', !!emptyState);
+        console.log('WrittenContentBlockManager: blocksList children before:', this.blocksList.children.length);
+        
         if (emptyState) {
             this.blocksList.insertBefore(blockElement, emptyState);
+            console.log('WrittenContentBlockManager: Block inserted before emptyState');
         } else {
             this.blocksList.appendChild(blockElement);
+            console.log('WrittenContentBlockManager: Block appended to blocksList');
         }
         
-        console.log('WrittenContentBlockManager: Block added to DOM');
+        console.log('WrittenContentBlockManager: blocksList children after:', this.blocksList.children.length);
+        console.log('WrittenContentBlockManager: Block added to DOM, element:', blockElement);
         
         // Initialize CKEditor only for text blocks
         if (block.type === 'text' || block.type === 'questionText') {
-            
             // Initialize CKEditor with a delay to ensure DOM is ready
-            setTimeout(() => {
+            // Use longer delay and retry mechanism to ensure editor element is available
+            let attempts = 0;
+            const maxAttempts = 5;
+            const initEditor = () => {
+                attempts++;
                 const editorElement = blockElement.querySelector('.ckeditor-editor');
                 if (editorElement && window.ckeditorManager) {
-                    window.ckeditorManager.initializeEditor(editorElement);
+                    try {
+                        window.ckeditorManager.initializeEditor(editorElement);
+                        console.log('WrittenContentBlockManager: CKEditor initialized for block', block.id);
+                    } catch (error) {
+                        console.error('WrittenContentBlockManager: Error initializing CKEditor:', error);
+                    }
                 } else {
-                    console.warn('WrittenContentBlockManager: CKEditor element or manager not found', {
-                        editorElement: !!editorElement,
-                        ckeditorManager: !!window.ckeditorManager
-                    });
+                    if (attempts < maxAttempts) {
+                        // Retry with exponential backoff
+                        setTimeout(initEditor, 100 * attempts);
+                    } else {
+                        console.warn('WrittenContentBlockManager: CKEditor element or manager not found after', maxAttempts, 'attempts', {
+                            editorElement: !!editorElement,
+                            ckeditorManager: !!window.ckeditorManager,
+                            blockElement: !!blockElement,
+                            blockType: block.type
+                        });
+                    }
                 }
-            }, 100);
+            };
+            setTimeout(initEditor, 150);
         }
         
         // Dispatch populate event for specific block managers
@@ -141,6 +246,18 @@ class WrittenContentBlockManager extends ContentBuilderBase {
         // If in Multiple Choice mode, attach MCQ editor to this block
         if (window.multipleChoiceMode) {
             this.attachMcqEditor(blockElement, block);
+        }
+        // If in Gap Fill mode, attach per-question gap editor (for questionText)
+        // Use setTimeout to ensure DOM is fully ready
+        if (window.gapFillMode) {
+            setTimeout(() => {
+                try {
+                    this.attachGapFillEditor(blockElement, block);
+                } catch (error) {
+                    console.error('Error attaching gap fill editor:', error);
+                    // Don't fail block creation if gap fill editor attachment fails
+                }
+            }, 150);
         }
         
         // Enhance question settings if present (modern controls)
@@ -165,6 +282,26 @@ class WrittenContentBlockManager extends ContentBuilderBase {
         
         console.log('WrittenContentBlockManager: Block rendering completed for', block.id);
         return blockElement;
+    }
+
+    // Mirror hidden field to gap fill when in gapFillMode
+    updateHiddenField() {
+        // Call base implementation via ContentBuilderBase prototype
+        if (typeof ContentBuilderBase.prototype.updateHiddenField === 'function') {
+            ContentBuilderBase.prototype.updateHiddenField.call(this);
+        }
+        if (window.gapFillMode) {
+            try {
+                const content = { type: 'gapfill', blocks: this.blocks };
+                const json = JSON.stringify(content);
+                const gf = document.getElementById('gapFillContentJson');
+                if (gf) gf.value = json;
+                const main = document.getElementById('contentJson');
+                if (main) main.value = json;
+            } catch (e) {
+                console.warn('GapFill mirror update failed:', e);
+            }
+        }
     }
 
     attachMcqEditor(blockElement, block) {
@@ -199,6 +336,204 @@ class WrittenContentBlockManager extends ContentBuilderBase {
         });
 
         this.renderMcqList(list, block);
+    }
+
+    attachGapFillEditor(blockElement, block) {
+        if ((block.type || '').toLowerCase() !== 'questiontext') return;
+        
+        // Ensure block element is in DOM
+        if (!blockElement || !document.contains(blockElement)) {
+            console.warn('WrittenContentBlockManager: Block element not in DOM, skipping gap fill editor attachment');
+            return;
+        }
+
+        // Create UI if not present
+        let gfContainer = blockElement.querySelector('[data-role="gf-container"]');
+        if (!gfContainer) {
+            gfContainer = document.createElement('div');
+            gfContainer.dataset.role = 'gf-container';
+            gfContainer.className = 'gf-editor';
+            gfContainer.innerHTML = `
+                <div class="section-header">
+                    <div class="section-title">
+                        <i class="fas fa-square"></i>
+                        <span>تنظیمات جای‌خالی این سوال</span>
+                    </div>
+                    <div class="section-actions">
+                        <button type="button" class="btn-teacher btn-secondary" data-action="gf-insert-blank">
+                            <i class="fas fa-plus-square"></i>
+                            <span>درج جای‌خالی</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="gf-settings">
+                    <div class="setting-item">
+                        <label class="form-label">نوع تصحیح</label>
+                        <select class="form-select form-select-sm" data-role="gf-answer-type">
+                            <option value="exact">دقیق</option>
+                            <option value="similar">مشابه</option>
+                            <option value="keyword">کلیدواژه</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <label class="form-label">حساس به حروف</label>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" data-role="gf-case">
+                            <label class="form-check-label">فعال</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="gaps-list" data-role="gf-gaps"></div>
+            `;
+            
+            // Try to find insertion point
+            let insertPoint = blockElement.querySelector('.question-hint');
+            if (insertPoint && insertPoint.parentNode) {
+                insertPoint.parentNode.insertBefore(gfContainer, insertPoint);
+            } else {
+                const blockContent = blockElement.querySelector('.block-content');
+                if (blockContent) {
+                    blockContent.appendChild(gfContainer);
+                } else {
+                    // Fallback: append to block element itself
+                    console.warn('WrittenContentBlockManager: Could not find suitable insertion point for gap fill editor');
+                    blockElement.appendChild(gfContainer);
+                }
+            }
+
+            // Bind insert blank
+            const insertBlankBtn = gfContainer.querySelector('[data-action="gf-insert-blank"]');
+            if (insertBlankBtn) {
+                insertBlankBtn.addEventListener('click', (ev) => {
+                    ev.preventDefault(); ev.stopPropagation();
+                    this.insertGapBlankToken(blockElement);
+                });
+            }
+
+            // Bind settings
+            const answerTypeSelect = gfContainer.querySelector('[data-role="gf-answer-type"]');
+            if (answerTypeSelect) {
+                answerTypeSelect.addEventListener('change', (e) => {
+                    block.data.answerType = e.target.value;
+                    this.updateHiddenField();
+                });
+            }
+            
+            const caseCheckbox = gfContainer.querySelector('[data-role="gf-case"]');
+            if (caseCheckbox) {
+                caseCheckbox.addEventListener('change', (e) => {
+                    block.data.caseSensitive = !!e.target.checked;
+                    this.updateHiddenField();
+                });
+            }
+        }
+
+        if (!Array.isArray(block.data.gaps)) block.data.gaps = [];
+        if (!block.data.answerType) block.data.answerType = 'exact';
+        if (typeof block.data.caseSensitive !== 'boolean') block.data.caseSensitive = false;
+
+        // Apply current
+        const sel = blockElement.querySelector('[data-role="gf-answer-type"]');
+        if (sel) sel.value = block.data.answerType;
+        const chk = blockElement.querySelector('[data-role="gf-case"]');
+        if (chk) chk.checked = !!block.data.caseSensitive;
+
+        // Render gaps and sync tokens
+        this.renderGapList(blockElement, block);
+        this.syncGapsFromQuestionContent(blockElement, block);
+    }
+
+    insertGapBlankToken(blockElement) {
+        const editorEl = blockElement.querySelector('.ckeditor-editor');
+        if (editorEl && window.ckeditorManager) {
+            const editor = window.ckeditorManager.editors.get(editorEl);
+            const index = this.nextGapIndex(blockElement);
+            const token = ` [[blank${index}]] `;
+            if (editor) {
+                editor.model.change(writer => {
+                    const pos = editor.model.document.selection.getFirstPosition();
+                    writer.insertText(token, pos);
+                });
+                editor.editing.view.focus();
+            }
+        }
+    }
+
+    nextGapIndex(blockElement) {
+        const id = blockElement.dataset.blockId;
+        const blk = this.blocks.find(b => b.id === id);
+        const used = new Set((blk?.data?.gaps || []).map(g => g.index));
+        let i = 1; while (used.has(i)) i++; return i;
+    }
+
+    syncGapsFromQuestionContent(blockElement, block) {
+        const html = block.data?.content || '';
+        const tokens = [...String(html).matchAll(/\[\[blank(\d+)\]\]/gi)]
+            .map(m => parseInt(m[1], 10)).filter(n => !isNaN(n));
+        const unique = Array.from(new Set(tokens)).sort((a,b)=>a-b);
+        const map = new Map((block.data.gaps||[]).map(g => [g.index, g]));
+        block.data.gaps = unique.map(i => map.get(i) || ({ index: i, correctAnswer: '', alternativeAnswers: [], hint: '' }));
+        this.renderGapList(blockElement, block);
+        this.updateHiddenField();
+    }
+
+    renderGapList(blockElement, block) {
+        const container = blockElement.querySelector('[data-role="gf-gaps"]');
+        if (!container) return;
+        container.innerHTML = '';
+        if (!block.data.gaps || !block.data.gaps.length) {
+            const empty = document.createElement('div');
+            empty.className = 'empty-state';
+            empty.innerHTML = '<p>برای این سوال هنوز جای‌خالی تعریف نشده است.</p>';
+            container.appendChild(empty);
+            return;
+        }
+        block.data.gaps.forEach(g => {
+            const row = document.createElement('div');
+            row.className = 'gap-item';
+            row.innerHTML = `
+                <div class="gap-item-header">
+                    <div class="gap-item-title"><i class=\"fas fa-square\"></i> جای‌خالی ${g.index}</div>
+                </div>
+                <div class="gap-item-body">
+                    <div class="row g-2">
+                        <div class="col-12 col-md-6">
+                            <label class="form-label">پاسخ صحیح</label>
+                            <input type="text" class="form-control" data-role="gf-correct" data-index="${g.index}" value="${this.escapeHtml(g.correctAnswer)}" />
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label class="form-label">پاسخ‌های جایگزین (با ویرگول جدا کنید)</label>
+                            <input type="text" class="form-control" data-role="gf-alts" data-index="${g.index}" value="${this.escapeHtml((g.alternativeAnswers||[]).join(', '))}" />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">راهنما (اختیاری)</label>
+                            <input type="text" class="form-control" data-role="gf-hint" data-index="${g.index}" value="${this.escapeHtml(g.hint||'')}" />
+                        </div>
+                    </div>
+                </div>`;
+            row.querySelectorAll('input').forEach(inp => {
+                inp.addEventListener('input', (e) => this.onGapFieldChange(e, block));
+            });
+            container.appendChild(row);
+        });
+    }
+
+    onGapFieldChange(e, block) {
+        const role = e.target.dataset.role;
+        const idx = parseInt(e.target.dataset.index, 10);
+        const gap = (block.data.gaps || []).find(x => x.index === idx);
+        if (!gap) return;
+        const val = e.target.value || '';
+        if (role === 'gf-correct') gap.correctAnswer = val;
+        if (role === 'gf-alts') gap.alternativeAnswers = val.split(',').map(s => s.trim()).filter(Boolean);
+        if (role === 'gf-hint') gap.hint = val;
+        this.updateHiddenField();
+    }
+
+    escapeHtml(str) {
+        const div = document.createElement('div');
+        div.textContent = str || '';
+        return div.innerHTML;
     }
 
     renderMcqList(container, block) {
@@ -389,8 +724,25 @@ class WrittenContentBlockManager extends ContentBuilderBase {
         // Collect current data from DOM before returning
         this.collectCurrentBlockData();
         
+        // For gapFill mode, return blocks instead of questionBlocks
+        if (window.gapFillMode || this.config.contentType === 'gapfill') {
+            return {
+                type: 'gapfill',
+                blocks: this.blocks
+            };
+        }
+        
+        // For multiple choice, return blocks
+        if (window.multipleChoiceMode || this.config.contentType === 'multipleChoice') {
+            return {
+                type: 'multipleChoice',
+                blocks: this.blocks
+            };
+        }
+        
+        // For written content, return questionBlocks
         return {
-            type: this.config.contentType,
+            type: this.config.contentType || 'written',
             questionBlocks: this.blocks // Return as questionBlocks for written content
         };
     }
@@ -541,6 +893,45 @@ class WrittenContentBlockManager extends ContentBuilderBase {
             this.isLoadingExistingContent = false;
         }
     }
+
+    // Implement updatePreview method
+    updatePreview() {
+        if (!this.preview) {
+            return;
+        }
+        
+        try {
+            // Get current content
+            const content = this.getContent();
+            
+            // Update preview using previewManager
+            if (this.previewManager && typeof this.previewManager.generatePreviewHTML === 'function') {
+                const previewHTML = this.previewManager.generatePreviewHTML(content);
+                this.preview.innerHTML = previewHTML;
+            } else {
+                // Fallback: simple preview update
+                if (content && content.blocks && Array.isArray(content.blocks)) {
+                    let html = '<div class="content-preview">';
+                    content.blocks.forEach(block => {
+                        html += this.generateBlockPreview(block);
+                    });
+                    html += '</div>';
+                    this.preview.innerHTML = html;
+                } else if (content && content.questionBlocks && Array.isArray(content.questionBlocks)) {
+                    let html = '<div class="content-preview">';
+                    content.questionBlocks.forEach(question => {
+                        html += this.generateBlockPreview(question);
+                    });
+                    html += '</div>';
+                    this.preview.innerHTML = html;
+                } else {
+                    this.preview.innerHTML = '<div class="empty-content">هیچ محتوایی برای نمایش وجود ندارد.</div>';
+                }
+            }
+        } catch (error) {
+            console.error('WrittenContentBlockManager: Error updating preview:', error);
+        }
+    }
 }
 
 // Initialize when DOM is loaded
@@ -572,12 +963,20 @@ function initializeWrittenBlockManager() {
         
         if (missingElements.length > 0) {
             console.warn('WrittenContentBlockManager: Missing required elements:', missingElements);
-            return;
+            console.warn('WrittenContentBlockManager: This usually means the writtenContentBuilder section is not loaded yet');
+            // Return false to indicate failure instead of just returning
+            return false;
         }
         
         console.log('WrittenContentBlockManager: All required elements found, creating manager...');
-        window.writtenBlockManager = new WrittenContentBlockManager();
-        console.log('WrittenContentBlockManager: Successfully initialized', window.writtenBlockManager);
+        try {
+            window.writtenBlockManager = new WrittenContentBlockManager();
+            console.log('WrittenContentBlockManager: Successfully initialized', window.writtenBlockManager);
+            return true;
+        } catch (error) {
+            console.error('WrittenContentBlockManager: Error creating manager:', error);
+            return false;
+        }
         
         // Force load existing content after initialization
         setTimeout(() => {
@@ -608,10 +1007,13 @@ document.addEventListener('DOMContentLoaded', () => {
 // Also try to initialize immediately if DOM is already loaded
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-        setTimeout(initializeWrittenBlockManager, 100);
+        setTimeout(initializeWrittenBlockManager, 300);
     });
 } else {
-    setTimeout(initializeWrittenBlockManager, 100);
+    // Try multiple times with increasing delays to ensure elements are loaded
+    setTimeout(initializeWrittenBlockManager, 300);
+    setTimeout(initializeWrittenBlockManager, 1000);
+    setTimeout(initializeWrittenBlockManager, 2000);
 }
 
 // Make initialization function available globally for manual triggering

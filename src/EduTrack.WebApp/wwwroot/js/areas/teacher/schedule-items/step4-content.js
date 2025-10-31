@@ -114,16 +114,16 @@ class Step4ContentManager {
                 return false;
             }
         } else if (selectedType === '3') {
-            // Gap Fill validation
+            // Gap Fill (block-based like written)
             const gapData = this.collectGapFillContentData();
-            if (!gapData) {
-                this.fieldManager.showFieldError('contentJson', 'محتوای آموزشی الزامی است');
+            if (!gapData || !Array.isArray(gapData.blocks) || gapData.blocks.length === 0) {
+                this.fieldManager.showFieldError('contentJson', 'حداقل یک سوال جای‌خالی الزامی است');
                 return false;
             }
-            const hasText = !!(gapData.Text && gapData.Text.trim());
-            const gaps = Array.isArray(gapData.Gaps) ? gapData.Gaps : [];
-            if (!hasText || gaps.length === 0) {
-                this.fieldManager.showFieldError('contentJson', 'برای جای‌خالی، متن و حداقل یک جای‌خالی لازم است');
+            // Ensure each questionText has at least one blank
+            const invalid = gapData.blocks.some(b => (String(b.type || '').toLowerCase() === 'questiontext') && (!b.data || !Array.isArray(b.data.gaps) || b.data.gaps.length === 0));
+            if (invalid) {
+                this.fieldManager.showFieldError('contentJson', 'هر سوال متنی باید حداقل یک جای‌خالی داشته باشد');
                 return false;
             }
         } else if (selectedType === '4') {
@@ -257,13 +257,65 @@ class Step4ContentManager {
     }
 
     handleAddBlockFromHeader() {
-        if (window.sharedContentBlockManager) {
-            const itemTypeSelect = document.getElementById('itemType');
-            const selectedType = itemTypeSelect ? itemTypeSelect.value : '0';
-            const itemTypeName = this.getItemTypeName(selectedType);
-            
-            window.sharedContentBlockManager.showBlockTypeModal('blockTypeModal', itemTypeName);
+        if (!window.sharedContentBlockManager) {
+            console.warn('Step4ContentManager: sharedContentBlockManager not available');
+            return;
         }
+        
+        const itemTypeSelect = document.getElementById('itemType');
+        const selectedType = itemTypeSelect ? itemTypeSelect.value : '0';
+        const itemTypeName = this.getItemTypeName(selectedType);
+        
+        // For gapFill, ensure gapFillBlockManager is ready before showing modal
+        if (selectedType === '3') {
+            window.gapFillMode = true;
+            window.multipleChoiceMode = false;
+            
+            // Ensure gapFillBlockManager is initialized
+            const ensureGapFillManager = () => {
+                if (!window.gapFillBlockManager) {
+                    if (typeof window.initializeGapFillBlockManager === 'function') {
+                        window.initializeGapFillBlockManager();
+                    }
+                    return false;
+                }
+                
+                // Ensure blocksList is available
+                if (!window.gapFillBlockManager.blocksList) {
+                    console.warn('Step4ContentManager: gapFillBlockManager blocksList not available');
+                    return false;
+                }
+                
+                return true;
+            };
+            
+            // Try immediately
+            if (!ensureGapFillManager()) {
+                // Wait for initialization with retries
+                let attempts = 0;
+                const maxAttempts = 10;
+                const retryInterval = setInterval(() => {
+                    attempts++;
+                    if (ensureGapFillManager() || attempts >= maxAttempts) {
+                        clearInterval(retryInterval);
+                        if (attempts >= maxAttempts) {
+                            console.error('Step4ContentManager: Could not ensure gapFillBlockManager after', maxAttempts, 'attempts');
+                            if (typeof window.toastError === 'function') {
+                                window.toastError('خطا در آماده‌سازی سیستم ایجاد بلاک');
+                            }
+                        } else {
+                            // Manager is ready, show modal
+                            if (window.sharedContentBlockManager) {
+                                window.sharedContentBlockManager.showBlockTypeModal('blockTypeModal', itemTypeName);
+                            }
+                        }
+                    }
+                }, 200);
+                return;
+            }
+        }
+        
+        window.sharedContentBlockManager.showBlockTypeModal('blockTypeModal', itemTypeName);
     }
 
     getItemTypeName(typeValue) {
@@ -299,18 +351,31 @@ class Step4ContentManager {
                 alert('سیستم پیش‌نمایش هنوز آماده نیست');
             }
             }
-        } else if (selectedType === '1') {
-            // Written content
+        } else if (selectedType === '1' || selectedType === '4') {
+            // Written content and Multiple Choice use writtenBlockManager
             if (window.writtenBlockManager) {
                 window.writtenBlockManager.updatePreview();
                 window.writtenBlockManager.showPreviewModal();
             } else {
-            console.warn('Written Block Manager not available');
-            if (typeof window.toastWarning === 'function') {
-                window.toastWarning('سیستم پیش‌نمایش هنوز آماده نیست');
-            } else {
-                alert('سیستم پیش‌نمایش هنوز آماده نیست');
+                console.warn('Written Block Manager not available');
+                if (typeof window.toastWarning === 'function') {
+                    window.toastWarning('سیستم پیش‌نمایش هنوز آماده نیست');
+                } else {
+                    alert('سیستم پیش‌نمایش هنوز آماده نیست');
+                }
             }
+        } else if (selectedType === '3') {
+            // Gap Fill uses gapFillBlockManager
+            if (window.gapFillBlockManager) {
+                window.gapFillBlockManager.updatePreview();
+                window.gapFillBlockManager.showPreviewModal();
+            } else {
+                console.warn('Gap Fill Block Manager not available');
+                if (typeof window.toastWarning === 'function') {
+                    window.toastWarning('سیستم پیش‌نمایش هنوز آماده نیست');
+                } else {
+                    alert('سیستم پیش‌نمایش هنوز آماده نیست');
+                }
             }
         }
     }
@@ -381,9 +446,43 @@ class Step4ContentManager {
                 writtenContentBuilder.style.display = 'block';
             }
         } else if (selectedType === '3') {
-            // Gap Fill type
+            // Gap Fill uses its own gapFillBlockManager
+            window.gapFillMode = true;
+            window.multipleChoiceMode = false;
+            
+            // Show gapFillContentBuilder
             if (gapFillContentBuilder) {
                 gapFillContentBuilder.style.display = 'block';
+            }
+            
+            // Ensure gapFillBlockManager is initialized
+            const ensureGapFillManager = () => {
+                if (window.gapFillBlockManager) {
+                    return true;
+                }
+                
+                // Try to initialize if function exists
+                if (typeof window.initializeGapFillBlockManager === 'function') {
+                    window.initializeGapFillBlockManager();
+                }
+                
+                return false;
+            };
+            
+            // Try immediately
+            if (!ensureGapFillManager()) {
+                // Wait for initialization with retries
+                let attempts = 0;
+                const maxAttempts = 15;
+                const checkInterval = setInterval(() => {
+                    attempts++;
+                    if (ensureGapFillManager() || attempts >= maxAttempts) {
+                        clearInterval(checkInterval);
+                        if (attempts >= maxAttempts && !window.gapFillBlockManager) {
+                            console.warn('Step4ContentManager: Could not initialize gapFillBlockManager after', maxAttempts, 'attempts');
+                        }
+                    }
+                }, 200);
             }
         } else {
             // Other types
@@ -501,14 +600,24 @@ class Step4ContentManager {
             }
         });
 
+        const itemTypeSelect = document.getElementById('itemType');
+        const selectedType = itemTypeSelect ? itemTypeSelect.value : '0';
+
         // Also force sync from reminder block manager
-        if (window.reminderBlockManager && typeof window.reminderBlockManager.forceSyncWithMainField === 'function') {
+        if (selectedType === '0' && window.reminderBlockManager && typeof window.reminderBlockManager.forceSyncWithMainField === 'function') {
             window.reminderBlockManager.forceSyncWithMainField();
         }
 
-        // Force sync from written block manager
-        if (window.writtenBlockManager && typeof window.writtenBlockManager.forceSyncWithMainField === 'function') {
+        // Force sync from written block manager (for written and multiple choice)
+        if ((selectedType === '1' || selectedType === '4') && 
+            window.writtenBlockManager && typeof window.writtenBlockManager.forceSyncWithMainField === 'function') {
             window.writtenBlockManager.forceSyncWithMainField();
+        }
+
+        // Force sync from gap fill block manager
+        if (selectedType === '3' && 
+            window.gapFillBlockManager && typeof window.gapFillBlockManager.forceSyncWithMainField === 'function') {
+            window.gapFillBlockManager.forceSyncWithMainField();
         }
     }
 
@@ -555,20 +664,35 @@ class Step4ContentManager {
         
         this.isSyncingContent = true;
         try {
-            // Force sync from reminder block manager if available
-            if (window.reminderBlockManager && typeof window.reminderBlockManager.forceSyncWithMainField === 'function') {
+            const itemTypeSelect = document.getElementById('itemType');
+            const selectedType = itemTypeSelect ? itemTypeSelect.value : '0';
+
+            // Force sync from reminder block manager if available (for reminder type)
+            if (selectedType === '0' && window.reminderBlockManager && typeof window.reminderBlockManager.forceSyncWithMainField === 'function') {
                 window.reminderBlockManager.forceSyncWithMainField();
             }
 
-            // Force sync from written block manager if available
-            if (window.writtenBlockManager && typeof window.writtenBlockManager.forceSyncWithMainField === 'function') {
+            // Force sync from written block manager if available (for written and multiple choice types)
+            if ((selectedType === '1' || selectedType === '4') && 
+                window.writtenBlockManager && typeof window.writtenBlockManager.forceSyncWithMainField === 'function') {
                 window.writtenBlockManager.forceSyncWithMainField();
+            }
+
+            // Force sync from gap fill block manager if available
+            if (selectedType === '3' && 
+                window.gapFillBlockManager && typeof window.gapFillBlockManager.forceSyncWithMainField === 'function') {
+                window.gapFillBlockManager.forceSyncWithMainField();
             }
 
             const contentData = this.collectContentData();
             if (contentData) {
                 const contentJson = typeof contentData === 'string' ? contentData : JSON.stringify(contentData);
                 this.fieldManager.updateField('contentJson', contentJson);
+                
+                // Also update gapFillContentJson if in gap fill mode
+                if (selectedType === '3') {
+                    this.fieldManager.updateField('gapFillContentJson', contentJson);
+                }
             }
         } finally {
             this.isSyncingContent = false;
@@ -617,32 +741,51 @@ class Step4ContentManager {
 
     // Collect gap fill content data
     collectGapFillContentData() {
+        // First, try to get content from gapFillBlockManager
+        if (window.gapFillBlockManager && typeof window.gapFillBlockManager.getContent === 'function') {
+            const content = window.gapFillBlockManager.getContent();
+            if (content && typeof content === 'object') {
+                return content;
+            }
+        }
+
+        // Fallback: try to get content from hidden field
         const hiddenField = document.getElementById('gapFillContentJson');
         if (hiddenField && hiddenField.value) {
             try {
                 const parsed = JSON.parse(hiddenField.value);
-                return parsed || {};
+                if (parsed && typeof parsed === 'object') {
+                    return parsed;
+                }
             } catch (e) {
                 console.warn('Failed to parse gap fill content from hidden field:', e);
             }
         }
+
         // As a fallback, try main field
         const mainField = document.getElementById('contentJson');
         if (mainField && mainField.value) {
             try {
                 const parsed = JSON.parse(mainField.value);
-                if (parsed && (parsed.Text || parsed.Gaps)) return parsed;
-            } catch {}
+                if (parsed && typeof parsed === 'object' && (parsed.type === 'gapfill' || Array.isArray(parsed.blocks))) {
+                    return parsed;
+                }
+            } catch (e) {
+                console.warn('Failed to parse main content for gap fill:', e);
+            }
         }
-        return null;
+
+        // Return empty content structure
+        return { type: 'gapfill', blocks: [] };
     }
 
     // Collect step 4 data for saving
     async collectStep4Data() {
-        // First upload all pending files from both reminder and written managers
+        // First upload all pending files from all managers
         const managers = [];
         if (window.reminderBlockManager) managers.push(window.reminderBlockManager);
         if (window.writtenBlockManager) managers.push(window.writtenBlockManager);
+        if (window.gapFillBlockManager) managers.push(window.gapFillBlockManager);
         
         for (const manager of managers) {
             if (manager && typeof manager.uploadAllPendingFiles === 'function') {
@@ -700,15 +843,26 @@ class Step4ContentManager {
             if (this.formManager && typeof this.formManager.getExistingItemData === 'function') {
                 const existingData = this.formManager.getExistingItemData();
                 if (existingData && existingData.contentJson) {
+                    // Determine item type to know which manager to use
+                    const itemTypeSelect = document.getElementById('itemType');
+                    const selectedType = itemTypeSelect ? itemTypeSelect.value : '0';
+
                     // Use field manager to set values for all related hidden fields
                     this.fieldManager.updateField('contentJson', existingData.contentJson);
                     this.fieldManager.updateField('reminderContentJson', existingData.contentJson);
                     this.fieldManager.updateField('writtenContentJson', existingData.contentJson);
                     this.fieldManager.updateField('multipleChoiceContentJson', existingData.contentJson);
+                    this.fieldManager.updateField('gapFillContentJson', existingData.contentJson);
+
+                    // For gap fill type, ensure gapFillMode is set
+                    if (selectedType === '3') {
+                        window.gapFillMode = true;
+                        window.multipleChoiceMode = false;
+                    }
 
                     // Notify reminder block manager to reload content
                     const notifyReminderManager = () => {
-                        if (window.reminderBlockManager && typeof window.reminderBlockManager.loadExistingContent === 'function') {
+                        if (selectedType === '0' && window.reminderBlockManager && typeof window.reminderBlockManager.loadExistingContent === 'function') {
                             // Force reload the content
                             window.reminderBlockManager.loadExistingContent();
                             return true;
@@ -716,10 +870,21 @@ class Step4ContentManager {
                         return false;
                     };
 
-                    // Also notify written block manager if it exists
+                    // Also notify written block manager if it exists (for written and multiple choice)
                     const notifyWrittenManager = () => {
-                        if (window.writtenBlockManager && typeof window.writtenBlockManager.loadExistingContent === 'function') {
+                        if ((selectedType === '1' || selectedType === '4') && 
+                            window.writtenBlockManager && typeof window.writtenBlockManager.loadExistingContent === 'function') {
                             window.writtenBlockManager.loadExistingContent();
+                            return true;
+                        }
+                        return false;
+                    };
+
+                    // Also notify gap-fill block manager if it exists
+                    const notifyGapFillManager = () => {
+                        if (selectedType === '3' && 
+                            window.gapFillBlockManager && typeof window.gapFillBlockManager.loadExistingContent === 'function') {
+                            window.gapFillBlockManager.loadExistingContent();
                             return true;
                         }
                         return false;
@@ -727,8 +892,9 @@ class Step4ContentManager {
 
                     const reminderSuccess = notifyReminderManager();
                     const writtenSuccess = notifyWrittenManager();
+                    const gapFillSuccess = notifyGapFillManager();
 
-                    if (!reminderSuccess && !writtenSuccess) {
+                    if (!reminderSuccess && !writtenSuccess && !gapFillSuccess) {
                         return false;
                     }
 

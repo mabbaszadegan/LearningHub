@@ -148,18 +148,60 @@ class SharedContentBlockManager {
             return window.reminderBlockManager;
         }
         
-        // Check for written content builder
+        // Check for gap-fill content builder (must check before written since gap fill has its own manager)
+        const gapFillBuilder = document.getElementById('gapFillContentBuilder');
+        const gapFillVisible = gapFillBuilder && gapFillBuilder.style.display !== 'none';
+        console.log('GapFill builder check:', {
+            element: !!gapFillBuilder,
+            visible: gapFillVisible,
+            manager: !!window.gapFillBlockManager,
+            blocksList: window.gapFillBlockManager?.blocksList ? !!window.gapFillBlockManager.blocksList : false
+        });
+        if (window.gapFillBlockManager && gapFillVisible) {
+            console.log('SharedContentBlockManager: Found active gap-fill builder');
+            return window.gapFillBlockManager;
+        }
+        
+        // Check for written content builder (used for written and multiple choice)
         const writtenBuilder = document.getElementById('writtenContentBuilder');
         const writtenVisible = writtenBuilder && writtenBuilder.style.display !== 'none';
         console.log('Written builder check:', {
             element: !!writtenBuilder,
             visible: writtenVisible,
-            manager: !!window.writtenBlockManager
+            manager: !!window.writtenBlockManager,
+            multipleChoiceMode: !!window.multipleChoiceMode,
+            contentType: window.writtenBlockManager?.config?.contentType,
+            blocksList: window.writtenBlockManager?.blocksList ? !!window.writtenBlockManager.blocksList : false
         });
         
+        // For multiple choice, multipleChoiceMode is set and writtenContentBuilder is shown
+        // For written, writtenContentBuilder is shown
         if (window.writtenBlockManager && writtenVisible) {
-            console.log('SharedContentBlockManager: Found active written builder');
-            return window.writtenBlockManager;
+            // Additional check: ensure blocksList is available
+            if (!window.writtenBlockManager.blocksList) {
+                console.warn('SharedContentBlockManager: writtenBlockManager found but blocksList not available');
+                // Try to get blocksList from DOM
+                const blocksListElement = document.getElementById(window.writtenBlockManager.config?.containerId || 'contentBlocksList');
+                if (blocksListElement) {
+                    window.writtenBlockManager.blocksList = blocksListElement;
+                    console.log('SharedContentBlockManager: Found blocksList element, assigned to manager');
+                } else {
+                    console.warn('SharedContentBlockManager: Could not find blocksList element');
+                }
+            }
+            
+            // If blocksList is still not available, try to initialize
+            if (!window.writtenBlockManager.blocksList && typeof window.initializeWrittenBlockManager === 'function') {
+                console.log('SharedContentBlockManager: Attempting to reinitialize writtenBlockManager...');
+                window.initializeWrittenBlockManager();
+            }
+            
+            if (window.writtenBlockManager.blocksList) {
+                console.log('SharedContentBlockManager: Found active written builder');
+                return window.writtenBlockManager;
+            } else {
+                console.warn('SharedContentBlockManager: writtenBlockManager found but blocksList still not available');
+            }
         }
         
         // Check for other content builders
@@ -181,13 +223,31 @@ class SharedContentBlockManager {
     }
 
     handleBlockTypeSelected(type) {
+        console.log('SharedContentBlockManager: handleBlockTypeSelected called with type:', type);
+        
         // Find the active content builder
         const activeBuilder = this.getActiveContentBuilder();
         
+        console.log('SharedContentBlockManager: Active builder found:', {
+            builder: !!activeBuilder,
+            builderType: activeBuilder ? activeBuilder.constructor.name : 'none',
+            hasAddBlock: activeBuilder && typeof activeBuilder.addBlock === 'function',
+            blocksList: activeBuilder && activeBuilder.blocksList ? !!activeBuilder.blocksList : false
+        });
+        
         if (activeBuilder && typeof activeBuilder.addBlock === 'function') {
-            activeBuilder.addBlock(type);
+            console.log('SharedContentBlockManager: Calling addBlock with type:', type);
+            try {
+                activeBuilder.addBlock(type);
+                console.log('SharedContentBlockManager: addBlock completed successfully');
+            } catch (error) {
+                console.error('SharedContentBlockManager: Error in addBlock:', error);
+            }
         } else {
-            console.warn('SharedContentBlockManager: No active content builder found');
+            console.warn('SharedContentBlockManager: No active content builder found or addBlock not available', {
+                activeBuilder: !!activeBuilder,
+                hasAddBlock: activeBuilder && typeof activeBuilder.addBlock === 'function'
+            });
             // Fallback: trigger custom event for specific implementations
             const event = new CustomEvent('blockTypeSelected', {
                 detail: { type: type }

@@ -3,84 +3,18 @@
 
 @model EduTrack.Application.Common.Models.ScheduleItems.CreateScheduleItemRequest
 
-<div class="gap-fill-content-builder">
+<div id="gapFillContentBuilder" class="gap-fill-content-builder">
     <div class="builder-content-layout">
         <!-- Main Content Area -->
         <div class="main-content-area">
-            <!-- Optional Context Block (Text/Image/Video/Audio) -->
-            <div class="context-section">
-                <div class="section-header">
-                    <div class="section-title">
-                        <i class="fas fa-layer-group"></i>
-                        <span>محتوای زمینه (اختیاری)</span>
+            <div class="blocks-list" id="contentBlocksList">
+                <!-- Question blocks will be added here dynamically -->
+                <div class="empty-state" id="emptyBlocksState">
+                    <div class="empty-state-icon">
+                        <i class="fas fa-square"></i>
                     </div>
-                    <div class="section-actions">
-                        <button type="button" class="btn-teacher btn-primary" id="addContextBlockBtn">
-                            <i class="fas fa-plus"></i>
-                            <span>افزودن بلاک</span>
-                        </button>
-                        <button type="button" class="btn-teacher btn-danger" id="removeContextBlockBtn" style="display:none">
-                            <i class="fas fa-trash"></i>
-                            <span>حذف بلاک</span>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="context-container" id="gapFillContextContainer">
-                    <div class="empty-state" id="contextEmptyState">
-                        <div class="empty-state-icon">
-                            <i class="fas fa-plus-circle"></i>
-                        </div>
-                        <h4>هنوز محتوایی اضافه نشده</h4>
-                        <p>می‌توانید یک بلاک متن، تصویر، ویدیو یا صوت به عنوان زمینه تمرین اضافه کنید یا این بخش را خالی بگذارید.</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Gap Text and Answers -->
-            <div class="gap-editor-section">
-                <div class="section-header">
-                    <div class="section-title">
-                        <i class="fas fa-edit"></i>
-                        <span>متن جای‌خالی و پاسخ‌ها</span>
-                    </div>
-                    <div class="section-actions">
-                        <button type="button" class="btn-teacher btn-secondary" id="insertBlankBtn">
-                            <i class="fas fa-square"></i>
-                            <span>درج جای‌خالی</span>
-                        </button>
-                        <button type="button" class="btn-teacher btn-info" id="previewGapFillBtn">
-                            <i class="fas fa-eye"></i>
-                            <span>پیش‌نمایش</span>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="gap-editor">
-                    <label for="gapText" class="form-label">متن تمرین (از دکمه درج جای‌خالی استفاده کنید)</label>
-                    <textarea id="gapText" class="form-control" rows="6" placeholder="مثال: من هر روز به [[blank1]] می‌روم و [[blank2]] می‌خورم."></textarea>
-
-                    <div class="gap-settings">
-                        <div class="setting-item">
-                            <label class="form-label">نوع تصحیح</label>
-                            <select id="answerType" class="form-select">
-                                <option value="exact">دقیق</option>
-                                <option value="similar">مشابه</option>
-                                <option value="keyword">کلیدواژه</option>
-                            </select>
-                        </div>
-                        <div class="setting-item">
-                            <label class="form-label">حساس به حروف بزرگ/کوچک</label>
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="caseSensitive">
-                                <label class="form-check-label" for="caseSensitive">فعال</label>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="gaps-list" id="gapsList">
-                        <!-- Dynamic gaps answers editor -->
-                    </div>
+                    <h4>هنوز سوال جای‌خالی اضافه نشده</h4>
+                    <p>برای شروع، روی دکمه "افزودن سوال" کلیک کنید</p>
                 </div>
             </div>
         </div>
@@ -90,32 +24,50 @@
             <div class="sidebar-header">
                 <div class="sidebar-title">
                     <i class="fas fa-list"></i>
-                    <span>فهرست اقلام</span>
+                    <span>فهرست سوالات</span>
                 </div>
+                <div class="sidebar-count" id="sidebarBlockCount">0</div>
             </div>
-            <div class="sidebar-content" id="gapFillSidebar">
-                <!-- Filled by JS: context present indicator + blanks list -->
+            <div class="sidebar-content">
+                <div class="blocks-navigation" id="blocksNavigation"></div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Hidden field for content -->
-<input type="hidden" id="gapFillContentJson" value="@Model.ContentJson" />
+<!-- Preview Section (hidden by default) -->
+<div class="preview-section" id="gapFillPreview" style="display: none;">
+    <div class="content-preview">
+        <div class="preview-header">
+            <h4>پیش‌نمایش تمرین جای‌خالی</h4>
+        </div>
+        <div class="preview-content">
+            <div class="written-exercise-card">
+                <div class="exercise-icon">
+                    <i class="fas fa-square"></i>
+                </div>
+                <div class="exercise-text">
+                    <p>سوالات جای‌خالی شما اینجا نمایش داده خواهد شد...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-<!-- Block Templates (non-question variants) -->
-<div id="contentBlockTemplates" style="display: none;">
+<!-- Question Block Templates (gap-fill uses question variants) -->
+<div id="questionBlockTemplates" style="display: none;">
     @{
-        ViewData["IsQuestionBlock"] = "false";
+        ViewData["IsQuestionBlock"] = "true";
     }
     @await Html.PartialAsync("_TextBlock", new { BlockType = "text" })
     @await Html.PartialAsync("_ImageBlock", new { BlockType = "image" })
     @await Html.PartialAsync("_VideoBlock", new { BlockType = "video" })
     @await Html.PartialAsync("_AudioBlock", new { BlockType = "audio" })
-    @await Html.PartialAsync("_CodeBlock", new { BlockType = "code" })
-    <!-- Code is available but typically not used as context here -->
-    <!-- The builder will restrict to text/image/video/audio for context selection -->
 </div>
 
-<script src="~/js/areas/teacher/schedule-items/gap-fill-content-builder.js" asp-append-version="true"></script>
+<!-- Hidden field for content -->
+<input type="hidden" id="gapFillContentJson" name="GapFillContentJson" value="@Model.ContentJson" />
+
+<script src="~/js/areas/teacher/schedule-items/unified-content-loader.js" asp-append-version="true"></script>
+<script src="~/js/areas/teacher/schedule-items/gap-fill-block-manager.js" asp-append-version="true"></script>
 

@@ -65,17 +65,37 @@ class ContentBuilderBase {
         
         // Setup global blockContentChanged listener
         document.addEventListener('blockContentChanged', (e) => {
-            // Forward to all active content builders
-            if (window.reminderBlockManager && e.detail.blockElement) {
-                const blockId = e.detail.blockElement.dataset?.blockId;
-                if (window.reminderBlockManager.blocks?.find(b => b.id === blockId)) {
+            // Validate event detail
+            if (!e.detail) {
+                return;
+            }
+            
+            const blockElement = e.detail.blockElement;
+            
+            // Validate blockElement exists and has required properties
+            if (!blockElement || !blockElement.dataset || !blockElement.dataset.blockId) {
+                return;
+            }
+            
+            const blockId = blockElement.dataset.blockId;
+            
+            // Forward to all active content builders that own this block
+            if (window.reminderBlockManager && window.reminderBlockManager.blocks) {
+                const block = window.reminderBlockManager.blocks.find(b => b.id === blockId);
+                if (block) {
                     window.reminderBlockManager.handleBlockContentChanged(e.detail);
                 }
             }
-            if (window.writtenBlockManager && e.detail.blockElement) {
-                const blockId = e.detail.blockElement.dataset?.blockId;
-                if (window.writtenBlockManager.blocks?.find(b => b.id === blockId)) {
+            if (window.writtenBlockManager && window.writtenBlockManager.blocks) {
+                const block = window.writtenBlockManager.blocks.find(b => b.id === blockId);
+                if (block) {
                     window.writtenBlockManager.handleBlockContentChanged(e.detail);
+                }
+            }
+            if (window.gapFillBlockManager && window.gapFillBlockManager.blocks) {
+                const block = window.gapFillBlockManager.blocks.find(b => b.id === blockId);
+                if (block) {
+                    window.gapFillBlockManager.handleBlockContentChanged(e.detail);
                 }
             }
         });
@@ -179,6 +199,14 @@ class ContentBuilderBase {
     }
 
     addBlock(type) {
+        console.log('ContentBuilderBase: addBlock called with type:', type, 'for contentType:', this.config.contentType);
+        console.log('ContentBuilderBase: blocksList available:', !!this.blocksList);
+        
+        if (!this.blocksList) {
+            console.error('ContentBuilderBase: blocksList not available, cannot add block');
+            return;
+        }
+        
         const blockId = `block-${this.nextBlockId++}`;
         const block = {
             id: blockId,
@@ -187,11 +215,20 @@ class ContentBuilderBase {
             data: this.getDefaultBlockData(type)
         };
         
+        console.log('ContentBuilderBase: Created block:', block);
+        
         this.blocks.push(block);
-        this.renderBlock(block);
+        
+        const renderResult = this.renderBlock(block);
+        if (!renderResult) {
+            console.error('ContentBuilderBase: renderBlock returned nothing, block may not have been rendered');
+        }
+        
         this.updateEmptyState();
         this.updateHiddenField();
         this.scrollToNewBlock(blockId);
+        
+        console.log('ContentBuilderBase: Block added successfully, total blocks:', this.blocks.length);
         
         // Dispatch custom event for sidebar (event-driven approach - no direct call needed)
         this.eventManager.dispatch('blockAdded', {
@@ -256,7 +293,7 @@ class ContentBuilderBase {
                 };
             // Question block types
             case 'questionText':
-                return {
+                const questionTextData = {
                     content: '',
                     textContent: '',
                     points: 1,
@@ -264,6 +301,13 @@ class ContentBuilderBase {
                     isRequired: true,
                     teacherGuidance: ''
                 };
+                // Add gap fill specific data if in gapFillMode
+                if (window.gapFillMode) {
+                    questionTextData.gaps = [];
+                    questionTextData.answerType = 'exact';
+                    questionTextData.caseSensitive = false;
+                }
+                return questionTextData;
             case 'questionImage':
                 return {
                     ...baseData,
@@ -724,39 +768,64 @@ class ContentBuilderBase {
     }
 
     handleBlockContentChanged(detail) {
+        // Validate detail and blockElement
+        if (!detail || !detail.blockElement) {
+            console.warn('ContentBuilderBase: handleBlockContentChanged called without valid blockElement');
+            return;
+        }
+        
         const blockElement = detail.blockElement;
+        
+        // Check if blockElement has dataset
+        if (!blockElement.dataset) {
+            console.warn('ContentBuilderBase: blockElement does not have dataset');
+            return;
+        }
+        
         const blockId = blockElement.dataset.blockId;
+        
+        if (!blockId) {
+            console.warn('ContentBuilderBase: blockElement does not have blockId');
+            return;
+        }
+        
+        // Check if this block belongs to this manager
         const block = this.blocks.find(b => b.id === blockId);
         
-        if (block) {
-            // Update block data with new content
-            if (detail.blockData) {
-                block.data = { ...block.data, ...detail.blockData };
-            }
-            if (detail.content !== undefined) {
-                block.data.content = detail.content;
-            }
-            if (detail.textContent !== undefined) {
-                block.data.textContent = detail.textContent;
-            }
-            
-            // Update block data attribute
+        if (!block) {
+            // Block doesn't belong to this manager, silently return
+            return;
+        }
+        
+        // Update block data with new content
+        if (detail.blockData) {
+            block.data = { ...block.data, ...detail.blockData };
+        }
+        if (detail.content !== undefined) {
+            block.data.content = detail.content;
+        }
+        if (detail.textContent !== undefined) {
+            block.data.textContent = detail.textContent;
+        }
+        
+        // Update block data attribute
+        try {
             blockElement.dataset.blockData = JSON.stringify(block.data);
-            
-            this.updateHiddenField();
-            
-            // Dispatch custom event
-            this.eventManager.dispatch('blockContentChanged', {
-                blockId: blockId, 
-                contentType: this.config.contentType
-            });
-            
-            // Notify sidebar manager
-            if (window.contentSidebarManager) {
-                window.contentSidebarManager.updateBlockInSidebar(blockId);
-            }
-        } else {
-            console.warn('ContentBuilderBase: Block not found for ID:', blockId);
+        } catch (error) {
+            console.error('ContentBuilderBase: Error updating blockData attribute:', error);
+        }
+        
+        this.updateHiddenField();
+        
+        // Dispatch custom event (but don't pass blockElement to avoid recursion issues)
+        this.eventManager.dispatch('blockContentChanged', {
+            blockId: blockId, 
+            contentType: this.config.contentType
+        });
+        
+        // Notify sidebar manager
+        if (window.contentSidebarManager) {
+            window.contentSidebarManager.updateBlockInSidebar(blockId);
         }
     }
 
