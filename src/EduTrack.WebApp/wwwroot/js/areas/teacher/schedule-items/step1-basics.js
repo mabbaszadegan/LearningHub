@@ -158,8 +158,11 @@ class Step1BasicsManager {
     async changeItemType(newTypeId) {
         const oldType = this.currentType;
         
-        // If in edit mode and content exists, warn user
-        if (this.formManager?.isEditMode && this.formManager?.existingItemData?.contentJson) {
+        // Only show warning if user actually changed the type (not the same type)
+        // and we're in edit mode with existing content
+        const isTypeActuallyChanged = oldType !== null && oldType !== newTypeId;
+        
+        if (isTypeActuallyChanged && this.formManager?.isEditMode && this.formManager?.existingItemData?.contentJson) {
             const contentJson = this.formManager.existingItemData.contentJson;
             
             // Check if content exists and is not empty
