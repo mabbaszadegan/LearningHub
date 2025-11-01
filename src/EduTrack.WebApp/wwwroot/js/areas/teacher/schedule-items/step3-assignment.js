@@ -42,11 +42,14 @@ class Step3AssignmentManager {
     }
 
     showErrorMessage(message) {
-        if (typeof window.toastError === 'function') {
-            window.toastError(message);
-            return;
+        const notification = window.EduTrack?.Services?.Notification;
+        if (notification) {
+            notification.error(message);
+        } else if (typeof toastError !== 'undefined') {
+            toastError(message);
+        } else {
+            try { alert(message); } catch (_) {}
         }
-        try { alert(message); } catch (_) {}
     }
 
     // Initialize step 3 content when entering step 3
@@ -132,17 +135,21 @@ class Step3AssignmentManager {
                 return;
             }
             
-            const response = await fetch(`/Teacher/Schedule/GetGroups?teachingPlanId=${teachingPlanId}`);
+            let groups;
             
-            if (!response.ok) {
-                return;
+            // Use API service if available
+            if (window.EduTrack?.API?.Schedule) {
+                groups = await window.EduTrack.API.Schedule.getGroups(teachingPlanId);
+            } else {
+                const response = await fetch(`/Teacher/Schedule/GetGroups?teachingPlanId=${teachingPlanId}`);
+                if (!response.ok) {
+                    return;
+                }
+                groups = await response.json();
             }
-            
-            const groups = await response.json();
 
             if (groups.success) {
                 this.renderGroupBadges(groups.data);
-            } else {
             }
         } catch (error) {
         }
@@ -249,17 +256,21 @@ class Step3AssignmentManager {
                 return;
             }
             
-            const response = await fetch(`/Teacher/Schedule/GetSubChapters?teachingPlanId=${teachingPlanId}`);
+            let subChapters;
             
-            if (!response.ok) {
-                return;
+            // Use API service if available
+            if (window.EduTrack?.API?.Schedule) {
+                subChapters = await window.EduTrack.API.Schedule.getSubChapters(teachingPlanId);
+            } else {
+                const response = await fetch(`/Teacher/Schedule/GetSubChapters?teachingPlanId=${teachingPlanId}`);
+                if (!response.ok) {
+                    return;
+                }
+                subChapters = await response.json();
             }
-            
-            const subChapters = await response.json();
 
             if (subChapters.success) {
                 this.renderChapterHierarchy(subChapters.data);
-            } else {
             }
         } catch (error) {
         }
@@ -448,9 +459,23 @@ class Step3AssignmentManager {
 
             // Load students for each selected group
             for (const group of this.selectedGroups) {
-                const response = await fetch(`/Teacher/StudentGroup/GetStudents?groupId=${group.id}`);
-                if (response.ok) {
-                    const students = await response.json();
+                let students;
+                
+                // Use API service if available
+                if (window.EduTrack?.API?.StudentGroup) {
+                    const result = await window.EduTrack.API.StudentGroup.getStudents(group.id);
+                    students = result.success ? result.data : [];
+                } else {
+                    const response = await fetch(`/Teacher/StudentGroup/GetStudents?groupId=${group.id}`);
+                    if (response.ok) {
+                        const result = await response.json();
+                        students = result.success ? result.data : [];
+                    } else {
+                        students = [];
+                    }
+                }
+                
+                if (students && students.length > 0) {
                     // Add group info to each student
                     const studentsWithGroup = students.map(student => ({
                         ...student,

@@ -2,11 +2,12 @@
 @using EduTrack.Domain.Enums
 @using EduTrack.Domain.Extensions
 @{
-    var scheduleItemTypes = ViewBag.ScheduleItemTypes as List<object> ?? 
+    var scheduleItemTypes = ViewBag.ScheduleItemTypes as List<object> ??
         Enum.GetValues<ScheduleItemType>()
             .Select(type => new { Value = (int)type, Text = type.GetDisplayName(), Description = type.GetDescription() })
             .Cast<object>()
             .ToList();
+    var isEditMode = ViewBag.IsEditMode as bool? ?? false;
 }
 
 <div class="form-step active" data-step="basic">
@@ -19,7 +20,7 @@
             <p class="step-description">عنوان، نوع و توضیحات آیتم آموزشی را تعیین کنید</p>
         </div>
     </div>
-    
+
     <div class="step-content">
         <div class="row">
             <div class="col-md-8">
@@ -30,9 +31,9 @@
                         <span class="required-indicator">*</span>
                     </label>
                     <div class="input-group-modern">
-                        <input asp-for="Title" 
-                               class="form-input-modern" 
-                               placeholder="مثال: تمرین ریاضی فصل اول - حل معادلات درجه دوم" 
+                        <input asp-for="Title"
+                               class="form-input-modern"
+                               placeholder="مثال: تمرین ریاضی فصل اول - حل معادلات درجه دوم"
                                autocomplete="off"
                                id="itemTitle" />
                         <div class="input-feedback">
@@ -43,15 +44,28 @@
                     <div class="input-hint">عنوان جذاب و واضح انتخاب کنید که دانش‌آموزان را ترغیب کند</div>
                 </div>
             </div>
-            
+
             <div class="col-md-4">
                 <div class="form-group-modern">
                     <label asp-for="Type" class="form-label-modern">
                         <i class="fas fa-tasks"></i>
                         <span>نوع آیتم</span>
                         <span class="required-indicator">*</span>
+
+                        @if (isEditMode)
+                        {
+                            <span class="badge bg-warning ms-2" style="font-size: 0.75rem;">
+                                <i class="fas fa-lock"></i> غیرقابل تغییر
+                            </span>
+                        }
                     </label>
-                    <select asp-for="Type" class="form-select-modern" id="itemType" required>
+                    <select asp-for="Type"
+                            class="form-select-modern @(isEditMode ? "disabled-field" : "")"
+                            id="itemType"
+                            required
+                            disabled="@isEditMode"
+                            data-edit-mode="@isEditMode.ToString().ToLower()"
+                            title="@(isEditMode ? "نوع آیتم پس از ایجاد قابل تغییر نیست. برای تغییر نوع باید آیتم جدید ایجاد کنید." : "")">
                         <option value="">انتخاب نوع آیتم...</option>
                         @foreach (dynamic type in scheduleItemTypes)
                         {
@@ -60,11 +74,18 @@
                             </option>
                         }
                     </select>
+                    @if (isEditMode)
+                    {
+                        <div class="input-hint text-warning">
+                            <i class="fas fa-info-circle"></i>
+                            نوع آیتم پس از ایجاد قابل تغییر نیست
+                        </div>
+                    }
                     <span asp-validation-for="Type" class="validation-error-modern"></span>
                 </div>
             </div>
         </div>
-        
+
         <div class="form-group-modern">
             <label asp-for="Description" class="form-label-modern">
                 <i class="fas fa-align-right"></i>
@@ -77,7 +98,7 @@
             <span asp-validation-for="Description" class="validation-error-modern"></span>
             <div class="input-hint">توضیحات کامل و جذاب بنویسید که دانش‌آموزان را راهنمایی کند</div>
         </div>
-        
+
         <div class="type-preview" id="typePreview" style="display: none;">
             <div class="preview-header">
                 <i class="fas fa-eye"></i>

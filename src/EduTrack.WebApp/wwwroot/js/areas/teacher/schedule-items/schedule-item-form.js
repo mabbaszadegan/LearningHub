@@ -427,17 +427,22 @@ class ModernScheduleItemFormManager {
             // Collect form data from step 1
             const formData = this.collectStep1Data();
             
-            // Create the item via API
-            const response = await fetch('/Teacher/ScheduleItem/CreateScheduleItem', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
-                },
-                body: JSON.stringify(formData)
-            });
-            
-            const result = await response.json();
+            // Use API service if available
+            let result;
+            if (window.EduTrack?.API?.ScheduleItem) {
+                result = await window.EduTrack.API.ScheduleItem.createScheduleItem(formData);
+            } else {
+                // Fallback to direct fetch
+                const response = await fetch('/Teacher/ScheduleItem/CreateScheduleItem', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                    },
+                    body: JSON.stringify(formData)
+                });
+                result = await response.json();
+            }
             
             if (result.success) {
                 this.lastCreatedItemId = result.id;
@@ -1262,16 +1267,21 @@ class ModernScheduleItemFormManager {
             // Save final step first
             await this.saveCurrentStep();
 
-            // Complete the item
-            const response = await fetch('/Teacher/ScheduleItem/Complete', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ Id: this.currentItemId })
-            });
-
-            const result = await response.json();
+            // Complete the item - Use API service if available
+            let result;
+            if (window.EduTrack?.API?.ScheduleItem) {
+                result = await window.EduTrack.API.ScheduleItem.complete(this.currentItemId);
+            } else {
+                // Fallback to direct fetch
+                const response = await fetch('/Teacher/ScheduleItem/Complete', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ Id: this.currentItemId })
+                });
+                result = await response.json();
+            }
 
             if (result.success) {
                 this.showSuccessMessage('آیتم آموزشی با موفقیت تکمیل شد');
@@ -1285,11 +1295,12 @@ class ModernScheduleItemFormManager {
     }
 
     showSuccessMessage(message = 'عملیات با موفقیت انجام شد') {
-        if (typeof window.toastSuccess === 'function') {
-            window.toastSuccess(message);
-            return;
-        }
-        if (typeof toastr !== 'undefined') {
+        const notification = window.EduTrack?.Services?.Notification;
+        if (notification) {
+            notification.success(message);
+        } else if (typeof toastSuccess !== 'undefined') {
+            toastSuccess(message);
+        } else if (typeof toastr !== 'undefined') {
             toastr.success(message, 'موفقیت', { timeOut: 3000, closeButton: true, progressBar: true });
         } else {
             alert('موفق: ' + message);
@@ -1297,11 +1308,12 @@ class ModernScheduleItemFormManager {
     }
 
     showErrorMessage(message) {
-        if (typeof window.toastError === 'function') {
-            window.toastError(message);
-            return;
-        }
-        if (typeof toastr !== 'undefined') {
+        const notification = window.EduTrack?.Services?.Notification;
+        if (notification) {
+            notification.error(message);
+        } else if (typeof toastError !== 'undefined') {
+            toastError(message);
+        } else if (typeof toastr !== 'undefined') {
             toastr.error(message, 'خطا', { timeOut: 5000, closeButton: true, progressBar: true });
         } else {
             alert('خطا: ' + message);
@@ -1370,28 +1382,35 @@ class ModernScheduleItemFormManager {
             }
 
 
-            const response = await fetch('/Teacher/ScheduleItem/SaveStep', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
-                },
-                body: JSON.stringify(requestData)
-            });
+            // Use API service if available
+            let result;
+            if (window.EduTrack?.API?.ScheduleItem) {
+                result = await window.EduTrack.API.ScheduleItem.saveStep(requestData);
+            } else {
+                // Fallback to direct fetch
+                const response = await fetch('/Teacher/ScheduleItem/SaveStep', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                    },
+                    body: JSON.stringify(requestData)
+                });
 
-            // Check if response is ok and has content
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`HTTP ${response.status}: ${errorText}`);
+                // Check if response is ok and has content
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP ${response.status}: ${errorText}`);
+                }
+
+                const responseText = await response.text();
+
+                if (!responseText) {
+                    throw new Error('Empty response from server');
+                }
+
+                result = JSON.parse(responseText);
             }
-
-            const responseText = await response.text();
-
-            if (!responseText) {
-                throw new Error('Empty response from server');
-            }
-
-            const result = JSON.parse(responseText);
 
             if (result.success) {
                 this.currentItemId = result.id;
@@ -1517,25 +1536,38 @@ class ModernScheduleItemFormManager {
         const itemId = urlParams.get('id');
 
         if (itemId) {
-            this.currentItemId = parseInt(itemId);
-            this.isEditMode = true;
-            try {
-                await this.loadExistingItem();
-            } catch (error) {
-                this.showErrorMessage('خطا در بارگذاری آیتم موجود');
+            const parsedId = parseInt(itemId);
+            if (!isNaN(parsedId) && parsedId > 0) {
+                this.currentItemId = parsedId;
+                this.isEditMode = true;
+                try {
+                    await this.loadExistingItem();
+                } catch (error) {
+                    console.error('Error loading existing item:', error);
+                    this.showErrorMessage('خطا در بارگذاری آیتم موجود');
+                }
             }
         }
     }
 
     async loadExistingItem() {
-        
-        if (!this.currentItemId) {
+        // Validate currentItemId is a valid positive number
+        const parsedId = parseInt(this.currentItemId);
+        if (!this.currentItemId || isNaN(parsedId) || parsedId <= 0) {
+            console.warn('loadExistingItem: Invalid or missing item ID:', this.currentItemId);
             return;
         }
 
         try {
-            const response = await fetch(`/Teacher/ScheduleItem/GetById/${this.currentItemId}`);
-            const result = await response.json();
+            // Use API service if available
+            let result;
+            if (window.EduTrack?.API?.ScheduleItem) {
+                result = await window.EduTrack.API.ScheduleItem.getById(parsedId);
+            } else {
+                // Fallback to direct fetch
+                const response = await fetch(`/Teacher/ScheduleItem/GetById/${parsedId}`);
+                result = await response.json();
+            }
             
             if (result.success) {
                 
@@ -1739,7 +1771,10 @@ document.addEventListener('DOMContentLoaded', () => {
     window.step1Manager = new Step1BasicsManager(formManager);
     window.step2Manager = new Step2TimingManager(formManager);
     // Step3Manager is initialized by the main form manager
-    window.step4Manager = new Step4ContentManager(formManager);
+    // Step4Manager is initialized in _Step4Content.cshtml or later if Step4ContentManager is available
+    if (typeof Step4ContentManager !== 'undefined') {
+        window.step4Manager = new Step4ContentManager(formManager);
+    }
     
     // Make formManager globally accessible
     window.formManager = formManager;

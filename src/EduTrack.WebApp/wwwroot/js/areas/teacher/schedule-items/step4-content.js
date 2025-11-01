@@ -334,7 +334,7 @@ class Step4ContentManager {
         return typeMap[typeValue] || 'reminder';
     }
 
-    handlePreviewFromHeader() {
+    async handlePreviewFromHeader() {
         const itemTypeSelect = document.getElementById('itemType');
         const selectedType = itemTypeSelect ? itemTypeSelect.value : '0';
 
@@ -348,7 +348,12 @@ class Step4ContentManager {
             if (typeof window.toastWarning === 'function') {
                 window.toastWarning('سیستم پیش‌نمایش هنوز آماده نیست');
             } else {
-                alert('سیستم پیش‌نمایش هنوز آماده نیست');
+                const modal = window.EduTrack?.Services?.Modal;
+                if (modal) {
+                    await modal.alert('سیستم پیش‌نمایش هنوز آماده نیست', 'در دست ساخت', 'info');
+                } else {
+                    alert('سیستم پیش‌نمایش هنوز آماده نیست');
+                }
             }
             }
         } else if (selectedType === '1' || selectedType === '4') {
@@ -361,7 +366,12 @@ class Step4ContentManager {
                 if (typeof window.toastWarning === 'function') {
                     window.toastWarning('سیستم پیش‌نمایش هنوز آماده نیست');
                 } else {
+                    const modal = window.EduTrack?.Services?.Modal;
+                if (modal) {
+                    await modal.alert('سیستم پیش‌نمایش هنوز آماده نیست', 'در دست ساخت', 'info');
+                } else {
                     alert('سیستم پیش‌نمایش هنوز آماده نیست');
+                }
                 }
             }
         } else if (selectedType === '3') {
@@ -374,7 +384,12 @@ class Step4ContentManager {
                 if (typeof window.toastWarning === 'function') {
                     window.toastWarning('سیستم پیش‌نمایش هنوز آماده نیست');
                 } else {
+                    const modal = window.EduTrack?.Services?.Modal;
+                if (modal) {
+                    await modal.alert('سیستم پیش‌نمایش هنوز آماده نیست', 'در دست ساخت', 'info');
+                } else {
                     alert('سیستم پیش‌نمایش هنوز آماده نیست');
+                }
                 }
             }
         }
@@ -498,8 +513,11 @@ class Step4ContentManager {
         const contentJson = JSON.stringify(contentData);
         this.fieldManager.updateField('contentJson', contentJson);
 
-        if (this.formManager && typeof this.formManager.showSuccess === 'function') {
-            this.formManager.showSuccess('محتوای آموزشی با موفقیت ذخیره شد.');
+        const notification = window.EduTrack?.Services?.Notification;
+        if (notification) {
+            notification.success('محتوای آموزشی با موفقیت ذخیره شد.');
+        } else if (this.formManager && typeof this.formManager.showSuccessMessage === 'function') {
+            this.formManager.showSuccessMessage('محتوای آموزشی با موفقیت ذخیره شد.');
         }
     }
 

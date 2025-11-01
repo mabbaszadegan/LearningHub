@@ -268,6 +268,9 @@ class ReminderContentBlockManager extends ContentBuilderBase {
     }
 }
 
+// Export to window for global access
+window.ReminderContentBlockManager = ReminderContentBlockManager;
+
 // Initialize when DOM is loaded
 function initializeReminderBlockManager() {
     try {

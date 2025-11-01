@@ -638,13 +638,19 @@ class ContentBuilderBase {
         }
     }
 
-    deleteBlock(blockElement) {
+    async deleteBlock(blockElement) {
         if (!blockElement) {
             console.error('ContentBuilderBase: deleteBlock called with null blockElement');
             return;
         }
         
-        if (confirm('آیا از حذف این بلاک اطمینان دارید؟')) {
+        // Use modal service instead of confirm
+        const modal = window.EduTrack?.Services?.Modal;
+        const confirmed = modal 
+            ? await modal.confirm('آیا از حذف این بلاک اطمینان دارید؟', 'حذف بلاک')
+            : confirm('آیا از حذف این بلاک اطمینان دارید؟');
+        
+        if (confirmed) {
             const blockId = blockElement.dataset.blockId;
             
             if (!blockId) {

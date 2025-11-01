@@ -51,6 +51,32 @@ class Step2TimingManager {
             this.clearFieldError('StartDate');
         }
 
+        // Validate Date Range (DueDate must be after StartDate)
+        if (startDateInput && startDateInput.value) {
+            const dueDateInput = document.querySelector('input[name="DueDate"]');
+            if (dueDateInput && dueDateInput.value) {
+                const startDate = new Date(startDateInput.value);
+                const dueDate = new Date(dueDateInput.value);
+                
+                if (dueDate <= startDate) {
+                    this.showFieldError('DueDate', 'تاریخ مهلت باید بعد از تاریخ شروع باشد');
+                    isValid = false;
+                    
+                    // Also highlight the Persian date input
+                    const persianDueDateInput = document.getElementById('PersianDueDate');
+                    if (persianDueDateInput) {
+                        persianDueDateInput.classList.add('is-invalid');
+                    }
+                } else {
+                    this.clearFieldError('DueDate');
+                    const persianDueDateInput = document.getElementById('PersianDueDate');
+                    if (persianDueDateInput) {
+                        persianDueDateInput.classList.remove('is-invalid');
+                    }
+                }
+            }
+        }
+
         // Validate Max Score if provided
         const maxScoreInput = document.querySelector('input[name="MaxScore"]');
         if (maxScoreInput && maxScoreInput.value) {
@@ -340,10 +366,12 @@ class Step2TimingManager {
             // Initial check
             this.toggleScoreDisplay();
 
-            // Listen for type changes
-            itemTypeSelect.addEventListener('change', () => {
-                this.toggleScoreDisplay();
-            });
+            // Listen for type changes (only if not disabled in edit mode)
+            if (!itemTypeSelect.disabled && itemTypeSelect.dataset.editMode !== 'true') {
+                itemTypeSelect.addEventListener('change', () => {
+                    this.toggleScoreDisplay();
+                });
+            }
         }
     }
 
@@ -352,6 +380,13 @@ class Step2TimingManager {
         const maxScoreSection = document.getElementById('maxScoreSection');
 
         if (itemTypeSelect && maxScoreSection) {
+            // Check if we're in edit mode (type select might be disabled)
+            const isEditMode = itemTypeSelect.disabled || itemTypeSelect.dataset.editMode === 'true';
+            if (isEditMode) {
+                // In edit mode, don't change visibility based on type
+                return;
+            }
+            
             const selectedType = parseInt(itemTypeSelect.value);
 
             // Hide score section for reminder items (Reminder = 0 in ScheduleItemType enum)
@@ -361,6 +396,32 @@ class Step2TimingManager {
                 maxScoreSection.style.display = 'none';
             } else {
                 maxScoreSection.style.display = 'block';
+            }
+        }
+    }
+    
+    validateDateRange() {
+        const startDateInput = document.querySelector('input[name="StartDate"]');
+        const dueDateInput = document.querySelector('input[name="DueDate"]');
+        
+        if (!startDateInput || !dueDateInput) return;
+        
+        if (startDateInput.value && dueDateInput.value) {
+            const startDate = new Date(startDateInput.value);
+            const dueDate = new Date(dueDateInput.value);
+            
+            if (dueDate <= startDate) {
+                this.showFieldError('DueDate', 'تاریخ مهلت باید بعد از تاریخ شروع باشد');
+                const persianDueDateInput = document.getElementById('PersianDueDate');
+                if (persianDueDateInput) {
+                    persianDueDateInput.classList.add('is-invalid');
+                }
+            } else {
+                this.clearFieldError('DueDate');
+                const persianDueDateInput = document.getElementById('PersianDueDate');
+                if (persianDueDateInput) {
+                    persianDueDateInput.classList.remove('is-invalid');
+                }
             }
         }
     }
@@ -507,6 +568,21 @@ class Step2TimingManager {
         if (startDateInput) {
             startDateInput.addEventListener('change', () => {
                 this.updateDurationCalculator();
+            });
+        }
+
+        // Add real-time validation for date ranges
+        if (dueDateInput) {
+            dueDateInput.addEventListener('change', () => {
+                // Validate date range when due date changes
+                this.validateDateRange();
+            });
+        }
+        
+        if (startDateInput) {
+            startDateInput.addEventListener('change', () => {
+                // Validate date range when start date changes
+                this.validateDateRange();
             });
         }
 

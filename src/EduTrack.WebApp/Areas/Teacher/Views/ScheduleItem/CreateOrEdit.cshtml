@@ -141,13 +141,34 @@
     <link rel="stylesheet" href="~/lib/ckeditor/ckeditor5-editor.css" asp-append-version="true" />
 }
 @section Scripts {
+    <!-- Core Utilities -->
+    <script src="~/js/utils/common.js" asp-append-version="true"></script>
+    <script src="~/js/utils/validation.js" asp-append-version="true"></script>
+    <script src="~/js/utils/dom-helpers.js" asp-append-version="true"></script>
+    
+    <!-- Services -->
+    <script src="~/js/services/notification-service.js" asp-append-version="true"></script>
+    <script src="~/js/services/modal-service.js" asp-append-version="true"></script>
+    
+    <!-- API Services -->
+    <script src="~/js/api/schedule-item-api.js" asp-append-version="true"></script>
+    <script src="~/js/api/schedule-api.js" asp-append-version="true"></script>
+    <script src="~/js/api/student-group-api.js" asp-append-version="true"></script>
+    
+    <!-- Core Initialization -->
+    <script src="~/js/edutrack-core.js" asp-append-version="true"></script>
+    
+    <!-- CKEditor -->
     <script type="importmap" src="~/js/importmaps/ckeditor-importmap.json" asp-append-version="true"></script>
     <script type="module" src="~/js/areas/teacher/schedule-items/ckeditor-init.js" asp-append-version="true"></script>
 
+    <!-- Lazy Loading -->
     <script src="~/js/lazy-loading.js" asp-append-version="true"></script>
+    
     <!-- Step Managers -->
     <script src="~/js/areas/teacher/schedule-items/step1-basics.js" asp-append-version="true"></script>
     <script src="~/js/areas/teacher/schedule-items/step2-timing.js" asp-append-version="true"></script>
     <script src="~/js/areas/teacher/schedule-items/step3-assignment.js" asp-append-version="true"></script>
+    <!-- step4-content.js is loaded in _Step4Content.cshtml partial -->
     <script src="~/js/areas/teacher/schedule-items/schedule-item-form.js" asp-append-version="true"></script>
 }

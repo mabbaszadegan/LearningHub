@@ -95,12 +95,18 @@ class Step1BasicsManager {
         // Item type selection
         const itemTypeSelect = document.getElementById('itemType');
         if (itemTypeSelect) {
-            itemTypeSelect.addEventListener('change', (e) => {
-                this.changeItemType(parseInt(e.target.value));
-                if (this.formManager && typeof this.formManager.validateField === 'function') {
-                    this.formManager.validateField('type', e.target.value);
-                }
-            });
+            // Check if we're in edit mode
+            const isEditMode = itemTypeSelect.dataset.editMode === 'true' || itemTypeSelect.disabled;
+            
+            if (!isEditMode) {
+                // Only allow type changes if not in edit mode
+                itemTypeSelect.addEventListener('change', async (e) => {
+                    await this.changeItemType(parseInt(e.target.value));
+                    if (this.formManager && typeof this.formManager.validateField === 'function') {
+                        this.formManager.validateField('type', e.target.value);
+                    }
+                });
+            }
         }
     }
 
@@ -149,11 +155,66 @@ class Step1BasicsManager {
         }
     }
 
-    changeItemType(typeId) {
-        this.currentType = typeId;
+    async changeItemType(newTypeId) {
+        const oldType = this.currentType;
+        
+        // If in edit mode and content exists, warn user
+        if (this.formManager?.isEditMode && this.formManager?.existingItemData?.contentJson) {
+            const contentJson = this.formManager.existingItemData.contentJson;
+            
+            // Check if content exists and is not empty
+            if (contentJson && contentJson !== '{}' && contentJson.trim() !== '') {
+                try {
+                    const parsedContent = JSON.parse(contentJson);
+                    // If content has actual data (not just empty object)
+                    if (Object.keys(parsedContent).length > 0 || Array.isArray(parsedContent) && parsedContent.length > 0) {
+                        const modal = window.EduTrack?.Services?.Modal;
+                        const confirmed = modal 
+                            ? await modal.confirm(
+                                'تغییر نوع آیتم باعث از دست رفتن محتوای فعلی می‌شود. آیا مطمئن هستید که می‌خواهید ادامه دهید؟',
+                                'هشدار تغییر نوع آیتم',
+                                'بله، ادامه',
+                                'انصراف'
+                            )
+                            : confirm('تغییر نوع آیتم باعث از دست رفتن محتوای فعلی می‌شود. آیا ادامه می‌دهید؟');
+                        
+                        if (!confirmed) {
+                            // Revert to old type
+                            const itemTypeSelect = document.getElementById('itemType');
+                            if (itemTypeSelect && oldType !== null) {
+                                itemTypeSelect.value = oldType;
+                            }
+                            return;
+                        }
+                        
+                        // Clear content if user confirmed
+                        const contentJsonInput = document.getElementById('contentJson');
+                        if (contentJsonInput) {
+                            contentJsonInput.value = '{}';
+                        }
+                        
+                        // Notify step 4 manager if available
+                        if (window.step4Manager && typeof window.step4Manager.clearContent === 'function') {
+                            window.step4Manager.clearContent();
+                        }
+                    }
+                } catch (e) {
+                    // If JSON parsing fails, assume empty content
+                    console.warn('Could not parse content JSON for type change validation:', e);
+                }
+            }
+        }
+        
+        // Update current type
+        this.currentType = newTypeId;
 
         // Show type preview
-        this.showTypePreview(typeId);
+        this.showTypePreview(newTypeId);
+
+        // Update Step 4 Content if available
+        if (window.step4Manager && typeof window.step4Manager.updateStep4Content === 'function') {
+            window.step4Manager.updateStep4Content();
+        }
 
         // Update sidebar
         if (this.formManager && typeof this.formManager.updateStepIndicators === 'function') {

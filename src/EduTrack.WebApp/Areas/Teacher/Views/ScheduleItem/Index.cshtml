@@ -197,11 +197,28 @@
 </div>
 
 @section Scripts {
+    <!-- Core Utilities -->
+    <script src="~/js/utils/common.js" asp-append-version="true"></script>
+    <script src="~/js/utils/validation.js" asp-append-version="true"></script>
+    <script src="~/js/utils/dom-helpers.js" asp-append-version="true"></script>
+    
+    <!-- Services -->
+    <script src="~/js/services/notification-service.js" asp-append-version="true"></script>
+    <script src="~/js/services/modal-service.js" asp-append-version="true"></script>
+    
+    <!-- API Services -->
+    <script src="~/js/api/schedule-item-api.js" asp-append-version="true"></script>
+    <script src="~/js/api/schedule-api.js" asp-append-version="true"></script>
+    <script src="~/js/api/student-group-api.js" asp-append-version="true"></script>
+    
+    <!-- Core Initialization -->
+    <script src="~/js/edutrack-core.js" asp-append-version="true"></script>
+    
     <script>
         // Set global teaching plan ID for JavaScript functions
         window.teachingPlanId = @teachingPlanId;
     </script>
-    <script src="~/js/areas/teacher/schedule-items/schedule-items.js"></script>
+    <script src="~/js/areas/teacher/schedule-items/schedule-items.js" asp-append-version="true"></script>
 }
 
 @section Styles {

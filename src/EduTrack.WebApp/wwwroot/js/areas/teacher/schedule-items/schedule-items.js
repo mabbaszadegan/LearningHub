@@ -1,27 +1,45 @@
 /**
  * Modern Schedule Items Management JavaScript
  * Handles all interactions for schedule items management
+ * Uses centralized API and Notification services
  */
 
 class ScheduleItemsManager {
     constructor() {
+        // Use Utils for parsing query string
+        const Utils = window.EduTrack?.Utils || {};
+        this.getTeachingPlanIdFromUrl = Utils.parseQueryString 
+            ? () => {
+                const params = Utils.parseQueryString(window.location.search);
+                return parseInt(params.teachingPlanId) || 0;
+            }
+            : () => {
+                const urlParams = new URLSearchParams(window.location.search);
+                return parseInt(urlParams.get('teachingPlanId')) || 0;
+            };
+
         this.currentTeachingPlanId = this.getTeachingPlanIdFromUrl();
         this.currentFilters = {
             search: '',
             type: '',
             status: ''
         };
+
+        // Get services
+        this.api = window.EduTrack?.API?.ScheduleItem;
+        this.notification = window.EduTrack?.Services?.Notification;
+        this.modal = window.EduTrack?.Services?.Modal;
+        
+        // Fallback debounce if Utils not available
+        const debounceFn = window.EduTrack?.Utils?.debounce;
+        this.debounce = debounceFn || this._fallbackDebounce.bind(this);
+
         this.init();
     }
 
     init() {
         this.setupEventListeners();
         this.loadScheduleItems();
-    }
-
-    getTeachingPlanIdFromUrl() {
-        const urlParams = new URLSearchParams(window.location.search);
-        return parseInt(urlParams.get('teachingPlanId')) || 0;
     }
 
     setupEventListeners() {
@@ -60,18 +78,26 @@ class ScheduleItemsManager {
         }
     }
 
-
     async loadScheduleItems() {
         try {
-            const response = await fetch(`/Teacher/ScheduleItem/GetScheduleItems?teachingPlanId=${this.currentTeachingPlanId}`);
-            const result = await response.json();
+            let result;
+            
+            if (this.api) {
+                // Use centralized API service
+                result = await this.api.getScheduleItems(this.currentTeachingPlanId);
+            } else {
+                // Fallback to direct fetch
+                const response = await fetch(`/Teacher/ScheduleItem/GetScheduleItems?teachingPlanId=${this.currentTeachingPlanId}`);
+                result = await response.json();
+            }
             
             if (result.success) {
                 this.renderScheduleItems(result.data);
             } else {
-                this.showError('خطا در بارگذاری آیتم‌ها: ' + result.message);
+                this.showError('خطا در بارگذاری آیتم‌ها: ' + (result.message || 'خطای ناشناخته'));
             }
         } catch (error) {
+            console.error('Error loading schedule items:', error);
             this.showError('خطا در بارگذاری آیتم‌ها');
         }
     }
@@ -254,8 +280,14 @@ class ScheduleItemsManager {
 
     async duplicateItem(itemId) {
         try {
-            const response = await fetch(`/Teacher/ScheduleItem/GetScheduleItem?id=${itemId}`);
-            const result = await response.json();
+            let result;
+            
+            if (this.api) {
+                result = await this.api.getScheduleItem(itemId);
+            } else {
+                const response = await fetch(`/Teacher/ScheduleItem/GetScheduleItem?id=${itemId}`);
+                result = await response.json();
+            }
             
             if (result.success) {
                 const item = result.data;
@@ -269,36 +301,48 @@ class ScheduleItemsManager {
                 // You can implement duplication logic here
                 this.showSuccess('آیتم با موفقیت کپی شد');
             } else {
-                this.showError('خطا در کپی آیتم: ' + result.message);
+                this.showError('خطا در کپی آیتم: ' + (result.message || 'خطای ناشناخته'));
             }
         } catch (error) {
+            console.error('Error duplicating item:', error);
             this.showError('خطا در کپی آیتم');
         }
     }
 
     async deleteItem(itemId) {
-        if (!confirm('آیا از حذف این آیتم آموزشی اطمینان دارید؟')) {
+        // Use modal service instead of confirm
+        const confirmed = this.modal 
+            ? await this.modal.confirm('آیا از حذف این آیتم آموزشی اطمینان دارید؟', 'حذف آیتم آموزشی')
+            : confirm('آیا از حذف این آیتم آموزشی اطمینان دارید؟');
+        
+        if (!confirmed) {
             return;
         }
         
         try {
-            const response = await fetch('/Teacher/ScheduleItem/DeleteScheduleItem', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ id: itemId })
-            });
+            let result;
             
-            const result = await response.json();
+            if (this.api) {
+                result = await this.api.deleteScheduleItem(itemId);
+            } else {
+                const response = await fetch('/Teacher/ScheduleItem/DeleteScheduleItem', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ id: itemId })
+                });
+                result = await response.json();
+            }
             
             if (result.success) {
                 this.showSuccess('آیتم آموزشی با موفقیت حذف شد');
                 this.loadScheduleItems();
             } else {
-                this.showError('خطا در حذف آیتم: ' + result.message);
+                this.showError('خطا در حذف آیتم: ' + (result.message || 'خطای ناشناخته'));
             }
         } catch (error) {
+            console.error('Error deleting item:', error);
             this.showError('خطا در حذف آیتم آموزشی');
         }
     }
@@ -330,7 +374,11 @@ class ScheduleItemsManager {
         return date.toLocaleDateString('fa-IR');
     }
 
-    debounce(func, wait) {
+    /**
+     * Fallback debounce if Utils not available
+     * @private
+     */
+    _fallbackDebounce(func, wait) {
         let timeout;
         return function executedFunction(...args) {
             const later = () => {
@@ -343,13 +391,23 @@ class ScheduleItemsManager {
     }
 
     showSuccess(message) {
-        // You can implement a toast notification system here
-        alert(message);
+        if (this.notification) {
+            this.notification.success(message);
+        } else if (typeof toastSuccess !== 'undefined') {
+            toastSuccess(message);
+        } else {
+            alert(message);
+        }
     }
 
     showError(message) {
-        // You can implement a toast notification system here
-        alert(message);
+        if (this.notification) {
+            this.notification.error(message);
+        } else if (typeof toastError !== 'undefined') {
+            toastError(message);
+        } else {
+            alert(message);
+        }
     }
 }
 
