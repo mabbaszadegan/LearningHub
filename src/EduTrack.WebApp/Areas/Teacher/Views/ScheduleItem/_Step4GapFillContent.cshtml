@@ -1,4 +1,4 @@
-<link rel="stylesheet" href="~/css/areas/teacher/schedule-items/gap-fill-content-builder.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/areas/teacher/schedule-items/gapfill-content-builder.css" asp-append-version="true" />
 <link rel="stylesheet" href="~/css/areas/teacher/schedule-items/stage4-enhancements.css" asp-append-version="true" />
 
 @model EduTrack.Application.Common.Models.ScheduleItems.CreateScheduleItemRequest
@@ -68,6 +68,23 @@
 <!-- Hidden field for content -->
 <input type="hidden" id="gapFillContentJson" name="GapFillContentJson" value="@Model.ContentJson" />
 
-<script src="~/js/areas/teacher/schedule-items/unified-content-loader.js" asp-append-version="true"></script>
-<script src="~/js/areas/teacher/schedule-items/gap-fill-block-manager.js" asp-append-version="true"></script>
+<!-- Gap Fill Editor Template -->
+<div id="gapFillEditorTemplate" style="display: none;">
+    @await Html.PartialAsync("_GapFillEditor")
+</div>
+
+<!-- Gap Item Template -->
+<div id="gapItemTemplate" style="display: none;">
+    @await Html.PartialAsync("_GapItem", new { GapIndex = 1 })
+</div>
+
+<script src="~/js/areas/teacher/schedule-items/content-sidebar.js" asp-append-version="true"></script>
+
+<!-- Block Type Selection Modal -->
+@{
+    ViewData["ModalId"] = "blockTypeModal";
+    ViewData["ModalTitle"] = "انتخاب نوع بلاک";
+    ViewData["ModalLabel"] = "blockTypeModalLabel";
+}
+@await Html.PartialAsync("_BlockTypeSelectionModal")
 

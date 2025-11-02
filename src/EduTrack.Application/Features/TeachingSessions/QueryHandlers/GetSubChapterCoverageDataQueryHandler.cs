@@ -132,7 +132,7 @@ public class GetSubChapterCoverageDataQueryHandler : IRequestHandler<GetSubChapt
                         Order = subChapter.Order,
                         CreatedAt = subChapter.CreatedAt,
                         UpdatedAt = subChapter.UpdatedAt,
-                        ContentCount = 0, // We don't need this for coverage
+                        // ContentCount removed - EducationalContent entity removed
                         ChapterTitle = chapter.Title,
                         CoverageCount = coverageCount,
                         AverageProgressPercentage = subChapterAverageProgress

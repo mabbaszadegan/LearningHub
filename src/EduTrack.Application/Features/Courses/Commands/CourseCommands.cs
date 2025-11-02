@@ -28,28 +28,8 @@ public record ReorderCoursesCommand : IRequest<Result<bool>>
     public List<int> CourseIds { get; set; } = new();
 }
 
-public record CreateModuleCommand(
-    int CourseId,
-    string Title,
-    string? Description,
-    int Order) : IRequest<Result<ModuleDto>>;
-
-public record UpdateModuleCommand(
-    int Id,
-    string Title,
-    string? Description,
-    bool IsActive,
-    int Order) : IRequest<Result<ModuleDto>>;
-
-public record DeleteModuleCommand(int Id) : IRequest<Result<bool>>;
-
-public record CreateLessonCommand(
-    int ModuleId,
-    string Title,
-    string? Content,
-    string? VideoUrl,
-    int Order,
-    int DurationMinutes) : IRequest<Result<LessonDto>>;
+// Module-related commands removed - Module entity removed
+// Lesson creation now uses legacy ModuleId field (nullable) for migration compatibility
 
 public record UpdateLessonCommand(
     int Id,

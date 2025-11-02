@@ -132,10 +132,7 @@ public class InteractiveLesson
         return _contentItems.Count(ci => ci.InteractiveQuestionId.HasValue);
     }
 
-    public int GetTotalEducationalContent()
-    {
-        return _contentItems.Count(ci => ci.EducationalContentId.HasValue);
-    }
+    // EducationalContent removed - using InteractiveQuestion only
 
     // Stage management methods
     public void AddStage(InteractiveLessonStage stage)

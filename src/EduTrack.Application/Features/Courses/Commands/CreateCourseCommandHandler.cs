@@ -66,8 +66,9 @@ public class CreateCourseCommandHandler : IRequestHandler<CreateCourseCommand, R
             CreatedAt = course.CreatedAt,
             UpdatedAt = course.UpdatedAt,
             CreatedBy = course.CreatedBy,
-            ModuleCount = 0,
-            LessonCount = 0
+                // ModuleCount and LessonCount removed - Modules removed
+                // ModuleCount = 0,
+                // LessonCount = 0
         };
 
         return Result<CourseDto>.Success(courseDto);

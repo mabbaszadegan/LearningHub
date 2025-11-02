@@ -40,7 +40,7 @@ public class CourseRepository : Repository<Course>, ICourseRepository
     public async Task<Course?> GetCourseWithModulesAsync(int courseId, CancellationToken cancellationToken = default)
     {
         return await _dbSet
-            .Include(c => c.Modules)
+            // Modules removed - using Chapters/SubChapters instead
             .FirstOrDefaultAsync(c => c.Id == courseId, cancellationToken);
     }
 

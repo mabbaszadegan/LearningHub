@@ -13,9 +13,8 @@ public class SubChapterDto
     public int Order { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
-    public int ContentCount { get; set; }
+    // ContentCount and EducationalContents removed - EducationalContent entity removed
     public string ChapterTitle { get; set; } = string.Empty;
-    public List<EducationalContentDto> EducationalContents { get; set; } = new();
     
     // Coverage statistics
     public int CoverageCount { get; set; }

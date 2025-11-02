@@ -11,11 +11,7 @@ public record GetCoursesQuery(
 
 public record GetCourseByIdQuery(int Id) : IRequest<Result<CourseDto>>;
 
-public record GetModulesByCourseIdQuery(int CourseId) : IRequest<Result<List<ModuleDto>>>;
-
-public record GetModuleByIdQuery(int Id) : IRequest<Result<ModuleDto>>;
-
-public record GetLessonsByModuleIdQuery(int ModuleId) : IRequest<Result<List<LessonDto>>>;
+// Module-related queries removed - Module entity removed
 
 public record GetLessonByIdQuery(int Id) : IRequest<Result<LessonDto>>;
 

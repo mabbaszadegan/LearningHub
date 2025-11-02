@@ -23,9 +23,8 @@ public class InteractiveContentItemDto
     public int Order { get; set; }
     public bool IsActive { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
-    public int? EducationalContentId { get; set; }
     public int? InteractiveQuestionId { get; set; }
-    public EducationalContentDto? EducationalContent { get; set; }
+    // EducationalContent removed - using InteractiveQuestion only
     public InteractiveQuestionDto? InteractiveQuestion { get; set; }
 }
 
@@ -70,23 +69,7 @@ public class StudentAnswerDto
     public string? Feedback { get; set; }
 }
 
-public class EducationalContentDto
-{
-    public int Id { get; set; }
-    public int SubChapterId { get; set; }
-    public string Title { get; set; } = string.Empty;
-    public string? Description { get; set; }
-    public EducationalContentType Type { get; set; }
-    public string? TextContent { get; set; }
-    public int? FileId { get; set; }
-    public string? ExternalUrl { get; set; }
-    public bool IsActive { get; set; }
-    public int Order { get; set; }
-    public DateTimeOffset CreatedAt { get; set; }
-    public DateTimeOffset UpdatedAt { get; set; }
-    public string CreatedBy { get; set; } = string.Empty;
-    public FileDto? File { get; set; }
-}
+// EducationalContentDto removed - EducationalContent entity removed
 
 public class InteractiveLessonAssignmentDto
 {
@@ -125,12 +108,11 @@ public class StageContentItemDto
     public int Order { get; set; }
     public bool IsActive { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
-    public int? EducationalContentId { get; set; }
     public int? InteractiveQuestionId { get; set; }
     public InteractiveContentType ContentType { get; set; }
     
     // Navigation properties for display
-    public EducationalContentDto? EducationalContent { get; set; }
+    // EducationalContent removed - using InteractiveQuestion only
     public InteractiveQuestionDto? InteractiveQuestion { get; set; }
 }
 
@@ -163,7 +145,7 @@ public class SubChapterDto
     public int Order { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
-    public List<EducationalContentDto> EducationalContents { get; set; } = new();
+    // EducationalContents removed - EducationalContent entity removed
     
     // Navigation properties for display
     public ChapterDto? Chapter { get; set; }

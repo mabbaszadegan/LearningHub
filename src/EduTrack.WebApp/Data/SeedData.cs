@@ -141,18 +141,10 @@ public static class SeedData
         context.Courses.Add(course);
         await context.SaveChangesAsync();
 
-        // Create module
-        var module = Module.Create(
-            course.Id,
-            "Introduction to English",
-            "Basic introduction to English language fundamentals.",
-            1);
-        context.Modules.Add(module);
-        await context.SaveChangesAsync();
-
-        // Create lessons
+        // Module removed - using Chapters/SubChapters instead
+        // Create lessons (ModuleId is nullable legacy field)
         var lesson1 = Lesson.Create(
-            module.Id,
+            null, // ModuleId is nullable - legacy field
             "Greetings and Introductions",
             "Learn how to greet people and introduce yourself in English.",
             null,
@@ -161,7 +153,7 @@ public static class SeedData
         context.Lessons.Add(lesson1);
 
         var lesson2 = Lesson.Create(
-            module.Id,
+            null, // ModuleId is nullable - legacy field
             "Numbers and Colors",
             "Learn basic numbers and colors in English.",
             null,
@@ -424,16 +416,6 @@ public static class SeedData
         context.TeachingSessionAttendances.AddRange(attendance);
         await context.SaveChangesAsync();
 
-        // Create sample ScheduleItemAssignment for targeted assignments
-        var scheduleItemAssignments = new List<ScheduleItemAssignment>
-        {
-            new() { ScheduleItemId = scheduleItems[0].Id, StudentId = int.Parse(students[0].Id) }, // Reminder for specific student
-            new() { ScheduleItemId = scheduleItems[1].Id, GroupId = studentGroups[0].Id }, // MCQ for Group A
-            new() { ScheduleItemId = scheduleItems[2].Id, GroupId = studentGroups[1].Id }, // Writing for Group B
-            new() { ScheduleItemId = scheduleItems[3].Id, StudentId = int.Parse(students[5].Id) } // GapFill for specific student
-        };
-
-        context.ScheduleItemAssignments.AddRange(scheduleItemAssignments);
-        await context.SaveChangesAsync();
+        // ScheduleItemAssignment removed - using new assignment tables instead
     }
 }

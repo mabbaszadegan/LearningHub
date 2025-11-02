@@ -17,7 +17,6 @@ public class LessonRepository : ILessonRepository
     public async Task<Lesson?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
         return await _context.Lessons
-            .Include(l => l.Module)
             .Include(l => l.Resources)
             .FirstOrDefaultAsync(l => l.Id == id, cancellationToken);
     }
@@ -33,12 +32,12 @@ public class LessonRepository : ILessonRepository
 
     public async Task<IEnumerable<Lesson>> GetByCourseIdAsync(int courseId, CancellationToken cancellationToken = default)
     {
+        // Module removed - using legacy ModuleId field for migration compatibility
+        // Lessons are now organized by SubChapters, but we keep ModuleId for legacy data
         return await _context.Lessons
-            .Include(l => l.Module)
             .Include(l => l.Resources)
-            .Where(l => l.Module.CourseId == courseId && l.IsActive)
-            .OrderBy(l => l.Module.Order)
-            .ThenBy(l => l.Order)
+            .Where(l => l.ModuleId.HasValue && l.IsActive)
+            .OrderBy(l => l.Order)
             .ToListAsync(cancellationToken);
     }
 

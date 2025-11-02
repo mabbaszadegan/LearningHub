@@ -130,6 +130,12 @@ if (typeof window !== 'undefined' && !window.ContentSidebarManager) {
         const blockId = blockDetail.blockId;
         const blockType = blockDetail.blockType;
         
+        // Remove empty state if it exists
+        const emptyState = this.sidebar.querySelector('.empty-sidebar-state');
+        if (emptyState) {
+            emptyState.remove();
+        }
+        
         // Check if block is already in sidebar to prevent duplicates
         const existingItem = this.sidebar.querySelector(`[data-block-id="${blockId}"]`);
         if (existingItem) {

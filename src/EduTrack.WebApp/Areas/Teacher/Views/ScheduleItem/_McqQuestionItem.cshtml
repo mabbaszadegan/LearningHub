@@ -1,0 +1,46 @@
+@{
+    var questionId = ViewData["QuestionId"] as string ?? Guid.NewGuid().ToString();
+    var questionIndex = (int)(ViewData["QuestionIndex"] ?? 0);
+    var question = ViewData["Question"] as object;
+}
+
+<div class="mcq-question-item" data-question-id="@questionId">
+    <div class="mcq-question-header">
+        <div class="mcq-question-number">سوال @(questionIndex + 1)</div>
+        <button type="button" class="btn-mcq-remove" data-action="mcq-remove">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+    <div class="mcq-question-body">
+        <div class="mcq-stem-field">
+            <label>صورت سوال</label>
+            <textarea class="mcq-stem-input" rows="2" placeholder="صورت سوال را وارد کنید..." data-role="mcq-stem"></textarea>
+        </div>
+        <div class="mcq-settings-row">
+            <div class="mcq-setting">
+                <label>نوع پاسخ</label>
+                <select class="mcq-answer-type-select" data-role="mcq-answer-type">
+                    <option value="single">تک‌گزینه‌ای</option>
+                    <option value="multiple">چندپاسخه</option>
+                </select>
+            </div>
+            <div class="mcq-setting">
+                <label class="mcq-checkbox-label">
+                    <input type="checkbox" class="mcq-randomize-checkbox" data-role="mcq-randomize">
+                    <span>به‌هم‌ریختن گزینه‌ها</span>
+                </label>
+            </div>
+        </div>
+        <div class="mcq-options-section">
+            <div class="mcq-options-header">
+                <span>گزینه‌ها</span>
+                <button type="button" class="btn-mcq-add-option" data-action="mcq-add-option">
+                    <i class="fas fa-plus"></i>
+                    افزودن گزینه
+                </button>
+            </div>
+            <div class="mcq-options-list" data-role="mcq-options"></div>
+        </div>
+    </div>
+</div>
+

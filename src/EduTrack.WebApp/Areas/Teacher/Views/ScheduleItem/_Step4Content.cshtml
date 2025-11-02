@@ -1,6 +1,5 @@
 <link rel="stylesheet" href="~/css/areas/teacher/schedule-items/content-builder.css" asp-append-version="true" />
 <link rel="stylesheet" href="~/css/areas/teacher/schedule-items/stage4-enhancements.css" asp-append-version="true" />
-<script src="~/js/areas/teacher/schedule-items/content-builder.js" asp-append-version="true"></script>
 
 @model EduTrack.Application.Common.Models.ScheduleItems.CreateScheduleItemRequest
 @{
@@ -46,18 +45,29 @@
             <div id="gapFillContentBuilder" style="display: none;">
                 @await Html.PartialAsync("_Step4GapFillContent", Model)
             </div>
-            
-            <!-- Written Content Builder (also needed for GapFill mode) -->
+        }
+
+        
+
+        @if (Model.Type == ScheduleItemType.Writing)
+        {
+            <!-- Written Content Builder -->
             <div id="writtenContentBuilder" style="display: none;">
                 @await Html.PartialAsync("_Step4WrittenContent", Model)
             </div>
         }
 
-        
-
-        @if (Model.Type == ScheduleItemType.Writing || Model.Type == ScheduleItemType.Audio || Model.Type == ScheduleItemType.MultipleChoice)
+        @if (Model.Type == ScheduleItemType.MultipleChoice)
         {
-            <!-- Written Content Builder -->
+            <!-- Multiple Choice Content Builder -->
+            <div id="multipleChoiceContentBuilder" style="display: none;">
+                @await Html.PartialAsync("_Step4MultipleChoiceContent", Model)
+            </div>
+        }
+
+        @if (Model.Type == ScheduleItemType.Audio)
+        {
+            <!-- Audio Content Builder (uses same structure as written) -->
             <div id="writtenContentBuilder" style="display: none;">
                 @await Html.PartialAsync("_Step4WrittenContent", Model)
             </div>
@@ -218,6 +228,18 @@
 <script src="~/js/areas/teacher/shared/block-type-selection-modal.js" asp-append-version="true"></script>
 <script src="~/js/areas/teacher/shared/base-content-blocks.js" asp-append-version="true"></script>
 <script src="~/js/areas/teacher/schedule-items/content-manager-base.js" asp-append-version="true"></script>
+<script src="~/js/areas/teacher/schedule-items/content-builder.js" asp-append-version="true"></script>
 <script src="~/js/areas/teacher/schedule-items/content-sidebar.js" asp-append-version="true"></script>
-<script src="~/js/areas/teacher/schedule-items/unified-content-loader.js" asp-append-version="true"></script>
-<script src="~/js/areas/teacher/schedule-items/step4-content.js" asp-append-version="true"></script>
+
+<!-- Base Classes -->
+<script src="~/js/areas/teacher/schedule-items/base/question-block-base.js" asp-append-version="true"></script>
+
+<!-- Content Type Managers -->
+<script src="~/js/areas/teacher/schedule-items/managers/written-content-manager.js" asp-append-version="true"></script>
+<script src="~/js/areas/teacher/schedule-items/managers/audio-content-manager.js" asp-append-version="true"></script>
+<script src="~/js/areas/teacher/schedule-items/managers/reminder-content-manager.js" asp-append-version="true"></script>
+<script src="~/js/areas/teacher/schedule-items/managers/gapfill-content-manager.js" asp-append-version="true"></script>
+<script src="~/js/areas/teacher/schedule-items/managers/multiplechoice-content-manager.js" asp-append-version="true"></script>
+
+<!-- Step 4 Main Manager -->
+<script src="~/js/areas/teacher/schedule-items/managers/step4-content-manager.js" asp-append-version="true"></script>

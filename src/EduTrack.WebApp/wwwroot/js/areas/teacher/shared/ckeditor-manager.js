@@ -47,8 +47,13 @@ if (typeof window.CKEditorManager === 'undefined') {
     }
 
     async initializeEditor(editorElement) {
-        if (!editorElement || this.editors.has(editorElement)) {
-            return;
+        if (!editorElement) {
+            return Promise.resolve();
+        }
+        
+        // If editor is already initialized, return the existing editor
+        if (this.editors.has(editorElement)) {
+            return Promise.resolve(this.editors.get(editorElement));
         }
 
         const blockElement = editorElement.closest('.content-block');
@@ -58,15 +63,18 @@ if (typeof window.CKEditorManager === 'undefined') {
         if (typeof window.ClassicEditor === 'undefined') {
             console.warn('CKEditorManager: ClassicEditor not available, waiting...');
             // Wait a bit and try again
-            setTimeout(() => this.initializeEditor(editorElement), 500);
-            return;
+            return new Promise((resolve) => {
+                setTimeout(() => {
+                    this.initializeEditor(editorElement).then(resolve).catch(resolve);
+                }, 500);
+            });
         }
 
         // Get plugins from global window object (set by ES6 module in CreateOrEdit.cshtml)
         const Plugins = window.CKEditorPlugins;
         if (!Plugins) {
             console.error('CKEditorManager: CKEditorPlugins not available');
-            return;
+            return Promise.reject(new Error('CKEditorPlugins not available'));
         }
 
         try {
@@ -501,32 +509,78 @@ if (typeof window.CKEditorManager === 'undefined') {
         const editorElement = blockElement.querySelector('.ckeditor-editor');
         if (!editorElement) {
             console.warn('CKEditorManager: No editor element found in block element');
+            // Still try to populate question fields even if editor is not found
+            this.populateQuestionFields(blockElement, data);
             return;
         }
 
         const editor = this.editors.get(editorElement);
         if (editor) {
+            // Editor is ready, set the data
             editor.setData(data.content || '');
+            // Populate question-specific fields
+            this.populateQuestionFields(blockElement, data);
         } else {
-            console.warn('CKEditorManager: Editor not found for editor element, waiting for initialization...');
+            console.log('CKEditorManager: Editor not found for editor element, waiting for initialization...', {
+                editorElement: !!editorElement,
+                blockId: blockElement?.dataset?.blockId,
+                hasData: !!data?.content
+            });
             
-            // Wait for editor to be initialized
+            // Wait for editor to be initialized with retry mechanism
+            let attempts = 0;
+            const maxAttempts = 30; // Try for up to 3 seconds (30 * 100ms)
+            
             const checkEditor = () => {
+                attempts++;
                 const editor = this.editors.get(editorElement);
                 if (editor) {
+                    // Editor is now ready, set the data
                     editor.setData(data.content || '');
-                } else {
+                    console.log('CKEditorManager: Editor initialized and data populated after', attempts, 'attempts');
+                    // Populate question-specific fields
+                    this.populateQuestionFields(blockElement, data);
+                } else if (attempts < maxAttempts) {
                     // Try again after a short delay
                     setTimeout(checkEditor, 100);
+                } else {
+                    console.warn('CKEditorManager: Editor not found after', maxAttempts, 'attempts. Trying to initialize now...');
+                    // Try to initialize the editor if it's not initialized yet
+                    if (this && typeof this.initializeEditor === 'function') {
+                        // Wrap in a Promise to handle both async and non-async returns
+                        Promise.resolve(this.initializeEditor(editorElement)).then(() => {
+                            // Wait a bit more for the editor to be ready
+                            setTimeout(() => {
+                                const editor = this.editors.get(editorElement);
+                                if (editor) {
+                                    editor.setData(data.content || '');
+                                    this.populateQuestionFields(blockElement, data);
+                                } else {
+                                    console.error('CKEditorManager: Failed to populate content - editor still not available after initialization attempt');
+                                }
+                            }, 200);
+                        }).catch(err => {
+                            console.error('CKEditorManager: Error initializing editor:', err);
+                        });
+                    } else if (window.ckeditorManager && typeof window.ckeditorManager.initializeEditor === 'function') {
+                        Promise.resolve(window.ckeditorManager.initializeEditor(editorElement)).then(() => {
+                            setTimeout(() => {
+                                const editor = this.editors.get(editorElement);
+                                if (editor) {
+                                    editor.setData(data.content || '');
+                                    this.populateQuestionFields(blockElement, data);
+                                }
+                            }, 200);
+                        }).catch(err => {
+                            console.error('CKEditorManager: Error initializing editor:', err);
+                        });
+                    }
                 }
             };
             
             // Start checking after a short delay
             setTimeout(checkEditor, 100);
         }
-
-        // Populate question-specific fields if this is a question block
-        this.populateQuestionFields(blockElement, data);
     }
 
     // Helper method to populate question-specific fields

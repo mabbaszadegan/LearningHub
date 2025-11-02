@@ -7,7 +7,6 @@ namespace EduTrack.Domain.Entities;
 /// </summary>
 public class SubChapter
 {
-    private readonly List<EducationalContent> _educationalContents = new();
 
     public int Id { get; private set; }
     public int ChapterId { get; private set; }
@@ -21,7 +20,6 @@ public class SubChapter
 
     // Navigation properties
     public Chapter Chapter { get; private set; } = null!;
-    public IReadOnlyCollection<EducationalContent> EducationalContents => _educationalContents.AsReadOnly();
     
     // Navigation properties for new entities
     public ICollection<TeachingSessionTopicCoverage> TopicCoverages { get; set; } = new List<TeachingSessionTopicCoverage>();
@@ -103,38 +101,4 @@ public class SubChapter
         UpdatedAt = DateTimeOffset.UtcNow;
     }
 
-    public void AddEducationalContent(EducationalContent content)
-    {
-        if (content == null)
-            throw new ArgumentNullException(nameof(content));
-
-        if (_educationalContents.Any(ec => ec.Id == content.Id))
-            throw new InvalidOperationException("EducationalContent already exists in this sub-chapter");
-
-        _educationalContents.Add(content);
-        UpdatedAt = DateTimeOffset.UtcNow;
-    }
-
-    public void RemoveEducationalContent(EducationalContent content)
-    {
-        if (content == null)
-            throw new ArgumentNullException(nameof(content));
-
-        var contentToRemove = _educationalContents.FirstOrDefault(ec => ec.Id == content.Id);
-        if (contentToRemove != null)
-        {
-            _educationalContents.Remove(contentToRemove);
-            UpdatedAt = DateTimeOffset.UtcNow;
-        }
-    }
-
-    public int GetTotalEducationalContent()
-    {
-        return _educationalContents.Count;
-    }
-
-    public bool HasEducationalContent()
-    {
-        return _educationalContents.Any();
-    }
 }

@@ -92,10 +92,10 @@ class ContentBuilderBase {
                     window.writtenBlockManager.handleBlockContentChanged(e.detail);
                 }
             }
-            if (window.gapFillBlockManager && window.gapFillBlockManager.blocks) {
-                const block = window.gapFillBlockManager.blocks.find(b => b.id === blockId);
+            if (window.gapFillContentManager && window.gapFillContentManager.blocks) {
+                const block = window.gapFillContentManager.blocks.find(b => b.id === blockId);
                 if (block) {
-                    window.gapFillBlockManager.handleBlockContentChanged(e.detail);
+                    window.gapFillContentManager.handleBlockContentChanged(e.detail);
                 }
             }
         });
@@ -1230,6 +1230,11 @@ class ContentBuilderBase {
             type: this.config.contentType,
             blocks: this.blocks
         };
+    }
+
+    // Unified method to collect content data - can be overridden by child classes
+    collectContentData() {
+        return this.getContent();
     }
 
     getSizeClass(size) {

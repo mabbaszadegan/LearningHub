@@ -7,53 +7,14 @@
     <div class="builder-content-layout">
         <!-- Main Content Area -->
         <div class="main-content-area">
-            <!-- Optional Context Block (Text/Image/Video/Audio) -->
-            <div class="context-section">
-                <div class="section-header">
-                    <div class="section-title">
-                        <i class="fas fa-layer-group"></i>
-                        <span>محتوای زمینه (اختیاری)</span>
-                    </div>
-                    <div class="section-actions">
-                        <button type="button" class="btn-teacher btn-primary" id="mcAddContextBlockBtn">
-                            <i class="fas fa-plus"></i>
-                            <span>افزودن بلاک</span>
-                        </button>
-                        <button type="button" class="btn-teacher btn-danger" id="mcRemoveContextBlockBtn" style="display:none">
-                            <i class="fas fa-trash"></i>
-                            <span>حذف بلاک</span>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="context-container" id="mcContextContainer">
-                    <div class="empty-state" id="mcContextEmptyState">
-                        <div class="empty-state-icon">
-                            <i class="fas fa-plus-circle"></i>
-                        </div>
-                        <h4>هنوز محتوایی اضافه نشده</h4>
-                        <p>می‌توانید یک بلاک متن، تصویر، ویدیو یا صوت به عنوان زمینه تمرین اضافه کنید یا این بخش را خالی بگذارید.</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Multiple Choice Questions -->
-            <div class="mc-editor-section">
-                <div class="section-header">
-                    <div class="section-title">
+            <div class="blocks-list" id="contentBlocksList">
+                <!-- Question blocks will be added here dynamically -->
+                <div class="empty-state" id="emptyBlocksState">
+                    <div class="empty-state-icon">
                         <i class="fas fa-list-ul"></i>
-                        <span>سوالات چندگزینه‌ای</span>
                     </div>
-                    <div class="section-actions">
-                        <button type="button" class="btn-teacher btn-secondary" id="mcAddQuestionBtn">
-                            <i class="fas fa-plus"></i>
-                            <span>افزودن سوال</span>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="mc-questions" id="mcQuestionsContainer">
-                    <!-- Dynamic question editors will be added here -->
+                    <h4>هنوز بلاک چندگزینه‌ای اضافه نشده</h4>
+                    <p>برای شروع، روی دکمه "افزودن بلاک" کلیک کنید</p>
                 </div>
             </div>
         </div>
@@ -63,12 +24,31 @@
             <div class="sidebar-header">
                 <div class="sidebar-title">
                     <i class="fas fa-list"></i>
-                    <span>فهرست سوالات</span>
+                    <span>فهرست بلاک‌ها</span>
                 </div>
-                <div class="sidebar-count" id="mcSidebarCount">0</div>
+                <div class="sidebar-count" id="sidebarBlockCount">0</div>
             </div>
-            <div class="sidebar-content" id="mcSidebar">
-                <!-- Filled by JS: questions list and quick actions -->
+            <div class="sidebar-content">
+                <div class="blocks-navigation" id="blocksNavigation"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Preview Section (hidden by default) -->
+<div class="preview-section" id="writtenPreview" style="display: none;">
+    <div class="content-preview">
+        <div class="preview-header">
+            <h4>پیش‌نمایش محتوای چندگزینه‌ای</h4>
+        </div>
+        <div class="preview-content">
+            <div class="written-exercise-card">
+                <div class="exercise-icon">
+                    <i class="fas fa-list-ul"></i>
+                </div>
+                <div class="exercise-text">
+                    <p>سوالات چندگزینه‌ای شما اینجا نمایش داده خواهد شد...</p>
+                </div>
             </div>
         </div>
     </div>
@@ -77,10 +57,10 @@
 <!-- Hidden field for content -->
 <input type="hidden" id="multipleChoiceContentJson" value="@Model.ContentJson" />
 
-<!-- Block Templates (non-question variants) -->
-<div id="mcContentBlockTemplates" style="display: none;">
+<!-- Question Block Templates -->
+<div id="questionBlockTemplates" style="display: none;">
     @{
-        ViewData["IsQuestionBlock"] = "false";
+        ViewData["IsQuestionBlock"] = "true";
     }
     @await Html.PartialAsync("_TextBlock", new { BlockType = "text" })
     @await Html.PartialAsync("_ImageBlock", new { BlockType = "image" })
@@ -88,6 +68,21 @@
     @await Html.PartialAsync("_AudioBlock", new { BlockType = "audio" })
 </div>
 
-<script src="~/js/areas/teacher/schedule-items/multiple-choice-content-builder.js" asp-append-version="true"></script>
+<!-- MCQ Questions Container Template -->
+<div id="mcqQuestionsContainerTemplate" style="display: none;">
+    @await Html.PartialAsync("_McqQuestionsContainer")
+</div>
+
+<!-- MCQ Question Item Template -->
+<div id="mcqQuestionItemTemplate" style="display: none;">
+    @await Html.PartialAsync("_McqQuestionItem", new { QuestionId = Guid.NewGuid().ToString(), QuestionIndex = 0 })
+</div>
+
+<!-- MCQ Option Item Template -->
+<div id="mcqOptionItemTemplate" style="display: none;">
+    @await Html.PartialAsync("_McqOptionItem", new { OptionIndex = 0, QuestionId = Guid.NewGuid().ToString(), IsSingle = true })
+</div>
+
+<script src="~/js/areas/teacher/schedule-items/managers/multiplechoice-content-manager.js" asp-append-version="true"></script>
 
 

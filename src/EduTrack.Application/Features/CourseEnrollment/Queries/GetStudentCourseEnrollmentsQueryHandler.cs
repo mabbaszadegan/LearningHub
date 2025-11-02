@@ -66,7 +66,7 @@ public class GetStudentCourseEnrollmentsQueryHandler : IRequestHandler<GetStuden
                 .FirstOrDefaultAsync(a => a.CourseId == enrollment.CourseId && a.StudentId == enrollment.StudentId, cancellationToken);
 
             // Calculate course statistics
-            var totalLessons = enrollment.Course.Modules.Sum(m => m.Lessons.Count);
+            var totalLessons = 0; // Modules removed - calculate from Chapters/SubChapters if needed
             var completedLessons = 0; // TODO: Calculate from progress tracking
             var totalExams = 0; // TODO: Calculate from course exams
             var completedExams = 0; // TODO: Calculate from attempts

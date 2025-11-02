@@ -99,18 +99,8 @@ public class InteractiveLessonController : Controller
         return NotFound();
     }
 
-    [HttpPost]
-    public async Task<IActionResult> AddContent(AddContentToInteractiveLessonCommand command)
-    {
-        var result = await _mediator.Send(command);
-        
-        if (result.IsSuccess)
-        {
-            return Json(new { success = true, data = result.Value });
-        }
-
-        return Json(new { success = false, error = result.Error });
-    }
+    // AddContent method removed - AddContentToInteractiveLessonCommand removed (EducationalContent entity removed)
+    // Use AddQuestion instead
 
     [HttpPost]
     public async Task<IActionResult> AddQuestion(AddQuestionToInteractiveLessonCommand command)
@@ -152,17 +142,7 @@ public class InteractiveLessonController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAvailableContent(int courseId)
-    {
-        var result = await _mediator.Send(new GetAvailableEducationalContentQuery(courseId));
-        
-        if (result.IsSuccess)
-        {
-            return Json(new { success = true, data = result.Value });
-        }
-
-        return Json(new { success = false, error = result.Error });
-    }
+    // GetAvailableContent method removed - GetAvailableEducationalContentQuery removed (EducationalContent entity removed)
 
     [HttpGet]
     public async Task<IActionResult> FixUserRoles()
@@ -219,7 +199,7 @@ public class InteractiveLessonController : Controller
         // Get sub-chapters for the course
         var subChapters = await _context.SubChapters
             .Include(sc => sc.Chapter)
-            .Include(sc => sc.EducationalContents.Where(ec => ec.IsActive))
+            // EducationalContents removed - EducationalContent entity removed
             .Where(sc => sc.Chapter.CourseId == courseId && sc.IsActive)
             .OrderBy(sc => sc.Chapter.Order)
             .ThenBy(sc => sc.Order)
@@ -405,7 +385,6 @@ public class InteractiveLessonController : Controller
             .Include(s => s.InteractiveLesson)
                 .ThenInclude(il => il.SubChapters.Where(sc => sc.IsActive))
                     .ThenInclude(sc => sc.SubChapter)
-                        .ThenInclude(sc => sc.EducationalContents.Where(ec => ec.IsActive))
             .FirstOrDefaultAsync(s => s.Id == stageId);
 
         if (stage == null)

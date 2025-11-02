@@ -31,9 +31,8 @@ public class ScheduleItem
     public StudentGroup? Group { get; private set; } // Legacy single group assignment
     public Lesson? Lesson { get; private set; }
     public TeachingSessionReport? SessionReport { get; set; }
-    public ICollection<ScheduleItemAssignment> Assignments { get; set; } = new List<ScheduleItemAssignment>();
     
-    // New navigation properties for multiple assignments
+    // Navigation properties for multiple assignments
     public ICollection<ScheduleItemGroupAssignment> GroupAssignments { get; set; } = new List<ScheduleItemGroupAssignment>();
     public ICollection<ScheduleItemSubChapterAssignment> SubChapterAssignments { get; set; } = new List<ScheduleItemSubChapterAssignment>();
     public ICollection<ScheduleItemStudentAssignment> StudentAssignments { get; set; } = new List<ScheduleItemStudentAssignment>();

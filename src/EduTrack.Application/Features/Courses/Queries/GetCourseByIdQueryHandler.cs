@@ -52,21 +52,7 @@ public class GetCourseByIdQueryHandler : IRequestHandler<GetCourseByIdQuery, Res
             .ToListAsync(cancellationToken);
 
        
-        // Step 7: Get educational contents for subchapters (only if needed)
-        var subChapterIds = chapters.SelectMany(ch => ch.SubChapters).Select(sc => sc.Id).ToList();
-        var educationalContents = new List<Domain.Entities.EducationalContent>();
-        
-        if (subChapterIds.Any())
-        {
-            educationalContents = await _courseRepository.GetAll()
-                .Where(c => c.Id == request.Id)
-                .SelectMany(c => c.Chapters)
-                .SelectMany(ch => ch.SubChapters)
-                .SelectMany(sc => sc.EducationalContents)
-                .Where(ec => ec.IsActive && subChapterIds.Contains(ec.SubChapterId))
-                .Include(ec => ec.File)
-                .ToListAsync(cancellationToken);
-        }
+        // EducationalContent removed - no longer needed
 
         // Step 6: Get student count (enrollments)
         var studentCount = await _courseRepository.GetAll()
@@ -89,8 +75,7 @@ public class GetCourseByIdQueryHandler : IRequestHandler<GetCourseByIdQuery, Res
             CreatedByName = teacherName,
             DisciplineType = course.DisciplineType,
             ChapterCount = chapters.Count,
-            ModuleCount = chapters.Sum(ch => ch.SubChapters.Count),
-            LessonCount = teachingPlans.Sum(tp => tp.ScheduleItems.Count),
+            // ModuleCount and LessonCount removed - Modules removed, using Chapters/SubChapters instead
             StudentCount = studentCount,
             Chapters = chapters.Select(ch => new ChapterDto
             {
@@ -115,43 +100,12 @@ public class GetCourseByIdQueryHandler : IRequestHandler<GetCourseByIdQuery, Res
                     Order = sc.Order,
                     CreatedAt = sc.CreatedAt,
                     UpdatedAt = sc.UpdatedAt,
-                    ContentCount = educationalContents.Count(ec => ec.SubChapterId == sc.Id),
+                    // ContentCount and EducationalContents removed - EducationalContent entity removed
                     ScheduleItemStats = teachingPlans
                         .SelectMany(tp => tp.ScheduleItems)
                         .Where(si => si.SubChapterAssignments.Any(sia => sia.SubChapterId == sc.Id))
                         .GroupBy(si => si.Type)
-                        .ToDictionary(g => g.Key, g => g.Count()),
-                    EducationalContents = educationalContents
-                        .Where(ec => ec.SubChapterId == sc.Id)
-                        .Select(ec => new EducationalContentDto
-                        {
-                            Id = ec.Id,
-                            SubChapterId = ec.SubChapterId,
-                            Title = ec.Title,
-                            Description = ec.Description,
-                            Type = ec.Type,
-                            TextContent = ec.TextContent,
-                            FileId = ec.FileId,
-                            ExternalUrl = ec.ExternalUrl,
-                            IsActive = ec.IsActive,
-                            Order = ec.Order,
-                            CreatedAt = ec.CreatedAt,
-                            UpdatedAt = ec.UpdatedAt,
-                            CreatedBy = ec.CreatedBy,
-                            File = ec.File != null ? new FileDto
-                            {
-                                Id = ec.File.Id,
-                                FileName = ec.File.FileName,
-                                OriginalFileName = ec.File.OriginalFileName,
-                                FilePath = ec.File.FilePath,
-                                MimeType = ec.File.MimeType,
-                                FileSizeBytes = ec.File.FileSizeBytes,
-                                MD5Hash = ec.File.MD5Hash,
-                                CreatedAt = ec.File.CreatedAt,
-                                CreatedBy = ec.File.CreatedBy,
-                                ReferenceCount = ec.File.ReferenceCount
-                            } : null
-                        }).ToList()
+                        .ToDictionary(g => g.Key, g => g.Count())
                 }).ToList()
             }).ToList()
         };

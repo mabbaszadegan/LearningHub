@@ -18,14 +18,12 @@ public class SubChapterRepository : ISubChapterRepository
     {
         return await _context.SubChapters
             .Include(s => s.Chapter)
-            .Include(s => s.EducationalContents)
             .FirstOrDefaultAsync(s => s.Id == id, cancellationToken);
     }
 
     public async Task<IEnumerable<SubChapter>> GetByChapterIdAsync(int chapterId, CancellationToken cancellationToken = default)
     {
         return await _context.SubChapters
-            .Include(s => s.EducationalContents)
             .Where(s => s.ChapterId == chapterId && s.IsActive)
             .OrderBy(s => s.Order)
             .ToListAsync(cancellationToken);
@@ -35,7 +33,6 @@ public class SubChapterRepository : ISubChapterRepository
     {
         return await _context.SubChapters
             .Include(s => s.Chapter)
-            .Include(s => s.EducationalContents)
             .Where(s => s.Chapter.CourseId == courseId && s.IsActive)
             .OrderBy(s => s.Chapter.Order)
             .ThenBy(s => s.Order)

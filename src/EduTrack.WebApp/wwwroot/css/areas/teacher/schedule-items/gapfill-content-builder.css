@@ -1,0 +1,539 @@
+/**
+ * Gap Fill Content Builder - Minimal & Modern Design
+ * Clean and user-friendly interface for gap fill exercises
+ */
+
+.gap-fill-content-builder {
+    padding: 0;
+}
+
+/* Gap Fill Editor Container */
+.gapfill-editor-container {
+    margin-top: 1.5rem;
+    padding: 1.5rem;
+    background: #f8f9fa;
+    border-radius: 12px;
+    border: 1px solid #e9ecef;
+}
+
+.gapfill-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.gapfill-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    color: #495057;
+    font-size: 0.95rem;
+}
+
+.gapfill-title i {
+    color: #6c757d;
+}
+
+.btn-gapfill-insert {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: #0d6efd;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-gapfill-insert:hover {
+    background: #0b5ed7;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(13, 110, 253, 0.2);
+}
+
+/* Gap Fill Settings */
+.gapfill-settings {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.gapfill-setting-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.gapfill-setting-item label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #495057;
+}
+
+.gapfill-select {
+    padding: 0.5rem;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    background: white;
+    font-size: 0.875rem;
+    color: #495057;
+    transition: border-color 0.2s;
+}
+
+.gapfill-select:focus {
+    outline: none;
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
+}
+
+.gapfill-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    font-size: 0.875rem;
+}
+
+.gapfill-checkbox {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: #0d6efd;
+}
+
+/* Gaps List */
+.gaps-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.gaps-empty-state {
+    text-align: center;
+    padding: 2rem;
+    color: #6c757d;
+    background: white;
+    border-radius: 8px;
+    border: 2px dashed #dee2e6;
+}
+
+.gaps-empty-state i {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    opacity: 0.5;
+}
+
+.gaps-empty-state p {
+    margin: 0.5rem 0;
+    font-weight: 500;
+}
+
+.gaps-empty-state small {
+    display: block;
+    margin-top: 0.5rem;
+    opacity: 0.7;
+}
+
+/* Gap Item */
+.gap-item {
+    background: white;
+    border-radius: 10px;
+    border: 1px solid #e9ecef;
+    overflow: hidden;
+    transition: box-shadow 0.2s;
+}
+
+.gap-item:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.gap-item-header {
+    padding: 0.75rem 1rem;
+    background: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.gap-item-number {
+    font-weight: 600;
+    color: #495057;
+    font-size: 0.9rem;
+}
+
+.gap-item-body {
+    padding: 1rem;
+}
+
+.gap-field-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.gap-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.gap-field label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #495057;
+}
+
+.gap-correct-input,
+.gap-alts-input,
+.gap-hint-input {
+    padding: 0.625rem;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    transition: border-color 0.2s;
+}
+
+.gap-correct-input:focus,
+.gap-alts-input:focus,
+.gap-hint-input:focus {
+    outline: none;
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
+}
+
+/* MCQ Questions Container */
+.mcq-questions-container {
+    margin-top: 1.5rem;
+    padding: 1.5rem;
+    background: #ffffff;
+    border-radius: 12px;
+    border: 1px solid #e9ecef;
+}
+
+.mcq-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.mcq-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    color: #495057;
+    font-size: 0.95rem;
+}
+
+.mcq-title i {
+    color: #0d6efd;
+}
+
+.btn-mcq-add {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: #198754;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-mcq-add:hover {
+    background: #157347;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(25, 135, 84, 0.2);
+}
+
+.mcq-empty-state {
+    text-align: center;
+    padding: 2rem;
+    color: #6c757d;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 2px dashed #dee2e6;
+}
+
+.mcq-empty-state i {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    opacity: 0.5;
+}
+
+.mcq-empty-state p {
+    margin: 0.5rem 0;
+    font-weight: 500;
+}
+
+/* MCQ Questions List */
+.mcq-questions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.mcq-question-item {
+    background: #f8f9fa;
+    border-radius: 10px;
+    border: 1px solid #e9ecef;
+    overflow: hidden;
+    transition: box-shadow 0.2s;
+}
+
+.mcq-question-item:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.mcq-question-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    background: white;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.mcq-question-number {
+    font-weight: 600;
+    color: #495057;
+    font-size: 0.9rem;
+}
+
+.btn-mcq-remove {
+    padding: 0.25rem 0.5rem;
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: background 0.2s;
+}
+
+.btn-mcq-remove:hover {
+    background: #bb2d3b;
+}
+
+.mcq-question-body {
+    padding: 1rem;
+}
+
+.mcq-stem-field {
+    margin-bottom: 1rem;
+}
+
+.mcq-stem-field label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    font-size: 0.875rem;
+    color: #495057;
+}
+
+.mcq-stem-input {
+    width: 100%;
+    padding: 0.625rem;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    resize: vertical;
+    transition: border-color 0.2s;
+}
+
+.mcq-stem-input:focus {
+    outline: none;
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
+}
+
+.mcq-settings-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+    padding: 1rem;
+    background: white;
+    border-radius: 8px;
+}
+
+.mcq-setting {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.mcq-setting label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #495057;
+}
+
+.mcq-answer-type-select {
+    padding: 0.5rem;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    background: white;
+    font-size: 0.875rem;
+    transition: border-color 0.2s;
+}
+
+.mcq-answer-type-select:focus {
+    outline: none;
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
+}
+
+.mcq-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    font-size: 0.875rem;
+}
+
+.mcq-randomize-checkbox {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: #0d6efd;
+}
+
+/* MCQ Options Section */
+.mcq-options-section {
+    margin-top: 1rem;
+}
+
+.mcq-options-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+    background: white;
+    border-radius: 8px;
+}
+
+.mcq-options-header span {
+    font-weight: 600;
+    color: #495057;
+    font-size: 0.9rem;
+}
+
+.btn-mcq-add-option {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 0.8rem;
+    background: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btn-mcq-add-option:hover {
+    background: #5c636a;
+}
+
+.mcq-options-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.mcq-option-item {
+    background: white;
+    padding: 0.75rem;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+}
+
+.mcq-option-input-group {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.mcq-option-label {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex: 1;
+    cursor: pointer;
+}
+
+.mcq-option-correct {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: #198754;
+}
+
+.mcq-option-text {
+    flex: 1;
+    padding: 0.5rem;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    transition: border-color 0.2s;
+}
+
+.mcq-option-text:focus {
+    outline: none;
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
+}
+
+.btn-mcq-remove-option {
+    padding: 0.25rem 0.5rem;
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.75rem;
+    transition: background 0.2s;
+}
+
+.btn-mcq-remove-option:hover {
+    background: #bb2d3b;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .gap-field-row {
+        grid-template-columns: 1fr;
+    }
+
+    .gapfill-settings {
+        grid-template-columns: 1fr;
+    }
+
+    .mcq-settings-row {
+        grid-template-columns: 1fr;
+    }
+
+    .gapfill-header,
+    .mcq-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+}
+

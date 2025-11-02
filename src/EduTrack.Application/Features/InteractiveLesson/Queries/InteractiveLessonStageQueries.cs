@@ -59,8 +59,7 @@ public class GetInteractiveLessonStagesQueryHandler : IRequestHandler<GetInterac
             .Where(s => s.InteractiveLessonId == request.InteractiveLessonId && s.IsActive)
             .OrderBy(s => s.Order)
             .Include(s => s.ContentItems.Where(ci => ci.IsActive))
-                .ThenInclude(ci => ci.EducationalContent!)
-                    .ThenInclude(ec => ec!.File)
+                // EducationalContent removed
             .Include(s => s.ContentItems.Where(ci => ci.IsActive))
                 .ThenInclude(ci => ci.InteractiveQuestion!)
                     .ThenInclude(iq => iq!.Choices)
@@ -101,34 +100,14 @@ public class GetInteractiveLessonStagesQueryHandler : IRequestHandler<GetInterac
             Order = item.Order,
             IsActive = item.IsActive,
             CreatedAt = item.CreatedAt,
-            EducationalContentId = item.EducationalContentId,
             InteractiveQuestionId = item.InteractiveQuestionId,
             ContentType = item.GetContentType(),
-            EducationalContent = item.EducationalContent != null ? MapEducationalContentToDto(item.EducationalContent) : null,
+            // EducationalContent removed - using InteractiveQuestion only
             InteractiveQuestion = item.InteractiveQuestion != null ? MapInteractiveQuestionToDto(item.InteractiveQuestion) : null
         };
     }
 
-    private static DTOs.EducationalContentDto MapEducationalContentToDto(Domain.Entities.EducationalContent content)
-    {
-        return new DTOs.EducationalContentDto
-        {
-            Id = content.Id,
-            SubChapterId = content.SubChapterId,
-            Title = content.Title,
-            Description = content.Description,
-            Type = content.Type,
-            TextContent = content.TextContent,
-            FileId = content.FileId,
-            ExternalUrl = content.ExternalUrl,
-            IsActive = content.IsActive,
-            Order = content.Order,
-            CreatedAt = content.CreatedAt,
-            UpdatedAt = content.UpdatedAt,
-            CreatedBy = content.CreatedBy,
-            File = content.File != null ? MapFileToDto(content.File) : null
-        };
-    }
+    // MapEducationalContentToDto removed - EducationalContent entity removed
 
     private static InteractiveQuestionDto MapInteractiveQuestionToDto(InteractiveQuestion question)
     {
@@ -193,8 +172,7 @@ public class GetInteractiveLessonWithStagesQueryHandler : IRequestHandler<GetInt
             .Where(il => il.Id == request.Id)
             .Include(il => il.Stages.Where(s => s.IsActive))
                 .ThenInclude(s => s.ContentItems.Where(ci => ci.IsActive))
-                    .ThenInclude(ci => ci.EducationalContent!)
-                        .ThenInclude(ec => ec!.File)
+                    // EducationalContent removed
             .Include(il => il.Stages.Where(s => s.IsActive))
                 .ThenInclude(s => s.ContentItems.Where(ci => ci.IsActive))
                     .ThenInclude(ci => ci.InteractiveQuestion!)
@@ -205,8 +183,7 @@ public class GetInteractiveLessonWithStagesQueryHandler : IRequestHandler<GetInt
                         .ThenInclude(iq => iq!.ImageFile)
             .Include(il => il.SubChapters.Where(sc => sc.IsActive))
                 .ThenInclude(sc => sc.SubChapter)
-                    .ThenInclude(sc => sc.EducationalContents.Where(ec => ec.IsActive))
-                        .ThenInclude(ec => ec.File)
+                    // EducationalContents removed
             .FirstOrDefaultAsync(cancellationToken);
 
         if (interactiveLesson == null)
@@ -281,7 +258,7 @@ public class GetInteractiveLessonWithStagesQueryHandler : IRequestHandler<GetInt
             Order = subChapter.Order,
             CreatedAt = subChapter.CreatedAt,
             UpdatedAt = subChapter.UpdatedAt,
-            EducationalContents = subChapter.EducationalContents.Select(MapEducationalContentToDto).ToList()
+            // EducationalContents removed - EducationalContent entity removed
         };
     }
 
@@ -294,34 +271,14 @@ public class GetInteractiveLessonWithStagesQueryHandler : IRequestHandler<GetInt
             Order = item.Order,
             IsActive = item.IsActive,
             CreatedAt = item.CreatedAt,
-            EducationalContentId = item.EducationalContentId,
             InteractiveQuestionId = item.InteractiveQuestionId,
             ContentType = item.GetContentType(),
-            EducationalContent = item.EducationalContent != null ? MapEducationalContentToDto(item.EducationalContent) : null,
+            // EducationalContent removed - using InteractiveQuestion only
             InteractiveQuestion = item.InteractiveQuestion != null ? MapInteractiveQuestionToDto(item.InteractiveQuestion) : null
         };
     }
 
-    private static DTOs.EducationalContentDto MapEducationalContentToDto(Domain.Entities.EducationalContent content)
-    {
-        return new DTOs.EducationalContentDto
-        {
-            Id = content.Id,
-            SubChapterId = content.SubChapterId,
-            Title = content.Title,
-            Description = content.Description,
-            Type = content.Type,
-            TextContent = content.TextContent,
-            FileId = content.FileId,
-            ExternalUrl = content.ExternalUrl,
-            IsActive = content.IsActive,
-            Order = content.Order,
-            CreatedAt = content.CreatedAt,
-            UpdatedAt = content.UpdatedAt,
-            CreatedBy = content.CreatedBy,
-            File = content.File != null ? MapFileToDto(content.File) : null
-        };
-    }
+    // MapEducationalContentToDto removed - EducationalContent entity removed
 
     private static InteractiveQuestionDto MapInteractiveQuestionToDto(InteractiveQuestion question)
     {

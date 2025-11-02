@@ -42,7 +42,6 @@ public class AppDbContext : IdentityDbContext<User>
 
     public DbSet<Profile> Profiles { get; set; }
     public DbSet<Course> Courses { get; set; }
-    public DbSet<Module> Modules { get; set; }
     public DbSet<Lesson> Lessons { get; set; }
     public DbSet<Resource> Resources { get; set; }
     public DbSet<Class> Classes { get; set; }
@@ -59,7 +58,6 @@ public class AppDbContext : IdentityDbContext<User>
     public DbSet<Chapter> Chapters { get; set; }
     public DbSet<SubChapter> SubChapters { get; set; }
     public DbSet<Domain.Entities.File> Files { get; set; }
-    public DbSet<EducationalContent> EducationalContents { get; set; }
     public DbSet<ActivityLog> ActivityLogs { get; set; }
     
     // Interactive Lesson System
@@ -85,7 +83,6 @@ public class AppDbContext : IdentityDbContext<User>
     // Teaching Session Reports
     public DbSet<TeachingSessionReport> TeachingSessionReports { get; set; }
     public DbSet<TeachingSessionAttendance> TeachingSessionAttendances { get; set; }
-    public DbSet<ScheduleItemAssignment> ScheduleItemAssignments { get; set; }
     
     // New Teaching Session Entities
     public DbSet<TeachingSessionPlan> TeachingSessionPlans { get; set; }
@@ -140,18 +137,6 @@ public class AppDbContext : IdentityDbContext<User>
             entity.HasIndex(e => e.IsActive);
         });
 
-        // Configure Module entity
-        builder.Entity<Module>(entity =>
-        {
-            entity.Property(e => e.Title).HasMaxLength(200).IsRequired();
-            entity.Property(e => e.Description).HasMaxLength(1000);
-            entity.HasOne(e => e.Course)
-                .WithMany(e => e.Modules)
-                .HasForeignKey(e => e.CourseId)
-                .OnDelete(DeleteBehavior.Cascade);
-            entity.HasIndex(e => new { e.CourseId, e.Order });
-            entity.HasIndex(e => e.IsActive);
-        });
 
         // Configure Lesson entity
         builder.Entity<Lesson>(entity =>
@@ -159,10 +144,8 @@ public class AppDbContext : IdentityDbContext<User>
             entity.Property(e => e.Title).HasMaxLength(200).IsRequired();
             (_providerConfig ?? new SqlServerConfiguration()).ConfigureLongText<Lesson>(entity.Property(e => e.Content));
             entity.Property(e => e.VideoUrl).HasMaxLength(500);
-            entity.HasOne(e => e.Module)
-                .WithMany(e => e.Lessons)
-                .HasForeignKey(e => e.ModuleId)
-                .OnDelete(DeleteBehavior.Cascade);
+            // Module removed - relationship kept for migration compatibility
+            // Lesson.ModuleId is now nullable and legacy
             entity.HasIndex(e => new { e.ModuleId, e.Order });
             entity.HasIndex(e => e.IsActive);
         });
@@ -403,27 +386,6 @@ public class AppDbContext : IdentityDbContext<User>
             entity.HasIndex(e => e.CreatedAt);
         });
 
-        // Configure EducationalContent entity
-        builder.Entity<EducationalContent>(entity =>
-        {
-            entity.Property(e => e.Title).HasMaxLength(200).IsRequired();
-            entity.Property(e => e.Description).HasMaxLength(1000);
-            entity.Property(e => e.ExternalUrl).HasMaxLength(1000);
-            entity.Property(e => e.CreatedBy).HasMaxLength(450);
-            (_providerConfig ?? new SqlServerConfiguration()).ConfigureLongText<EducationalContent>(entity.Property(e => e.TextContent));
-            entity.HasOne(e => e.SubChapter)
-                .WithMany(e => e.EducationalContents)
-                .HasForeignKey(e => e.SubChapterId)
-                .OnDelete(DeleteBehavior.Cascade);
-            entity.HasOne(e => e.File)
-                .WithMany(e => e.EducationalContents)
-                .HasForeignKey(e => e.FileId)
-                .OnDelete(DeleteBehavior.SetNull);
-            entity.HasIndex(e => new { e.SubChapterId, e.Order });
-            entity.HasIndex(e => e.IsActive);
-            entity.HasIndex(e => e.Type);
-            entity.HasIndex(e => e.FileId);
-        });
 
         // Configure ActivityLog entity
         builder.Entity<ActivityLog>(entity =>
@@ -463,10 +425,6 @@ public class AppDbContext : IdentityDbContext<User>
             entity.HasOne(e => e.InteractiveLesson)
                 .WithMany(e => e.ContentItems)
                 .HasForeignKey(e => e.InteractiveLessonId)
-                .OnDelete(DeleteBehavior.NoAction);
-            entity.HasOne(e => e.EducationalContent)
-                .WithMany()
-                .HasForeignKey(e => e.EducationalContentId)
                 .OnDelete(DeleteBehavior.NoAction);
             entity.HasOne(e => e.InteractiveQuestion)
                 .WithMany()
@@ -564,10 +522,6 @@ public class AppDbContext : IdentityDbContext<User>
                 .WithMany(e => e.ContentItems)
                 .HasForeignKey(e => e.InteractiveLessonStageId)
                 .OnDelete(DeleteBehavior.Cascade);
-            entity.HasOne(e => e.EducationalContent)
-                .WithMany()
-                .HasForeignKey(e => e.EducationalContentId)
-                .OnDelete(DeleteBehavior.NoAction);
             entity.HasOne(e => e.InteractiveQuestion)
                 .WithMany()
                 .HasForeignKey(e => e.InteractiveQuestionId)
@@ -806,19 +760,6 @@ public class AppDbContext : IdentityDbContext<User>
             entity.HasIndex(x => x.Status);
         });
 
-        // Configure ScheduleItemAssignment entity
-        builder.Entity<ScheduleItemAssignment>(entity =>
-        {
-            entity.ToTable("ScheduleItemAssignments");
-            entity.HasKey(x => x.Id);
-            entity.HasOne(x => x.ScheduleItem)
-                .WithMany(i => i.Assignments)
-                .HasForeignKey(x => x.ScheduleItemId)
-                .OnDelete(DeleteBehavior.NoAction);
-            entity.HasIndex(x => new { x.ScheduleItemId, x.StudentId, x.GroupId }).IsUnique();
-            entity.HasIndex(x => x.StudentId);
-            entity.HasIndex(x => x.GroupId);
-        });
 
         // Configure TeachingSessionPlan entity
         builder.Entity<TeachingSessionPlan>(entity =>

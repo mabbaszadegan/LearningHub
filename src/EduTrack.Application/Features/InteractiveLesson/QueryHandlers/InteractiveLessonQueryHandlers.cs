@@ -24,7 +24,7 @@ public class GetInteractiveLessonsByCourseQueryHandler : IRequestHandler<GetInte
             .Where(il => il.CourseId == request.CourseId && il.IsActive)
             .OrderBy(il => il.Order)
             .Include(il => il.ContentItems)
-                .ThenInclude(ci => ci.EducationalContent)
+                // EducationalContent removed
             .Include(il => il.ContentItems)
                 .ThenInclude(ci => ci.InteractiveQuestion!)
                     .ThenInclude(iq => iq.Choices)
@@ -51,24 +51,8 @@ public class GetInteractiveLessonsByCourseQueryHandler : IRequestHandler<GetInte
                     Order = ci.Order,
                     IsActive = ci.IsActive,
                     CreatedAt = ci.CreatedAt,
-                    EducationalContentId = ci.EducationalContentId,
                     InteractiveQuestionId = ci.InteractiveQuestionId,
-                    EducationalContent = ci.EducationalContent != null ? new EduTrack.Application.Features.InteractiveLesson.DTOs.EducationalContentDto
-                    {
-                        Id = ci.EducationalContent.Id,
-                        SubChapterId = ci.EducationalContent.SubChapterId,
-                        Title = ci.EducationalContent.Title,
-                        Description = ci.EducationalContent.Description,
-                        Type = ci.EducationalContent.Type,
-                        TextContent = ci.EducationalContent.TextContent,
-                        FileId = ci.EducationalContent.FileId,
-                        ExternalUrl = ci.EducationalContent.ExternalUrl,
-                        IsActive = ci.EducationalContent.IsActive,
-                        Order = ci.EducationalContent.Order,
-                        CreatedAt = ci.EducationalContent.CreatedAt,
-                        UpdatedAt = ci.EducationalContent.UpdatedAt,
-                        CreatedBy = ci.EducationalContent.CreatedBy
-                    } : null,
+                    // EducationalContent removed - using InteractiveQuestion only
                     InteractiveQuestion = ci.InteractiveQuestion != null ? new InteractiveQuestionDto
                     {
                         Id = ci.InteractiveQuestion.Id,
@@ -115,7 +99,7 @@ public class GetInteractiveLessonsByClassQueryHandler : IRequestHandler<GetInter
             .Where(a => a.ClassId == request.ClassId && a.IsActive)
             .Include(a => a.InteractiveLesson)
                 .ThenInclude(il => il.ContentItems)
-                    .ThenInclude(ci => ci.EducationalContent)
+                    // EducationalContent removed
             .Include(a => a.InteractiveLesson)
                 .ThenInclude(il => il.ContentItems)
                     .ThenInclude(ci => ci.InteractiveQuestion!)
@@ -143,24 +127,8 @@ public class GetInteractiveLessonsByClassQueryHandler : IRequestHandler<GetInter
                     Order = ci.Order,
                     IsActive = ci.IsActive,
                     CreatedAt = ci.CreatedAt,
-                    EducationalContentId = ci.EducationalContentId,
                     InteractiveQuestionId = ci.InteractiveQuestionId,
-                    EducationalContent = ci.EducationalContent != null ? new EduTrack.Application.Features.InteractiveLesson.DTOs.EducationalContentDto
-                    {
-                        Id = ci.EducationalContent.Id,
-                        SubChapterId = ci.EducationalContent.SubChapterId,
-                        Title = ci.EducationalContent.Title,
-                        Description = ci.EducationalContent.Description,
-                        Type = ci.EducationalContent.Type,
-                        TextContent = ci.EducationalContent.TextContent,
-                        FileId = ci.EducationalContent.FileId,
-                        ExternalUrl = ci.EducationalContent.ExternalUrl,
-                        IsActive = ci.EducationalContent.IsActive,
-                        Order = ci.EducationalContent.Order,
-                        CreatedAt = ci.EducationalContent.CreatedAt,
-                        UpdatedAt = ci.EducationalContent.UpdatedAt,
-                        CreatedBy = ci.EducationalContent.CreatedBy
-                    } : null,
+                    // EducationalContent removed - using InteractiveQuestion only
                     InteractiveQuestion = ci.InteractiveQuestion != null ? new InteractiveQuestionDto
                     {
                         Id = ci.InteractiveQuestion.Id,
@@ -206,7 +174,7 @@ public class GetInteractiveLessonByIdQueryHandler : IRequestHandler<GetInteracti
         var lesson = await _interactiveLessonRepository.GetAll()
             .Where(il => il.Id == request.Id)
             .Include(il => il.ContentItems)
-                .ThenInclude(ci => ci.EducationalContent)
+                // EducationalContent removed
             .Include(il => il.ContentItems)
                 .ThenInclude(ci => ci.InteractiveQuestion!)
                     .ThenInclude(iq => iq.Choices)
@@ -238,24 +206,8 @@ public class GetInteractiveLessonByIdQueryHandler : IRequestHandler<GetInteracti
                     Order = ci.Order,
                     IsActive = ci.IsActive,
                     CreatedAt = ci.CreatedAt,
-                    EducationalContentId = ci.EducationalContentId,
                     InteractiveQuestionId = ci.InteractiveQuestionId,
-                    EducationalContent = ci.EducationalContent != null ? new EduTrack.Application.Features.InteractiveLesson.DTOs.EducationalContentDto
-                    {
-                        Id = ci.EducationalContent.Id,
-                        SubChapterId = ci.EducationalContent.SubChapterId,
-                        Title = ci.EducationalContent.Title,
-                        Description = ci.EducationalContent.Description,
-                        Type = ci.EducationalContent.Type,
-                        TextContent = ci.EducationalContent.TextContent,
-                        FileId = ci.EducationalContent.FileId,
-                        ExternalUrl = ci.EducationalContent.ExternalUrl,
-                        IsActive = ci.EducationalContent.IsActive,
-                        Order = ci.EducationalContent.Order,
-                        CreatedAt = ci.EducationalContent.CreatedAt,
-                        UpdatedAt = ci.EducationalContent.UpdatedAt,
-                        CreatedBy = ci.EducationalContent.CreatedBy
-                    } : null,
+                    // EducationalContent removed - using InteractiveQuestion only
                     InteractiveQuestion = ci.InteractiveQuestion != null ? new InteractiveQuestionDto
                     {
                         Id = ci.InteractiveQuestion.Id,
@@ -287,58 +239,4 @@ public class GetInteractiveLessonByIdQueryHandler : IRequestHandler<GetInteracti
     }
 }
 
-public class GetAvailableEducationalContentQueryHandler : IRequestHandler<GetAvailableEducationalContentQuery, Result<List<EduTrack.Application.Features.InteractiveLesson.DTOs.EducationalContentDto>>>
-{
-    private readonly IRepository<Domain.Entities.EducationalContent> _educationalContentRepository;
-    private readonly IRepository<Course> _courseRepository;
-
-    public GetAvailableEducationalContentQueryHandler(
-        IRepository<Domain.Entities.EducationalContent> educationalContentRepository,
-        IRepository<Course> courseRepository)
-    {
-        _educationalContentRepository = educationalContentRepository;
-        _courseRepository = courseRepository;
-    }
-
-    public async Task<Result<List<EduTrack.Application.Features.InteractiveLesson.DTOs.EducationalContentDto>>> Handle(GetAvailableEducationalContentQuery request, CancellationToken cancellationToken)
-    {
-        var courseEntity = await _courseRepository.GetAll()
-            .Include(c => c.Chapters)
-                .ThenInclude(chapter => chapter.SubChapters)
-            .FirstOrDefaultAsync(c => c.Id == request.CourseId, cancellationToken);
-
-        if (courseEntity == null)
-        {
-            return Result<List<EduTrack.Application.Features.InteractiveLesson.DTOs.EducationalContentDto>>.Failure("Course not found");
-        }
-
-        var subChapterIds = courseEntity.Chapters
-            ?.SelectMany(chapter => chapter.SubChapters)
-            ?.Select(subChapter => subChapter.Id)
-            ?.ToList() ?? new List<int>();
-
-        var educationalContents = await _educationalContentRepository.GetAll()
-            .Where(ec => subChapterIds.Contains(ec.SubChapterId) && ec.IsActive)
-            .OrderBy(ec => ec.Order)
-            .ToListAsync(cancellationToken);
-
-        var dtos = educationalContents.Select(ec => new EduTrack.Application.Features.InteractiveLesson.DTOs.EducationalContentDto
-        {
-            Id = ec.Id,
-            SubChapterId = ec.SubChapterId,
-            Title = ec.Title,
-            Description = ec.Description,
-            Type = ec.Type,
-            TextContent = ec.TextContent,
-            FileId = ec.FileId,
-            ExternalUrl = ec.ExternalUrl,
-            IsActive = ec.IsActive,
-            Order = ec.Order,
-            CreatedAt = ec.CreatedAt,
-            UpdatedAt = ec.UpdatedAt,
-            CreatedBy = ec.CreatedBy
-        }).ToList();
-
-        return Result<List<EduTrack.Application.Features.InteractiveLesson.DTOs.EducationalContentDto>>.Success(dtos);
-    }
-}
+// GetAvailableEducationalContentQueryHandler removed - EducationalContent entity removed

@@ -150,16 +150,34 @@ class SharedContentBlockManager {
         
         // Check for gap-fill content builder (must check before written since gap fill has its own manager)
         const gapFillBuilder = document.getElementById('gapFillContentBuilder');
-        const gapFillVisible = gapFillBuilder && gapFillBuilder.style.display !== 'none';
+        const gapFillVisible = gapFillBuilder && gapFillBuilder.style.display !== 'none' && 
+                               gapFillBuilder.offsetParent !== null; // Also check if actually visible
         console.log('GapFill builder check:', {
             element: !!gapFillBuilder,
             visible: gapFillVisible,
-            manager: !!window.gapFillBlockManager,
-            blocksList: window.gapFillBlockManager?.blocksList ? !!window.gapFillBlockManager.blocksList : false
+            display: gapFillBuilder ? gapFillBuilder.style.display : 'none',
+            manager: !!window.gapFillContentManager,
+            blocksList: window.gapFillContentManager?.blocksList ? !!window.gapFillContentManager.blocksList : false
         });
-        if (window.gapFillBlockManager && gapFillVisible) {
-            console.log('SharedContentBlockManager: Found active gap-fill builder');
-            return window.gapFillBlockManager;
+        if (window.gapFillContentManager && gapFillVisible) {
+            // Ensure blocksList is available - scope to the visible builder
+            if (!window.gapFillContentManager.blocksList) {
+                const containerId = window.gapFillContentManager.config?.containerId || 'contentBlocksList';
+                // Try to find blocksList within the visible gapFillContentBuilder first
+                const blocksListElement = gapFillBuilder.querySelector(`#${containerId}`) || 
+                                         document.getElementById(containerId);
+                if (blocksListElement) {
+                    window.gapFillContentManager.blocksList = blocksListElement;
+                    console.log('SharedContentBlockManager: Found blocksList element, assigned to gapFillContentManager');
+                }
+            }
+            
+            if (window.gapFillContentManager.blocksList) {
+                console.log('SharedContentBlockManager: Found active gap-fill builder');
+                return window.gapFillContentManager;
+            } else {
+                console.warn('SharedContentBlockManager: gapFillContentManager found but blocksList not available');
+            }
         }
         
         // Check for written content builder (used for written and multiple choice)

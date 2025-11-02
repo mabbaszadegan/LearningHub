@@ -38,8 +38,7 @@ public class AddStageContentItemCommand : IRequest<Result<StageContentItemDto>>
 {
     public int InteractiveLessonStageId { get; set; }
     public int Order { get; set; }
-    public int? EducationalContentId { get; set; }
-    public int? InteractiveQuestionId { get; set; }
+    public int InteractiveQuestionId { get; set; } // EducationalContent removed - only questions supported
 }
 
 public class UpdateStageContentItemCommand : IRequest<Result<StageContentItemDto>>

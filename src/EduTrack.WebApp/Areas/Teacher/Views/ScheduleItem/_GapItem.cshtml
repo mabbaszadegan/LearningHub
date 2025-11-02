@@ -1,0 +1,26 @@
+@{
+    var gapIndex = (int)(ViewData["GapIndex"] ?? 1);
+}
+
+<div class="gap-item" data-gap-index="@gapIndex">
+    <div class="gap-item-header">
+        <span class="gap-item-number">جای‌خالی @gapIndex</span>
+    </div>
+    <div class="gap-item-body">
+        <div class="gap-field-row">
+            <div class="gap-field">
+                <label>پاسخ صحیح</label>
+                <input type="text" class="gap-correct-input" placeholder="پاسخ صحیح را وارد کنید" data-role="gf-correct" data-index="@gapIndex">
+            </div>
+            <div class="gap-field">
+                <label>پاسخ‌های جایگزین (با کاما جدا کنید)</label>
+                <input type="text" class="gap-alts-input" placeholder="پاسخ1، پاسخ2، ..." data-role="gf-alts" data-index="@gapIndex">
+            </div>
+        </div>
+        <div class="gap-field">
+            <label>راهنما (اختیاری)</label>
+            <input type="text" class="gap-hint-input" placeholder="راهنمایی برای دانش‌آموز" data-role="gf-hint" data-index="@gapIndex">
+        </div>
+    </div>
+</div>
+

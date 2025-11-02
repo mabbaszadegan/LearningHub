@@ -43,7 +43,7 @@ public class CoursesController : Controller
 
         var totalCourses = await query.CountAsync();
         var courses = await query
-            .Include(c => c.Modules)
+            // Modules removed - using Chapters/SubChapters instead
             .Include(c => c.Classes)
             .OrderByDescending(c => c.CreatedAt)
             .Skip((page - 1) * pageSize)

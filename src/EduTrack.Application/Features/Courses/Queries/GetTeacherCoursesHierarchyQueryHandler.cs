@@ -23,7 +23,6 @@ public class GetTeacherCoursesHierarchyQueryHandler : IRequestHandler<GetTeacher
             var courses = await _courseRepository.GetAll()
                 .Include(c => c.Chapters)
                     .ThenInclude(ch => ch.SubChapters)
-                        .ThenInclude(sc => sc.EducationalContents)
                 .Where(c => c.CreatedBy == request.TeacherId && c.IsActive)
                 .OrderBy(c => c.Order)
                 .ThenBy(c => c.Title)
@@ -59,8 +58,7 @@ public class GetTeacherCoursesHierarchyQueryHandler : IRequestHandler<GetTeacher
                                 Title = subChapter.Title,
                                 Description = subChapter.Description,
                                 IsActive = subChapter.IsActive,
-                                Order = subChapter.Order,
-                                ContentCount = subChapter.EducationalContents.Count
+                                Order = subChapter.Order
                             }).ToList()
                     }).ToList()
             }).ToList();

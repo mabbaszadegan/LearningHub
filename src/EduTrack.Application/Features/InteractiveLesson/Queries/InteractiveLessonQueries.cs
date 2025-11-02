@@ -12,7 +12,7 @@ public record GetInteractiveLessonByIdQuery(int Id) : IRequest<Result<Interactiv
 
 public record GetInteractiveLessonWithContentQuery(int Id) : IRequest<Result<InteractiveLessonWithContentDto>>;
 
-public record GetAvailableEducationalContentQuery(int CourseId) : IRequest<Result<List<EduTrack.Application.Features.InteractiveLesson.DTOs.EducationalContentDto>>>;
+// GetAvailableEducationalContentQuery removed - EducationalContent entity removed
 
 public record GetStudentAnswersQuery(int InteractiveQuestionId, string StudentId) : IRequest<Result<List<StudentAnswerDto>>>;
 
@@ -28,7 +28,7 @@ public record GetAvailableInteractiveLessonsForAssignmentQuery(int CourseId) : I
 public class InteractiveLessonWithContentDto
 {
     public InteractiveLessonDto Lesson { get; set; } = null!;
-    public List<EduTrack.Application.Features.InteractiveLesson.DTOs.EducationalContentDto> AvailableContent { get; set; } = new();
+    public List<InteractiveQuestionDto> AvailableQuestions { get; set; } = new(); // EducationalContent removed
 }
 
 public class StudentProgressDto

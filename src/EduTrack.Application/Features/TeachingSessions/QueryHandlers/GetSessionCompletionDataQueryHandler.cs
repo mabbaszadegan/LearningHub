@@ -134,14 +134,14 @@ public class GetSessionCompletionDataQueryHandler : IRequestHandler<GetSessionCo
             var lessonDtos = lessons.Select(l => new LessonDto
             {
                 Id = l.Id,
-                ModuleId = l.ModuleId,
+                ModuleId = l.ModuleId ?? 0, // ModuleId is nullable legacy field
                 Title = l.Title,
                 Content = l.Content,
                 VideoUrl = l.VideoUrl,
                 IsActive = l.IsActive,
                 Order = l.Order,
                 DurationMinutes = l.DurationMinutes,
-                ModuleTitle = l.Module?.Title ?? "Unknown Module"
+                ModuleTitle = "N/A" // Module removed
             }).ToList();
 
             // Check if session has planning data

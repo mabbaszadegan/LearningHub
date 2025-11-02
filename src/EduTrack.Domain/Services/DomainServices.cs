@@ -83,13 +83,13 @@ public class CourseDomainService : ICourseDomainService
         if (course == null)
             return false;
 
-        // Business rule: Course must have at least one module
-        if (!course.Modules.Any())
+        // Business rule: Course must have at least one chapter (Modules removed, using Chapters instead)
+        if (!course.Chapters.Any())
             return false;
 
-        // Business rule: Course must have at least one lesson
-        var hasLessons = course.Modules.Any(m => m.Lessons.Any());
-        if (!hasLessons)
+        // Business rule: Course must have at least one sub-chapter
+        var hasSubChapters = course.Chapters.Any(c => c.SubChapters.Any());
+        if (!hasSubChapters)
             return false;
 
         return true;

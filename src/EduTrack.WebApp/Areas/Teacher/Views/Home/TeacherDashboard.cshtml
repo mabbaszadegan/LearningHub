@@ -160,12 +160,11 @@
                                             <p class="course-description">@course.Description</p>
                                             <div class="course-stats">
                                                 <div class="course-stat">
-                                                    <div class="course-stat-number">@course.ModuleCount</div>
-                                                    <div class="course-stat-label">ماژول</div>
+                                                    @* ModuleCount removed - Modules removed, using Chapters/SubChapters instead *@
                                                 </div>
                                                 <div class="course-stat">
-                                                    <div class="course-stat-number">@course.LessonCount</div>
-                                                    <div class="course-stat-label">درس</div>
+                                                    <div class="course-stat-number">@course.ChapterCount</div>
+                                                    <div class="course-stat-label">مبحث</div>
                                                 </div>
                                                 <div class="course-stat">
                                                     <a asp-controller="Courses" asp-action="Edit" asp-route-id="@course.Id" class="btn btn-primary btn-sm">

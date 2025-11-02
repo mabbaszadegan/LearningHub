@@ -32,11 +32,7 @@
                                         <div class="list-group-item" data-item-id="@item.Id">
                                             <div class="d-flex w-100 justify-content-between">
                                                 <h6 class="mb-1">
-                                                    @if (item.EducationalContent != null)
-                                                    {
-                                                        <i class="fas fa-file-alt"></i> @item.EducationalContent.Title
-                                                    }
-                                                    else if (item.InteractiveQuestion != null)
+                                                    @if (item.InteractiveQuestion != null)
                                                     {
                                                         <i class="fas fa-question"></i> @item.InteractiveQuestion.QuestionText
                                                     }
@@ -48,11 +44,7 @@
                                                 </div>
                                             </div>
                                             <p class="mb-1">
-                                                @if (item.EducationalContent != null)
-                                                {
-                                                    @item.EducationalContent.Description
-                                                }
-                                                else if (item.InteractiveQuestion != null)
+                                                @if (item.InteractiveQuestion != null)
                                                 {
                                                     @item.InteractiveQuestion.Description
                                                 }
@@ -206,7 +198,8 @@ function addContentToLesson(contentId) {
         type: 'POST',
         data: {
             interactiveLessonId: currentLessonId,
-            educationalContentId: contentId,
+            // educationalContentId removed - EducationalContent entity removed
+            // educationalContentId: contentId,
             order: order
         },
         success: function(response) {

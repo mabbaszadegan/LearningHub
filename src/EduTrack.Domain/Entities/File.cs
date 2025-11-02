@@ -7,7 +7,6 @@ namespace EduTrack.Domain.Entities;
 /// </summary>
 public class File
 {
-    private readonly List<EducationalContent> _educationalContents = new();
 
     public int Id { get; private set; }
     public string FileName { get; private set; } = string.Empty;
@@ -21,7 +20,6 @@ public class File
     public int ReferenceCount { get; private set; } = 1;
 
     // Navigation properties
-    public IReadOnlyCollection<EducationalContent> EducationalContents => _educationalContents.AsReadOnly();
 
     // Private constructor for EF Core
     private File() { }

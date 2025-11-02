@@ -15,11 +15,9 @@ public class CourseDto
     public string CreatedBy { get; set; } = string.Empty;
     public string CreatedByName { get; set; } = string.Empty;
     public DisciplineType DisciplineType { get; set; }
-    public int ModuleCount { get; set; }
-    public int LessonCount { get; set; }
+    // ModuleCount and LessonCount removed - Modules removed, using Chapters/SubChapters instead
     public int ChapterCount { get; set; }
     public int ClassCount { get; set; }
-    public List<ModuleDto> Modules { get; set; } = new();
     public List<ChapterDto> Chapters { get; set; } = new();
     public int StudentCount { get; set; }
 }

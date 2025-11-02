@@ -87,16 +87,6 @@ public interface IChapterRepository : IRepository<Chapter>
 }
 
 /// <summary>
-/// Specific repository for EducationalContent entity with domain-specific queries
-/// </summary>
-public interface IEducationalContentRepository : IRepository<EducationalContent>
-{
-    Task<IEnumerable<EducationalContent>> GetContentBySubChapterAsync(int subChapterId, CancellationToken cancellationToken = default);
-    Task<IEnumerable<EducationalContent>> GetContentByTypeAsync(EducationalContentType type, CancellationToken cancellationToken = default);
-    Task<IEnumerable<EducationalContent>> GetActiveContentAsync(CancellationToken cancellationToken = default);
-}
-
-/// <summary>
 /// Specific repository for TeachingPlan entity with domain-specific queries
 /// </summary>
 public interface ITeachingPlanRepository : IRepository<TeachingPlan>

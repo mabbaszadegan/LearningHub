@@ -219,7 +219,7 @@ public class HomeController : Controller
         {
             TotalCourses = await _context.Courses.CountAsync(),
             ActiveCourses = await _context.Courses.CountAsync(c => c.IsActive),
-            TotalModules = await _context.Modules.CountAsync(),
+            // TotalModules removed - Modules entity removed
             TotalLessons = await _context.Lessons.CountAsync(),
             NewCoursesThisMonth = await _context.Courses.CountAsync(c => c.CreatedAt >= DateTimeOffset.UtcNow.AddDays(-30))
         };

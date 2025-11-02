@@ -11,7 +11,7 @@ public class Lesson
     private readonly List<Progress> _progresses = new();
 
     public int Id { get; private set; }
-    public int ModuleId { get; private set; }
+    public int? ModuleId { get; private set; } // Legacy - kept for migration compatibility
     public string Title { get; private set; } = string.Empty;
     public string? Content { get; private set; }
     public string? VideoUrl { get; private set; }
@@ -21,8 +21,7 @@ public class Lesson
     public DateTimeOffset CreatedAt { get; private set; }
     public DateTimeOffset UpdatedAt { get; private set; }
 
-    // Navigation properties
-    public Module Module { get; private set; } = null!;
+    // Navigation properties - Module removed, using Course/SubChapter instead
     public IReadOnlyCollection<Resource> Resources => _resources.AsReadOnly();
     public IReadOnlyCollection<Progress> Progresses => _progresses.AsReadOnly();
     
@@ -32,11 +31,12 @@ public class Lesson
     // Private constructor for EF Core
     private Lesson() { }
 
-    public static Lesson Create(int moduleId, string title, string? content, string? videoUrl, 
+    public static Lesson Create(int? moduleId, string title, string? content, string? videoUrl, 
         int durationMinutes, int order)
     {
-        if (moduleId <= 0)
-            throw new ArgumentException("Module ID must be greater than 0", nameof(moduleId));
+        // ModuleId is nullable legacy field - validation removed
+        if (moduleId.HasValue && moduleId.Value <= 0)
+            throw new ArgumentException("Module ID must be greater than 0 if provided", nameof(moduleId));
         
         if (string.IsNullOrWhiteSpace(title))
             throw new ArgumentException("Title cannot be null or empty", nameof(title));

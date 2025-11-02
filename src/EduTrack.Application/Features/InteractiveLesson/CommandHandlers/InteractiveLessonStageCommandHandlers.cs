@@ -41,13 +41,8 @@ public class AddStageContentItemCommandValidator : AbstractValidator<AddStageCon
         RuleFor(x => x.Order)
             .GreaterThanOrEqualTo(0).WithMessage("Order must be non-negative");
 
-        RuleFor(x => x)
-            .Must(x => x.EducationalContentId.HasValue || x.InteractiveQuestionId.HasValue)
-            .WithMessage("Either EducationalContentId or InteractiveQuestionId must be specified");
-
-        RuleFor(x => x)
-            .Must(x => !(x.EducationalContentId.HasValue && x.InteractiveQuestionId.HasValue))
-            .WithMessage("Cannot specify both EducationalContentId and InteractiveQuestionId");
+        RuleFor(x => x.InteractiveQuestionId)
+            .GreaterThan(0).WithMessage("InteractiveQuestionId is required"); // EducationalContent removed
     }
 }
 
@@ -133,7 +128,8 @@ public class CreateInteractiveLessonStageCommandHandler : IRequestHandler<Create
             Order = item.Order,
             IsActive = item.IsActive,
             CreatedAt = item.CreatedAt,
-            EducationalContentId = item.EducationalContentId,
+                    // EducationalContentId removed - EducationalContent entity removed
+                    // EducationalContentId = null, // EducationalContent removed
             InteractiveQuestionId = item.InteractiveQuestionId,
             ContentType = item.GetContentType()
         };
@@ -199,7 +195,8 @@ public class UpdateInteractiveLessonStageCommandHandler : IRequestHandler<Update
             Order = item.Order,
             IsActive = item.IsActive,
             CreatedAt = item.CreatedAt,
-            EducationalContentId = item.EducationalContentId,
+                    // EducationalContentId removed - EducationalContent entity removed
+                    // EducationalContentId = null, // EducationalContent removed
             InteractiveQuestionId = item.InteractiveQuestionId,
             ContentType = item.GetContentType()
         };
@@ -257,8 +254,7 @@ public class AddStageContentItemCommandHandler : IRequestHandler<AddStageContent
         var contentItem = StageContentItem.Create(
             request.InteractiveLessonStageId,
             request.Order,
-            request.EducationalContentId,
-            request.InteractiveQuestionId
+            interactiveQuestionId: request.InteractiveQuestionId // EducationalContent removed
         );
 
         await _contentItemRepository.AddAsync(contentItem, cancellationToken);
@@ -276,7 +272,8 @@ public class AddStageContentItemCommandHandler : IRequestHandler<AddStageContent
             Order = item.Order,
             IsActive = item.IsActive,
             CreatedAt = item.CreatedAt,
-            EducationalContentId = item.EducationalContentId,
+                    // EducationalContentId removed - EducationalContent entity removed
+                    // EducationalContentId = null, // EducationalContent removed
             InteractiveQuestionId = item.InteractiveQuestionId,
             ContentType = item.GetContentType()
         };

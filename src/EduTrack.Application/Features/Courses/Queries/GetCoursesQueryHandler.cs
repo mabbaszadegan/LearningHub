@@ -50,8 +50,9 @@ public class GetCoursesQueryHandler : IRequestHandler<GetCoursesQuery, Paginated
                 CreatedByName = c.CreatedBy, // Will be updated with actual teacher name if needed
                 DisciplineType = c.DisciplineType,
                 ChapterCount = c.Chapters.Count, // تعداد مبحث
-                ModuleCount = c.Chapters.Sum(ch => ch.SubChapters.Count), // تعداد زیرمبحث
-                LessonCount = c.TeachingPlans.Sum(tp => tp.ScheduleItems.Count), // تعداد محتوا (ScheduleItems)
+                // ModuleCount and LessonCount removed - Modules removed
+                // ModuleCount = c.Chapters.Sum(ch => ch.SubChapters.Count), // تعداد زیرمبحث
+                // LessonCount = c.TeachingPlans.Sum(tp => tp.ScheduleItems.Count), // تعداد محتوا (ScheduleItems)
                 ClassCount = c.Enrollments.Count(e => e.IsActive) // تعداد دانش‌آموز (تعداد ثبت‌نام‌های فعال)
             });
 

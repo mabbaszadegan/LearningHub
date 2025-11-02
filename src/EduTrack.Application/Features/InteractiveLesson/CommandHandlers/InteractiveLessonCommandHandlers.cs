@@ -81,76 +81,7 @@ public class CreateInteractiveLessonCommandHandler : IRequestHandler<CreateInter
     }
 }
 
-public class AddContentToInteractiveLessonCommandHandler : IRequestHandler<AddContentToInteractiveLessonCommand, Result<InteractiveContentItemDto>>
-{
-    private readonly IRepository<Domain.Entities.InteractiveLesson> _interactiveLessonRepository;
-    private readonly IRepository<Domain.Entities.EducationalContent> _educationalContentRepository;
-    private readonly IRepository<Domain.Entities.InteractiveContentItem> _contentItemRepository;
-    private readonly IUnitOfWork _unitOfWork;
-
-    public AddContentToInteractiveLessonCommandHandler(
-        IRepository<Domain.Entities.InteractiveLesson> interactiveLessonRepository,
-        IRepository<Domain.Entities.EducationalContent> educationalContentRepository,
-        IRepository<Domain.Entities.InteractiveContentItem> contentItemRepository,
-        IUnitOfWork unitOfWork)
-    {
-        _interactiveLessonRepository = interactiveLessonRepository;
-        _educationalContentRepository = educationalContentRepository;
-        _contentItemRepository = contentItemRepository;
-        _unitOfWork = unitOfWork;
-    }
-
-    public async Task<Result<InteractiveContentItemDto>> Handle(AddContentToInteractiveLessonCommand request, CancellationToken cancellationToken)
-    {
-        var interactiveLesson = await _interactiveLessonRepository.GetByIdAsync(request.InteractiveLessonId, cancellationToken);
-        if (interactiveLesson == null)
-        {
-            return Result<InteractiveContentItemDto>.Failure("Interactive lesson not found");
-        }
-
-        var educationalContent = await _educationalContentRepository.GetByIdAsync(request.EducationalContentId, cancellationToken);
-        if (educationalContent == null)
-        {
-            return Result<InteractiveContentItemDto>.Failure("Educational content not found");
-        }
-
-        var contentItem = Domain.Entities.InteractiveContentItem.Create(
-            request.InteractiveLessonId,
-            request.Order,
-            educationalContentId: request.EducationalContentId);
-
-        await _contentItemRepository.AddAsync(contentItem, cancellationToken);
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-        var dto = new InteractiveContentItemDto
-        {
-            Id = contentItem.Id,
-            InteractiveLessonId = contentItem.InteractiveLessonId,
-            Order = contentItem.Order,
-            IsActive = contentItem.IsActive,
-            CreatedAt = contentItem.CreatedAt,
-            EducationalContentId = contentItem.EducationalContentId,
-            EducationalContent = new EduTrack.Application.Features.InteractiveLesson.DTOs.EducationalContentDto
-            {
-                Id = educationalContent.Id,
-                SubChapterId = educationalContent.SubChapterId,
-                Title = educationalContent.Title,
-                Description = educationalContent.Description,
-                Type = educationalContent.Type,
-                TextContent = educationalContent.TextContent,
-                FileId = educationalContent.FileId,
-                ExternalUrl = educationalContent.ExternalUrl,
-                IsActive = educationalContent.IsActive,
-                Order = educationalContent.Order,
-                CreatedAt = educationalContent.CreatedAt,
-                UpdatedAt = educationalContent.UpdatedAt,
-                CreatedBy = educationalContent.CreatedBy
-            }
-        };
-
-        return Result<InteractiveContentItemDto>.Success(dto);
-    }
-}
+// AddContentToInteractiveLessonCommandHandler removed - EducationalContent entity removed
 
 public class CreateInteractiveQuestionCommandHandler : IRequestHandler<CreateInteractiveQuestionCommand, Result<InteractiveQuestionDto>>
 {

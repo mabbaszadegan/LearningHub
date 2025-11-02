@@ -75,8 +75,9 @@ public class UpdateCourseCommandHandler : IRequestHandler<UpdateCourseCommand, R
             CreatedAt = course.CreatedAt,
             UpdatedAt = course.UpdatedAt,
             CreatedBy = course.CreatedBy,
-            ModuleCount = course.Modules.Count,
-            LessonCount = course.Modules.SelectMany(m => m.Lessons).Count()
+                // ModuleCount and LessonCount removed - Modules removed
+                // ModuleCount = 0, // Modules removed
+                // LessonCount = 0 // Lessons removed (using Chapters/SubChapters instead)
         };
 
         return Result<CourseDto>.Success(courseDto);

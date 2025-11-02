@@ -1,0 +1,20 @@
+@{
+    var optionIndex = (int)(ViewData["OptionIndex"] ?? 0);
+    var questionId = ViewData["QuestionId"] as string ?? "";
+    var isSingle = (bool)(ViewData["IsSingle"] ?? true);
+    var inputName = $"mcq-{questionId}";
+    var inputType = isSingle ? "radio" : "checkbox";
+}
+
+<div class="mcq-option-item" data-option-index="@optionIndex">
+    <div class="mcq-option-input-group">
+        <label class="mcq-option-label">
+            <input type="@inputType" name="@inputName" class="mcq-option-correct" data-role="mcq-option-correct">
+            <input type="text" class="mcq-option-text" placeholder="متن گزینه..." data-role="mcq-option-text">
+        </label>
+        <button type="button" class="btn-mcq-remove-option" data-action="remove-option">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+</div>
+

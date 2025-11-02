@@ -21,10 +21,7 @@ public record UpdateInteractiveLessonCommand(
 
 public record DeleteInteractiveLessonCommand(int Id) : IRequest<Result<bool>>;
 
-public record AddContentToInteractiveLessonCommand(
-    int InteractiveLessonId,
-    int EducationalContentId,
-    int Order) : IRequest<Result<InteractiveContentItemDto>>;
+// AddContentToInteractiveLessonCommand removed - EducationalContent entity removed
 
 public record AddQuestionToInteractiveLessonCommand(
     int InteractiveLessonId,

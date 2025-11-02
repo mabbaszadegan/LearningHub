@@ -37,8 +37,7 @@ public class GetAvailableCoursesForEnrollmentQueryHandler : IRequestHandler<GetA
             // Get all active courses that student is not enrolled in
             var coursesQuery = _courseRepository.GetAll()
                 .Where(c => c.IsActive && !enrolledCourseIds.Contains(c.Id))
-                .Include(c => c.Modules)
-                    .ThenInclude(m => m.Lessons)
+                // Modules removed
                 .Include(c => c.Chapters)
                     .ThenInclude(ch => ch.SubChapters)
                 .Include(c => c.Classes)
@@ -68,36 +67,34 @@ public class GetAvailableCoursesForEnrollmentQueryHandler : IRequestHandler<GetA
                 CreatedAt = c.CreatedAt,
                 UpdatedAt = c.UpdatedAt,
                 CreatedBy = c.CreatedBy,
-                ModuleCount = c.Chapters?.Sum(ch => ch.SubChapters?.Count ?? 0) ?? 0, // تعداد زیرمبحث
-                LessonCount = c.TeachingPlans?.Sum(tp => tp.ScheduleItems?.Count ?? 0) ?? 0, // تعداد محتوا (ScheduleItems)
+                // ModuleCount and LessonCount removed - Modules removed, using Chapters/SubChapters instead
                 ChapterCount = c.Chapters?.Count ?? 0, // تعداد مبحث
                 ClassCount = c.Classes?.Count ?? 0, // تعداد کلاس
-                Modules = c.Modules?.Select(m => new ModuleDto
+                // Modules removed - using Chapters/SubChapters instead
+                Chapters = c.Chapters?.Select(ch => new ChapterDto
                 {
-                    Id = m.Id,
-                    CourseId = m.CourseId,
-                    Title = m.Title,
-                    Description = m.Description,
-                    IsActive = m.IsActive,
-                    Order = m.Order,
-                    CreatedAt = m.CreatedAt,
-                    UpdatedAt = m.UpdatedAt,
-                    LessonCount = m.Lessons?.Count ?? 0,
-                    Lessons = m.Lessons?.Select(l => new LessonDto
+                    Id = ch.Id,
+                    CourseId = ch.CourseId,
+                    Title = ch.Title,
+                    Description = ch.Description,
+                    Objective = ch.Objective,
+                    IsActive = ch.IsActive,
+                    Order = ch.Order,
+                    CreatedAt = ch.CreatedAt,
+                    UpdatedAt = ch.UpdatedAt,
+                    SubChapters = ch.SubChapters?.Select(sc => new SubChapterDto
                     {
-                        Id = l.Id,
-                        ModuleId = l.ModuleId,
-                        Title = l.Title,
-                        Content = l.Content,
-                        VideoUrl = l.VideoUrl,
-                        IsActive = l.IsActive,
-                        Order = l.Order,
-                        DurationMinutes = l.DurationMinutes,
-                        CreatedAt = l.CreatedAt,
-                        UpdatedAt = l.UpdatedAt,
-                        Resources = new List<ResourceDto>()
-                    }).ToList() ?? new List<LessonDto>()
-                }).ToList() ?? new List<ModuleDto>()
+                        Id = sc.Id,
+                        ChapterId = sc.ChapterId,
+                        Title = sc.Title,
+                        Description = sc.Description,
+                        Objective = sc.Objective,
+                        IsActive = sc.IsActive,
+                        Order = sc.Order,
+                        CreatedAt = sc.CreatedAt,
+                        UpdatedAt = sc.UpdatedAt
+                    }).ToList() ?? new List<SubChapterDto>()
+                }).ToList() ?? new List<ChapterDto>()
             }).ToList();
 
             var paginatedResult = new PaginatedList<CourseDto>(
@@ -251,8 +248,6 @@ public class GetStudentCourseProgressQueryHandler : IRequestHandler<GetStudentCo
 
         // Get course with modules and lessons
         var course = await _courseRepository.GetAll()
-            .Include(c => c.Modules)
-                .ThenInclude(m => m.Lessons)
             .FirstOrDefaultAsync(c => c.Id == request.CourseId, cancellationToken);
 
         if (course == null)
@@ -261,7 +256,8 @@ public class GetStudentCourseProgressQueryHandler : IRequestHandler<GetStudentCo
         }
 
         // Get student's progress for lessons in this course
-        var lessonIds = course.Modules?.SelectMany(m => m.Lessons?.Select(l => l.Id) ?? new List<int>()) ?? new List<int>();
+        // Modules removed - using legacy Lesson.ModuleId field for migration compatibility
+        var lessonIds = new List<int>(); // Lessons now use SubChapters, progress tracking needs to be updated
 
         var progresses = await _progressRepository.GetAll()
             .Where(p => p.StudentId == request.StudentId && lessonIds.Contains(p.LessonId ?? 0))

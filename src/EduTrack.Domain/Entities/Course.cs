@@ -7,7 +7,6 @@ namespace EduTrack.Domain.Entities;
 /// </summary>
 public class Course
 {
-    private readonly List<Module> _modules = new();
     private readonly List<Chapter> _chapters = new();
     private readonly List<Class> _classes = new();
     private readonly List<CourseEnrollment> _enrollments = new();
@@ -26,7 +25,6 @@ public class Course
     public DisciplineType DisciplineType { get; private set; } = DisciplineType.Other;
 
     // Navigation properties
-    public IReadOnlyCollection<Module> Modules => _modules.AsReadOnly();
     public IReadOnlyCollection<Chapter> Chapters => _chapters.AsReadOnly();
     public IReadOnlyCollection<Class> Classes => _classes.AsReadOnly();
     public IReadOnlyCollection<CourseEnrollment> Enrollments => _enrollments.AsReadOnly();
@@ -110,31 +108,6 @@ public class Course
         UpdatedAt = DateTimeOffset.UtcNow;
     }
 
-    public void AddModule(Module module)
-    {
-        if (module == null)
-            throw new ArgumentNullException(nameof(module));
-
-        if (_modules.Any(m => m.Id == module.Id))
-            throw new InvalidOperationException("Module already exists in this course");
-
-        _modules.Add(module);
-        UpdatedAt = DateTimeOffset.UtcNow;
-    }
-
-    public void RemoveModule(Module module)
-    {
-        if (module == null)
-            throw new ArgumentNullException(nameof(module));
-
-        var moduleToRemove = _modules.FirstOrDefault(m => m.Id == module.Id);
-        if (moduleToRemove != null)
-        {
-            _modules.Remove(moduleToRemove);
-            UpdatedAt = DateTimeOffset.UtcNow;
-        }
-    }
-
     public void AddChapter(Chapter chapter)
     {
         if (chapter == null)
@@ -183,16 +156,6 @@ public class Course
             _classes.Remove(classToRemove);
             UpdatedAt = DateTimeOffset.UtcNow;
         }
-    }
-
-    public int GetTotalModules()
-    {
-        return _modules.Count;
-    }
-
-    public int GetTotalLessons()
-    {
-        return _modules.Sum(m => m.Lessons.Count);
     }
 
     public int GetTotalChapters()
