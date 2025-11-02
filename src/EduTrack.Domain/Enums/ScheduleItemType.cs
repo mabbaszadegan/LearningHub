@@ -48,5 +48,10 @@ public enum ScheduleItemType
     /// <summary>
     /// Quiz with multiple question types
     /// </summary>
-    Quiz = 8
+    Quiz = 8,
+    
+    /// <summary>
+    /// Ordering exercise - student must arrange items in correct order
+    /// </summary>
+    Ordering = 9
 }

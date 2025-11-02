@@ -83,7 +83,25 @@ window.BlockTypeSelectionModal = class BlockTypeSelectionModal {
     showModal(scheduleItemType) {
         const modal = document.getElementById(this.modalId);
         if (modal) {
-            this.loadBlockTypes(scheduleItemType || 'reminder');
+            // Always convert to string type
+            let itemTypeString = 'reminder';
+            if (scheduleItemType) {
+                if (typeof getItemTypeString !== 'undefined') {
+                    itemTypeString = getItemTypeString(scheduleItemType);
+                } else if (typeof scheduleItemType === 'string' && !/^\d+$/.test(scheduleItemType)) {
+                    itemTypeString = scheduleItemType.toLowerCase();
+                } else {
+                    // Fallback: try to get from select element
+                    const selectElement = document.getElementById('itemType');
+                    if (selectElement) {
+                        const selectedOption = selectElement.options[selectElement.selectedIndex];
+                        if (selectedOption && selectedOption.dataset.typeString) {
+                            itemTypeString = selectedOption.dataset.typeString;
+                        }
+                    }
+                }
+            }
+            this.loadBlockTypes(itemTypeString);
             this.cleanupModalBackdrops();
             const bsModal = new bootstrap.Modal(modal);
             bsModal.show();
@@ -154,56 +172,95 @@ window.BlockTypeSelectionModal = class BlockTypeSelectionModal {
     }
 
     getBlockTypeConfig(itemType) {
+        // Always ensure itemType is a string
+        let typeString = itemType;
+        if (typeof getItemTypeString !== 'undefined') {
+            typeString = getItemTypeString(itemType);
+        } else if (typeof itemType !== 'string' || /^\d+$/.test(itemType)) {
+            // Try to get from select element
+            const selectElement = document.getElementById('itemType');
+            if (selectElement) {
+                const selectedOption = selectElement.options[selectElement.selectedIndex];
+                if (selectedOption && selectedOption.dataset.typeString) {
+                    typeString = selectedOption.dataset.typeString;
+                } else {
+                    typeString = 'reminder';
+                }
+            } else {
+                typeString = 'reminder';
+            }
+        }
+        
+        // Use centralized config if available
+        if (typeof getBlockTypeConfig !== 'undefined') {
+            const config = getBlockTypeConfig(typeString);
+            return {
+                showRegularBlocks: config.regularBlocks.length > 0,
+                showQuestionBlocks: config.questionBlocks.length > 0,
+                questionTypeBlocks: config.questionTypeBlocks || [],
+                itemType: typeString
+            };
+        }
+
+        // Fallback to old config
         const configs = {
             'reminder': {
                 showRegularBlocks: true,
                 showQuestionBlocks: false,
+                questionTypeBlocks: [],
                 itemType: 'reminder'
             },
             'writing': {
                 showRegularBlocks: false,
                 showQuestionBlocks: true,
+                questionTypeBlocks: [],
                 itemType: 'writing'
             },
             'quiz': {
                 showRegularBlocks: true,
                 showQuestionBlocks: true,
+                questionTypeBlocks: ['multipleChoice', 'gapFill', 'ordering', 'matching', 'errorFinding'],
                 itemType: 'quiz'
             },
             'multiplechoice': {
                 showRegularBlocks: false,
-                showQuestionBlocks: true,
-                itemType: 'multiplechoice'
-            },
-            // Special mode for selecting only media (regular) blocks for MC question-level attachments
-            'multiplechoice-media': {
-                showRegularBlocks: true,
                 showQuestionBlocks: false,
-                itemType: 'multiplechoice-media'
+                questionTypeBlocks: ['multipleChoice'],
+                itemType: 'multiplechoice'
             },
             'gapfill': {
                 showRegularBlocks: false,
-                showQuestionBlocks: true,
+                showQuestionBlocks: false,
+                questionTypeBlocks: ['gapFill'],
                 itemType: 'gapfill'
+            },
+            'ordering': {
+                showRegularBlocks: false,
+                showQuestionBlocks: false,
+                questionTypeBlocks: ['ordering'],
+                itemType: 'ordering'
             },
             'match': {
                 showRegularBlocks: false,
-                showQuestionBlocks: true,
+                showQuestionBlocks: false,
+                questionTypeBlocks: ['matching'],
                 itemType: 'match'
             },
             'errorfinding': {
                 showRegularBlocks: false,
-                showQuestionBlocks: true,
+                showQuestionBlocks: false,
+                questionTypeBlocks: ['errorFinding'],
                 itemType: 'errorfinding'
             },
             'codeexercise': {
                 showRegularBlocks: false,
                 showQuestionBlocks: true,
+                questionTypeBlocks: [],
                 itemType: 'codeexercise'
             }
         };
 
-        return configs[itemType] || configs['reminder']; // Default to reminder
+        return configs[itemType] || configs['reminder'];
     }
 
     loadBlockTypeOptions(config, container) {
@@ -211,6 +268,12 @@ window.BlockTypeSelectionModal = class BlockTypeSelectionModal {
         formData.append('itemType', config.itemType);
         formData.append('showRegularBlocks', config.showRegularBlocks);
         formData.append('showQuestionBlocks', config.showQuestionBlocks);
+        
+        // Get question type blocks from config
+        const questionTypeBlocks = config.questionTypeBlocks || [];
+        if (questionTypeBlocks.length > 0) {
+            formData.append('questionTypeBlocks', questionTypeBlocks.join(','));
+        }
 
         fetch('/Teacher/ScheduleItem/GetBlockTypeOptions', {
             method: 'POST',

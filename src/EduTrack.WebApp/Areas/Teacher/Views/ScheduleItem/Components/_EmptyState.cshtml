@@ -1,0 +1,14 @@
+@{
+    var icon = ViewData["Icon"]?.ToString() ?? "fas fa-plus-circle";
+    var title = ViewData["EmptyStateTitle"]?.ToString() ?? ViewData["Title"]?.ToString() ?? "هنوز بلاکی اضافه نشده";
+    var description = ViewData["Description"]?.ToString() ?? "برای شروع، روی دکمه \"افزودن بلاک\" کلیک کنید";
+    var emptyStateId = ViewData["EmptyStateId"]?.ToString() ?? "emptyBlocksState";
+}
+
+<div class="empty-state" id="@emptyStateId">
+    <div class="empty-state-icon">
+        <i class="@icon"></i>
+    </div>
+    <h4>@title</h4>
+    <p>@description</p>
+</div>

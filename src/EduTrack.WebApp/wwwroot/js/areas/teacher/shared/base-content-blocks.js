@@ -132,6 +132,12 @@ class SharedContentBlockManager {
     }
 
     getActiveContentBuilder() {
+        // Prioritize unified content manager
+        if (window.unifiedContentManager && window.unifiedContentManager.blocksList) {
+            console.log('SharedContentBlockManager: Found active unified content manager');
+            return window.unifiedContentManager;
+        }
+        
         console.log('SharedContentBlockManager: Checking for active content builder...');
         
         // Check for reminder content builder

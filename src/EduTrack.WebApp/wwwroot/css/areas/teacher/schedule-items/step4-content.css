@@ -1,0 +1,36 @@
+@import url('./variables.css');
+@import url('./components/buttons.css');
+@import url('./components/headers.css');
+@import url('./components/sidebar.css');
+@import url('./components/block-card.css');
+@import url('./components/empty-state.css');
+@import url('./layouts/content-builder-layout.css');
+@import url('./layouts/blocks-list.css');
+@import url('./blocks/multiple-choice-block.css');
+@import url('./blocks/gapfill-block.css');
+@import url('./blocks/ordering-block.css');
+
+/* Additional global styles for Step 4 */
+.form-step[data-step="content"] {
+    background-color: var(--color-bg);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
+}
+
+.block-type-section {
+    margin-bottom: var(--spacing-md);
+}
+
+.block-type-section:last-child {
+    margin-bottom: 0;
+}
+
+.section-title {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: var(--spacing-sm);
+    padding: 0 var(--spacing-sm);
+}

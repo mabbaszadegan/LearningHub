@@ -1,0 +1,76 @@
+@model dynamic
+
+<div class="content-block-template question-type-block" data-type="ordering">
+    <div class="block-header">
+        <div class="block-type">
+            <i class="fas fa-sort"></i>
+            <span>بلاک مرتب‌سازی</span>
+        </div>
+        @await Html.PartialAsync("_BlockActions", new ViewDataDictionary(ViewData) { { "IsQuestionBlock", "false" } })
+    </div>
+    <div class="block-content">
+        <div class="question-settings">
+            <div class="settings-grid">
+                <div class="setting-item">
+                    <label>امتیاز:</label>
+                    <select class="form-select-sm" data-setting="points">
+                        @for (int i = 1; i <= 20; i++)
+                        {
+                            <option value="@i" selected="@(i == 1)">@i</option>
+                        }
+                    </select>
+                </div>
+                <div class="setting-item">
+                    <label>
+                        <input type="checkbox" data-setting="isRequired" checked>
+                        اجباری
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div class="ordering-settings">
+            <div class="setting-item">
+                <label>جهت مرتب‌سازی:</label>
+                <select class="form-select-sm" data-setting="direction">
+                    <option value="vertical" selected>عمودی</option>
+                    <option value="horizontal">افقی</option>
+                </select>
+            </div>
+            <div class="setting-item">
+                <label>
+                    <input type="checkbox" data-setting="allowDragDrop" checked>
+                    اجازه کشیدن و رها کردن
+                </label>
+            </div>
+            <div class="setting-item">
+                <label>
+                    <input type="checkbox" data-setting="showNumbers" checked>
+                    نمایش شماره
+                </label>
+            </div>
+        </div>
+
+        <div class="ordering-items-container">
+            <div class="ordering-header">
+                <span>آیتم‌های مرتب‌سازی</span>
+                <button type="button" class="btn-teacher btn-primary btn-sm" data-action="add-ordering-item">
+                    <i class="fas fa-plus"></i>
+                    افزودن آیتم
+                </button>
+            </div>
+            <div class="ordering-items-list" data-role="ordering-items"></div>
+        </div>
+
+        <div class="correct-order-section">
+            <div class="section-header">
+                <span>ترتیب صحیح را تنظیم کنید:</span>
+                <button type="button" class="btn-teacher btn-secondary btn-sm" data-action="save-correct-order">
+                    <i class="fas fa-check"></i>
+                    ذخیره ترتیب صحیح
+                </button>
+            </div>
+            <div class="correct-order-list" data-role="correct-order"></div>
+        </div>
+    </div>
+</div>

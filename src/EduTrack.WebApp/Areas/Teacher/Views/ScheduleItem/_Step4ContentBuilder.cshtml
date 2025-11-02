@@ -1,0 +1,97 @@
+@model EduTrack.Application.Common.Models.ScheduleItems.CreateScheduleItemRequest
+
+<div class="unified-content-builder" id="unifiedContentBuilder">
+    <div class="builder-content-layout">
+        <div class="main-content-area">
+            <div class="blocks-list" id="contentBlocksList">
+                @{
+                    var emptyStateViewData = new ViewDataDictionary(ViewData);
+                    emptyStateViewData["Icon"] = "fas fa-plus-circle";
+                    emptyStateViewData["EmptyStateTitle"] = "هنوز بلاکی اضافه نشده";
+                    emptyStateViewData["Description"] = "برای شروع، روی دکمه \"افزودن بلاک\" کلیک کنید";
+                    emptyStateViewData["EmptyStateId"] = "emptyBlocksState";
+                }
+                @await Html.PartialAsync("Components/_EmptyState", Model, emptyStateViewData)
+            </div>
+        </div>
+
+        @await Html.PartialAsync("_Step4ContentSidebar")
+    </div>
+</div>
+
+<!-- Block Templates Container -->
+<div id="blockTemplatesContainer" style="display: none;">
+    <!-- Regular Block Templates -->
+    <div id="contentBlockTemplates">
+        @{
+            var textBlockViewData = new ViewDataDictionary(ViewData);
+            textBlockViewData["BlockType"] = "text";
+            textBlockViewData["IsQuestionBlock"] = "false";
+        }
+        @await Html.PartialAsync("../Shared/_TextBlock", new { BlockType = "text" }, textBlockViewData)
+        @{
+            var imageBlockViewData = new ViewDataDictionary(ViewData);
+            imageBlockViewData["BlockType"] = "image";
+            imageBlockViewData["IsQuestionBlock"] = "false";
+        }
+        @await Html.PartialAsync("../Shared/_ImageBlock", new { BlockType = "image" }, imageBlockViewData)
+        @{
+            var videoBlockViewData = new ViewDataDictionary(ViewData);
+            videoBlockViewData["BlockType"] = "video";
+            videoBlockViewData["IsQuestionBlock"] = "false";
+        }
+        @await Html.PartialAsync("../Shared/_VideoBlock", new { BlockType = "video" }, videoBlockViewData)
+        @{
+            var audioBlockViewData = new ViewDataDictionary(ViewData);
+            audioBlockViewData["BlockType"] = "audio";
+            audioBlockViewData["IsQuestionBlock"] = "false";
+        }
+        @await Html.PartialAsync("../Shared/_AudioBlock", new { BlockType = "audio" }, audioBlockViewData)
+        @{
+            var codeBlockViewData = new ViewDataDictionary(ViewData);
+            codeBlockViewData["BlockType"] = "code";
+            codeBlockViewData["IsQuestionBlock"] = "false";
+        }
+        @await Html.PartialAsync("../Shared/_CodeBlock", new { BlockType = "code" }, codeBlockViewData)
+    </div>
+
+    <!-- Question Block Templates -->
+    <div id="questionBlockTemplates">
+        @{
+            var questionTextBlockViewData = new ViewDataDictionary(ViewData);
+            questionTextBlockViewData["BlockType"] = "questionText";
+            questionTextBlockViewData["IsQuestionBlock"] = "true";
+        }
+        @await Html.PartialAsync("../Shared/_TextBlock", new { BlockType = "questionText" }, questionTextBlockViewData)
+        @{
+            var questionImageBlockViewData = new ViewDataDictionary(ViewData);
+            questionImageBlockViewData["BlockType"] = "questionImage";
+            questionImageBlockViewData["IsQuestionBlock"] = "true";
+        }
+        @await Html.PartialAsync("../Shared/_ImageBlock", new { BlockType = "questionImage" }, questionImageBlockViewData)
+        @{
+            var questionVideoBlockViewData = new ViewDataDictionary(ViewData);
+            questionVideoBlockViewData["BlockType"] = "questionVideo";
+            questionVideoBlockViewData["IsQuestionBlock"] = "true";
+        }
+        @await Html.PartialAsync("../Shared/_VideoBlock", new { BlockType = "questionVideo" }, questionVideoBlockViewData)
+        @{
+            var questionAudioBlockViewData = new ViewDataDictionary(ViewData);
+            questionAudioBlockViewData["BlockType"] = "questionAudio";
+            questionAudioBlockViewData["IsQuestionBlock"] = "true";
+        }
+        @await Html.PartialAsync("../Shared/_AudioBlock", new { BlockType = "questionAudio" }, questionAudioBlockViewData)
+    </div>
+
+    <!-- Question Type Block Templates -->
+    <div id="questionTypeBlockTemplates">
+        @await Html.PartialAsync("Blocks/_MultipleChoiceBlock")
+        @await Html.PartialAsync("Blocks/_GapFillBlock")
+        @await Html.PartialAsync("Blocks/_OrderingBlock")
+        @await Html.PartialAsync("Blocks/_MatchingBlock")
+        @await Html.PartialAsync("Blocks/_ErrorFindingBlock")
+    </div>
+</div>
+
+<!-- Hidden field for content -->
+<input type="hidden" id="contentJson" name="ContentJson" value="@Model.ContentJson" />

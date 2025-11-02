@@ -69,7 +69,21 @@
                         <option value="">انتخاب نوع آیتم...</option>
                         @foreach (dynamic type in scheduleItemTypes)
                         {
-                            <option value="@type.Value" data-description="@type.Description">
+                            var typeString = type.Value switch
+                            {
+                                0 => "reminder",
+                                1 => "writing",
+                                2 => "audio",
+                                3 => "gapfill",
+                                4 => "multiplechoice",
+                                5 => "match",
+                                6 => "errorfinding",
+                                7 => "codeexercise",
+                                8 => "quiz",
+                                9 => "ordering",
+                                _ => "reminder"
+                            };
+                            <option value="@type.Value" data-type-string="@typeString" data-description="@type.Description">
                                 @type.Text
                             </option>
                         }

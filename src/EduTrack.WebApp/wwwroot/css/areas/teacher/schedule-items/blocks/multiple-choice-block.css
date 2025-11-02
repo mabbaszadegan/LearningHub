@@ -1,0 +1,34 @@
+.question-type-block[data-type="multipleChoice"] {
+    /* Multiple Choice specific styles */
+}
+
+.mcq-questions-container {
+    margin-top: var(--spacing-md);
+}
+
+.mcq-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--spacing-md);
+}
+
+.mcq-title {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text);
+}
+
+.mcq-questions-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.mcq-empty-state {
+    text-align: center;
+    padding: var(--spacing-xl);
+    color: var(--color-text-muted);
+}

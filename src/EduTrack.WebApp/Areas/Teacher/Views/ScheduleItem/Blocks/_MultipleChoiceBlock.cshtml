@@ -1,0 +1,34 @@
+@model dynamic
+
+<div class="content-block-template question-type-block" data-type="multipleChoice">
+    <div class="block-header">
+        <div class="block-type">
+            <i class="fas fa-list-ul"></i>
+            <span>بلاک سوال چندگزینه‌ای</span>
+        </div>
+        @await Html.PartialAsync("_BlockActions", new ViewDataDictionary(ViewData) { { "IsQuestionBlock", "false" } })
+    </div>
+    <div class="block-content">
+        <div class="question-settings">
+            <div class="settings-grid">
+                <div class="setting-item">
+                    <label>امتیاز:</label>
+                    <select class="form-select-sm" data-setting="points">
+                        @for (int i = 1; i <= 20; i++)
+                        {
+                            <option value="@i" selected="@(i == 1)">@i</option>
+                        }
+                    </select>
+                </div>
+                <div class="setting-item">
+                    <label>
+                        <input type="checkbox" data-setting="isRequired" checked>
+                        اجباری
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        @await Html.PartialAsync("_McqQuestionsContainer")
+    </div>
+</div>

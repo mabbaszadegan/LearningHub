@@ -553,13 +553,22 @@ public class ScheduleItemController : BaseTeacherController
 
     // POST: ScheduleItem/GetBlockTypeOptions
     [HttpPost]
-    public IActionResult GetBlockTypeOptions(string itemType, bool showRegularBlocks, bool showQuestionBlocks)
+    public IActionResult GetBlockTypeOptions(string itemType, bool showRegularBlocks, bool showQuestionBlocks, string? questionTypeBlocks = null)
     {
         try
         {
             ViewData["ItemType"] = itemType;
             ViewData["ShowRegularBlocks"] = showRegularBlocks;
             ViewData["ShowQuestionBlocks"] = showQuestionBlocks;
+            
+            var questionTypeBlocksList = new List<string>();
+            if (!string.IsNullOrWhiteSpace(questionTypeBlocks))
+            {
+                questionTypeBlocksList = questionTypeBlocks.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                    .Select(x => x.Trim())
+                    .ToList();
+            }
+            ViewData["QuestionTypeBlocks"] = questionTypeBlocksList;
             
             return PartialView("_BlockTypeOptions");
         }

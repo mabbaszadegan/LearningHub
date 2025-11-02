@@ -1,7 +1,7 @@
-<link rel="stylesheet" href="~/css/areas/teacher/schedule-items/content-builder.css" asp-append-version="true" />
-<link rel="stylesheet" href="~/css/areas/teacher/schedule-items/stage4-enhancements.css" asp-append-version="true" />
-
 @model EduTrack.Application.Common.Models.ScheduleItems.CreateScheduleItemRequest
+
+<link rel="stylesheet" href="~/css/areas/teacher/schedule-items/step4-content.css" asp-append-version="true" />
+
 @{
     ViewData["ModalId"] = "blockTypeModal";
     ViewData["ModalTitle"] = "انتخاب نوع بلاک";
@@ -10,236 +10,25 @@
 @await Html.PartialAsync("_BlockTypeSelectionModal")
 
 <div class="form-step" data-step="content">
-    <div class="step-header">
-        <div class="step-icon">
-            <i class="fas fa-paint-brush"></i>
-        </div>
-        <div class="step-info">
-            <h3 class="step-title">طراحی محتوای آموزشی</h3>
-            <p class="step-description">محتوای تعاملی و جذاب برای دانش‌آموزان طراحی کنید</p>
-        </div>
-        <div class="step-actions">
-            <button type="button" class="btn-teacher btn-primary" id="addContentBlockBtn">
-                <i class="fas fa-plus"></i>
-                <span>افزودن بلاک</span>
-            </button>
-            <button type="button" class="btn-teacher btn-info" id="previewReminderBtn">
-                <i class="fas fa-eye"></i>
-                <span>پیش‌نمایش</span>
-            </button>
-        </div>
-    </div>
+    @await Html.PartialAsync("_Step4ContentHeader")
 
     <div class="step-content">
-        @if (Model.Type == ScheduleItemType.Reminder)
-        {
-            <!-- Reminder Content Builder -->
-            <div id="reminderContentBuilder" style="display: none;">
-                @await Html.PartialAsync("_Step4ReminderContent", Model)
-            </div>
-        }
-
-        @if (Model.Type == ScheduleItemType.GapFill)
-        {
-            <!-- Gap Fill Content Builder -->
-            <div id="gapFillContentBuilder" style="display: none;">
-                @await Html.PartialAsync("_Step4GapFillContent", Model)
-            </div>
-        }
-
-        
-
-        @if (Model.Type == ScheduleItemType.Writing)
-        {
-            <!-- Written Content Builder -->
-            <div id="writtenContentBuilder" style="display: none;">
-                @await Html.PartialAsync("_Step4WrittenContent", Model)
-            </div>
-        }
-
-        @if (Model.Type == ScheduleItemType.MultipleChoice)
-        {
-            <!-- Multiple Choice Content Builder -->
-            <div id="multipleChoiceContentBuilder" style="display: none;">
-                @await Html.PartialAsync("_Step4MultipleChoiceContent", Model)
-            </div>
-        }
-
-        @if (Model.Type == ScheduleItemType.Audio)
-        {
-            <!-- Audio Content Builder (uses same structure as written) -->
-            <div id="writtenContentBuilder" style="display: none;">
-                @await Html.PartialAsync("_Step4WrittenContent", Model)
-            </div>
-        }
-
-        <!-- Content Builder for Other Types -->
-        <div class="content-builder" id="contentBuilder" style="display: none;">
-            <div class="builder-header">
-                <div class="builder-title">
-                    <i class="fas fa-edit"></i>
-                    <span>سازنده محتوای آموزشی</span>
-                </div>
-                <div class="builder-actions">
-                    <button type="button" class="btn-teacher btn-primary" id="addContentBoxBtn">
-                        <i class="fas fa-plus"></i>
-                        <span>افزودن محتوا</span>
-                    </button>
-                    <button type="button" class="btn-teacher btn-info" id="previewContentBtn">
-                        <i class="fas fa-eye"></i>
-                        <span>پیش‌نمایش</span>
-                    </button>
-                    <button type="button" class="btn-teacher btn-success" id="saveContentBtn">
-                        <i class="fas fa-save"></i>
-                        <span>ذخیره</span>
-                    </button>
-                </div>
-            </div>
-
-            <div class="builder-content-layout">
-                <!-- Main Content Area -->
-                <div class="main-content-area">
-                    <div class="content-boxes-container" id="contentBoxesContainer">
-                        <!-- Content boxes will be added here dynamically -->
-                        <div class="empty-state" id="emptyState">
-                            <div class="empty-state-icon">
-                                <i class="fas fa-plus-circle"></i>
-                            </div>
-                            <h4>هنوز محتوایی اضافه نشده</h4>
-                            <p>برای شروع، روی دکمه "افزودن محتوا" کلیک کنید</p>
-                            <div class="quick-templates">
-                                <h5>قالب‌های سریع:</h5>
-                                <div class="template-buttons">
-                                    <button type="button" class="btn-teacher btn-secondary" data-template="text">
-                                        <i class="fas fa-font"></i>
-                                        <span>متن ساده</span>
-                                    </button>
-                                    <button type="button" class="btn-teacher btn-secondary" data-template="image-text">
-                                        <i class="fas fa-image"></i>
-                                        <span>تصویر + متن</span>
-                                    </button>
-                                    <button type="button" class="btn-teacher btn-secondary" data-template="video-text">
-                                        <i class="fas fa-video"></i>
-                                        <span>ویدیو + متن</span>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Fixed Sidebar -->
-                <div class="content-sidebar">
-                    <div class="sidebar-header">
-                        <div class="sidebar-title">
-                            <i class="fas fa-list"></i>
-                            <span>فهرست بلاک‌ها</span>
-                        </div>
-                        <div class="sidebar-count" id="sidebarBlockCount">0</div>
-                    </div>
-                    <div class="sidebar-content">
-                        <div class="blocks-navigation" id="blocksNavigation">
-                            <!-- Block navigation items will be added here dynamically -->
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Content Type Selector for other types -->
-        <div class="content-type-selector" id="contentTypeSelector" style="display: none;">
-            <div class="selector-header">
-                <i class="fas fa-magic"></i>
-                <span>انتخاب نوع محتوا</span>
-            </div>
-
-            <div class="selector-content">
-                <div class="content-types-grid">
-                    <div class="content-type-card" data-type="text">
-                        <div class="type-icon">
-                            <i class="fas fa-font"></i>
-                        </div>
-                        <div class="type-info">
-                            <h4>متن</h4>
-                            <p>محتوای متنی با قابلیت فرمت‌بندی</p>
-                        </div>
-                    </div>
-
-                    <div class="content-type-card" data-type="image">
-                        <div class="type-icon">
-                            <i class="fas fa-image"></i>
-                        </div>
-                        <div class="type-info">
-                            <h4>تصویر</h4>
-                            <p>آپلود تصویر با توضیحات</p>
-                        </div>
-                    </div>
-
-                    <div class="content-type-card" data-type="video">
-                        <div class="type-icon">
-                            <i class="fas fa-video"></i>
-                        </div>
-                        <div class="type-info">
-                            <h4>ویدیو</h4>
-                            <p>آپلود ویدیو آموزشی</p>
-                        </div>
-                    </div>
-
-                    <div class="content-type-card" data-type="audio">
-                        <div class="type-icon">
-                            <i class="fas fa-microphone"></i>
-                        </div>
-                        <div class="type-info">
-                            <h4>صوت</h4>
-                            <p>آپلود فایل صوتی یا ضبط صدا</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Content Designer for other types -->
-        <div class="content-designer" id="contentDesigner" style="display: none;">
-            <div class="designer-header">
-                <i class="fas fa-paint-brush"></i>
-                <span>طراح محتوا</span>
-            </div>
-            <div class="designer-content">
-                <p>طراحی محتوا برای این نوع آیتم در حال توسعه است.</p>
-            </div>
-        </div>
-
-        <!-- Content Templates -->
-        <div class="content-templates" id="contentTemplates" style="display: none;">
-            <div class="templates-header">
-                <i class="fas fa-layer-group"></i>
-                <span>قالب‌های آماده</span>
-            </div>
-            <div class="templates-content">
-                <p>قالب‌های آماده برای این نوع آیتم در حال توسعه است.</p>
-            </div>
-        </div>
+        @await Html.PartialAsync("_Step4ContentBuilder", Model)
     </div>
 </div>
-
-<!-- Hidden field for content JSON -->
-<input type="hidden" id="contentJson" name="ContentJson" value="@Model.ContentJson" />
 
 <script src="~/js/areas/teacher/shared/block-type-selection-modal.js" asp-append-version="true"></script>
 <script src="~/js/areas/teacher/shared/base-content-blocks.js" asp-append-version="true"></script>
 <script src="~/js/areas/teacher/schedule-items/content-manager-base.js" asp-append-version="true"></script>
 <script src="~/js/areas/teacher/schedule-items/content-builder.js" asp-append-version="true"></script>
 <script src="~/js/areas/teacher/schedule-items/content-sidebar.js" asp-append-version="true"></script>
-
-<!-- Base Classes -->
 <script src="~/js/areas/teacher/schedule-items/base/question-block-base.js" asp-append-version="true"></script>
 
-<!-- Content Type Managers -->
-<script src="~/js/areas/teacher/schedule-items/managers/written-content-manager.js" asp-append-version="true"></script>
-<script src="~/js/areas/teacher/schedule-items/managers/audio-content-manager.js" asp-append-version="true"></script>
-<script src="~/js/areas/teacher/schedule-items/managers/reminder-content-manager.js" asp-append-version="true"></script>
-<script src="~/js/areas/teacher/schedule-items/managers/gapfill-content-manager.js" asp-append-version="true"></script>
-<script src="~/js/areas/teacher/schedule-items/managers/multiplechoice-content-manager.js" asp-append-version="true"></script>
-
-<!-- Step 4 Main Manager -->
-<script src="~/js/areas/teacher/schedule-items/managers/step4-content-manager.js" asp-append-version="true"></script>
+<script src="~/js/areas/teacher/schedule-items/config/block-type-config.js" asp-append-version="true"></script>
+<script src="~/js/areas/teacher/schedule-items/utils/content-migrator.js" asp-append-version="true"></script>
+<script src="~/js/areas/teacher/schedule-items/blocks/handlers/regular-block-handler.js" asp-append-version="true"></script>
+<script src="~/js/areas/teacher/schedule-items/blocks/handlers/question-block-handler.js" asp-append-version="true"></script>
+<script src="~/js/areas/teacher/schedule-items/blocks/handlers/multiple-choice-handler.js" asp-append-version="true"></script>
+<script src="~/js/areas/teacher/schedule-items/blocks/handlers/gapfill-handler.js" asp-append-version="true"></script>
+<script src="~/js/areas/teacher/schedule-items/blocks/handlers/ordering-handler.js" asp-append-version="true"></script>
+<script src="~/js/areas/teacher/schedule-items/managers/unified-content-manager.js" asp-append-version="true"></script>

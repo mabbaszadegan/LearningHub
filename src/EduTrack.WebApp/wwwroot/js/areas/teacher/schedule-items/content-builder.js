@@ -32,14 +32,14 @@ class ContentBuilderBase {
         // DOM elements
         this.blocksList = document.getElementById(this.config.containerId);
         this.emptyState = document.getElementById(this.config.emptyStateId);
-        this.preview = document.getElementById(this.config.previewId);
+        this.preview = document.getElementById(this.config.previewId); // Optional - preview uses modal instead
         this.hiddenField = document.getElementById(this.config.hiddenFieldId);
         
         this.init();
     }
 
     init() {
-        if (!this.blocksList || !this.emptyState || !this.preview || !this.hiddenField) {
+        if (!this.blocksList || !this.emptyState || !this.hiddenField) {
             console.error('Required elements not found!', {
                 blocksList: !!this.blocksList,
                 emptyState: !!this.emptyState,
@@ -361,8 +361,29 @@ class ContentBuilderBase {
             templateType = block.type.replace('question', '').toLowerCase();
         }
         
-        // Look for template in contentBlockTemplates
-        let template = document.querySelector(`#contentBlockTemplates .content-block-template[data-type="${templateType}"]`);
+        // Look for template in blockTemplatesContainer
+        const blockTemplatesContainer = document.getElementById('blockTemplatesContainer');
+        let template = null;
+        
+        if (blockTemplatesContainer) {
+            // Check in appropriate template container based on block type
+            if (block.type.startsWith('question')) {
+                const questionTemplates = blockTemplatesContainer.querySelector('#questionBlockTemplates');
+                if (questionTemplates) {
+                    template = questionTemplates.querySelector(`.content-block-template[data-type="${block.type}"]`);
+                }
+            } else {
+                const regularTemplates = blockTemplatesContainer.querySelector('#contentBlockTemplates');
+                if (regularTemplates) {
+                    template = regularTemplates.querySelector(`.content-block-template[data-type="${templateType}"]`);
+                }
+            }
+        }
+        
+        // Fallback to old selector for backward compatibility
+        if (!template) {
+            template = document.querySelector(`#contentBlockTemplates .content-block-template[data-type="${templateType}"]`);
+        }
         
         if (!template) {
             console.error('ContentBuilderBase: Template not found for type:', templateType);
@@ -370,7 +391,10 @@ class ContentBuilderBase {
         }
         
         const blockElement = template.cloneNode(true);
+        // Remove template class that hides the element
+        blockElement.classList.remove('content-block-template');
         blockElement.classList.add('content-block');
+        blockElement.style.display = ''; // Ensure it's visible
         blockElement.dataset.blockId = block.id;
         blockElement.dataset.blockData = JSON.stringify(block.data);
         blockElement.dataset.type = block.type; // Keep original type (e.g., questionText)

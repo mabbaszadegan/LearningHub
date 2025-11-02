@@ -359,11 +359,12 @@ class ModernScheduleItemFormManager {
                 
             case 4:
                 // Step 4: Load content data
-                if (window.step4Manager && typeof window.step4Manager.updateStep4Content === 'function') {
-                    window.step4Manager.updateStep4Content();
+                const manager = window.unifiedContentManager || window.step4Manager;
+                if (manager && typeof manager.updateStep4Content === 'function') {
+                    manager.updateStep4Content();
                 }
-                if (window.step4Manager && typeof window.step4Manager.loadStepData === 'function') {
-                    await window.step4Manager.loadStepData();
+                if (manager && typeof manager.loadStepData === 'function') {
+                    await manager.loadStepData();
                 }
                 break;
         }
@@ -1190,8 +1191,9 @@ class ModernScheduleItemFormManager {
             const formData = this.collectFormData();
 
             // Add content data from Step 4 manager
-            if (window.step4Manager && typeof window.step4Manager.collectContentData === 'function') {
-                formData.contentData = window.step4Manager.collectContentData();
+            const manager = window.unifiedContentManager || window.step4Manager;
+            if (manager && typeof manager.collectContentData === 'function') {
+                formData.contentData = manager.collectContentData();
             }
 
             // Submit form
@@ -1476,48 +1478,27 @@ class ModernScheduleItemFormManager {
         }
         
         if (this.currentStep >= 4) {
-            // Make sure step4Manager is available
-            if (!window.step4Manager) {
-                console.warn('Step4Manager not available, attempting to initialize...');
-                if (typeof window.Step4ContentManager !== 'undefined') {
-                    window.step4Manager = new window.Step4ContentManager(this);
-                }
-            }
-            
-            if (window.step4Manager && typeof window.step4Manager.collectStep4Data === 'function') {
+            // Use unified content manager
+            const manager = window.unifiedContentManager || window.step4Manager;
+            if (manager && typeof manager.collectStep4Data === 'function') {
                 try {
-                    const step4Data = await window.step4Manager.collectStep4Data();
+                    const step4Data = await manager.collectStep4Data();
                     Object.assign(stepData, step4Data);
                 } catch (error) {
                     console.error('Error collecting step 4 data:', error);
                     // Fallback: try to get content from hidden fields
                     const mainContentField = document.getElementById('contentJson');
-                    const reminderField = document.getElementById('reminderContentJson');
-                    const writtenField = document.getElementById('writtenContentJson');
-                    
                     if (mainContentField && mainContentField.value) {
                         stepData.ContentJson = mainContentField.value;
-                    } else if (reminderField && reminderField.value) {
-                        stepData.ContentJson = reminderField.value;
-                    } else if (writtenField && writtenField.value) {
-                        stepData.ContentJson = writtenField.value;
                     } else {
                         stepData.ContentJson = '{}';
                     }
                 }
             } else {
-                console.warn('Step4Manager collectStep4Data method not available');
                 // Fallback: try to get content from hidden fields
                 const mainContentField = document.getElementById('contentJson');
-                const reminderField = document.getElementById('reminderContentJson');
-                const writtenField = document.getElementById('writtenContentJson');
-                
                 if (mainContentField && mainContentField.value) {
                     stepData.ContentJson = mainContentField.value;
-                } else if (reminderField && reminderField.value) {
-                    stepData.ContentJson = reminderField.value;
-                } else if (writtenField && writtenField.value) {
-                    stepData.ContentJson = writtenField.value;
                 } else {
                     stepData.ContentJson = '{}';
                 }
@@ -1771,9 +1752,10 @@ document.addEventListener('DOMContentLoaded', () => {
     window.step1Manager = new Step1BasicsManager(formManager);
     window.step2Manager = new Step2TimingManager(formManager);
     // Step3Manager is initialized by the main form manager
-    // Step4Manager is initialized in _Step4Content.cshtml or later if Step4ContentManager is available
-    if (typeof Step4ContentManager !== 'undefined') {
-        window.step4Manager = new Step4ContentManager(formManager);
+    // UnifiedContentManager is initialized in _Step4Content.cshtml
+    // Set step4Manager alias for backward compatibility
+    if (window.unifiedContentManager) {
+        window.step4Manager = window.unifiedContentManager;
     }
     
     // Make formManager globally accessible
@@ -1793,12 +1775,14 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
         window.step3Manager = formManager.step3Manager;
         
-        // Also ensure step4Manager is properly initialized
-        if (!window.step4Manager) {
-            console.warn('Step4Manager not initialized, attempting to reinitialize...');
-            // Try to reinitialize step4Manager
-            if (typeof window.Step4ContentManager !== 'undefined') {
-                window.step4Manager = new window.Step4ContentManager(formManager);
+        // Also ensure unifiedContentManager is properly initialized
+        if (!window.unifiedContentManager && !window.step4Manager) {
+            // Try to initialize unified content manager
+            if (typeof window.initializeUnifiedContentManager === 'function') {
+                window.initializeUnifiedContentManager();
+            }
+            if (window.unifiedContentManager) {
+                window.step4Manager = window.unifiedContentManager;
             }
         }
     }, 100);

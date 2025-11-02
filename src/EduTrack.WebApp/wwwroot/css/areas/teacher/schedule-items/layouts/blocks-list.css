@@ -1,0 +1,25 @@
+.blocks-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+}
+
+.content-block-template {
+    display: none;
+}
+
+.content-block {
+    position: relative;
+}
+
+.content-block.dragging {
+    opacity: 0.5;
+}
+
+.content-block.drag-over {
+    border-top: 2px solid var(--color-primary);
+}
+
+.content-block:last-child {
+    margin-bottom: 0;
+}
