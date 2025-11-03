@@ -3,8 +3,11 @@
     --color-primary: #007bff;
     --color-primary-dark: #0056b3;
     --color-secondary: #6c757d;
+    --color-secondary-dark: #545b62;
     --color-success: #28a745;
     --color-danger: #dc3545;
+    --color-danger-dark: #c82333;
+    --color-danger-light: #f5c6cb;
     --color-warning: #ffc107;
     --color-info: #17a2b8;
     
@@ -15,6 +18,8 @@
     --color-bg: #ffffff;
     --color-bg-light: #f8f9fa;
     --color-bg-dark: #e9ecef;
+    --color-background: #ffffff;
+    --color-background-light: #f8f9fa;
     
     --color-border: #dee2e6;
     --color-border-light: #e9ecef;
@@ -54,6 +59,7 @@
     --radius-lg: 0.5rem;
     --radius-xl: 0.75rem;
     --radius-full: 9999px;
+    --border-radius: 0.375rem;
     
     /* Transitions */
     --transition-fast: 150ms ease-in-out;
