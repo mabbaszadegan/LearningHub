@@ -1,0 +1,759 @@
+/**
+ * Unified Course Content Styles
+ * Cohesive and unified display of course content including chapters, subchapters, and schedule items
+ */
+
+/* Unified Course Header */
+.unified-course-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+    color: white;
+}
+
+.course-header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 2rem;
+}
+
+.course-header-info {
+    flex: 1;
+}
+
+.course-main-title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem 0;
+    color: white;
+}
+
+.course-description {
+    font-size: 1rem;
+    margin: 0;
+    opacity: 0.95;
+    line-height: 1.6;
+}
+
+.course-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-shrink: 0;
+}
+
+.progress-indicator {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.progress-indicator:hover {
+    transform: scale(1.05);
+}
+
+.progress-circle-large {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: conic-gradient(
+        rgba(255, 255, 255, 0.9) 0deg,
+        rgba(255, 255, 255, 0.9) calc(var(--progress, 0) * 3.6deg),
+        rgba(255, 255, 255, 0.3) calc(var(--progress, 0) * 3.6deg)
+    );
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.progress-circle-large::before {
+    content: '';
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    backdrop-filter: blur(10px);
+}
+
+.progress-percentage {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: white;
+    position: relative;
+    z-index: 1;
+}
+
+.progress-label {
+    font-size: 0.85rem;
+    opacity: 0.9;
+    font-weight: 500;
+}
+
+.btn-header-action {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+    color: white;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+.btn-header-action:hover {
+    background: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.5);
+    color: white;
+    transform: translateY(-2px);
+}
+
+/* Unified Content Container */
+.unified-content-container {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+    border: 1px solid #e9ecef;
+}
+
+.unified-content-tabs {
+    border-bottom: 2px solid #e9ecef;
+    padding: 0;
+    margin: 0;
+    background: #f8f9fa;
+}
+
+.unified-content-tabs .nav-item {
+    margin: 0;
+}
+
+.unified-content-tabs .nav-link {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem 1.5rem;
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: #6c757d;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    background: transparent;
+}
+
+.unified-content-tabs .nav-link:hover {
+    color: #495057;
+    background: rgba(0, 123, 255, 0.05);
+}
+
+.unified-content-tabs .nav-link.active {
+    color: #007bff;
+    border-bottom-color: #007bff;
+    background: white;
+}
+
+.unified-content-tabs .nav-link .badge {
+    background: #6c757d;
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+}
+
+.unified-content-tabs .nav-link.active .badge {
+    background: #007bff;
+}
+
+.unified-content-tab-content {
+    padding: 2rem;
+}
+
+/* Chapters Container */
+.chapters-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.chapter-card {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.chapter-card:hover {
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    border-color: #007bff;
+}
+
+.chapter-header {
+    padding: 1.5rem;
+    background: white;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background-color 0.3s ease;
+}
+
+.chapter-header:hover {
+    background: #f8f9fa;
+}
+
+.chapter-header-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex: 1;
+}
+
+.chapter-number {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.chapter-info {
+    flex: 1;
+}
+
+.chapter-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #212529;
+    margin: 0 0 0.5rem 0;
+}
+
+.chapter-description {
+    color: #6c757d;
+    margin: 0;
+    line-height: 1.6;
+}
+
+.chapter-meta {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-shrink: 0;
+}
+
+.chapter-subchapters-count {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+.chapter-toggle {
+    color: #6c757d;
+    transition: transform 0.3s ease;
+}
+
+.chapter-header[aria-expanded="true"] .chapter-toggle {
+    transform: rotate(180deg);
+}
+
+.chapter-content {
+    padding: 1.5rem;
+    background: white;
+}
+
+.chapter-objective {
+    padding: 1rem;
+    background: #e3f2fd;
+    border-right: 4px solid #2196f3;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    color: #1565c0;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+}
+
+.chapter-objective i {
+    margin-top: 0.25rem;
+    flex-shrink: 0;
+}
+
+/* Subchapters List */
+.subchapters-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.subchapter-item {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 10px;
+    padding: 1.25rem;
+    transition: all 0.3s ease;
+}
+
+.subchapter-item:hover {
+    border-color: #007bff;
+    box-shadow: 0 2px 8px rgba(0, 123, 255, 0.1);
+}
+
+.subchapter-header {
+    margin-bottom: 0.75rem;
+}
+
+.subchapter-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #212529;
+    margin: 0 0 0.5rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.subchapter-title i {
+    color: #007bff;
+}
+
+.subchapter-description {
+    color: #6c757d;
+    margin: 0;
+    line-height: 1.5;
+}
+
+.subchapter-objective {
+    padding: 0.75rem;
+    background: #fff3e0;
+    border-right: 3px solid #ff9800;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+    color: #e65100;
+}
+
+/* Activities in Subchapters */
+.subchapter-activities {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e9ecef;
+}
+
+.activities-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+    color: #495057;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.activities-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.activity-item-small {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.activity-item-small:hover {
+    border-color: #007bff;
+    box-shadow: 0 2px 6px rgba(0, 123, 255, 0.1);
+}
+
+.activity-icon-small {
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+}
+
+.activity-info-small {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.activity-title-small {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #212529;
+}
+
+.activity-status-small {
+    font-size: 0.75rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 12px;
+    display: inline-block;
+    width: fit-content;
+}
+
+.activity-status-small.status-active {
+    background: #d4edda;
+    color: #155724;
+}
+
+.activity-status-small.status-completed {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+
+.activity-status-small.status-overdue {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.btn-activity-action {
+    width: 32px;
+    height: 32px;
+    background: #007bff;
+    border: none;
+    border-radius: 6px;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.btn-activity-action:hover {
+    background: #0056b3;
+    transform: scale(1.1);
+}
+
+/* Schedule Items Unified */
+.schedule-items-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.schedule-item-card-unified {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+}
+
+.schedule-item-card-unified:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    border-color: #007bff;
+}
+
+.schedule-item-icon-unified {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.schedule-item-content-unified {
+    flex: 1;
+    min-width: 0;
+}
+
+.schedule-item-header-unified {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.schedule-item-title-unified {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #212529;
+    margin: 0;
+    flex: 1;
+}
+
+.status-badge-unified {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.35rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    flex-shrink: 0;
+}
+
+.status-badge-unified.status-active {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status-badge-unified.status-completed {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+
+.status-badge-unified.status-overdue {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.status-badge-unified.status-upcoming {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.schedule-item-description-unified {
+    color: #6c757d;
+    font-size: 0.9rem;
+    margin: 0 0 0.75rem 0;
+    line-height: 1.5;
+}
+
+.schedule-item-meta-unified {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.meta-item-unified {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+
+.meta-item-unified.mandatory {
+    color: #dc3545;
+    font-weight: 500;
+}
+
+.schedule-item-actions-unified {
+    display: flex;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+.btn-action-unified {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.btn-action-unified.primary {
+    background: #007bff;
+    color: white;
+}
+
+.btn-action-unified.primary:hover {
+    background: #0056b3;
+    transform: translateY(-2px);
+}
+
+.btn-action-unified.secondary {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    justify-content: center;
+    background: #f8f9fa;
+    color: #6c757d;
+    border: 1px solid #e9ecef;
+}
+
+.btn-action-unified.secondary:hover {
+    background: #e9ecef;
+    color: #495057;
+}
+
+.btn-action-unified.success {
+    background: #28a745;
+    color: white;
+}
+
+.btn-action-unified.warning {
+    background: #ffc107;
+    color: #856404;
+}
+
+.btn-action-unified:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Empty States */
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: #6c757d;
+}
+
+.empty-state i {
+    margin-bottom: 1.5rem;
+    opacity: 0.5;
+}
+
+.empty-state h4 {
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+.empty-state-small {
+    text-align: center;
+    padding: 2rem;
+    color: #6c757d;
+}
+
+.empty-state-small i {
+    font-size: 2rem;
+    margin-bottom: 0.75rem;
+    opacity: 0.5;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .unified-course-header {
+        padding: 1.5rem;
+    }
+    
+    .course-header-content {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .course-main-title {
+        font-size: 1.5rem;
+    }
+    
+    .course-header-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .unified-content-tab-content {
+        padding: 1rem;
+    }
+    
+    .chapter-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .chapter-header-content {
+        width: 100%;
+    }
+    
+    .schedule-item-card-unified {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .schedule-item-actions-unified {
+        width: 100%;
+        justify-content: flex-end;
+    }
+    
+    .btn-action-unified {
+        flex: 1;
+    }
+}
+
+@media (max-width: 576px) {
+    .unified-course-header {
+        padding: 1rem;
+        border-radius: 12px;
+    }
+    
+    .course-main-title {
+        font-size: 1.25rem;
+    }
+    
+    .progress-circle-large {
+        width: 60px;
+        height: 60px;
+    }
+    
+    .progress-circle-large::before {
+        width: 45px;
+        height: 45px;
+    }
+    
+    .progress-percentage {
+        font-size: 1rem;
+    }
+    
+    .unified-content-tabs .nav-link {
+        padding: 0.75rem 1rem;
+        font-size: 0.9rem;
+    }
+    
+    .chapter-card {
+        border-radius: 10px;
+    }
+    
+    .chapter-header {
+        padding: 1rem;
+    }
+    
+    .chapter-title {
+        font-size: 1.25rem;
+    }
+    
+    .schedule-item-card-unified {
+        padding: 1rem;
+    }
+}

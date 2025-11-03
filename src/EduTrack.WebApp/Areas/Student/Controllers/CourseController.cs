@@ -5,6 +5,7 @@ using EduTrack.Application.Features.CourseEnrollment.Commands;
 using EduTrack.Application.Features.CourseEnrollment.DTOs;
 using EduTrack.Application.Features.CourseEnrollment.Queries;
 using EduTrack.Application.Features.Courses.Queries;
+using EduTrack.Application.Features.Chapters.Queries;
 using EduTrack.Domain.Entities;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -194,8 +195,18 @@ public class CourseController : Controller
         // Get course progress
         var progressResult = await _mediator.Send(new GetStudentCourseProgressQuery(id, currentUser.Id));
         
+        // Get course chapters with subchapters
+        var chaptersResult = await _mediator.Send(new GetChaptersByCourseIdQuery(id));
+        var chapters = chaptersResult.IsSuccess ? chaptersResult.Value : new List<ChapterDto>();
+        
+        // Get schedule items for the course
+        var scheduleItemsResult = await _mediator.Send(new GetCourseScheduleItemsQuery(id, currentUser.Id));
+        var scheduleItems = scheduleItemsResult.IsSuccess ? scheduleItemsResult.Value : new List<ScheduleItemDto>();
+        
         ViewBag.Enrollment = enrollmentResult.Value;
         ViewBag.Progress = progressResult.IsSuccess ? progressResult.Value : null;
+        ViewBag.Chapters = chapters;
+        ViewBag.ScheduleItems = scheduleItems;
 
         return View(courseResult.Value);
     }
