@@ -39,10 +39,31 @@ class MultipleChoiceHandler {
         blockElement.dataset.blockData = JSON.stringify(block.data || {});
         blockElement.style.display = ''; // Ensure it's visible
 
+        // Clear any empty state that might have been cloned
+        const container = blockElement.querySelector('[data-role="mcq-container"]');
+        if (container) {
+            const questionsList = container.querySelector('[data-role="mcq-list"]');
+            if (questionsList) {
+                // Remove empty state if exists (it might be in template)
+                const emptyState = questionsList.querySelector('.mcq-empty-state');
+                if (emptyState) {
+                    emptyState.remove();
+                }
+            }
+        }
+
         return blockElement;
     }
 
     async initialize(blockElement, block) {
+        // Check if already initialized to prevent duplicate loading
+        if (blockElement.dataset.mcqInitialized === 'true') {
+            return;
+        }
+        
+        // Mark as initialized
+        blockElement.dataset.mcqInitialized = 'true';
+        
         // Load existing MCQ data if it exists
         if (block.data && block.data.questions && window.mcqManager) {
             try {
@@ -57,13 +78,19 @@ class MultipleChoiceHandler {
         // Collect MCQ questions data using MCQ Manager
         if (window.mcqManager) {
             const mcqData = window.mcqManager.collectMcqData(blockElement);
-            return {
-                ...block.data,
-                ...mcqData
-            };
+            // Return only fresh collected data, don't merge with old data
+            // This prevents stale data from corrupting the saved content
+            if (mcqData && mcqData.questions !== undefined) {
+                return {
+                    questions: mcqData.questions
+                };
+            }
         }
         
-        return block.data || {};
+        // Return empty structure if no valid data collected
+        return {
+            questions: []
+        };
     }
 }
 

@@ -85,7 +85,7 @@ class McqManager {
         }
     }
 
-    async addQuestion(blockElement) {
+    async addQuestion(blockElement, skipDefaultOptions = false) {
         const container = blockElement?.querySelector('[data-role="mcq-container"]');
         if (!container) return Promise.resolve();
 
@@ -133,14 +133,18 @@ class McqManager {
             }
 
             questionsList.appendChild(questionElement);
-            this.initializeQuestion(questionElement);
+            if (!skipDefaultOptions) {
+                this.initializeQuestion(questionElement);
+            }
             this.updateEmptyState(container);
         } catch (error) {
             console.error('Error adding question:', error);
             // Fallback: create question manually
             const questionElement = this.createQuestionElement(questionId, questionCount);
             questionsList.appendChild(questionElement);
-            this.initializeQuestion(questionElement);
+            if (!skipDefaultOptions) {
+                this.initializeQuestion(questionElement);
+            }
             this.updateEmptyState(container);
         }
         
@@ -724,7 +728,13 @@ class McqManager {
         const questionItems = container.querySelectorAll('.mcq-question-item');
 
         questionItems.forEach((questionItem, qIndex) => {
-            const stem = questionItem.querySelector('[data-role="mcq-stem"]')?.value || '';
+            // Skip if this is a template or empty state element
+            if (questionItem.closest('.content-block-template') || 
+                questionItem.classList.contains('mcq-empty-state')) {
+                return;
+            }
+
+            const stem = questionItem.querySelector('[data-role="mcq-stem"]')?.value?.trim() || '';
             const answerType = questionItem.querySelector('[data-role="mcq-answer-type"]')?.value || 'single';
             const randomize = questionItem.querySelector('[data-role="mcq-randomize"]')?.checked || false;
 
@@ -732,6 +742,11 @@ class McqManager {
             const optionItems = questionItem.querySelectorAll('.mcq-option-item');
 
             optionItems.forEach((optionItem, oIndex) => {
+                // Skip if option item is not valid
+                if (!optionItem || !optionItem.closest('.mcq-options-list')) {
+                    return;
+                }
+
                 const optionType = optionItem.dataset.optionType || 'text';
                 const isCorrect = optionItem.querySelector('[data-role="mcq-option-correct"]')?.checked || false;
 
@@ -742,12 +757,19 @@ class McqManager {
                 };
 
                 if (optionType === 'text') {
-                    option.text = optionItem.querySelector('[data-role="mcq-option-text"]')?.value || '';
+                    const textValue = optionItem.querySelector('[data-role="mcq-option-text"]')?.value?.trim() || '';
+                    option.text = textValue || '';
+                    // Note: We keep empty text options to allow users to save incomplete questions
                 } else if (optionType === 'image') {
                     option.imageUrl = optionItem.querySelector('[data-role="mcq-option-image-url"]')?.value || optionItem.dataset.imageFileUrl || '';
                     const fileIdValue = optionItem.querySelector('[data-role="mcq-option-image-fileid"]')?.value || optionItem.dataset.imageFileId || '';
                     option.imageFileId = fileIdValue ? String(fileIdValue) : '';
                     option.imageFileName = optionItem.dataset.pendingImageFile || '';
+                    
+                    // Only add option if it has an image
+                    if (!option.imageUrl && !option.imageFileId) {
+                        return; // Skip options without image
+                    }
                 } else if (optionType === 'audio') {
                     option.audioUrl = optionItem.querySelector('[data-role="mcq-option-audio-url"]')?.value || optionItem.dataset.audioFileUrl || '';
                     const audioFileIdValue = optionItem.querySelector('[data-role="mcq-option-audio-fileid"]')?.value || optionItem.dataset.audioFileId || '';
@@ -755,18 +777,26 @@ class McqManager {
                     option.isRecorded = optionItem.querySelector('[data-role="mcq-option-audio-recorded"]')?.value === 'true';
                     const audioName = optionItem.querySelector('.mcq-option-audio-name')?.textContent || '';
                     option.audioFileName = audioName || '';
+                    
+                    // Only add option if it has audio
+                    if (!option.audioUrl && !option.audioFileId) {
+                        return; // Skip options without audio
+                    }
                 }
 
                 options.push(option);
             });
 
-            questions.push({
-                id: questionItem.dataset.questionId || `q-${qIndex}`,
-                stem: stem,
-                answerType: answerType,
-                randomizeOptions: randomize,
-                options: options
-            });
+            // Only add question if it has at least one valid option or has a stem
+            if (stem || options.length > 0) {
+                questions.push({
+                    id: questionItem.dataset.questionId || `q-${Date.now()}-${qIndex}`,
+                    stem: stem,
+                    answerType: answerType,
+                    randomizeOptions: randomize,
+                    options: options
+                });
+            }
         });
 
         return {
@@ -777,20 +807,30 @@ class McqManager {
     // Load MCQ data into block
     async loadMcqData(blockElement, data) {
         if (!blockElement || !data || !data.questions) return;
+        
+        // Check if already loading to prevent duplicate loads
+        if (blockElement.dataset.mcqLoading === 'true') {
+            return;
+        }
+        
+        blockElement.dataset.mcqLoading = 'true';
 
         const container = blockElement.querySelector('[data-role="mcq-container"]');
-        if (!container) return;
+        if (!container) {
+            delete blockElement.dataset.mcqLoading;
+            return;
+        }
 
-        // Clear existing questions
+        // Clear existing questions completely
         const questionsList = container.querySelector('[data-role="mcq-list"]');
         if (questionsList) {
             questionsList.innerHTML = '';
         }
 
-        // Load questions
+        // Load questions - skip default options since we're loading existing data
         for (let qIndex = 0; qIndex < data.questions.length; qIndex++) {
             const question = data.questions[qIndex];
-            await this.addQuestion(blockElement);
+            await this.addQuestion(blockElement, true);
             
             const questionItems = container.querySelectorAll('.mcq-question-item');
             const questionItem = questionItems[questionItems.length - 1];
@@ -891,6 +931,9 @@ class McqManager {
                 }
             }
         }
+        
+        // Mark loading as complete
+        delete blockElement.dataset.mcqLoading;
     }
 }
 
