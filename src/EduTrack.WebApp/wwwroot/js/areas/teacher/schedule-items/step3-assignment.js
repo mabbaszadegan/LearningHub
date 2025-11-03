@@ -464,12 +464,30 @@ class Step3AssignmentManager {
                 // Use API service if available
                 if (window.EduTrack?.API?.StudentGroup) {
                     const result = await window.EduTrack.API.StudentGroup.getStudents(group.id);
-                    students = result.success ? result.data : [];
+                    // Normalize both wrapped { success, data } and plain array responses
+                    if (Array.isArray(result)) {
+                        students = result;
+                    } else if (result && Array.isArray(result.data)) {
+                        students = result.data;
+                    } else if (result && result.success && result.data) {
+                        students = result.data;
+                    } else {
+                        students = [];
+                    }
                 } else {
                     const response = await fetch(`/Teacher/StudentGroup/GetStudents?groupId=${group.id}`);
                     if (response.ok) {
                         const result = await response.json();
-                        students = result.success ? result.data : [];
+                        // Controller currently returns a plain array; support both shapes
+                        if (Array.isArray(result)) {
+                            students = result;
+                        } else if (result && Array.isArray(result.data)) {
+                            students = result.data;
+                        } else if (result && result.success && result.data) {
+                            students = result.data;
+                        } else {
+                            students = [];
+                        }
                     } else {
                         students = [];
                     }
