@@ -20,6 +20,73 @@ class McqManager {
         // Delegate events using event delegation
         document.addEventListener('click', (e) => this.handleClick(e));
         document.addEventListener('change', (e) => this.handleChange(e));
+        document.addEventListener('input', (e) => this.handleInput(e));
+    }
+
+    handleInput(e) {
+        const target = e.target;
+        
+        // Handle stem text input changes - check for textarea with the role attribute
+        if (target.matches('textarea[data-role="mcq-stem-text"]')) {
+            this.onStemTextChange(target.closest('.mcq-question-item'));
+        }
+        
+        // Handle option text input changes
+        if (target.matches('input[data-role="mcq-option-text"], .mcq-option-text-input')) {
+            this.onOptionTextChange(target.closest('.mcq-option-item'));
+        }
+    }
+
+    onStemTextChange(questionItem) {
+        if (!questionItem) return;
+        
+        // Trigger content update for the parent block
+        const blockElement = questionItem.closest('.content-block[data-type="multipleChoice"]');
+        this.triggerContentUpdate(blockElement);
+    }
+
+    onOptionTextChange(optionItem) {
+        if (!optionItem) return;
+        
+        // Trigger content update for the parent block
+        const blockElement = optionItem.closest('.content-block[data-type="multipleChoice"]');
+        this.triggerContentUpdate(blockElement);
+    }
+
+    triggerContentUpdate(blockElement) {
+        if (!blockElement) return;
+        
+        // Find the content manager and trigger update
+        const blockId = blockElement.dataset.blockId;
+        if (blockId) {
+            // Trigger block content changed event
+            const event = new CustomEvent('blockContentChanged', {
+                detail: {
+                    blockElement: blockElement,
+                    blockId: blockId
+                }
+            });
+            document.dispatchEvent(event);
+            
+            // Also try to update via content builder if available
+            if (window.step4ContentManager && typeof window.step4ContentManager.updateHiddenField === 'function') {
+                // Get the handler and collect fresh data
+                if (window.sharedContentBlockManager) {
+                    const handler = window.sharedContentBlockManager.getBlockManager('multipleChoice');
+                    if (handler && typeof handler.collectData === 'function') {
+                        const block = window.step4ContentManager.blocks.find(b => b.id === blockId);
+                        if (block) {
+                            const newData = handler.collectData(blockElement, block);
+                            if (newData) {
+                                block.data = { ...block.data, ...newData };
+                                blockElement.dataset.blockData = JSON.stringify(block.data);
+                            }
+                        }
+                    }
+                }
+                window.step4ContentManager.updateHiddenField();
+            }
+        }
     }
 
     handleClick(e) {
@@ -68,6 +135,35 @@ class McqManager {
                 e.preventDefault();
                 this.removeAudio(optionItem);
                 break;
+            case 'upload-stem-image':
+                e.preventDefault();
+                this.triggerStemImageUpload(questionItem);
+                break;
+            case 'upload-stem-audio':
+                e.preventDefault();
+                this.triggerStemAudioUpload(questionItem);
+                break;
+            case 'record-stem-audio':
+                e.preventDefault();
+                this.startStemRecording(questionItem);
+                break;
+            case 'stop-stem-recording':
+                e.preventDefault();
+                this.stopStemRecording();
+                break;
+            case 'remove-stem-audio':
+                e.preventDefault();
+                this.removeStemAudio(questionItem);
+                break;
+            case 'remove-stem-media':
+                e.preventDefault();
+                const mediaType = target.getAttribute('data-media-type');
+                this.removeStemMedia(questionItem, mediaType);
+                break;
+            case 'upload-stem-video':
+                e.preventDefault();
+                this.triggerStemVideoUpload(questionItem);
+                break;
         }
     }
 
@@ -82,6 +178,20 @@ class McqManager {
             this.handleAudioFileSelect(target);
         } else if (target.matches('.mcq-answer-type-select')) {
             this.updateAnswerType(target.closest('.mcq-question-item'), target.value);
+            this.triggerContentUpdate(target.closest('.content-block[data-type="multipleChoice"]'));
+        } else if (target.matches('.mcq-stem-media-type-select')) {
+            this.changeStemMediaType(target.closest('.mcq-question-item'), target.value);
+            this.triggerContentUpdate(target.closest('.content-block[data-type="multipleChoice"]'));
+        } else if (target.matches('.mcq-option-correct')) {
+            this.triggerContentUpdate(target.closest('.content-block[data-type="multipleChoice"]'));
+        } else if (target.matches('.mcq-randomize-checkbox')) {
+            this.triggerContentUpdate(target.closest('.content-block[data-type="multipleChoice"]'));
+        } else if (target.matches('.mcq-stem-image-file')) {
+            this.handleStemImageFileSelect(target);
+        } else if (target.matches('.mcq-stem-audio-file')) {
+            this.handleStemAudioFileSelect(target);
+        } else if (target.matches('.mcq-stem-video-file')) {
+            this.handleStemVideoFileSelect(target);
         }
     }
 
@@ -164,8 +274,114 @@ class McqManager {
             </div>
             <div class="mcq-question-body">
                 <div class="mcq-stem-field">
-                    <label>صورت سوال</label>
-                    <textarea class="mcq-stem-input" rows="2" placeholder="صورت سوال را وارد کنید..." data-role="mcq-stem"></textarea>
+                    <div class="mcq-stem-header">
+                        <label>صورت سوال</label>
+                        <div class="mcq-stem-type-selector">
+                            <select class="mcq-stem-type-select" data-role="mcq-stem-type">
+                                <option value="text">متن</option>
+                                <option value="image">تصویر</option>
+                                <option value="audio">صوت</option>
+                                <option value="video">ویدیو</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Text Stem - Always Visible -->
+                    <div class="mcq-stem-content mcq-stem-text-content" data-content-type="text">
+                        <textarea class="mcq-stem-input" rows="2" placeholder="صورت سوال را وارد کنید..." data-role="mcq-stem-text"></textarea>
+                    </div>
+                    
+                    <!-- Media Section - Optional -->
+                    <div class="mcq-stem-media-section">
+                        <label class="mcq-stem-media-label">افزودن رسانه (اختیاری)</label>
+                        <div class="mcq-stem-media-selector">
+                            <select class="mcq-stem-media-type-select" data-role="mcq-stem-media-type">
+                                <option value="">بدون رسانه</option>
+                                <option value="image">تصویر</option>
+                                <option value="audio">صوت</option>
+                                <option value="video">ویدیو</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Image Media -->
+                        <div class="mcq-stem-media-content mcq-stem-image-content" data-media-type="image" style="display: none;">
+                            <div class="mcq-stem-image-upload">
+                                <input type="file" class="mcq-stem-image-file" accept="image/*" data-role="mcq-stem-image-file" style="display: none;">
+                                <div class="mcq-stem-image-preview" data-role="mcq-stem-image-preview">
+                                    <div class="mcq-stem-image-placeholder">
+                                        <i class="fas fa-image"></i>
+                                        <span>برای آپلود تصویر کلیک کنید</span>
+                                    </div>
+                                </div>
+                                <button type="button" class="btn-mcq-upload-stem-image" data-action="upload-stem-image">
+                                    <i class="fas fa-upload"></i>
+                                    آپلود تصویر
+                                </button>
+                                <button type="button" class="btn-mcq-remove-stem-media" data-action="remove-stem-media" data-media-type="image" style="display: none;">
+                                    <i class="fas fa-times"></i>
+                                    حذف تصویر
+                                </button>
+                                <input type="hidden" class="mcq-stem-image-url" data-role="mcq-stem-image-url">
+                                <input type="hidden" class="mcq-stem-image-fileid" data-role="mcq-stem-image-fileid">
+                            </div>
+                        </div>
+                        
+                        <!-- Audio Media -->
+                        <div class="mcq-stem-media-content mcq-stem-audio-content" data-media-type="audio" style="display: none;">
+                        <div class="mcq-stem-audio-upload">
+                            <div class="mcq-stem-audio-controls">
+                                <button type="button" class="btn-mcq-upload-stem-audio" data-action="upload-stem-audio">
+                                    <i class="fas fa-upload"></i>
+                                    آپلود
+                                </button>
+                                <input type="file" class="mcq-stem-audio-file" accept="audio/*" data-role="mcq-stem-audio-file" style="display: none;">
+                                <button type="button" class="btn-mcq-record-stem-audio" data-action="record-stem-audio">
+                                    <i class="fas fa-microphone"></i>
+                                    ضبط
+                                </button>
+                                <button type="button" class="btn-mcq-stop-stem-recording" data-action="stop-stem-recording" disabled>
+                                    <i class="fas fa-stop"></i>
+                                </button>
+                            </div>
+                            <div class="mcq-stem-audio-preview" data-role="mcq-stem-audio-preview" style="display: none;">
+                                <audio controls class="mcq-stem-audio-player"></audio>
+                                <div class="mcq-stem-audio-info">
+                                    <span class="mcq-stem-audio-name"></span>
+                                    <button type="button" class="btn-mcq-remove-stem-media" data-action="remove-stem-media" data-media-type="audio">
+                                        <i class="fas fa-times"></i>
+                                        حذف
+                                    </button>
+                                </div>
+                            </div>
+                            <input type="hidden" class="mcq-stem-audio-url" data-role="mcq-stem-audio-url">
+                            <input type="hidden" class="mcq-stem-audio-fileid" data-role="mcq-stem-audio-fileid">
+                            <input type="hidden" class="mcq-stem-audio-recorded" data-role="mcq-stem-audio-recorded" value="false">
+                        </div>
+                    </div>
+                    
+                    <!-- Video Media -->
+                    <div class="mcq-stem-media-content mcq-stem-video-content" data-media-type="video" style="display: none;">
+                        <div class="mcq-stem-video-upload">
+                            <input type="file" class="mcq-stem-video-file" accept="video/*" data-role="mcq-stem-video-file" style="display: none;">
+                            <div class="mcq-stem-video-preview" data-role="mcq-stem-video-preview">
+                                <div class="mcq-stem-video-placeholder">
+                                    <i class="fas fa-video"></i>
+                                    <span>برای آپلود ویدیو کلیک کنید</span>
+                                </div>
+                            </div>
+                            <button type="button" class="btn-mcq-upload-stem-video" data-action="upload-stem-video">
+                                <i class="fas fa-upload"></i>
+                                آپلود ویدیو
+                            </button>
+                            <button type="button" class="btn-mcq-remove-stem-media" data-action="remove-stem-media" data-media-type="video" style="display: none;">
+                                <i class="fas fa-times"></i>
+                                حذف ویدیو
+                            </button>
+                            <input type="hidden" class="mcq-stem-video-url" data-role="mcq-stem-video-url">
+                            <input type="hidden" class="mcq-stem-video-fileid" data-role="mcq-stem-video-fileid">
+                        </div>
+                    </div>
+                </div>
                 </div>
                 <div class="mcq-settings-row">
                     <div class="mcq-setting">
@@ -719,6 +935,464 @@ class McqManager {
         if (fileInput) fileInput.value = '';
     }
 
+    // Stem media handling methods
+    changeStemMediaType(questionItem, mediaType) {
+        if (!questionItem) return;
+
+        // Hide all media content
+        const mediaContents = questionItem.querySelectorAll('.mcq-stem-media-content');
+        mediaContents.forEach(content => {
+            content.style.display = 'none';
+        });
+
+        // Show selected media type (if any)
+        if (mediaType) {
+            const selectedMediaContent = questionItem.querySelector(`.mcq-stem-media-content[data-media-type="${mediaType}"]`);
+            if (selectedMediaContent) {
+                selectedMediaContent.style.display = 'block';
+            }
+            questionItem.dataset.stemMediaType = mediaType;
+        } else {
+            delete questionItem.dataset.stemMediaType;
+        }
+    }
+
+    triggerStemImageUpload(questionItem) {
+        const fileInput = questionItem?.querySelector('.mcq-stem-image-file');
+        if (fileInput) {
+            fileInput.click();
+        }
+    }
+
+    async handleStemImageFileSelect(fileInput) {
+        const file = fileInput.files[0];
+        if (!file) return;
+
+        const questionItem = fileInput.closest('.mcq-question-item');
+        if (!questionItem) return;
+
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+            alert('لطفاً یک فایل تصویری انتخاب کنید');
+            return;
+        }
+
+        // Validate file size (10MB limit)
+        if (file.size > 10 * 1024 * 1024) {
+            alert('حجم فایل نباید بیش از 10 مگابایت باشد');
+            return;
+        }
+
+        try {
+            // Show preview
+            const preview = questionItem.querySelector('[data-role="mcq-stem-image-preview"]');
+            const reader = new FileReader();
+            
+            reader.onload = (e) => {
+                if (preview) {
+                    preview.innerHTML = `<img src="${e.target.result}" alt="Preview" style="max-width: 100%; max-height: 200px; border-radius: 4px;">`;
+                }
+            };
+            
+            reader.readAsDataURL(file);
+
+            // Upload file
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('type', 'image');
+
+            const response = await fetch(this.uploadUrl, {
+                method: 'POST',
+                headers: {
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                },
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (result.success && result.data) {
+                const urlInput = questionItem.querySelector('[data-role="mcq-stem-image-url"]');
+                const fileIdInput = questionItem.querySelector('[data-role="mcq-stem-image-fileid"]');
+                
+                const fileUrl = result.data.url || result.url || '';
+                const fileId = result.data.id || result.fileId || '';
+                const fileName = result.data.fileName || result.data.originalFileName || file.name;
+                
+                if (urlInput) urlInput.value = fileUrl;
+                if (fileIdInput) fileIdInput.value = String(fileId);
+                
+                // Store file info in dataset
+                questionItem.dataset.pendingStemImageFile = fileName;
+                questionItem.dataset.stemImageFileId = String(fileId);
+                questionItem.dataset.stemImageFileUrl = fileUrl;
+                
+                // Update preview
+                const preview = questionItem.querySelector('[data-role="mcq-stem-image-preview"]');
+                const removeBtn = questionItem.querySelector('[data-action="remove-stem-media"][data-media-type="image"]');
+                if (preview && fileUrl) {
+                    preview.innerHTML = `<img src="${fileUrl}" alt="Preview" style="max-width: 100%; max-height: 200px; border-radius: 4px;">`;
+                    if (removeBtn) removeBtn.style.display = 'inline-block';
+                }
+                
+                // Trigger content update
+                this.triggerContentUpdate(questionItem.closest('.content-block[data-type="multipleChoice"]'));
+            } else {
+                alert(result.message || 'خطا در آپلود تصویر');
+            }
+        } catch (error) {
+            console.error('Error uploading stem image:', error);
+            alert('خطا در آپلود تصویر');
+        }
+    }
+
+    triggerStemAudioUpload(questionItem) {
+        const fileInput = questionItem?.querySelector('.mcq-stem-audio-file');
+        if (fileInput) {
+            fileInput.click();
+        }
+    }
+
+    async handleStemAudioFileSelect(fileInput) {
+        const file = fileInput.files[0];
+        if (!file) return;
+
+        const questionItem = fileInput.closest('.mcq-question-item');
+        if (!questionItem) return;
+
+        // Validate file type
+        if (!file.type.startsWith('audio/') && !/\.(mp3|wav|ogg)$/i.test(file.name)) {
+            alert('لطفاً یک فایل صوتی انتخاب کنید');
+            return;
+        }
+
+        // Validate file size (10MB limit)
+        if (file.size > 10 * 1024 * 1024) {
+            alert('حجم فایل نباید بیش از 10 مگابایت باشد');
+            return;
+        }
+
+        await this._handleStemAudioFileUpload(questionItem, file, false);
+    }
+
+    async startStemRecording(questionItem) {
+        if (this.isRecording) {
+            alert('در حال ضبط صدا هستید. لطفاً ابتدا ضبط قبلی را متوقف کنید.');
+            return;
+        }
+
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const mediaRecorder = new MediaRecorder(stream);
+            const chunks = [];
+            
+            this.isRecording = true;
+            this.currentRecordingOption = questionItem;
+
+            // Store recorder and stream on the question item
+            questionItem._mediaRecorder = mediaRecorder;
+            questionItem._recordingStream = stream;
+            questionItem._recordingChunks = chunks;
+
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0) {
+                    chunks.push(event.data);
+                }
+            };
+
+            mediaRecorder.onstop = async () => {
+                const blob = new Blob(chunks, { type: 'audio/wav' });
+                const file = new File([blob], `recording_${Date.now()}.wav`, { type: 'audio/wav' });
+                
+                // Stop stream tracks
+                stream.getTracks().forEach(t => t.stop());
+                
+                // Upload the recorded file
+                await this._handleStemAudioFileUpload(questionItem, file, true);
+                
+                // Cleanup
+                this.isRecording = false;
+                this.currentRecordingOption = null;
+                delete questionItem._mediaRecorder;
+                delete questionItem._recordingStream;
+                delete questionItem._recordingChunks;
+                
+                // Update UI
+                this.updateStemRecordingUI(questionItem, false);
+            };
+
+            mediaRecorder.start();
+            this.updateStemRecordingUI(questionItem, true);
+
+        } catch (error) {
+            console.error('Error starting stem recording:', error);
+            alert('خطا در شروع ضبط صدا. لطفاً دسترسی میکروفون را بررسی کنید.');
+            this.isRecording = false;
+            this.currentRecordingOption = null;
+        }
+    }
+
+    stopStemRecording() {
+        if (!this.isRecording || !this.currentRecordingOption) return;
+
+        const questionItem = this.currentRecordingOption;
+        const mediaRecorder = questionItem._mediaRecorder;
+        
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+            mediaRecorder.stop();
+        }
+    }
+
+    updateStemRecordingUI(questionItem, isRecording) {
+        if (!questionItem) return;
+
+        const recordBtn = questionItem.querySelector('[data-action="record-stem-audio"]');
+        const stopBtn = questionItem.querySelector('[data-action="stop-stem-recording"]');
+        const uploadBtn = questionItem.querySelector('[data-action="upload-stem-audio"]');
+
+        if (isRecording) {
+            if (recordBtn) recordBtn.disabled = true;
+            if (stopBtn) stopBtn.disabled = false;
+            if (uploadBtn) uploadBtn.disabled = true;
+        } else {
+            if (recordBtn) recordBtn.disabled = false;
+            if (stopBtn) stopBtn.disabled = true;
+            if (uploadBtn) uploadBtn.disabled = false;
+        }
+    }
+
+    async _handleStemAudioFileUpload(questionItem, file, isRecorded = false) {
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('type', 'audio');
+
+            const response = await fetch(this.uploadUrl, {
+                method: 'POST',
+                headers: {
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                },
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (result.success && result.data) {
+                const fileUrl = result.data.url || result.url || '';
+                const fileId = result.data.id || result.fileId || '';
+                const fileName = result.data.fileName || result.data.originalFileName || file.name || '';
+                
+                this.showStemAudioPreview(questionItem, fileUrl, fileName, isRecorded);
+                
+                const urlInput = questionItem.querySelector('[data-role="mcq-stem-audio-url"]');
+                const fileIdInput = questionItem.querySelector('[data-role="mcq-stem-audio-fileid"]');
+                const recordedInput = questionItem.querySelector('[data-role="mcq-stem-audio-recorded"]');
+                
+                if (urlInput) urlInput.value = fileUrl;
+                if (fileIdInput) fileIdInput.value = String(fileId || '');
+                if (recordedInput) recordedInput.value = isRecorded ? 'true' : 'false';
+                
+                // Store in dataset for easy access
+                questionItem.dataset.stemAudioFileId = String(fileId || '');
+                questionItem.dataset.stemAudioFileUrl = fileUrl;
+                
+                // Trigger content update
+                this.triggerContentUpdate(questionItem.closest('.content-block[data-type="multipleChoice"]'));
+            } else {
+                alert(result.message || 'خطا در آپلود فایل صوتی');
+            }
+        } catch (error) {
+            console.error('Error uploading stem audio:', error);
+            alert('خطا در آپلود فایل صوتی');
+        }
+    }
+
+    showStemAudioPreview(questionItem, url, fileName, isRecorded) {
+        if (!questionItem) return;
+
+        const preview = questionItem.querySelector('[data-role="mcq-stem-audio-preview"]');
+        const controls = questionItem.querySelector('.mcq-stem-audio-controls');
+
+        if (preview && url) {
+            const player = preview.querySelector('.mcq-stem-audio-player');
+            const nameSpan = preview.querySelector('.mcq-stem-audio-name');
+
+            if (player) {
+                player.src = url;
+                player.style.display = 'block';
+            }
+            if (nameSpan) {
+                nameSpan.textContent = fileName || (isRecorded ? 'ضبط صوتی' : 'فایل صوتی');
+            }
+
+            preview.style.display = 'block';
+        }
+
+        if (controls) {
+            controls.style.display = 'flex';
+        }
+    }
+
+    removeStemAudio(questionItem) {
+        if (!questionItem) return;
+        this.removeStemMedia(questionItem, 'audio');
+    }
+
+    removeStemMedia(questionItem, mediaType) {
+        if (!questionItem || !mediaType) return;
+
+        if (mediaType === 'image') {
+            const preview = questionItem.querySelector('[data-role="mcq-stem-image-preview"]');
+            const urlInput = questionItem.querySelector('[data-role="mcq-stem-image-url"]');
+            const fileIdInput = questionItem.querySelector('[data-role="mcq-stem-image-fileid"]');
+            const fileInput = questionItem.querySelector('.mcq-stem-image-file');
+            const removeBtn = questionItem.querySelector('[data-action="remove-stem-media"][data-media-type="image"]');
+
+            if (preview) {
+                preview.innerHTML = '<div class="mcq-stem-image-placeholder"><i class="fas fa-image"></i><span>برای آپلود تصویر کلیک کنید</span></div>';
+            }
+            if (urlInput) urlInput.value = '';
+            if (fileIdInput) fileIdInput.value = '';
+            if (fileInput) fileInput.value = '';
+            if (removeBtn) removeBtn.style.display = 'none';
+            delete questionItem.dataset.stemImageFileId;
+            delete questionItem.dataset.stemImageFileUrl;
+            delete questionItem.dataset.pendingStemImageFile;
+        } else if (mediaType === 'audio') {
+            const preview = questionItem.querySelector('[data-role="mcq-stem-audio-preview"]');
+            const controls = questionItem.querySelector('.mcq-stem-audio-controls');
+            const urlInput = questionItem.querySelector('[data-role="mcq-stem-audio-url"]');
+            const fileIdInput = questionItem.querySelector('[data-role="mcq-stem-audio-fileid"]');
+            const recordedInput = questionItem.querySelector('[data-role="mcq-stem-audio-recorded"]');
+            const fileInput = questionItem.querySelector('.mcq-stem-audio-file');
+
+            if (preview) preview.style.display = 'none';
+            if (controls) controls.style.display = 'flex';
+            if (urlInput) urlInput.value = '';
+            if (fileIdInput) fileIdInput.value = '';
+            if (recordedInput) recordedInput.value = 'false';
+            if (fileInput) fileInput.value = '';
+            delete questionItem.dataset.stemAudioFileId;
+            delete questionItem.dataset.stemAudioFileUrl;
+        } else if (mediaType === 'video') {
+            const preview = questionItem.querySelector('[data-role="mcq-stem-video-preview"]');
+            const urlInput = questionItem.querySelector('[data-role="mcq-stem-video-url"]');
+            const fileIdInput = questionItem.querySelector('[data-role="mcq-stem-video-fileid"]');
+            const fileInput = questionItem.querySelector('.mcq-stem-video-file');
+            const removeBtn = questionItem.querySelector('[data-action="remove-stem-media"][data-media-type="video"]');
+
+            if (preview) {
+                preview.innerHTML = '<div class="mcq-stem-video-placeholder"><i class="fas fa-video"></i><span>برای آپلود ویدیو کلیک کنید</span></div>';
+            }
+            if (urlInput) urlInput.value = '';
+            if (fileIdInput) fileIdInput.value = '';
+            if (fileInput) fileInput.value = '';
+            if (removeBtn) removeBtn.style.display = 'none';
+            delete questionItem.dataset.stemVideoFileId;
+            delete questionItem.dataset.stemVideoFileUrl;
+            delete questionItem.dataset.pendingStemVideoFile;
+        }
+
+        // Reset media type selector
+        const mediaTypeSelect = questionItem.querySelector('[data-role="mcq-stem-media-type"]');
+        if (mediaTypeSelect) {
+            mediaTypeSelect.value = '';
+            this.changeStemMediaType(questionItem, '');
+        }
+
+        // Trigger content update
+        this.triggerContentUpdate(questionItem.closest('.content-block[data-type="multipleChoice"]'));
+    }
+
+    triggerStemVideoUpload(questionItem) {
+        const fileInput = questionItem?.querySelector('.mcq-stem-video-file');
+        if (fileInput) {
+            fileInput.click();
+        }
+    }
+
+    async handleStemVideoFileSelect(fileInput) {
+        const file = fileInput.files[0];
+        if (!file) return;
+
+        const questionItem = fileInput.closest('.mcq-question-item');
+        if (!questionItem) return;
+
+        // Validate file type
+        if (!file.type.startsWith('video/')) {
+            alert('لطفاً یک فایل ویدیویی انتخاب کنید');
+            return;
+        }
+
+        // Validate file size (50MB limit for video)
+        if (file.size > 50 * 1024 * 1024) {
+            alert('حجم فایل نباید بیش از 50 مگابایت باشد');
+            return;
+        }
+
+        try {
+            // Show preview
+            const preview = questionItem.querySelector('[data-role="mcq-stem-video-preview"]');
+            const reader = new FileReader();
+            
+            reader.onload = (e) => {
+                if (preview) {
+                    preview.innerHTML = `<video src="${e.target.result}" controls style="max-width: 100%; max-height: 300px; border-radius: 4px;"></video>`;
+                }
+            };
+            
+            reader.readAsDataURL(file);
+
+            // Upload file
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('type', 'video');
+
+            const response = await fetch(this.uploadUrl, {
+                method: 'POST',
+                headers: {
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                },
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (result.success && result.data) {
+                const urlInput = questionItem.querySelector('[data-role="mcq-stem-video-url"]');
+                const fileIdInput = questionItem.querySelector('[data-role="mcq-stem-video-fileid"]');
+                
+                const fileUrl = result.data.url || result.url || '';
+                const fileId = result.data.id || result.fileId || '';
+                const fileName = result.data.fileName || result.data.originalFileName || file.name;
+                
+                if (urlInput) urlInput.value = fileUrl;
+                if (fileIdInput) fileIdInput.value = String(fileId);
+                
+                // Store file info in dataset
+                questionItem.dataset.pendingStemVideoFile = fileName;
+                questionItem.dataset.stemVideoFileId = String(fileId);
+                questionItem.dataset.stemVideoFileUrl = fileUrl;
+                
+                // Update preview
+                const preview = questionItem.querySelector('[data-role="mcq-stem-video-preview"]');
+                const removeBtn = questionItem.querySelector('[data-action="remove-stem-media"][data-media-type="video"]');
+                if (preview && fileUrl) {
+                    preview.innerHTML = `<video src="${fileUrl}" controls style="max-width: 100%; max-height: 300px; border-radius: 4px;"></video>`;
+                    if (removeBtn) removeBtn.style.display = 'inline-block';
+                }
+                
+                // Trigger content update
+                this.triggerContentUpdate(questionItem.closest('.content-block[data-type="multipleChoice"]'));
+            } else {
+                alert(result.message || 'خطا در آپلود ویدیو');
+            }
+        } catch (error) {
+            console.error('Error uploading stem video:', error);
+            alert('خطا در آپلود ویدیو');
+        }
+    }
+
     // Collect MCQ data from block
     collectMcqData(blockElement) {
         const container = blockElement?.querySelector('[data-role="mcq-container"]');
@@ -734,7 +1408,31 @@ class McqManager {
                 return;
             }
 
-            const stem = questionItem.querySelector('[data-role="mcq-stem"]')?.value?.trim() || '';
+            // Collect stem data - text is always required, media is optional
+            const stem = questionItem.querySelector('[data-role="mcq-stem-text"]')?.value?.trim() || '';
+            const stemMediaType = questionItem.querySelector('[data-role="mcq-stem-media-type"]')?.value || questionItem.dataset.stemMediaType || '';
+            const stemData = {
+                text: stem,
+                mediaType: stemMediaType || null
+            };
+
+            // Collect media data if media type is selected
+            if (stemMediaType === 'image') {
+                stemData.imageUrl = questionItem.querySelector('[data-role="mcq-stem-image-url"]')?.value || questionItem.dataset.stemImageFileUrl || '';
+                stemData.imageFileId = questionItem.querySelector('[data-role="mcq-stem-image-fileid"]')?.value || questionItem.dataset.stemImageFileId || '';
+                stemData.imageFileName = questionItem.dataset.pendingStemImageFile || '';
+            } else if (stemMediaType === 'audio') {
+                stemData.audioUrl = questionItem.querySelector('[data-role="mcq-stem-audio-url"]')?.value || questionItem.dataset.stemAudioFileUrl || '';
+                stemData.audioFileId = questionItem.querySelector('[data-role="mcq-stem-audio-fileid"]')?.value || questionItem.dataset.stemAudioFileId || '';
+                stemData.isRecorded = questionItem.querySelector('[data-role="mcq-stem-audio-recorded"]')?.value === 'true';
+                const audioName = questionItem.querySelector('.mcq-stem-audio-name')?.textContent || '';
+                stemData.audioFileName = audioName || '';
+            } else if (stemMediaType === 'video') {
+                stemData.videoUrl = questionItem.querySelector('[data-role="mcq-stem-video-url"]')?.value || questionItem.dataset.stemVideoFileUrl || '';
+                stemData.videoFileId = questionItem.querySelector('[data-role="mcq-stem-video-fileid"]')?.value || questionItem.dataset.stemVideoFileId || '';
+                stemData.videoFileName = questionItem.dataset.pendingStemVideoFile || '';
+            }
+
             const answerType = questionItem.querySelector('[data-role="mcq-answer-type"]')?.value || 'single';
             const randomize = questionItem.querySelector('[data-role="mcq-randomize"]')?.checked || false;
 
@@ -787,11 +1485,12 @@ class McqManager {
                 options.push(option);
             });
 
-            // Only add question if it has at least one valid option or has a stem
+            // Only add question if it has at least one valid option or has a stem (text)
             if (stem || options.length > 0) {
                 questions.push({
                     id: questionItem.dataset.questionId || `q-${Date.now()}-${qIndex}`,
                     stem: stem,
+                    stemData: stemData,
                     answerType: answerType,
                     randomizeOptions: randomize,
                     options: options
@@ -836,12 +1535,101 @@ class McqManager {
             const questionItem = questionItems[questionItems.length - 1];
 
             if (questionItem) {
-                // Set question data
-                const stemInput = questionItem.querySelector('[data-role="mcq-stem"]');
+                // Set question stem text (always required)
+                const stemTextInput = questionItem.querySelector('[data-role="mcq-stem-text"]');
+                if (stemTextInput) {
+                    const stemValue = question.stem || (question.stemData?.text || '');
+                    stemTextInput.value = stemValue;
+                }
+                
+                // Set stem media (optional)
+                const stemData = question.stemData || {};
+                const stemMediaType = stemData.mediaType || '';
+                const stemMediaTypeSelect = questionItem.querySelector('[data-role="mcq-stem-media-type"]');
+                
+                if (stemMediaTypeSelect) {
+                    stemMediaTypeSelect.value = stemMediaType || '';
+                    if (stemMediaType) {
+                        this.changeStemMediaType(questionItem, stemMediaType);
+                    }
+                }
+                
+                // Set stem media content based on type
+                if (stemMediaType === 'image' && stemData) {
+                    const urlInput = questionItem.querySelector('[data-role="mcq-stem-image-url"]');
+                    const fileIdInput = questionItem.querySelector('[data-role="mcq-stem-image-fileid"]');
+                    
+                    const imageUrl = stemData.imageUrl || '';
+                    const imageFileId = stemData.imageFileId ? String(stemData.imageFileId) : '';
+                    const imageFileName = stemData.imageFileName || '';
+                    
+                    if (urlInput) urlInput.value = imageUrl;
+                    if (fileIdInput) fileIdInput.value = imageFileId;
+                    
+                    // Store in dataset
+                    if (imageFileId) questionItem.dataset.stemImageFileId = imageFileId;
+                    if (imageUrl) questionItem.dataset.stemImageFileUrl = imageUrl;
+                    if (imageFileName) questionItem.dataset.pendingStemImageFile = imageFileName;
+                    
+                    // Show preview
+                    if (imageUrl) {
+                        const preview = questionItem.querySelector('[data-role="mcq-stem-image-preview"]');
+                        const removeBtn = questionItem.querySelector('[data-action="remove-stem-media"][data-media-type="image"]');
+                        if (preview) {
+                            preview.innerHTML = `<img src="${imageUrl}" alt="Preview" style="max-width: 100%; max-height: 200px; border-radius: 4px;">`;
+                            if (removeBtn) removeBtn.style.display = 'inline-block';
+                        }
+                    }
+                } else if (stemMediaType === 'audio' && stemData) {
+                    const urlInput = questionItem.querySelector('[data-role="mcq-stem-audio-url"]');
+                    const fileIdInput = questionItem.querySelector('[data-role="mcq-stem-audio-fileid"]');
+                    const recordedInput = questionItem.querySelector('[data-role="mcq-stem-audio-recorded"]');
+                    
+                    const audioUrl = stemData.audioUrl || '';
+                    const audioFileId = stemData.audioFileId ? String(stemData.audioFileId) : '';
+                    const audioFileName = stemData.audioFileName || '';
+                    
+                    if (urlInput) urlInput.value = audioUrl;
+                    if (fileIdInput) fileIdInput.value = audioFileId;
+                    if (recordedInput) recordedInput.value = stemData.isRecorded ? 'true' : 'false';
+                    
+                    // Store in dataset
+                    if (audioFileId) questionItem.dataset.stemAudioFileId = audioFileId;
+                    if (audioUrl) questionItem.dataset.stemAudioFileUrl = audioUrl;
+                    
+                    // Show preview
+                    if (audioUrl) {
+                        this.showStemAudioPreview(questionItem, audioUrl, audioFileName, stemData.isRecorded || false);
+                    }
+                } else if (stemMediaType === 'video' && stemData) {
+                    const urlInput = questionItem.querySelector('[data-role="mcq-stem-video-url"]');
+                    const fileIdInput = questionItem.querySelector('[data-role="mcq-stem-video-fileid"]');
+                    
+                    const videoUrl = stemData.videoUrl || '';
+                    const videoFileId = stemData.videoFileId ? String(stemData.videoFileId) : '';
+                    const videoFileName = stemData.videoFileName || '';
+                    
+                    if (urlInput) urlInput.value = videoUrl;
+                    if (fileIdInput) fileIdInput.value = videoFileId;
+                    
+                    // Store in dataset
+                    if (videoFileId) questionItem.dataset.stemVideoFileId = videoFileId;
+                    if (videoUrl) questionItem.dataset.stemVideoFileUrl = videoUrl;
+                    if (videoFileName) questionItem.dataset.pendingStemVideoFile = videoFileName;
+                    
+                    // Show preview
+                    if (videoUrl) {
+                        const preview = questionItem.querySelector('[data-role="mcq-stem-video-preview"]');
+                        if (preview) {
+                            preview.innerHTML = `<video src="${videoUrl}" controls style="max-width: 100%; max-height: 300px; border-radius: 4px;"></video>`;
+                        }
+                    }
+                }
+                
+                // Set answer type and randomize
                 const answerTypeSelect = questionItem.querySelector('[data-role="mcq-answer-type"]');
                 const randomizeCheckbox = questionItem.querySelector('[data-role="mcq-randomize"]');
 
-                if (stemInput) stemInput.value = question.stem || '';
                 if (answerTypeSelect) answerTypeSelect.value = question.answerType || 'single';
                 if (randomizeCheckbox) randomizeCheckbox.checked = question.randomizeOptions || false;
 

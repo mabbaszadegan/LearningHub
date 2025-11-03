@@ -14,7 +14,103 @@
     <div class="mcq-question-body">
         <div class="mcq-stem-field">
             <label>صورت سوال</label>
-            <textarea class="mcq-stem-input" rows="2" placeholder="صورت سوال را وارد کنید..." data-role="mcq-stem"></textarea>
+            
+            <!-- Text Stem - Always Visible -->
+            <div class="mcq-stem-content mcq-stem-text-content" data-content-type="text">
+                <textarea class="mcq-stem-input" rows="2" placeholder="صورت سوال را وارد کنید..." data-role="mcq-stem-text"></textarea>
+            </div>
+            
+            <!-- Media Section - Optional -->
+            <div class="mcq-stem-media-section">
+                <label class="mcq-stem-media-label">افزودن رسانه (اختیاری)</label>
+                <div class="mcq-stem-media-selector">
+                    <select class="mcq-stem-media-type-select" data-role="mcq-stem-media-type">
+                        <option value="">بدون رسانه</option>
+                        <option value="image">تصویر</option>
+                        <option value="audio">صوت</option>
+                        <option value="video">ویدیو</option>
+                    </select>
+                </div>
+                
+                <!-- Image Media -->
+                <div class="mcq-stem-media-content mcq-stem-image-content" data-media-type="image" style="display: none;">
+                    <div class="mcq-stem-image-upload">
+                        <input type="file" class="mcq-stem-image-file" accept="image/*" data-role="mcq-stem-image-file" style="display: none;">
+                        <div class="mcq-stem-image-preview" data-role="mcq-stem-image-preview">
+                            <div class="mcq-stem-image-placeholder">
+                                <i class="fas fa-image"></i>
+                                <span>برای آپلود تصویر کلیک کنید</span>
+                            </div>
+                        </div>
+                        <button type="button" class="btn-mcq-upload-stem-image" data-action="upload-stem-image">
+                            <i class="fas fa-upload"></i>
+                            آپلود تصویر
+                        </button>
+                        <button type="button" class="btn-mcq-remove-stem-media" data-action="remove-stem-media" data-media-type="image" style="display: none;">
+                            <i class="fas fa-times"></i>
+                            حذف تصویر
+                        </button>
+                        <input type="hidden" class="mcq-stem-image-url" data-role="mcq-stem-image-url">
+                        <input type="hidden" class="mcq-stem-image-fileid" data-role="mcq-stem-image-fileid">
+                    </div>
+                </div>
+                
+                <!-- Audio Media -->
+                <div class="mcq-stem-media-content mcq-stem-audio-content" data-media-type="audio" style="display: none;">
+                    <div class="mcq-stem-audio-upload">
+                        <div class="mcq-stem-audio-controls">
+                            <button type="button" class="btn-mcq-upload-stem-audio" data-action="upload-stem-audio">
+                                <i class="fas fa-upload"></i>
+                                آپلود
+                            </button>
+                            <input type="file" class="mcq-stem-audio-file" accept="audio/*" data-role="mcq-stem-audio-file" style="display: none;">
+                            <button type="button" class="btn-mcq-record-stem-audio" data-action="record-stem-audio">
+                                <i class="fas fa-microphone"></i>
+                                ضبط
+                            </button>
+                            <button type="button" class="btn-mcq-stop-stem-recording" data-action="stop-stem-recording" disabled>
+                                <i class="fas fa-stop"></i>
+                            </button>
+                        </div>
+                        <div class="mcq-stem-audio-preview" data-role="mcq-stem-audio-preview" style="display: none;">
+                            <audio controls class="mcq-stem-audio-player"></audio>
+                            <div class="mcq-stem-audio-info">
+                                <span class="mcq-stem-audio-name"></span>
+                                <button type="button" class="btn-mcq-remove-stem-media" data-action="remove-stem-media" data-media-type="audio">
+                                    <i class="fas fa-times"></i>
+                                    حذف
+                                </button>
+                            </div>
+                        </div>
+                        <input type="hidden" class="mcq-stem-audio-url" data-role="mcq-stem-audio-url">
+                        <input type="hidden" class="mcq-stem-audio-fileid" data-role="mcq-stem-audio-fileid">
+                        <input type="hidden" class="mcq-stem-audio-recorded" data-role="mcq-stem-audio-recorded" value="false">
+                    </div>
+                </div>
+                
+                <!-- Video Media -->
+                <div class="mcq-stem-media-content mcq-stem-video-content" data-media-type="video" style="display: none;">
+                    <div class="mcq-stem-video-upload">
+                        <input type="file" class="mcq-stem-video-file" accept="video/*" data-role="mcq-stem-video-file" style="display: none;">
+                        <div class="mcq-stem-video-preview" data-role="mcq-stem-video-preview">
+                            <div class="mcq-stem-video-placeholder">
+                                <i class="fas fa-video"></i>
+                                <span>برای آپلود ویدیو کلیک کنید</span>
+                            </div>
+                        </div>
+                        <button type="button" class="btn-mcq-upload-stem-video" data-action="upload-stem-video">
+                            <i class="fas fa-upload"></i>
+                            آپلود ویدیو
+                        </button>
+                        <button type="button" class="btn-mcq-remove-stem-media" data-action="remove-stem-media" data-media-type="video" style="display: none;">
+                            <i class="fas fa-times"></i>
+                            حذف ویدیو
+                        </button>
+                        <input type="hidden" class="mcq-stem-video-url" data-role="mcq-stem-video-url">
+                        <input type="hidden" class="mcq-stem-video-fileid" data-role="mcq-stem-video-fileid">
+                    </div>
+                </div>
+            </div>
         </div>
         <div class="mcq-settings-row">
             <div class="mcq-setting">
