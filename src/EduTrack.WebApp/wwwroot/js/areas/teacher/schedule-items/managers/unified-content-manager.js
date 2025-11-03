@@ -455,9 +455,14 @@ class UnifiedContentManager extends ContentBuilderBase {
             this.updateEmptyState();
             
             // Populate content fields after rendering with longer delay
+            // Increased delay to ensure all handlers are initialized and DOM is ready
             setTimeout(() => {
+                console.log('UnifiedContentManager: Starting populateBlockContent', {
+                    blocksCount: this.blocks.length,
+                    blocks: this.blocks.map(b => ({ id: b.id, type: b.type, hasData: !!b.data }))
+                });
                 this.populateBlockContent();
-            }, 500);
+            }, 800);
             
             this.isLoadingExistingContent = false;
 
@@ -524,6 +529,30 @@ class UnifiedContentManager extends ContentBuilderBase {
 
     updateStep4Content() {
         this.updateHiddenField();
+    }
+
+    populateBlockByType(blockElement, block) {
+        // For question type blocks, try to use handler's loadData method
+        if (this.isQuestionTypeBlock(block.type)) {
+            const handler = this.getHandler(block.type);
+            if (handler && typeof handler.loadData === 'function') {
+                console.log('UnifiedContentManager: populateBlockByType for', block.type, {
+                    blockId: block.id,
+                    hasData: !!block.data,
+                    handler: handler.constructor.name
+                });
+                // Load data using handler's loadData method
+                handler.loadData(blockElement, block).catch(error => {
+                    console.error('UnifiedContentManager: Error loading block data:', error);
+                });
+                return;
+            } else {
+                console.warn('UnifiedContentManager: No handler or loadData method found for', block.type);
+            }
+        }
+        
+        // Fall back to base class implementation
+        super.populateBlockByType(blockElement, block);
     }
 }
 

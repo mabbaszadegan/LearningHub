@@ -1555,6 +1555,19 @@ class ModernScheduleItemFormManager {
                 // Store the loaded data for step managers to use
                 this.existingItemData = result.data;
                 
+                // Update contentJson hidden field with fresh data from server
+                if (result.data.contentJson) {
+                    const contentJsonField = document.getElementById('contentJson');
+                    if (contentJsonField) {
+                        // Ensure it's a string
+                        const contentJsonValue = typeof result.data.contentJson === 'string' 
+                            ? result.data.contentJson 
+                            : JSON.stringify(result.data.contentJson);
+                        contentJsonField.value = contentJsonValue;
+                        console.log('Updated contentJson field from server data');
+                    }
+                }
+                
                 // Update current step from server data
                 if (result.data.currentStep) {
                     this.currentStep = result.data.currentStep;
@@ -1621,10 +1634,19 @@ class ModernScheduleItemFormManager {
                     }, 100);
                 }
                 
-                if (window.step4Manager && typeof window.step4Manager.loadStepData === 'function') {
+                // Try unifiedContentManager first (preferred), then step4Manager as fallback
+                const step4Manager = window.unifiedContentManager || window.step4Manager;
+                if (step4Manager && typeof step4Manager.loadStepData === 'function') {
                     setTimeout(() => {
-                        window.step4Manager.loadStepData();
-                    }, 200); // Increased delay to ensure step 3 loads first
+                        console.log('Reloading step 4 content after save...');
+                        step4Manager.loadStepData().then(() => {
+                            console.log('Step 4 content reloaded successfully');
+                        }).catch(error => {
+                            console.error('Error reloading step 4 content:', error);
+                        });
+                    }, 300); // Increased delay to ensure step 3 loads first and DOM is ready
+                } else {
+                    console.warn('No step 4 manager found for reloading content');
                 }
                 break;
         }

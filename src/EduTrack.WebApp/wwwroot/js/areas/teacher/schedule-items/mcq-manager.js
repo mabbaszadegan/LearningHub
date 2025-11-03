@@ -1505,11 +1505,34 @@ class McqManager {
 
     // Load MCQ data into block
     async loadMcqData(blockElement, data) {
-        if (!blockElement || !data || !data.questions) return;
+        if (!blockElement || !data || !data.questions) {
+            console.warn('McqManager: loadMcqData called with invalid parameters', {
+                hasBlockElement: !!blockElement,
+                hasData: !!data,
+                hasQuestions: !!(data && data.questions)
+            });
+            return;
+        }
+        
+        console.log('McqManager: loadMcqData called', {
+            blockId: blockElement.dataset.blockId,
+            questionsCount: data.questions?.length || 0,
+            alreadyLoading: blockElement.dataset.mcqLoading === 'true'
+        });
         
         // Check if already loading to prevent duplicate loads
         if (blockElement.dataset.mcqLoading === 'true') {
-            return;
+            console.warn('McqManager: Already loading, waiting...');
+            // Wait for current load to complete, but with a timeout
+            let waitCount = 0;
+            while (blockElement.dataset.mcqLoading === 'true' && waitCount < 20) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+                waitCount++;
+            }
+            // If still loading after timeout, proceed anyway
+            if (blockElement.dataset.mcqLoading === 'true') {
+                console.warn('McqManager: Timeout waiting for previous load, proceeding...');
+            }
         }
         
         blockElement.dataset.mcqLoading = 'true';
