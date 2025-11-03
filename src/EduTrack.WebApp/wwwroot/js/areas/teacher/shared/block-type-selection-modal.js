@@ -206,8 +206,8 @@ window.BlockTypeSelectionModal = class BlockTypeSelectionModal {
         const configs = {
             'reminder': {
                 showRegularBlocks: true,
-                showQuestionBlocks: false,
-                questionTypeBlocks: [],
+                showQuestionBlocks: true,
+                questionTypeBlocks: ['multipleChoice', 'gapFill', 'ordering', 'matching', 'errorFinding'],
                 itemType: 'reminder'
             },
             'writing': {

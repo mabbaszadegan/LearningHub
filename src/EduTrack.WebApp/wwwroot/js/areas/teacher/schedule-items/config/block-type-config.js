@@ -6,8 +6,8 @@
 const BlockTypeConfig = {
     'reminder': {
         regularBlocks: ['text', 'image', 'video', 'audio', 'code'],
-        questionBlocks: [],
-        questionTypeBlocks: []
+        questionBlocks: ['questionText', 'questionImage', 'questionVideo', 'questionAudio'],
+        questionTypeBlocks: ['multipleChoice', 'gapFill', 'ordering', 'matching', 'errorFinding']
     },
     'writing': {
         regularBlocks: [],
