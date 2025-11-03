@@ -368,7 +368,3 @@ wwwroot/js/areas/teacher/schedule-items/
 5. **Performance**: Lazy loading برای handlers
 6. **Accessibility**: ARIA labels و keyboard navigation
 7. **RTL Support**: همه استایل‌ها RTL-ready باشند
-
-### To-dos
-
-- [ ] 

@@ -387,6 +387,11 @@ class OrderingHandler {
                         delete block.data.items[idx].fileName;
                         delete block.data.items[idx].fileUrl;
                         delete block.data.items[idx].mimeType;
+                        // Also clean DOM attributes
+                        li.removeAttribute('data-file-id');
+                        li.removeAttribute('data-file-name');
+                        li.removeAttribute('data-file-url');
+                        li.removeAttribute('data-mime');
                     }
                 }
             }
@@ -422,6 +427,14 @@ class OrderingHandler {
 
         // Initial preview render
         this._updatePreview(li, item.type, (item.type === 'text') ? (item.value || '') : (item.fileUrl || ''));
+
+        // Set file data attributes if item already has file information (for existing items)
+        if (item.type !== 'text' && item.fileId) {
+            li.setAttribute('data-file-id', String(item.fileId));
+            if (item.fileName) li.setAttribute('data-file-name', item.fileName);
+            if (item.fileUrl) li.setAttribute('data-file-url', item.fileUrl);
+            if (item.mimeType) li.setAttribute('data-mime', item.mimeType);
+        }
 
         return li;
     }

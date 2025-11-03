@@ -68,3 +68,4 @@ const ContentMigrator = {
 if (typeof window !== 'undefined') {
     window.ContentMigrator = ContentMigrator;
 }
+
