@@ -74,20 +74,8 @@ class GapFillHandler {
         // Setup settings handlers
         this.setupSettingsHandlers(blockElement);
 
-        // Render existing gaps after a delay to ensure CKEditor is ready
-        setTimeout(() => {
-        if (block.data && block.data.gaps) {
-            this.renderGaps(blockElement, block);
-            } else {
-                // Try to extract gaps from content
-                this.updateGapsList(blockElement);
-            }
-        }, 600);
-
-        // Load media if exists
-        if (block.data) {
-            this.loadMedia(blockElement, block.data);
-        }
+        // Note: Data loading is handled by loadData method which is called by populateBlockContent
+        // We don't load data here in initialize to avoid duplicate loading
     }
 
     setupCKEditorChangeListener(blockElement, editorEl) {
@@ -353,6 +341,158 @@ class GapFillHandler {
         }
     }
 
+    async loadData(blockElement, block) {
+        if (!blockElement) {
+            console.warn('GapFillHandler: loadData called with invalid blockElement');
+            return;
+        }
+
+        // Get block data from block parameter or from dataset
+        let blockData = block?.data;
+        if (!blockData && blockElement.dataset.blockData) {
+            try {
+                blockData = JSON.parse(blockElement.dataset.blockData);
+                console.log('GapFillHandler: Loaded block data from dataset');
+            } catch (e) {
+                console.warn('GapFillHandler: Failed to parse block data from dataset', e);
+            }
+        }
+
+        // If still no block, try to construct it from element
+        if (!block && blockElement.dataset.blockId) {
+            block = {
+                id: blockElement.dataset.blockId,
+                type: blockElement.dataset.type || 'gapFill',
+                data: blockData
+            };
+        }
+
+        console.log('GapFillHandler: loadData called', {
+            blockId: block?.id || blockElement.dataset.blockId,
+            blockType: block?.type || 'gapFill',
+            hasData: !!blockData,
+            hasContent: !!(blockData && blockData.content),
+            hasGaps: !!(blockData && blockData.gaps),
+            gapsCount: blockData?.gaps?.length || 0
+        });
+
+        if (!blockData) {
+            console.warn('GapFillHandler: No block data to load');
+            return;
+        }
+
+        // Load CKEditor content
+        const editorEl = blockElement.querySelector('.ckeditor-editor');
+        if (editorEl && blockData.content) {
+            // Wait for CKEditor to be initialized
+            let attempts = 0;
+            const maxAttempts = 30;
+            const loadContent = async () => {
+                attempts++;
+                if (window.ckeditorManager) {
+                    const editor = window.ckeditorManager.editors.get(editorEl);
+                    if (editor) {
+                        try {
+                            editor.setData(blockData.content || '');
+                            console.log('GapFillHandler: CKEditor content loaded');
+                            
+                            // Update gaps list after content is loaded
+                            setTimeout(() => {
+                                this.updateGapsList(blockElement);
+                                this.populateGapsData(blockElement, blockData);
+                            }, 300);
+                        } catch (error) {
+                            console.error('GapFillHandler: Error setting CKEditor data:', error);
+                        }
+                    } else if (attempts < maxAttempts) {
+                        setTimeout(loadContent, 100);
+                    }
+                } else if (attempts < maxAttempts) {
+                    setTimeout(loadContent, 100);
+                }
+            };
+            
+            loadContent();
+        }
+
+        // Load media
+        if (blockData.fileUrl || blockData.fileId) {
+            this.loadMedia(blockElement, blockData);
+        }
+
+        // Load settings
+        this.loadSettings(blockElement, blockData);
+
+        // Load gaps data (will be populated after gaps list is updated)
+        if (blockData.gaps && Array.isArray(blockData.gaps) && blockData.gaps.length > 0) {
+            // This will be called after updateGapsList
+            setTimeout(() => {
+                this.populateGapsData(blockElement, blockData);
+            }, 500);
+        }
+    }
+
+    loadSettings(blockElement, data) {
+        // Load answer type
+        const answerTypeSelect = blockElement.querySelector('[data-role="gf-answer-type"]');
+        if (answerTypeSelect && data.answerType) {
+            answerTypeSelect.value = data.answerType;
+        }
+
+        // Load case sensitive
+        const caseCheckbox = blockElement.querySelector('[data-role="gf-case"]');
+        if (caseCheckbox) {
+            caseCheckbox.checked = data.caseSensitive === true;
+        }
+
+        // Load show options
+        const showOptionsCheckbox = blockElement.querySelector('[data-role="gf-show-options"]');
+        if (showOptionsCheckbox) {
+            showOptionsCheckbox.checked = data.showOptions !== false; // Default to true
+        }
+
+        // Load points
+        const pointsSelect = blockElement.querySelector('[data-setting="points"]');
+        if (pointsSelect && data.points) {
+            pointsSelect.value = String(data.points);
+        }
+
+        // Load isRequired
+        const isRequiredCheckbox = blockElement.querySelector('[data-setting="isRequired"]');
+        if (isRequiredCheckbox) {
+            isRequiredCheckbox.checked = data.isRequired !== false; // Default to true
+        }
+    }
+
+    populateGapsData(blockElement, blockData) {
+        if (!blockData || !blockData.gaps || !Array.isArray(blockData.gaps)) {
+            return;
+        }
+
+        blockData.gaps.forEach(gap => {
+            const gapItem = blockElement.querySelector(`.gap-item[data-gap-index="${gap.index}"]`);
+            if (gapItem) {
+                const correctInput = gapItem.querySelector('[data-role="gf-correct"]');
+                const altsInput = gapItem.querySelector('[data-role="gf-alts"]');
+                const hintInput = gapItem.querySelector('[data-role="gf-hint"]');
+                
+                if (correctInput && gap.correctAnswer) {
+                    correctInput.value = gap.correctAnswer;
+                }
+                if (altsInput && gap.alternativeAnswers && gap.alternativeAnswers.length > 0) {
+                    // Handle both array and string formats
+                    const altsValue = Array.isArray(gap.alternativeAnswers) 
+                        ? gap.alternativeAnswers.join('، ')
+                        : gap.alternativeAnswers;
+                    altsInput.value = altsValue;
+                }
+                if (hintInput && gap.hint) {
+                    hintInput.value = gap.hint;
+                }
+            }
+        });
+    }
+
     renderGaps(blockElement, block) {
         // This method is called when loading existing data
         // First, update gaps list from content (to show all gaps found in text)
@@ -361,25 +501,8 @@ class GapFillHandler {
         // Then, if we have saved gap data, populate the input fields
         if (block && block.data && block.data.gaps && Array.isArray(block.data.gaps)) {
             setTimeout(() => {
-                block.data.gaps.forEach(gap => {
-                    const gapItem = blockElement.querySelector(`.gap-item[data-gap-index="${gap.index}"]`);
-                    if (gapItem) {
-                        const correctInput = gapItem.querySelector('[data-role="gf-correct"]');
-                        const altsInput = gapItem.querySelector('[data-role="gf-alts"]');
-                        const hintInput = gapItem.querySelector('[data-role="gf-hint"]');
-                        
-                        if (correctInput && gap.correctAnswer) {
-                            correctInput.value = gap.correctAnswer;
-                        }
-                        if (altsInput && gap.alternativeAnswers && gap.alternativeAnswers.length > 0) {
-                            altsInput.value = gap.alternativeAnswers.join('، ');
-                        }
-                        if (hintInput && gap.hint) {
-                            hintInput.value = gap.hint;
-                        }
-                    }
-                });
-            }, 200);
+                this.populateGapsData(blockElement, block.data);
+            }, 500);
         }
     }
 
