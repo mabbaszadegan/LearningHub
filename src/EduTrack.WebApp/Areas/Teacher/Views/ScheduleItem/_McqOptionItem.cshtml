@@ -6,15 +6,78 @@
     var inputType = isSingle ? "radio" : "checkbox";
 }
 
-<div class="mcq-option-item" data-option-index="@optionIndex">
-    <div class="mcq-option-input-group">
+<div class="mcq-option-item" data-option-index="@optionIndex" data-option-type="text">
+    <div class="mcq-option-header">
         <label class="mcq-option-label">
             <input type="@inputType" name="@inputName" class="mcq-option-correct" data-role="mcq-option-correct">
-            <input type="text" class="mcq-option-text" placeholder="متن گزینه..." data-role="mcq-option-text">
+            <span class="mcq-option-number">@(optionIndex + 1)</span>
         </label>
-        <button type="button" class="btn-mcq-remove-option" data-action="remove-option">
+        <div class="mcq-option-type-selector">
+            <select class="mcq-option-type-select" data-role="mcq-option-type">
+                <option value="text">متن</option>
+                <option value="image">تصویر</option>
+                <option value="audio">صوت</option>
+            </select>
+        </div>
+        <button type="button" class="btn-mcq-remove-option" data-action="remove-option" title="حذف گزینه">
             <i class="fas fa-times"></i>
         </button>
+    </div>
+    
+    <!-- Text Option -->
+    <div class="mcq-option-content mcq-option-text-content" data-content-type="text">
+        <input type="text" class="mcq-option-text-input form-control" placeholder="متن گزینه را وارد کنید..." data-role="mcq-option-text">
+    </div>
+    
+    <!-- Image Option -->
+    <div class="mcq-option-content mcq-option-image-content" data-content-type="image" style="display: none;">
+        <div class="mcq-option-image-upload">
+            <input type="file" class="mcq-option-image-file" accept="image/*" data-role="mcq-option-image-file" style="display: none;">
+            <div class="mcq-option-image-preview" data-role="mcq-option-image-preview">
+                <div class="mcq-option-image-placeholder">
+                    <i class="fas fa-image"></i>
+                    <span>برای آپلود تصویر کلیک کنید</span>
+                </div>
+            </div>
+            <button type="button" class="btn-mcq-upload-image" data-action="upload-image">
+                <i class="fas fa-upload"></i>
+                آپلود تصویر
+            </button>
+            <input type="hidden" class="mcq-option-image-url" data-role="mcq-option-image-url">
+            <input type="hidden" class="mcq-option-image-fileid" data-role="mcq-option-image-fileid">
+        </div>
+    </div>
+    
+    <!-- Audio Option -->
+    <div class="mcq-option-content mcq-option-audio-content" data-content-type="audio" style="display: none;">
+        <div class="mcq-option-audio-upload">
+            <div class="mcq-option-audio-controls">
+                <button type="button" class="btn-mcq-upload-audio" data-action="upload-audio">
+                    <i class="fas fa-upload"></i>
+                    آپلود
+                </button>
+                <input type="file" class="mcq-option-audio-file" accept="audio/*" data-role="mcq-option-audio-file" style="display: none;">
+                <button type="button" class="btn-mcq-record-audio" data-action="record-audio">
+                    <i class="fas fa-microphone"></i>
+                    ضبط
+                </button>
+                <button type="button" class="btn-mcq-stop-recording" data-action="stop-recording" disabled>
+                    <i class="fas fa-stop"></i>
+                </button>
+            </div>
+            <div class="mcq-option-audio-preview" data-role="mcq-option-audio-preview" style="display: none;">
+                <audio controls class="mcq-option-audio-player"></audio>
+                <div class="mcq-option-audio-info">
+                    <span class="mcq-option-audio-name"></span>
+                    <button type="button" class="btn-mcq-remove-audio" data-action="remove-audio">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            <input type="hidden" class="mcq-option-audio-url" data-role="mcq-option-audio-url">
+            <input type="hidden" class="mcq-option-audio-fileid" data-role="mcq-option-audio-fileid">
+            <input type="hidden" class="mcq-option-audio-recorded" data-role="mcq-option-audio-recorded" value="false">
+        </div>
     </div>
 </div>
 

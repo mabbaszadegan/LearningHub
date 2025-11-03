@@ -42,28 +42,28 @@ class MultipleChoiceHandler {
         return blockElement;
     }
 
-    initialize(blockElement, block) {
-        // Initialize MCQ questions if they exist
-        if (block.data && block.data.questions) {
-            // Load existing questions
+    async initialize(blockElement, block) {
+        // Load existing MCQ data if it exists
+        if (block.data && block.data.questions && window.mcqManager) {
+            try {
+                await window.mcqManager.loadMcqData(blockElement, block.data);
+            } catch (error) {
+                console.error('Error loading MCQ data:', error);
+            }
         }
-
-        // Setup event listeners
-        const addQuestionBtn = blockElement.querySelector('[data-action="mcq-add-question"]');
-        if (addQuestionBtn) {
-            addQuestionBtn.addEventListener('click', () => this.addQuestion(blockElement, block));
-        }
-    }
-
-    addQuestion(blockElement, block) {
-        // Add new MCQ question
-        // Implementation to be completed
     }
 
     collectData(blockElement, block) {
-        // Collect MCQ questions data
-        // Implementation to be completed
-        return block.data;
+        // Collect MCQ questions data using MCQ Manager
+        if (window.mcqManager) {
+            const mcqData = window.mcqManager.collectMcqData(blockElement);
+            return {
+                ...block.data,
+                ...mcqData
+            };
+        }
+        
+        return block.data || {};
     }
 }
 

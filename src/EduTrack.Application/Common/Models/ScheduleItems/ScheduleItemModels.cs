@@ -104,8 +104,21 @@ public class MultipleChoiceContent
 public class MultipleChoiceOption
 {
     public int Index { get; set; }
+    public string OptionType { get; set; } = "text"; // text, image, audio
     public string Text { get; set; } = string.Empty;
     public bool IsCorrect { get; set; }
+    
+    // For image options
+    public string? ImageUrl { get; set; }
+    public string? ImageFileId { get; set; }
+    public string? ImageFileName { get; set; }
+    
+    // For audio options
+    public string? AudioUrl { get; set; }
+    public string? AudioFileId { get; set; }
+    public string? AudioFileName { get; set; }
+    public bool IsRecorded { get; set; } = false;
+    public int? AudioDuration { get; set; } // in seconds
 }
 
 public class GapFillContent

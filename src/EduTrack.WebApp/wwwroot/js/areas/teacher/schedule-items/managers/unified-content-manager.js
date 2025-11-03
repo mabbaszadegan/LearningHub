@@ -393,7 +393,13 @@ class UnifiedContentManager extends ContentBuilderBase {
                     // Initialize handlers if they have an initialize method
                     setTimeout(() => {
                         if (handler.initialize) {
-                            handler.initialize(blockElement, block);
+                            // Handle both sync and async initialize methods
+                            const initResult = handler.initialize(blockElement, block);
+                            if (initResult && typeof initResult.then === 'function') {
+                                initResult.catch(error => {
+                                    console.error('Error initializing block:', error);
+                                });
+                            }
                         }
                     }, 100);
                 }
