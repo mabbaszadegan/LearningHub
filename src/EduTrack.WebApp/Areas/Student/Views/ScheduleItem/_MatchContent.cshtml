@@ -1,0 +1,63 @@
+@model object
+@using EduTrack.Application.Common.Models.ScheduleItems
+@{
+    var content = Model as MatchingContent;
+}
+
+<div class="match-content-container">
+    @if (content != null && content.LeftItems.Any() && content.RightItems.Any())
+    {
+        <div class="match-instructions">
+            <p>آیتم‌های ستون چپ را با آیتم‌های ستون راست تطبیق دهید.</p>
+        </div>
+        
+        <div class="match-game-area">
+            <div class="match-columns">
+                <div class="match-column match-left">
+                    <h5>ستون چپ</h5>
+                    <div class="match-items">
+                        @foreach (var item in content.LeftItems.OrderBy(i => i.Index))
+                        {
+                            <div class="match-item match-item-left" data-index="@item.Index" draggable="true">
+                                @item.Text
+                            </div>
+                        }
+                    </div>
+                </div>
+                
+                <div class="match-column match-right">
+                    <h5>ستون راست</h5>
+                    <div class="match-items">
+                        @foreach (var item in content.RightItems.OrderBy(i => i.Index))
+                        {
+                            <div class="match-item match-item-right" data-index="@item.Index" draggable="true">
+                                @item.Text
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+            
+            <div class="match-connections" id="match-connections">
+                <!-- Connections will be drawn here -->
+            </div>
+        </div>
+        
+        <div class="match-actions">
+            <button type="button" class="btn btn-primary" id="check-match">
+                <i class="fas fa-check"></i> بررسی پاسخ
+            </button>
+            <button type="button" class="btn btn-success" id="submit-match">
+                <i class="fas fa-paper-plane"></i> ارسال پاسخ
+            </button>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-warning">
+            <i class="fas fa-exclamation-triangle"></i>
+            محتوای تطبیقی یافت نشد.
+        </div>
+    }
+</div>
+

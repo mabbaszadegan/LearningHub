@@ -1,0 +1,77 @@
+@model object
+@using EduTrack.Application.Common.Models.ScheduleItems
+@{
+    var content = Model as AudioContent;
+}
+
+<div class="audio-content-container">
+    @if (content != null)
+    {
+        @if (!string.IsNullOrEmpty(content.Instruction))
+        {
+            <div class="audio-instruction">
+                <h4>دستورالعمل:</h4>
+                <p>@content.Instruction</p>
+            </div>
+        }
+        
+        @if (!string.IsNullOrEmpty(content.AudioUrl))
+        {
+            <div class="audio-player-section">
+                <h5>فایل صوتی:</h5>
+                <div class="audio-player-wrapper">
+                    <audio controls class="audio-player">
+                        <source src="@content.AudioUrl" type="audio/mpeg">
+                        مرورگر شما از پخش صدا پشتیبانی نمی‌کند.
+                    </audio>
+                </div>
+            </div>
+        }
+        
+        @if (content.AllowRecording)
+        {
+            <div class="audio-recording-section">
+                <h5>ضبط پاسخ:</h5>
+                @if (!string.IsNullOrEmpty(content.RecordingInstructions))
+                {
+                    <p class="recording-instructions">@content.RecordingInstructions</p>
+                }
+                
+                <div class="recording-controls">
+                    <button type="button" class="btn btn-danger" id="start-recording">
+                        <i class="fas fa-microphone"></i> شروع ضبط
+                    </button>
+                    <button type="button" class="btn btn-secondary" id="stop-recording" style="display: none;">
+                        <i class="fas fa-stop"></i> توقف ضبط
+                    </button>
+                    <button type="button" class="btn btn-info" id="play-recording" style="display: none;">
+                        <i class="fas fa-play"></i> پخش ضبط
+                    </button>
+                </div>
+                
+                <div id="recording-status" class="recording-status" style="display: none;">
+                    <span id="recording-time">00:00</span>
+                </div>
+                
+                <audio id="recorded-audio" controls style="display: none;"></audio>
+            </div>
+        }
+        
+        <div class="audio-actions">
+            <button type="button" class="btn btn-primary" id="save-audio-answer">
+                <i class="fas fa-save"></i> ذخیره پاسخ
+            </button>
+            <button type="button" class="btn btn-success" id="submit-audio-answer">
+                <i class="fas fa-paper-plane"></i> ارسال پاسخ
+            </button>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-warning">
+            <i class="fas fa-exclamation-triangle"></i>
+            محتوای صوتی یافت نشد.
+        </div>
+    }
+</div>
+

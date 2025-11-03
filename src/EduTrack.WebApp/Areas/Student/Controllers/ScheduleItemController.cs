@@ -4,11 +4,15 @@ using EduTrack.Application.Features.ScheduleItems.Queries;
 using EduTrack.Application.Features.TeachingPlan.Queries;
 using EduTrack.Application.Common.Models.StudySessions;
 using EduTrack.Application.Common.Models.TeachingPlans;
+using EduTrack.Application.Common.Models.ScheduleItems;
+using EduTrack.Domain.Enums;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using EduTrack.Domain.Entities;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 
 namespace EduTrack.WebApp.Areas.Student.Controllers;
 
@@ -78,31 +82,19 @@ public class ScheduleItemController : Controller
         var statisticsResult = await _mediator.Send(new GetStudySessionStatisticsQuery(currentUser.Id, id));
         var statistics = statisticsResult.IsSuccess ? statisticsResult.Value : new StudySessionStatisticsDto();
 
-        // Create a combined object for the view
-        var scheduleItemWithStats = new
-        {
-            Id = scheduleItem.Id,
-            TeachingPlanId = scheduleItem.TeachingPlanId,
-            CourseId = teachingPlan.CourseId,
-            Title = scheduleItem.Title,
-            Description = scheduleItem.Description,
-            ContentJson = scheduleItem.ContentJson,
-            Type = scheduleItem.Type,
-            CreatedAt = scheduleItem.CreatedAt,
-            UpdatedAt = scheduleItem.UpdatedAt,
-            StudyStatistics = statistics
-        };
-
         // Check if there's an active study session
         var activeSessionResult = await _mediator.Send(new GetActiveStudySessionQuery(currentUser.Id, id));
         var activeSession = activeSessionResult.IsSuccess ? activeSessionResult.Value : null;
 
+        // Parse content JSON based on type
+        var parsedContent = ParseContentJson(scheduleItem.ContentJson, scheduleItem.Type);
+
         ViewBag.ActiveSession = activeSession;
         ViewBag.CurrentUserId = currentUser.Id;
-        ViewBag.ScheduleItem = scheduleItemWithStats;
-        ViewBag.CourseId = teachingPlan.CourseId; // Add course ID for navigation
+        ViewBag.CourseId = teachingPlan.CourseId;
+        ViewBag.ParsedContent = parsedContent;
 
-        return View("~/Areas/Student/Views/EducationalContent/Study.cshtml", scheduleItemWithStats);
+        return View(scheduleItem);
     }
 
     /// <summary>
@@ -163,5 +155,40 @@ public class ScheduleItemController : Controller
         }
 
         return Json(new { success = true, statistics = result.Value });
+    }
+
+    private static object? ParseContentJson(string contentJson, ScheduleItemType type)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(contentJson))
+            {
+                return null;
+            }
+
+            var jsonSettings = new JsonSerializerSettings
+            {
+                ContractResolver = new CamelCasePropertyNamesContractResolver()
+            };
+            
+            return type switch
+            {
+                ScheduleItemType.Reminder => JsonConvert.DeserializeObject<ReminderContent>(contentJson, jsonSettings),
+                ScheduleItemType.Writing => JsonConvert.DeserializeObject<WritingContent>(contentJson, jsonSettings),
+                ScheduleItemType.Audio => JsonConvert.DeserializeObject<AudioContent>(contentJson, jsonSettings),
+                ScheduleItemType.GapFill => JsonConvert.DeserializeObject<GapFillContent>(contentJson, jsonSettings),
+                ScheduleItemType.MultipleChoice => JsonConvert.DeserializeObject<MultipleChoiceContent>(contentJson, jsonSettings),
+                ScheduleItemType.Match => JsonConvert.DeserializeObject<MatchingContent>(contentJson, jsonSettings),
+                ScheduleItemType.ErrorFinding => JsonConvert.DeserializeObject<ErrorFindingContent>(contentJson, jsonSettings),
+                ScheduleItemType.CodeExercise => JsonConvert.DeserializeObject<CodeExerciseContent>(contentJson, jsonSettings),
+                ScheduleItemType.Quiz => JsonConvert.DeserializeObject<QuizContent>(contentJson, jsonSettings),
+                _ => null
+            };
+        }
+        catch
+        {
+            // Log error but don't throw - return null to show empty content
+            return null;
+        }
     }
 }

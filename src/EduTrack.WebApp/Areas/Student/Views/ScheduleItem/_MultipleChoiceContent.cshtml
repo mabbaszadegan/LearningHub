@@ -1,0 +1,61 @@
+@model object
+@using EduTrack.Application.Common.Models.ScheduleItems
+@{
+    var content = Model as MultipleChoiceContent;
+}
+
+<div class="multiple-choice-content-container">
+    @if (content != null)
+    {
+        <div class="mcq-question">
+            <h4>@content.Question</h4>
+        </div>
+        
+        <div class="mcq-options" data-answer-type="@content.AnswerType">
+            @foreach (var option in content.Options.OrderBy(o => o.Index))
+            {
+                <div class="mcq-option" data-index="@option.Index">
+                    <label class="mcq-option-label">
+                        <input type="@(content.AnswerType == "multiple" ? "checkbox" : "radio")" 
+                               name="mcq-answer" 
+                               value="@option.Index"
+                               class="mcq-option-input">
+                        <span class="mcq-option-text">
+                            @if (option.OptionType == "text")
+                            {
+                                <span>@option.Text</span>
+                            }
+                            else if (option.OptionType == "image" && !string.IsNullOrEmpty(option.ImageUrl))
+                            {
+                                <img src="@option.ImageUrl" alt="@option.Text" class="mcq-option-image">
+                            }
+                            else if (option.OptionType == "audio" && !string.IsNullOrEmpty(option.AudioUrl))
+                            {
+                                <div class="mcq-audio-option">
+                                    <audio controls>
+                                        <source src="@option.AudioUrl" type="audio/mpeg">
+                                    </audio>
+                                    <span>@option.Text</span>
+                                </div>
+                            }
+                        </span>
+                    </label>
+                </div>
+            }
+        </div>
+        
+        <div class="mcq-actions">
+            <button type="button" class="btn btn-primary" id="submit-mcq-answer">
+                <i class="fas fa-check-circle"></i> ثبت پاسخ
+            </button>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-warning">
+            <i class="fas fa-exclamation-triangle"></i>
+            محتوای چندگزینه‌ای یافت نشد.
+        </div>
+    }
+</div>
+

@@ -1,0 +1,64 @@
+@model object
+@using EduTrack.Application.Common.Models.ScheduleItems
+@{
+    var content = Model as CodeExerciseContent;
+}
+
+<div class="code-exercise-content-container">
+    @if (content != null)
+    {
+        <div class="code-exercise-problem">
+            <h4>صورت مسئله:</h4>
+            <div class="problem-statement">
+                @Html.Raw(content.ProblemStatement.Replace("\n", "<br>"))
+            </div>
+        </div>
+        
+        <div class="code-editor-section">
+            <h5>کد خود را بنویسید:</h5>
+            <div class="code-editor-wrapper">
+                <textarea id="code-editor" 
+                          class="code-editor" 
+                          data-language="@content.ProgrammingLanguage"
+                          placeholder="کد خود را اینجا بنویسید...">@content.InitialCode</textarea>
+            </div>
+            <div class="code-language-badge">
+                <i class="fas fa-code"></i>
+                <span>@content.ProgrammingLanguage</span>
+            </div>
+        </div>
+        
+        @if (content.TimeLimitMinutes > 0)
+        {
+            <div class="time-limit-info">
+                <i class="fas fa-clock"></i>
+                <span>زمان محدود: @content.TimeLimitMinutes دقیقه</span>
+            </div>
+        }
+        
+        <div class="code-exercise-actions">
+            <button type="button" class="btn btn-info" id="run-code">
+                <i class="fas fa-play"></i> اجرای کد
+            </button>
+            <button type="button" class="btn btn-primary" id="save-code">
+                <i class="fas fa-save"></i> ذخیره
+            </button>
+            <button type="button" class="btn btn-success" id="submit-code">
+                <i class="fas fa-paper-plane"></i> ارسال کد
+            </button>
+        </div>
+        
+        <div id="test-results" class="test-results" style="display: none;">
+            <h5>نتایج تست:</h5>
+            <div id="test-results-content"></div>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-warning">
+            <i class="fas fa-exclamation-triangle"></i>
+            محتوای تمرین کدنویسی یافت نشد.
+        </div>
+    }
+</div>
+

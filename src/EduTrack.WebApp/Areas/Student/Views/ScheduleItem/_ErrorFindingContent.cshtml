@@ -1,0 +1,58 @@
+@model object
+@using EduTrack.Application.Common.Models.ScheduleItems
+@{
+    var content = Model as ErrorFindingContent;
+}
+
+<div class="error-finding-content-container">
+    @if (content != null)
+    {
+        <div class="error-finding-instructions">
+            <h4>دستورالعمل:</h4>
+            <p>خطاهای موجود در متن زیر را پیدا کرده و تصحیح کنید.</p>
+        </div>
+        
+        <div class="error-finding-text" id="error-finding-text">
+            @if (content.ShowLineNumbers)
+            {
+                var lines = content.Text.Split('\n');
+                for (int i = 0; i < lines.Length; i++)
+                {
+                    <div class="text-line" data-line-number="@(i + 1)">
+                        <span class="line-number">@(i + 1)</span>
+                        <span class="line-content">@Html.Raw(lines[i])</span>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="text-content">@Html.Raw(content.Text)</div>
+            }
+        </div>
+        
+        <div class="error-finding-answer-area">
+            <h5>پاسخ خود را بنویسید:</h5>
+            <textarea id="error-finding-answer" 
+                      class="form-control" 
+                      rows="10" 
+                      placeholder="متن تصحیح شده را اینجا بنویسید..."></textarea>
+        </div>
+        
+        <div class="error-finding-actions">
+            <button type="button" class="btn btn-primary" id="check-error-finding">
+                <i class="fas fa-check"></i> بررسی پاسخ
+            </button>
+            <button type="button" class="btn btn-success" id="submit-error-finding">
+                <i class="fas fa-paper-plane"></i> ارسال پاسخ
+            </button>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-warning">
+            <i class="fas fa-exclamation-triangle"></i>
+            محتوای پیدا کردن خطا یافت نشد.
+        </div>
+    }
+</div>
+

@@ -1,0 +1,162 @@
+@using EduTrack.Application.Common.Models.ScheduleItems
+@using EduTrack.Domain.Enums
+@model ScheduleItemDto
+@{
+    ViewData["Title"] = Model.Title;
+    var parsedContent = ViewBag.ParsedContent as object;
+    var activeSession = ViewBag.ActiveSession as dynamic;
+    var courseId = ViewBag.CourseId as int?;
+    var currentUserId = ViewBag.CurrentUserId as string;
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/areas/student/educational-content/study-content.css" asp-append-version="true" />
+}
+
+<!-- Breadcrumb Navigation -->
+<div class="study-breadcrumb">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="@Url.Action("Index", "Home", new { area = "Student" })">
+                    <i class="fas fa-home"></i> خانه
+                </a>
+            </li>
+            @if (courseId.HasValue)
+            {
+                <li class="breadcrumb-item">
+                    <a href="@Url.Action("Study", "Course", new { area = "Student", id = courseId.Value })">
+                        دوره
+                    </a>
+                </li>
+            }
+            <li class="breadcrumb-item active">@Model.Title</li>
+        </ol>
+    </nav>
+</div>
+
+<!-- Ultra Minimal Header -->
+<div class="study-header-ultra-minimal">
+    <div class="study-header-content">
+        <div class="header-line">
+            <a href="@(courseId.HasValue ? Url.Action("Study", "Course", new { area = "Student", id = courseId.Value }) : Url.Action("Index", "Home", new { area = "Student" }))" 
+               class="btn-back-minimal" title="بازگشت">
+                <i class="fas fa-arrow-right"></i>
+            </a>
+            <h1 class="study-title">@Model.Title</h1>
+            <div class="header-actions-minimal">
+                <button class="btn-icon-minimal" id="study-session-toggle" title="شروع/توقف مطالعه">
+                    <i class="fas fa-play"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Content -->
+<div class="study-content-wrapper">
+    <!-- Content Description -->
+    @if (!string.IsNullOrEmpty(Model.Description))
+    {
+        <div class="content-description">
+            <p>@Model.Description</p>
+        </div>
+    }
+
+    <!-- Content Type Specific Rendering -->
+    <div id="schedule-item-content" data-type="@Model.Type" data-item-id="@Model.Id">
+        @switch (Model.Type)
+        {
+            case ScheduleItemType.Reminder:
+                @await Html.PartialAsync("_ReminderContent", parsedContent)
+                break;
+            case ScheduleItemType.Writing:
+                @await Html.PartialAsync("_WritingContent", parsedContent)
+                break;
+            case ScheduleItemType.Audio:
+                @await Html.PartialAsync("_AudioContent", parsedContent)
+                break;
+            case ScheduleItemType.GapFill:
+                @await Html.PartialAsync("_GapFillContent", parsedContent)
+                break;
+            case ScheduleItemType.MultipleChoice:
+                @await Html.PartialAsync("_MultipleChoiceContent", parsedContent)
+                break;
+            case ScheduleItemType.Match:
+                @await Html.PartialAsync("_MatchContent", parsedContent)
+                break;
+            case ScheduleItemType.ErrorFinding:
+                @await Html.PartialAsync("_ErrorFindingContent", parsedContent)
+                break;
+            case ScheduleItemType.CodeExercise:
+                @await Html.PartialAsync("_CodeExerciseContent", parsedContent)
+                break;
+            case ScheduleItemType.Quiz:
+                @await Html.PartialAsync("_QuizContent", parsedContent)
+                break;
+            default:
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    نوع محتوای آموزشی: @Model.TypeName
+                </div>
+                @if (parsedContent != null)
+                {
+                    <div class="content-json-display">
+                        <pre><code>@Model.ContentJson</code></pre>
+                    </div>
+                }
+                break;
+        }
+    </div>
+
+    <!-- Study Statistics (Hidden Timer) -->
+    <div class="study-statistics-hidden" id="study-statistics" style="display: none;">
+        <div class="stat-item">
+            <span class="stat-label">زمان مطالعه:</span>
+            <span class="stat-value" id="study-time">00:00:00</span>
+        </div>
+    </div>
+</div>
+
+<!-- Exit Confirmation Modal -->
+<div class="modal fade" id="exitConfirmationModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">خروج از صفحه مطالعه</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>آیا مطمئن هستید که می‌خواهید از صفحه مطالعه خارج شوید؟</p>
+                <p class="text-muted small">زمان مطالعه شما ثبت خواهد شد.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">لغو</button>
+                <button type="button" class="btn btn-primary" id="confirm-exit">بله، خروج</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/areas/student/educational-content/study-content.js" asp-append-version="true"></script>
+    <script>
+        // Configuration for study content page
+        window.studyContentConfig = {
+            scheduleItemId: @Model.Id,
+            contentType: '@Model.Type',
+            contentJson: @Html.Raw(Json.Serialize(Model.ContentJson)),
+            activeSessionId: @(activeSession?.Id ?? 0),
+            currentUserId: '@currentUserId',
+            courseId: @(courseId ?? 0)
+        };
+
+        // Initialize study session
+        $(document).ready(function() {
+            if (window.studySession) {
+                window.studySession.init();
+            }
+        });
+    </script>
+}
+

@@ -1,0 +1,70 @@
+@model object
+@using EduTrack.Application.Common.Models.ScheduleItems
+@{
+    var content = Model as QuizContent;
+}
+
+<div class="quiz-content-container">
+    @if (content != null)
+    {
+        <div class="quiz-header">
+            <h3>@content.Title</h3>
+            @if (!string.IsNullOrEmpty(content.Description))
+            {
+                <p class="quiz-description">@content.Description</p>
+            }
+        </div>
+        
+        @if (content.TimeLimitMinutes > 0)
+        {
+            <div class="quiz-time-limit">
+                <i class="fas fa-clock"></i>
+                <span>زمان محدود: @content.TimeLimitMinutes دقیقه</span>
+                <div id="quiz-timer" class="quiz-timer"></div>
+            </div>
+        }
+        
+        <div class="quiz-questions" id="quiz-questions">
+            @foreach (var question in content.Questions.OrderBy(q => q.Index))
+            {
+                <div class="quiz-question" data-question-index="@question.Index" data-points="@question.Points">
+                    <div class="question-header">
+                        <h5>سوال @question.Index</h5>
+                        <span class="question-points">@question.Points نمره</span>
+                    </div>
+                    <div class="question-content">
+                        <p>@question.QuestionText</p>
+                        <div class="question-answer-area" data-question-type="@question.QuestionType">
+                            <!-- Answer area will be rendered based on question type -->
+                            <p class="text-muted">نوع سوال: @question.QuestionType</p>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+        
+        <div class="quiz-actions">
+            <button type="button" class="btn btn-primary" id="save-quiz">
+                <i class="fas fa-save"></i> ذخیره پاسخ‌ها
+            </button>
+            <button type="button" class="btn btn-success" id="submit-quiz">
+                <i class="fas fa-paper-plane"></i> ارسال کوئیز
+            </button>
+        </div>
+        
+        <div class="quiz-progress">
+            <div class="progress">
+                <div class="progress-bar" id="quiz-progress-bar" role="progressbar" style="width: 0%"></div>
+            </div>
+            <p class="progress-text">0 از @content.Questions.Count سوال پاسخ داده شده</p>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-warning">
+            <i class="fas fa-exclamation-triangle"></i>
+            محتوای کوئیز یافت نشد.
+        </div>
+    }
+</div>
+
