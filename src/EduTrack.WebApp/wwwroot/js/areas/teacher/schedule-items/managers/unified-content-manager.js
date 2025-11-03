@@ -23,10 +23,11 @@ class UnifiedContentManager extends ContentBuilderBase {
     }
 
     init() {
-        super.init();
+        // Initialize handlers BEFORE calling super.init() because loadExistingContent needs them
+        this.initializeHandlers();
         this.detectItemType();
         this.setupItemTypeListener();
-        this.initializeHandlers();
+        super.init();
         this.setupButtonHandlers();
         this.setupModalCallback();
     }
@@ -230,20 +231,44 @@ class UnifiedContentManager extends ContentBuilderBase {
     }
 
     initializeHandlers() {
-        this.handlers = [
-            new RegularBlockHandler(this),
-            new QuestionBlockHandler(this),
-            new MultipleChoiceHandler(this),
-            new GapFillHandler(this),
-            new OrderingHandler(this),
-            new MatchingHandler(this),
-            new ErrorFindingHandler(this)
-        ];
+        this.handlers = [];
+        
+        // Initialize handlers with error handling in case some are not loaded yet
+        try {
+            if (typeof RegularBlockHandler !== 'undefined') {
+                this.handlers.push(new RegularBlockHandler(this));
+            }
+            if (typeof QuestionBlockHandler !== 'undefined') {
+                this.handlers.push(new QuestionBlockHandler(this));
+            }
+            if (typeof MultipleChoiceHandler !== 'undefined') {
+                this.handlers.push(new MultipleChoiceHandler(this));
+            }
+            if (typeof GapFillHandler !== 'undefined') {
+                this.handlers.push(new GapFillHandler(this));
+            }
+            if (typeof OrderingHandler !== 'undefined') {
+                this.handlers.push(new OrderingHandler(this));
+            }
+            if (typeof MatchingHandler !== 'undefined') {
+                this.handlers.push(new MatchingHandler(this));
+            }
+            if (typeof ErrorFindingHandler !== 'undefined') {
+                this.handlers.push(new ErrorFindingHandler(this));
+            }
+        } catch (error) {
+            console.error('UnifiedContentManager: Error initializing handlers:', error);
+        }
     }
 
     getHandler(blockType) {
+        if (!this.handlers || !Array.isArray(this.handlers)) {
+            console.warn('UnifiedContentManager: handlers not initialized yet');
+            return null;
+        }
+        
         for (const handler of this.handlers) {
-            if (handler.canHandle && handler.canHandle(blockType)) {
+            if (handler && handler.canHandle && handler.canHandle(blockType)) {
                 return handler;
             }
         }

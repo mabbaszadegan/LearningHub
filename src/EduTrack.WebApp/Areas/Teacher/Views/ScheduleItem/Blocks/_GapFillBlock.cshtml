@@ -14,6 +14,98 @@
             <div class="ckeditor-editor" data-role="question-text"></div>
         </div>
 
+        <!-- Media Section - Optional -->
+        <div class="gapfill-media-section">
+            <label class="gapfill-media-label">افزودن رسانه (اختیاری)</label>
+            <div class="gapfill-media-selector">
+                <select class="gapfill-media-type-select" data-role="gf-media-type">
+                    <option value="">بدون رسانه</option>
+                    <option value="image">تصویر</option>
+                    <option value="audio">صوت</option>
+                    <option value="video">ویدیو</option>
+                </select>
+            </div>
+            
+            <!-- Image Media -->
+            <div class="gapfill-media-content gapfill-image-content" data-media-type="image" style="display: none;">
+                <div class="gapfill-image-upload">
+                    <input type="file" class="gapfill-image-file" accept="image/*" data-role="gf-image-file" style="display: none;">
+                    <div class="gapfill-image-preview" data-role="gf-image-preview">
+                        <div class="gapfill-image-placeholder">
+                            <i class="fas fa-image"></i>
+                            <span>برای آپلود تصویر کلیک کنید</span>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-gapfill-upload-image" data-action="gf-upload-image">
+                        <i class="fas fa-upload"></i>
+                        آپلود تصویر
+                    </button>
+                    <button type="button" class="btn-gapfill-remove-media" data-action="gf-remove-media" data-media-type="image" style="display: none;">
+                        <i class="fas fa-times"></i>
+                        حذف تصویر
+                    </button>
+                    <input type="hidden" class="gapfill-image-url" data-role="gf-image-url">
+                    <input type="hidden" class="gapfill-image-fileid" data-role="gf-image-fileid">
+                </div>
+            </div>
+            
+            <!-- Audio Media -->
+            <div class="gapfill-media-content gapfill-audio-content" data-media-type="audio" style="display: none;">
+                <div class="gapfill-audio-upload">
+                    <div class="gapfill-audio-controls">
+                        <button type="button" class="btn-gapfill-upload-audio" data-action="gf-upload-audio">
+                            <i class="fas fa-upload"></i>
+                            آپلود
+                        </button>
+                        <input type="file" class="gapfill-audio-file" accept="audio/*" data-role="gf-audio-file" style="display: none;">
+                        <button type="button" class="btn-gapfill-record-audio" data-action="gf-record-audio">
+                            <i class="fas fa-microphone"></i>
+                            ضبط
+                        </button>
+                        <button type="button" class="btn-gapfill-stop-recording" data-action="gf-stop-recording" disabled>
+                            <i class="fas fa-stop"></i>
+                        </button>
+                    </div>
+                    <div class="gapfill-audio-preview" data-role="gf-audio-preview" style="display: none;">
+                        <audio controls class="gapfill-audio-player"></audio>
+                        <div class="gapfill-audio-info">
+                            <span class="gapfill-audio-name"></span>
+                            <button type="button" class="btn-gapfill-remove-media" data-action="gf-remove-media" data-media-type="audio">
+                                <i class="fas fa-times"></i>
+                                حذف
+                            </button>
+                        </div>
+                    </div>
+                    <input type="hidden" class="gapfill-audio-url" data-role="gf-audio-url">
+                    <input type="hidden" class="gapfill-audio-fileid" data-role="gf-audio-fileid">
+                    <input type="hidden" class="gapfill-audio-recorded" data-role="gf-audio-recorded" value="false">
+                </div>
+            </div>
+            
+            <!-- Video Media -->
+            <div class="gapfill-media-content gapfill-video-content" data-media-type="video" style="display: none;">
+                <div class="gapfill-video-upload">
+                    <input type="file" class="gapfill-video-file" accept="video/*" data-role="gf-video-file" style="display: none;">
+                    <div class="gapfill-video-preview" data-role="gf-video-preview">
+                        <div class="gapfill-video-placeholder">
+                            <i class="fas fa-video"></i>
+                            <span>برای آپلود ویدیو کلیک کنید</span>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-gapfill-upload-video" data-action="gf-upload-video">
+                        <i class="fas fa-upload"></i>
+                        آپلود ویدیو
+                    </button>
+                    <button type="button" class="btn-gapfill-remove-media" data-action="gf-remove-media" data-media-type="video" style="display: none;">
+                        <i class="fas fa-times"></i>
+                        حذف ویدیو
+                    </button>
+                    <input type="hidden" class="gapfill-video-url" data-role="gf-video-url">
+                    <input type="hidden" class="gapfill-video-fileid" data-role="gf-video-fileid">
+                </div>
+            </div>
+        </div>
+
         <div class="question-settings">
             <div class="settings-grid">
                 <div class="setting-item">

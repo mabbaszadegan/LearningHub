@@ -127,6 +127,24 @@ public class GapFillContent
     public List<GapFillGap> Gaps { get; set; } = new();
     public string AnswerType { get; set; } = "exact"; // exact, similar, keyword
     public bool CaseSensitive { get; set; }
+    public bool ShowOptions { get; set; } = true; // Show answer options to students
+    
+    // Media question data (image, video, audio)
+    public string? FileId { get; set; }
+    public string? FileName { get; set; }
+    public string? FileUrl { get; set; }
+    public long? FileSize { get; set; }
+    public string? MimeType { get; set; }
+    
+    // Image/Video specific settings
+    public string? Size { get; set; } = "medium"; // small, medium, large, full
+    public string? Position { get; set; } = "center"; // left, center, right
+    public string? Caption { get; set; }
+    public string? CaptionPosition { get; set; } = "bottom"; // top, bottom, overlay
+    
+    // Audio specific settings
+    public bool IsRecorded { get; set; } = false;
+    public int? Duration { get; set; } // in seconds
 }
 
 public class GapFillGap

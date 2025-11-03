@@ -349,6 +349,28 @@ class ContentBuilderBase {
                     isRequired: true,
                     teacherGuidance: ''
                 };
+            case 'gapFill':
+                return {
+                    content: '',
+                    textContent: '',
+                    gaps: [],
+                    answerType: 'exact',
+                    caseSensitive: false,
+                    showOptions: true,
+                    fileId: null,
+                    fileName: null,
+                    fileUrl: null,
+                    fileSize: null,
+                    mimeType: null,
+                    size: 'medium',
+                    position: 'center',
+                    caption: '',
+                    captionPosition: 'bottom',
+                    isRecorded: false,
+                    duration: null,
+                    points: 1,
+                    isRequired: true
+                };
             default:
                 return baseData;
         }
