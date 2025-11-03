@@ -97,7 +97,8 @@ class OrderingHandler {
         const newItem = {
             id: this._generateItemId(block),
             type: 'text',
-            value: ''
+            value: '',
+            include: true
         };
         block.data = block.data || {};
         block.data.items = block.data.items || [];
@@ -137,7 +138,12 @@ class OrderingHandler {
         const itemsList = blockElement.querySelector('[data-role="ordering-items"]');
         if (!itemsList) return;
 
-        const idsInOrder = Array.from(itemsList.querySelectorAll('[data-item-id]')).map(el => el.getAttribute('data-item-id'));
+        const idsInOrder = Array.from(itemsList.querySelectorAll('.ordering-item'))
+            .filter(el => {
+                const inc = el.querySelector('[data-field="include"]');
+                return inc ? inc.checked : true;
+            })
+            .map(el => el.getAttribute('data-item-id'));
         block.data = block.data || {};
         block.data.correctOrder = idsInOrder;
 
@@ -200,17 +206,19 @@ class OrderingHandler {
             const id = el.getAttribute('data-item-id');
             const typeSelect = el.querySelector('[data-field="type"]');
             const type = typeSelect ? typeSelect.value : 'text';
+            const includeCheckbox = el.querySelector('[data-field="include"]');
+            const include = includeCheckbox ? !!includeCheckbox.checked : true;
             if (type === 'text') {
                 const valueInput = el.querySelector('[data-field="value"]');
                 const value = valueInput ? valueInput.value.trim() : '';
-                return { id, type, value };
+                return { id, type, value, include };
             }
             // media item
             const fileId = el.getAttribute('data-file-id');
             const fileName = el.getAttribute('data-file-name');
             const fileUrl = el.getAttribute('data-file-url');
             const mimeType = el.getAttribute('data-mime');
-            return { id, type, fileId: fileId ? parseInt(fileId, 10) : null, fileName, fileUrl, mimeType };
+            return { id, type, include, fileId: fileId ? parseInt(fileId, 10) : null, fileName, fileUrl, mimeType };
         });
 
         const correctOrder = Array.from(correctList.querySelectorAll('[data-item-id]')).map(el => el.getAttribute('data-item-id'));
@@ -250,6 +258,10 @@ class OrderingHandler {
                         <option value="image" ${item.type === 'image' ? 'selected' : ''}>تصویر</option>
                         <option value="audio" ${item.type === 'audio' ? 'selected' : ''}>صوت</option>
                     </select>
+                    <label class="form-check-label" style="display:flex; align-items:center; gap:4px;">
+                        <input type="checkbox" class="form-check-input" data-field="include" ${item.include === false ? '' : 'checked'} />
+                        <span style="font-size:12px;">جزء پاسخ</span>
+                    </label>
                     <div class="ordering-item-inputs" style="flex:1; display:flex; gap:6px; align-items:center;"></div>
                     <button type="button" class="btn btn-sm btn-outline-danger" data-action="remove-item" title="حذف">
                         <i class="fas fa-trash"></i>
@@ -263,6 +275,7 @@ class OrderingHandler {
         const typeSelect = li.querySelector('[data-field="type"]');
         const removeBtn = li.querySelector('[data-action="remove-item"]');
         const inputsHost = li.querySelector('.ordering-item-inputs');
+        const includeCheckbox = li.querySelector('[data-field="include"]');
 
         const buildInputsForType = (currentType) => {
             inputsHost.innerHTML = '';
@@ -364,6 +377,7 @@ class OrderingHandler {
                 const idx = block.data.items.findIndex(x => x.id === item.id);
                 if (idx >= 0) {
                     block.data.items[idx].type = typeSelect.value;
+                    block.data.items[idx].include = includeCheckbox ? !!includeCheckbox.checked : true;
                     // For text type, read input value
                     if (typeSelect.value === 'text') {
                         const textInput = li.querySelector('[data-field="value"]');
@@ -390,6 +404,10 @@ class OrderingHandler {
             buildInputsForType(typeSelect.value);
             updateItemModel();
         });
+
+        if (includeCheckbox) {
+            includeCheckbox.addEventListener('change', updateItemModel);
+        }
 
         removeBtn.addEventListener('click', () => {
             // Remove from data
@@ -505,13 +523,19 @@ class OrderingHandler {
 
         const ids = (block.data && Array.isArray(block.data.correctOrder) && block.data.correctOrder.length)
             ? block.data.correctOrder
-            : Array.from(itemsList.querySelectorAll('[data-item-id]')).map(el => el.getAttribute('data-item-id'));
+            : Array.from(itemsList.querySelectorAll('.ordering-item'))
+                .filter(el => {
+                    const inc = el.querySelector('[data-field="include"]');
+                    return inc ? inc.checked : true;
+                })
+                .map(el => el.getAttribute('data-item-id'));
 
         ids.forEach(id => {
             const src = itemsList.querySelector(`[data-item-id="${id}"]`);
             if (!src) return;
             const type = src.querySelector('[data-field="type"]').value;
-            const value = src.querySelector('[data-field="value"]').value.trim();
+            const valueInput = src.querySelector('[data-field="value"]');
+            const value = valueInput ? valueInput.value.trim() : '';
             const pill = document.createElement('div');
             pill.className = 'correct-order-item';
             pill.setAttribute('data-item-id', id);
@@ -524,6 +548,9 @@ class OrderingHandler {
             pill.textContent = type === 'text' ? (value || '—') : (type === 'image' ? 'تصویر' : 'صوت');
             correctList.appendChild(pill);
         });
+
+        // Enable drag-drop reordering for correct list
+        this._initializeCorrectListDragDrop(correctList, block);
     }
 
     _readSettings(blockElement) {
@@ -535,6 +562,43 @@ class OrderingHandler {
             if (input.type === 'checkbox') settings[key] = input.checked; else settings[key] = input.value;
         });
         return settings;
+    }
+
+    _initializeCorrectListDragDrop(correctList, block) {
+        if (!correctList || correctList._orderingDnDBound) return;
+        correctList._orderingDnDBound = true;
+        let dragSrcEl = null;
+        correctList.addEventListener('dragstart', (e) => {
+            const el = e.target.closest('.correct-order-item');
+            if (!el) return;
+            dragSrcEl = el;
+            el.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            try { e.dataTransfer.setData('text/plain', el.dataset.itemId); } catch (_) { }
+        });
+        // Set draggable on children
+        Array.from(correctList.children).forEach(ch => ch.setAttribute('draggable', 'true'));
+        correctList.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            const el = e.target.closest('.correct-order-item');
+            if (!el || el === dragSrcEl) return;
+            const rect = el.getBoundingClientRect();
+            const next = (e.clientX - rect.left) / rect.width > 0.5; // horizontal
+            correctList.insertBefore(dragSrcEl, next ? el.nextSibling : el);
+        });
+        correctList.addEventListener('drop', (e) => { e.preventDefault(); });
+        correctList.addEventListener('dragend', () => {
+            if (dragSrcEl) dragSrcEl.classList.remove('dragging');
+            // Update block.data.correctOrder to reflect new order
+            const ids = Array.from(correctList.querySelectorAll('.correct-order-item'))
+                .map(el => el.getAttribute('data-item-id'));
+            block.data = block.data || {};
+            block.data.correctOrder = ids;
+            if (this.contentManager && typeof this.contentManager.updateHiddenField === 'function') {
+                this.contentManager.updateHiddenField();
+            }
+        });
     }
 
     applySettingsToUi(blockElement, block) {
