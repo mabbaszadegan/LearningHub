@@ -1728,6 +1728,32 @@
     margin-bottom: 1.5rem;
 }
 
+.matching-container {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: #f8fafc;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+}
+
+.matching-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.matching-header span {
+    font-weight: 500;
+    color: #374151;
+}
+
+.matching-items-list {
+    min-height: 100px;
+}
+
 .matching-columns {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -1749,10 +1775,9 @@
 .matching-item {
     background: white;
     border: 1px solid #d1d5db;
-    border-radius: 4px;
-    padding: 0.5rem;
-    margin-bottom: 0.5rem;
-    cursor: move;
+    border-radius: 6px;
+    padding: 0.75rem;
+    margin-bottom: 0.75rem;
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -1761,6 +1786,14 @@
     .matching-item:last-child {
         margin-bottom: 0;
     }
+
+.matching-item-inner {
+    width: 100%;
+}
+
+.matching-item input[type="text"] {
+    width: 100%;
+}
 
 .connections-section {
     margin-bottom: 1.5rem;

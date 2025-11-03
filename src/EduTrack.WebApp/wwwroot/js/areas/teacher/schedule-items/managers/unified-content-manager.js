@@ -236,6 +236,7 @@ class UnifiedContentManager extends ContentBuilderBase {
             new MultipleChoiceHandler(this),
             new GapFillHandler(this),
             new OrderingHandler(this),
+            new MatchingHandler(this),
             new ErrorFindingHandler(this)
         ];
     }
