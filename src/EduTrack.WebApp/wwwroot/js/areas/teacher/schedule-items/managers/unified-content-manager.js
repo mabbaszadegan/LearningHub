@@ -235,7 +235,8 @@ class UnifiedContentManager extends ContentBuilderBase {
             new QuestionBlockHandler(this),
             new MultipleChoiceHandler(this),
             new GapFillHandler(this),
-            new OrderingHandler(this)
+            new OrderingHandler(this),
+            new ErrorFindingHandler(this)
         ];
     }
 
@@ -445,6 +446,12 @@ class UnifiedContentManager extends ContentBuilderBase {
             });
 
             this.updateEmptyState();
+            
+            // Populate content fields after rendering with longer delay
+            setTimeout(() => {
+                this.populateBlockContent();
+            }, 500);
+            
             this.isLoadingExistingContent = false;
 
         } catch (error) {

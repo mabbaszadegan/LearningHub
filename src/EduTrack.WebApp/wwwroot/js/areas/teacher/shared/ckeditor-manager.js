@@ -36,7 +36,7 @@ if (typeof window.CKEditorManager === 'undefined') {
         // Listen for populate block content events
         document.addEventListener('populateBlockContent', (e) => {
             // Handle both regular text blocks and question text blocks
-            if (e.detail.blockType === 'text' || e.detail.blockType === 'questionText') {
+            if (e.detail.blockType === 'text' || e.detail.blockType === 'questionText' || e.detail.blockType === 'errorFinding') {
                 this.populateTextBlock(e.detail.blockElement, e.detail.block.data);
             }
         });

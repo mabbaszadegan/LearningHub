@@ -1,0 +1,89 @@
+.question-type-block[data-type="errorFinding"] {
+    /* Error Finding specific styles */
+}
+
+.error-finding-container {
+    margin-top: var(--spacing-md);
+}
+
+.error-text-editor {
+    margin-bottom: var(--spacing-md);
+}
+
+.error-text-editor label {
+    display: block;
+    margin-bottom: var(--spacing-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text);
+}
+
+.error-settings {
+    display: flex;
+    gap: var(--spacing-md);
+    align-items: center;
+    padding: var(--spacing-md);
+    background-color: var(--color-bg-light);
+    border-radius: var(--radius-sm);
+    margin-bottom: var(--spacing-md);
+}
+
+.errors-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-md);
+}
+
+.error-item {
+    padding: var(--spacing-md);
+    background-color: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+}
+
+.error-item-header {
+    display: flex;
+    gap: var(--spacing-md);
+    align-items: flex-start;
+    margin-bottom: var(--spacing-sm);
+}
+
+.error-item-fields {
+    display: flex;
+    gap: var(--spacing-md);
+    flex: 1;
+}
+
+.error-item .form-group {
+    margin-bottom: var(--spacing-sm);
+}
+
+.error-item .form-group label {
+    display: block;
+    margin-bottom: var(--spacing-xs);
+    font-weight: var(--font-weight-medium);
+    font-size: var(--font-size-sm);
+    color: var(--color-text);
+}
+
+.error-item .form-group:last-child {
+    margin-bottom: 0;
+}
+
+.error-item .form-control-sm {
+    font-size: var(--font-size-sm);
+}
+
+.error-item input[type="number"] {
+    width: 100px;
+}
+
+.error-item textarea {
+    resize: vertical;
+    min-height: 60px;
+}
+
+.error-item .btn-outline-danger {
+    margin-top: 0;
+    align-self: flex-start;
+}

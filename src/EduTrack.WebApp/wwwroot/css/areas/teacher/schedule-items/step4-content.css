@@ -9,6 +9,7 @@
 @import url('./blocks/multiple-choice-block.css');
 @import url('./blocks/gapfill-block.css');
 @import url('./blocks/ordering-block.css');
+@import url('./blocks/error-finding-block.css');
 
 /* Additional global styles for Step 4 */
 .form-step[data-step="content"] {
