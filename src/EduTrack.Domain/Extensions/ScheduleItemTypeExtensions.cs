@@ -17,6 +17,7 @@ public static class ScheduleItemTypeExtensions
             ScheduleItemType.ErrorFinding => "پیدا کردن خطا",
             ScheduleItemType.CodeExercise => "تمرین کد",
             ScheduleItemType.Quiz => "کویز",
+            ScheduleItemType.Ordering => "مرتب سازی",
             _ => "نامشخص"
         };
     }
@@ -34,6 +35,7 @@ public static class ScheduleItemTypeExtensions
             ScheduleItemType.ErrorFinding => "تمرین پیدا کردن خطا در متن",
             ScheduleItemType.CodeExercise => "تمرینات برنامه‌نویسی و کدنویسی",
             ScheduleItemType.Quiz => "کویز و آزمون کوتاه",
+            ScheduleItemType.Ordering => "مرتب سازی",
             _ => "نوع آیتم نامشخص"
         };
     }

@@ -18,7 +18,10 @@ class ScheduleItemsManager {
                 return parseInt(urlParams.get('teachingPlanId')) || 0;
             };
 
-        this.currentTeachingPlanId = this.getTeachingPlanIdFromUrl();
+        // Prefer reading from container data attribute; fallback to query string
+        const container = document.querySelector('.schedule-items-container');
+        const dataTeachingPlanId = container?.dataset?.teachingPlanId ? parseInt(container.dataset.teachingPlanId) : 0;
+        this.currentTeachingPlanId = dataTeachingPlanId || this.getTeachingPlanIdFromUrl();
         this.currentFilters = {
             search: '',
             type: '',
@@ -37,9 +40,27 @@ class ScheduleItemsManager {
         this.init();
     }
 
+    buildTypeNameMap() {
+        this.typeNameMap = {};
+        const typeChips = document.querySelectorAll('.chips-group[aria-label="نوع آیتم"] .filter-chip[data-type]');
+        typeChips.forEach(chip => {
+            const key = chip.getAttribute('data-type');
+            if (key !== null && key !== '') {
+                this.typeNameMap[key] = chip.textContent.trim();
+            }
+        });
+    }
+
+    getTypeName(type) {
+        const key = String(type);
+        return this.typeNameMap ? this.typeNameMap[key] : undefined;
+    }
+
     init() {
+        this.buildTypeNameMap();
         this.setupEventListeners();
         this.loadScheduleItems();
+        this.updateClearVisibility();
     }
 
     setupEventListeners() {
@@ -49,15 +70,17 @@ class ScheduleItemsManager {
             searchInput.addEventListener('input', this.debounce((e) => {
                 this.currentFilters.search = e.target.value;
                 this.filterItems();
+                this.updateClearVisibility();
             }, 300));
         }
 
-        // Filter controls
+        // Filter controls (dropdowns)
         const typeFilter = document.getElementById('typeFilter');
         if (typeFilter) {
             typeFilter.addEventListener('change', (e) => {
                 this.currentFilters.type = e.target.value;
                 this.filterItems();
+                this.updateClearVisibility();
             });
         }
 
@@ -66,6 +89,7 @@ class ScheduleItemsManager {
             statusFilter.addEventListener('change', (e) => {
                 this.currentFilters.status = e.target.value;
                 this.filterItems();
+                this.updateClearVisibility();
             });
         }
 
@@ -74,6 +98,47 @@ class ScheduleItemsManager {
         if (clearFiltersBtn) {
             clearFiltersBtn.addEventListener('click', () => {
                 this.clearFilters();
+            });
+        }
+
+        // Chip filters (modern toggles)
+        const typeChips = document.querySelectorAll('.filter-chip[data-type]');
+        if (typeChips && typeChips.length) {
+            typeChips.forEach(chip => {
+                chip.addEventListener('click', () => {
+                    typeChips.forEach(c => c.classList.remove('active'));
+                    chip.classList.add('active');
+                    const value = chip.getAttribute('data-type') || '';
+                    this.currentFilters.type = value;
+                    // keep selects in sync if present
+                    if (typeFilter) typeFilter.value = value;
+                    this.filterItems();
+                    this.updateClearVisibility();
+                });
+            });
+        }
+
+        const statusChips = document.querySelectorAll('.filter-chip[data-status]');
+        const statusFilterEl = document.getElementById('statusFilter');
+        if (statusChips && statusChips.length) {
+            statusChips.forEach(chip => {
+                chip.addEventListener('click', () => {
+                    statusChips.forEach(c => c.classList.remove('active'));
+                    chip.classList.add('active');
+                    const value = chip.getAttribute('data-status') || '';
+                    this.currentFilters.status = value;
+                    if (statusFilterEl) statusFilterEl.value = value;
+                    this.filterItems();
+                    this.updateClearVisibility();
+                });
+            });
+        }
+
+        // Sort select
+        const sortSelect = document.getElementById('sortSelect');
+        if (sortSelect) {
+            sortSelect.addEventListener('change', () => {
+                this.applySort(sortSelect.value);
             });
         }
     }
@@ -122,13 +187,14 @@ class ScheduleItemsManager {
         const typeIcon = this.getTypeIcon(item.type);
         const statusClass = `status-${item.status}`;
         const typeClass = `type-${item.type}`;
+        const typeName = this.getTypeName(item.type) || item.typeName || '';
 
         return `
             <div class="schedule-item-card" data-item-id="${item.id}" data-type="${item.type}" data-status="${item.status}">
                 <div class="item-header">
                     <div class="item-type-badge ${typeClass}">
                         <i class="${typeIcon}"></i>
-                        ${item.typeName}
+                        ${typeName}
                     </div>
                     <div class="item-actions">
                         <div class="dropdown">
@@ -136,14 +202,14 @@ class ScheduleItemsManager {
                                 <i class="fas fa-ellipsis-v"></i>
                             </button>
                             <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="#" onclick="scheduleItemsManager.editItem(${item.id})">
+                                <li><a class="dropdown-item" href="#" data-action="edit" data-item-id="${item.id}">
                                     <i class="fas fa-edit"></i> ویرایش
                                 </a></li>
-                                <li><a class="dropdown-item" href="#" onclick="scheduleItemsManager.duplicateItem(${item.id})">
+                                <li><a class="dropdown-item" href="#" data-action="duplicate" data-item-id="${item.id}">
                                     <i class="fas fa-copy"></i> کپی
                                 </a></li>
                                 <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item text-danger" href="#" onclick="scheduleItemsManager.deleteItem(${item.id})">
+                                <li><a class="dropdown-item text-danger" href="#" data-action="delete" data-item-id="${item.id}">
                                     <i class="fas fa-trash"></i> حذف
                                 </a></li>
                             </ul>
@@ -207,8 +273,32 @@ class ScheduleItemsManager {
     }
 
     setupItemEventListeners() {
-        // Add any specific event listeners for individual items
-        // This method can be expanded as needed
+        // Delegated events for dropdown actions
+        const grid = document.getElementById('scheduleItemsGrid');
+        if (!grid) return;
+
+        grid.addEventListener('click', (e) => {
+            const actionLink = e.target.closest('a[data-action]');
+            if (!actionLink) return;
+            e.preventDefault();
+
+            const action = actionLink.getAttribute('data-action');
+            const itemId = parseInt(actionLink.getAttribute('data-item-id')) || parseInt(actionLink.closest('.schedule-item-card')?.getAttribute('data-item-id'));
+
+            if (!itemId) return;
+
+            switch (action) {
+                case 'edit':
+                    this.editItem(itemId);
+                    break;
+                case 'duplicate':
+                    this.duplicateItem(itemId);
+                    break;
+                case 'delete':
+                    this.deleteItem(itemId);
+                    break;
+            }
+        });
     }
 
     filterItems() {
@@ -260,12 +350,63 @@ class ScheduleItemsManager {
         if (searchInput) searchInput.value = '';
         if (typeFilter) typeFilter.value = '';
         if (statusFilter) statusFilter.value = '';
+        // Reset chips
+        document.querySelectorAll('.filter-chip[data-type]').forEach((c, idx) => c.classList.toggle('active', idx === 0));
+        document.querySelectorAll('.filter-chip[data-status]').forEach((c, idx) => c.classList.toggle('active', idx === 0));
         
         // Show all items
         const cards = document.querySelectorAll('.schedule-item-card');
         cards.forEach(card => {
             card.style.display = 'block';
         });
+
+        this.updateClearVisibility();
+    }
+
+    applySort(mode) {
+        const grid = document.getElementById('scheduleItemsGrid');
+        if (!grid) return;
+        const cards = Array.from(grid.querySelectorAll('.schedule-item-card'));
+        const parseDate = (text) => {
+            // expects text like "شروع: yyyy/MM/dd" or "مهلت: yyyy/MM/dd"
+            const m = text?.match(/\d{4}\/\d{2}\/\d{2}/);
+            return m ? new Date(m[0]) : new Date(0);
+        };
+
+        const getStart = (card) => parseDate(card.querySelector('.meta-item span')?.textContent || '');
+        const getDue = (card) => {
+            const items = card.querySelectorAll('.meta-item span');
+            return parseDate(items.length > 1 ? items[1].textContent : '');
+        };
+        const getTitle = (card) => (card.querySelector('.item-title')?.textContent || '').toLowerCase();
+
+        const compare = (a, b) => {
+            switch (mode) {
+                case 'start-asc': return getStart(a) - getStart(b);
+                case 'start-desc': return getStart(b) - getStart(a);
+                case 'due-asc': return getDue(a) - getDue(b);
+                case 'due-desc': return getDue(b) - getDue(a);
+                case 'title-desc': return getTitle(b).localeCompare(getTitle(a));
+                case 'title-asc':
+                default: return getTitle(a).localeCompare(getTitle(b));
+            }
+        };
+
+        cards.sort(compare).forEach(card => grid.appendChild(card));
+    }
+
+    isAnyFilterActive() {
+        return Boolean(this.currentFilters.search || this.currentFilters.type || this.currentFilters.status);
+    }
+
+    updateClearVisibility() {
+        const btn = document.getElementById('clearFilters');
+        if (!btn) return;
+        if (this.isAnyFilterActive()) {
+            btn.removeAttribute('hidden');
+        } else {
+            btn.setAttribute('hidden', '');
+        }
     }
 
 

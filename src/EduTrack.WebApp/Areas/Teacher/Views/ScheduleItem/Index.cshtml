@@ -1,4 +1,5 @@
 @model List<EduTrack.Application.Common.Models.ScheduleItems.ScheduleItemDto>
+@using EduTrack.Domain.Extensions
 @{
     ViewData["Title"] = "مدیریت آیتم‌های آموزشی";
     var teachingPlanId = ViewBag.TeachingPlanId as int? ?? 0;
@@ -6,9 +7,12 @@
     var courseTitle = ViewBag.CourseTitle as string ?? "دوره";
     var courseId = ViewBag.CourseId as int? ?? 0;
     var stats = ViewBag.Stats as EduTrack.Application.Common.Models.ScheduleItems.ScheduleItemStatsDto ?? new EduTrack.Application.Common.Models.ScheduleItems.ScheduleItemStatsDto();
+    var itemTypes = Enum.GetValues<EduTrack.Domain.Enums.ScheduleItemType>()
+        .Select(t => new { Value = (int)t, Name = t.GetDisplayName() })
+        .ToList();
 }
 
-<div class="schedule-items-container">
+<div class="schedule-items-container" data-teaching-plan-id="@teachingPlanId">
 
     <!-- Stats Cards -->
     <div class="stats-grid">
@@ -56,47 +60,41 @@
     <!-- Filters and Search -->
     <div class="filters-section-minimal">
         <div class="filters-container">
-            <div class="search-container">
+            <div class="filters-top-row">
                 <div class="search-input-wrapper">
                     <i class="fas fa-search search-icon"></i>
                     <input type="text" id="searchInput" placeholder="جستجو در آیتم‌ها..." class="search-input">
                 </div>
+                <div class="sort-container">
+                    <select id="sortSelect" class="filter-select">
+                        <option value="start-desc">شروع (جدیدترین)</option>
+                        <option value="start-asc">شروع (قدیمی‌ترین)</option>
+                        <option value="due-asc">نزدیک‌ترین مهلت</option>
+                        <option value="due-desc">دورترین مهلت</option>
+                        <option value="title-asc">عنوان (الف تا ی)</option>
+                        <option value="title-desc">عنوان (ی تا الف)</option>
+                    </select>
+                </div>
+                <button type="button" class="btn-icon btn-clear-filters" id="clearFilters" aria-label="پاک کردن فیلترها" hidden>
+                    <i class="fas fa-times-circle"></i>
+                </button>
             </div>
-            
-            <div class="filters-row">
-                <div class="filter-group">
-                    <label class="filter-label">نوع آیتم:</label>
-                    <select id="typeFilter" class="filter-select">
-                        <option value="">همه انواع</option>
-                        <option value="0">یادآوری</option>
-                        <option value="1">نوشتاری</option>
-                        <option value="2">صوتی</option>
-                        <option value="3">پر کردن جای خالی</option>
-                        <option value="4">چند گزینه‌ای</option>
-                        <option value="5">تطبیق</option>
-                        <option value="6">پیدا کردن خطا</option>
-                        <option value="7">تمرین کد</option>
-                        <option value="8">کویز</option>
-                    </select>
+
+            <div class="filter-chips-row">
+                <div class="chips-group" aria-label="نوع آیتم">
+                    <button type="button" class="filter-chip active" data-type="">همه</button>
+                    @foreach (var t in itemTypes)
+                    {
+                        <button type="button" class="filter-chip" data-type="@t.Value">@t.Name</button>
+                    }
                 </div>
-                
-                <div class="filter-group">
-                    <label class="filter-label">وضعیت:</label>
-                    <select id="statusFilter" class="filter-select">
-                        <option value="">همه وضعیت‌ها</option>
-                        <option value="0">پیش‌نویس</option>
-                        <option value="1">منتشر شده</option>
-                        <option value="2">فعال</option>
-                        <option value="3">تکمیل شده</option>
-                        <option value="4">منقضی شده</option>
-                    </select>
-                </div>
-                
-                <div class="filter-actions">
-                    <button type="button" class="btn-clear-filters" id="clearFilters">
-                        <i class="fas fa-times"></i>
-                        پاک کردن
-                    </button>
+                <div class="chips-group" aria-label="وضعیت">
+                    <button type="button" class="filter-chip active" data-status="">همه وضعیت‌ها</button>
+                    <button type="button" class="filter-chip" data-status="0">پیش‌نویس</button>
+                    <button type="button" class="filter-chip" data-status="1">منتشر شده</button>
+                    <button type="button" class="filter-chip" data-status="2">فعال</button>
+                    <button type="button" class="filter-chip" data-status="3">تکمیل شده</button>
+                    <button type="button" class="filter-chip" data-status="4">منقضی شده</button>
                 </div>
             </div>
         </div>
@@ -112,7 +110,7 @@
                     <div class="item-header">
                         <div class="item-type-badge type-@((int)item.Type)">
                             <i class="@GetTypeIcon(item.Type)"></i>
-                            @item.TypeName
+                            @item.Type.GetDisplayName()
                         </div>
                         <div class="item-actions">
                             <div class="dropdown">
@@ -120,14 +118,14 @@
                                     <i class="fas fa-ellipsis-v"></i>
                                 </button>
                                 <ul class="dropdown-menu">
-                                    <li><a class="dropdown-item" href="#" onclick="scheduleItemsManager.editItem(@item.Id)">
+                                    <li><a class="dropdown-item" href="#" data-action="edit" data-item-id="@item.Id">
                                         <i class="fas fa-edit"></i> ویرایش
                                     </a></li>
-                                    <li><a class="dropdown-item" href="#" onclick="scheduleItemsManager.duplicateItem(@item.Id)">
+                                    <li><a class="dropdown-item" href="#" data-action="duplicate" data-item-id="@item.Id">
                                         <i class="fas fa-copy"></i> کپی
                                     </a></li>
                                     <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item text-danger" href="#" onclick="scheduleItemsManager.deleteItem(@item.Id)">
+                                    <li><a class="dropdown-item text-danger" href="#" data-action="delete" data-item-id="@item.Id">
                                         <i class="fas fa-trash"></i> حذف
                                     </a></li>
                                 </ul>
@@ -201,23 +199,18 @@
     <script src="~/js/utils/common.js" asp-append-version="true"></script>
     <script src="~/js/utils/validation.js" asp-append-version="true"></script>
     <script src="~/js/utils/dom-helpers.js" asp-append-version="true"></script>
-    
+
     <!-- Services -->
     <script src="~/js/services/notification-service.js" asp-append-version="true"></script>
     <script src="~/js/services/modal-service.js" asp-append-version="true"></script>
-    
+
     <!-- API Services -->
     <script src="~/js/api/schedule-item-api.js" asp-append-version="true"></script>
     <script src="~/js/api/schedule-api.js" asp-append-version="true"></script>
     <script src="~/js/api/student-group-api.js" asp-append-version="true"></script>
-    
+
     <!-- Core Initialization -->
     <script src="~/js/edutrack-core.js" asp-append-version="true"></script>
-    
-    <script>
-        // Set global teaching plan ID for JavaScript functions
-        window.teachingPlanId = @teachingPlanId;
-    </script>
     <script src="~/js/areas/teacher/schedule-items/schedule-items.js" asp-append-version="true"></script>
 }
 
