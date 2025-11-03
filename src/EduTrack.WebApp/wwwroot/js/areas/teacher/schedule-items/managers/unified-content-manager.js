@@ -424,6 +424,12 @@ class UnifiedContentManager extends ContentBuilderBase {
                 return;
             }
 
+            // Clear existing blocks from DOM before rendering new ones
+            if (this.blocksList) {
+                const existingBlocks = this.blocksList.querySelectorAll('.content-block, .question-block-template, .question-type-block');
+                existingBlocks.forEach(block => block.remove());
+            }
+
             this.blocks = blocks;
 
             if (this.blocks.length > 0) {
