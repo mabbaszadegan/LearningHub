@@ -181,11 +181,48 @@ class BottomNavigation {
             });
 
             // Extract and execute scripts
+            // Scripts that should only be loaded once (base scripts)
+            const baseScripts = [
+                '/js/pwa.js',
+                '/js/areas/student/bottom-navigation.js',
+                '/js/areas/student/desktop-header.js',
+                '/js/site.js',
+                '/js/notifications.js'
+            ];
+            
+            // Helper function to get base path without query string
+            const getBasePath = (url) => {
+                if (!url) return '';
+                const urlObj = new URL(url, window.location.origin);
+                return urlObj.pathname;
+            };
+            
+            // Helper function to check if script is already loaded
+            const isScriptLoaded = (scriptSrc) => {
+                const basePath = getBasePath(scriptSrc);
+                
+                // Check if it's a base script that should only load once
+                if (baseScripts.some(base => basePath.includes(base))) {
+                    return true;
+                }
+                
+                // Check if script with same base path is already in DOM
+                const existingScripts = document.querySelectorAll('script[src]');
+                for (const existing of existingScripts) {
+                    const existingBasePath = getBasePath(existing.src);
+                    if (existingBasePath === basePath) {
+                        return true;
+                    }
+                }
+                
+                return false;
+            };
+            
             const scripts = doc.querySelectorAll('script');
             scripts.forEach(script => {
                 if (script.src) {
-                    // External script
-                    if (!document.querySelector(`script[src="${script.src}"]`)) {
+                    // External script - check if already loaded
+                    if (!isScriptLoaded(script.src)) {
                         const newScript = document.createElement('script');
                         newScript.src = script.src;
                         if (script.hasAttribute('asp-append-version')) {
@@ -194,10 +231,20 @@ class BottomNavigation {
                         document.body.appendChild(newScript);
                     }
                 } else {
-                    // Inline script
-                    const newScript = document.createElement('script');
-                    newScript.textContent = script.textContent;
-                    document.body.appendChild(newScript);
+                    // Inline script - only execute if it doesn't declare already existing globals
+                    const scriptContent = script.textContent || '';
+                    
+                    // Check for common duplicate declarations
+                    const hasDuplicateDeclarations = 
+                        (scriptContent.includes('class BottomNavigation') && window.BottomNavigation) ||
+                        (scriptContent.includes('class DesktopHeader') && window.DesktopHeader) ||
+                        (scriptContent.includes('let deferredPrompt') && window.deferredPrompt !== undefined);
+                    
+                    if (!hasDuplicateDeclarations) {
+                        const newScript = document.createElement('script');
+                        newScript.textContent = scriptContent;
+                        document.body.appendChild(newScript);
+                    }
                 }
             });
 
