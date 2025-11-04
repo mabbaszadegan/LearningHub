@@ -11,6 +11,9 @@
 
 @section Styles {
     <link rel="stylesheet" href="~/css/areas/student/educational-content/study-content.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/areas/student/educational-content/study-content-minimal.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/areas/student/educational-content/view-toggle.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/areas/student/educational-content/question-blocks.css" asp-append-version="true" />
 }
 
 <!-- Breadcrumb Navigation -->
@@ -68,10 +71,30 @@
         @switch (Model.Type)
         {
             case ScheduleItemType.Reminder:
-                @await Html.PartialAsync("_ReminderContent", parsedContent)
+                @if (parsedContent != null)
+                {
+                    @await Html.PartialAsync("_ReminderContent", parsedContent)
+                }
+                else
+                {
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        محتوای یادآوری یافت نشد. (ContentJson: @(string.IsNullOrEmpty(Model.ContentJson) ? "خالی" : "وجود دارد"))
+                    </div>
+                }
                 break;
             case ScheduleItemType.Writing:
-                @await Html.PartialAsync("_WritingContent", parsedContent)
+                @if (parsedContent != null)
+                {
+                    @await Html.PartialAsync("_WritingContent", parsedContent)
+                }
+                else
+                {
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        محتوای نوشتاری یافت نشد. (ContentJson: @(string.IsNullOrEmpty(Model.ContentJson) ? "خالی" : "وجود دارد"))
+                    </div>
+                }
                 break;
             case ScheduleItemType.Audio:
                 @await Html.PartialAsync("_AudioContent", parsedContent)
@@ -139,6 +162,7 @@
 </div>
 
 @section Scripts {
+    <script src="~/js/areas/student/educational-content/study-content-view-toggle.js" asp-append-version="true"></script>
     <script src="~/js/areas/student/educational-content/study-content.js" asp-append-version="true"></script>
     <script>
         // Configuration for study content page
@@ -151,11 +175,19 @@
             courseId: @(courseId ?? 0)
         };
 
-        // Initialize study session
+        // Initialize study session and hide header/footer
         $(document).ready(function() {
+            // Add class to body to hide header and footer
+            document.body.classList.add('study-content-page-active');
+            
             if (window.studySession) {
                 window.studySession.init();
             }
+        });
+        
+        // Clean up on page unload
+        window.addEventListener('beforeunload', function() {
+            document.body.classList.remove('study-content-page-active');
         });
     </script>
 }

@@ -308,21 +308,8 @@ class ScheduleItemsManager {
             itemCard.classList.add('loading');
         }
 
-        // Show loading message
-        this.showToast('در حال بارگذاری آیتم...', 'info');
-
-        // Simulate API call (replace with actual implementation)
-        setTimeout(() => {
-            if (itemCard) {
-                itemCard.classList.remove('loading');
-            }
-            
-            // For now, just show a message
-            this.showToast('آیتم با موفقیت شروع شد', 'success');
-            
-            // In a real implementation, you would redirect to the schedule item page
-            // window.location.href = `/Student/ScheduleItem/Start/${itemId}`;
-        }, 1000);
+        // Redirect to Study page
+        window.location.href = `/Student/ScheduleItem/Study/${itemId}`;
     }
 
     showItemDetails(itemId) {

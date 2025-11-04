@@ -1,0 +1,95 @@
+@using EduTrack.Application.Common.Models.ScheduleItems
+@using EduTrack.Domain.Enums
+@model ContentBlock
+
+@switch (Model.Type)
+{
+    case ContentBlockType.Text:
+        <div class="content-block-text">
+            @Html.Raw(Model.Data.Content?.Replace("\n", "<br />") ?? Model.Data.TextContent?.Replace("\n", "<br />") ?? "")
+        </div>
+        break;
+        
+    case ContentBlockType.Image:
+        @if (!string.IsNullOrEmpty(Model.Data.FileUrl) || !string.IsNullOrEmpty(Model.Data.FileId))
+        {
+            var imageUrl = !string.IsNullOrEmpty(Model.Data.FileUrl) 
+                ? Model.Data.FileUrl 
+                : $"/FileUpload/GetFile/{Model.Data.FileId}";
+                
+            <div class="content-block-image">
+                <img src="@imageUrl" 
+                     alt="@(Model.Data.Caption ?? "تصویر")" 
+                     class="content-image content-image-@(Model.Data.Size ?? "medium")"
+                     loading="lazy" />
+                @if (!string.IsNullOrEmpty(Model.Data.Caption))
+                {
+                    <div class="content-caption content-caption-@(Model.Data.CaptionPosition ?? "bottom")">
+                        @Model.Data.Caption
+                    </div>
+                }
+            </div>
+        }
+        break;
+        
+    case ContentBlockType.Video:
+        @if (!string.IsNullOrEmpty(Model.Data.FileUrl) || !string.IsNullOrEmpty(Model.Data.FileId))
+        {
+            var videoUrl = !string.IsNullOrEmpty(Model.Data.FileUrl) 
+                ? Model.Data.FileUrl 
+                : $"/FileUpload/GetFile/{Model.Data.FileId}";
+                
+            <div class="content-block-video">
+                <video controls class="content-video content-video-@(Model.Data.Size ?? "medium")">
+                    <source src="@videoUrl" type="@(Model.Data.MimeType ?? "video/mp4")">
+                    مرورگر شما از پخش ویدیو پشتیبانی نمی‌کند.
+                </video>
+                @if (!string.IsNullOrEmpty(Model.Data.Caption))
+                {
+                    <div class="content-caption content-caption-@(Model.Data.CaptionPosition ?? "bottom")">
+                        @Model.Data.Caption
+                    </div>
+                }
+            </div>
+        }
+        break;
+        
+    case ContentBlockType.Audio:
+        @if (!string.IsNullOrEmpty(Model.Data.FileUrl) || !string.IsNullOrEmpty(Model.Data.FileId))
+        {
+            var audioUrl = !string.IsNullOrEmpty(Model.Data.FileUrl) 
+                ? Model.Data.FileUrl 
+                : $"/FileUpload/GetFile/{Model.Data.FileId}";
+                
+            <div class="content-block-audio-minimal">
+                <audio controls class="content-audio-minimal" preload="metadata">
+                    <source src="@audioUrl" type="@(Model.Data.MimeType ?? "audio/mpeg")">
+                    مرورگر شما از پخش صدا پشتیبانی نمی‌کند.
+                </audio>
+                @if (!string.IsNullOrEmpty(Model.Data.Caption))
+                {
+                    <div class="content-caption content-caption-bottom">
+                        @Model.Data.Caption
+                    </div>
+                }
+            </div>
+        }
+        break;
+        
+    case ContentBlockType.Code:
+        <div class="content-block-code">
+            @if (!string.IsNullOrEmpty(Model.Data.CodeTitle))
+            {
+                <div class="code-title">@Model.Data.CodeTitle</div>
+            }
+            <pre class="code-block"><code class="language-@(Model.Data.Language ?? "plaintext")">@Html.Raw(Html.Encode(Model.Data.CodeContent ?? ""))</code></pre>
+        </div>
+        break;
+        
+    default:
+        <div class="content-block-unknown">
+            <p>نوع بلاک پشتیبانی نمی‌شود: @Model.Type</p>
+        </div>
+        break;
+}
+

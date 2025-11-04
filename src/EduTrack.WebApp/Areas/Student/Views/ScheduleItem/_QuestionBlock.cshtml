@@ -1,0 +1,137 @@
+@using EduTrack.Application.Common.Models.ScheduleItems
+@using EduTrack.Domain.Enums
+@model ReminderQuestionBlock
+
+@{
+    var questionId = $"question-{Model.Id}";
+}
+
+<div class="question-block-minimal" data-question-id="@Model.Id" data-question-type="@Model.QuestionType">
+    <div class="question-header-minimal">
+        <div class="question-meta-minimal">
+            @if (Model.Points > 0)
+            {
+                <span class="question-points-badge">@Model.Points امتیاز</span>
+            }
+            @if (Model.IsRequired)
+            {
+                <span class="question-required-badge">اجباری</span>
+            }
+        </div>
+    </div>
+    
+    <div class="question-content-minimal">
+        @switch (Model.QuestionType)
+        {
+            case ReminderQuestionType.Text:
+                @if (!string.IsNullOrEmpty(Model.QuestionData.TextContent))
+                {
+                    <div class="question-text-minimal">
+                        @Html.Raw(Model.QuestionData.TextContent.Replace("\n", "<br />"))
+                    </div>
+                }
+                <div class="question-answer-minimal">
+                    <textarea id="@questionId" 
+                              name="@questionId" 
+                              class="question-textarea-minimal" 
+                              placeholder="پاسخ خود را وارد کنید..."
+                              rows="4"
+                              @(Model.IsRequired ? "required" : "")></textarea>
+                </div>
+                break;
+                
+            case ReminderQuestionType.Image:
+                @if (!string.IsNullOrEmpty(Model.QuestionData.FileUrl) || !string.IsNullOrEmpty(Model.QuestionData.FileId))
+                {
+                    var imageUrl = !string.IsNullOrEmpty(Model.QuestionData.FileUrl) 
+                        ? Model.QuestionData.FileUrl 
+                        : $"/FileUpload/GetFile/{Model.QuestionData.FileId}";
+                        
+                    <div class="question-image-minimal">
+                        <img src="@imageUrl" 
+                             alt="@(Model.QuestionData.Caption ?? "سوال تصویری")" 
+                             class="question-image"
+                             loading="lazy" />
+                        @if (!string.IsNullOrEmpty(Model.QuestionData.Caption))
+                        {
+                            <div class="question-image-caption">@Model.QuestionData.Caption</div>
+                        }
+                    </div>
+                }
+                <div class="question-answer-minimal">
+                    <textarea id="@questionId" 
+                              name="@questionId" 
+                              class="question-textarea-minimal" 
+                              placeholder="پاسخ خود را وارد کنید..."
+                              rows="4"
+                              @(Model.IsRequired ? "required" : "")></textarea>
+                </div>
+                break;
+                
+            case ReminderQuestionType.Video:
+                @if (!string.IsNullOrEmpty(Model.QuestionData.FileUrl) || !string.IsNullOrEmpty(Model.QuestionData.FileId))
+                {
+                    var videoUrl = !string.IsNullOrEmpty(Model.QuestionData.FileUrl) 
+                        ? Model.QuestionData.FileUrl 
+                        : $"/FileUpload/GetFile/{Model.QuestionData.FileId}";
+                        
+                    <div class="question-video-minimal">
+                        <video controls class="question-video" preload="metadata">
+                            <source src="@videoUrl" type="@(Model.QuestionData.MimeType ?? "video/mp4")">
+                            مرورگر شما از پخش ویدیو پشتیبانی نمی‌کند.
+                        </video>
+                        @if (!string.IsNullOrEmpty(Model.QuestionData.Caption))
+                        {
+                            <div class="question-video-caption">@Model.QuestionData.Caption</div>
+                        }
+                    </div>
+                }
+                <div class="question-answer-minimal">
+                    <textarea id="@questionId" 
+                              name="@questionId" 
+                              class="question-textarea-minimal" 
+                              placeholder="پاسخ خود را وارد کنید..."
+                              rows="4"
+                              @(Model.IsRequired ? "required" : "")></textarea>
+                </div>
+                break;
+                
+            case ReminderQuestionType.Audio:
+                @if (!string.IsNullOrEmpty(Model.QuestionData.FileUrl) || !string.IsNullOrEmpty(Model.QuestionData.FileId))
+                {
+                    var audioUrl = !string.IsNullOrEmpty(Model.QuestionData.FileUrl) 
+                        ? Model.QuestionData.FileUrl 
+                        : $"/FileUpload/GetFile/{Model.QuestionData.FileId}";
+                        
+                    <div class="question-audio-minimal">
+                        <audio controls class="question-audio-minimal-player" preload="metadata">
+                            <source src="@audioUrl" type="@(Model.QuestionData.MimeType ?? "audio/mpeg")">
+                            مرورگر شما از پخش صدا پشتیبانی نمی‌کند.
+                        </audio>
+                        @if (!string.IsNullOrEmpty(Model.QuestionData.Caption))
+                        {
+                            <div class="question-audio-caption">@Model.QuestionData.Caption</div>
+                        }
+                    </div>
+                }
+                <div class="question-answer-minimal">
+                    <textarea id="@questionId" 
+                              name="@questionId" 
+                              class="question-textarea-minimal" 
+                              placeholder="پاسخ خود را وارد کنید..."
+                              rows="4"
+                              @(Model.IsRequired ? "required" : "")></textarea>
+                </div>
+                break;
+        }
+    </div>
+    
+    @if (!string.IsNullOrEmpty(Model.TeacherGuidance))
+    {
+        <div class="question-guidance-minimal">
+            <i class="fas fa-lightbulb"></i>
+            <span>راهنمایی: @Model.TeacherGuidance</span>
+        </div>
+    }
+</div>
+

@@ -3,6 +3,23 @@
  * Ultra clean, minimal header with breadcrumb for ScheduleItem study
  */
 
+/* Hide bottom navigation and headers on study content page */
+body.study-content-page-active .fixed-footer,
+body.study-content-page-active .fixed-header,
+body.study-content-page-active .desktop-header {
+    display: none !important;
+}
+
+/* Override main-content styles for study content page */
+body.study-content-page-active .main-content {
+    position: static !important;
+    top: auto !important;
+    bottom: auto !important;
+    height: auto !important;
+    overflow: visible !important;
+    padding: 0 !important;
+}
+
 /* Breadcrumb Navigation */
 .study-breadcrumb {
     background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);

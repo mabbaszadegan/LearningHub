@@ -1,0 +1,128 @@
+/**
+ * View Toggle Styles
+ * Styles for unified and step-by-step view modes
+ */
+
+/* Toggle Button */
+.btn-view-toggle {
+    background: rgba(255, 255, 255, 0.15);
+    border: none;
+    color: white;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.8rem;
+    flex-shrink: 0;
+}
+
+.btn-view-toggle:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: scale(1.1);
+}
+
+.btn-view-toggle:active {
+    transform: scale(0.95);
+}
+
+/* Block Navigation */
+.block-navigation {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem;
+    background: white;
+    border-top: 1px solid #e5e5e5;
+    margin-top: 1rem;
+    border-radius: 0 0 12px 12px;
+    gap: 1rem;
+}
+
+.btn-block-nav {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.btn-block-nav:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.btn-block-nav:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.btn-block-nav:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: #ccc;
+}
+
+.block-counter {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #495057;
+    padding: 0.5rem 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+/* Block Visibility States */
+.content-block.block-hidden {
+    display: none !important;
+}
+
+.content-block.block-visible {
+    display: block;
+    animation: fadeIn 0.3s ease-in;
+}
+
+.content-block.block-active {
+    position: relative;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Step-by-step view specific styles */
+[data-view-mode="step-by-step"] .content-blocks-wrapper {
+    position: relative;
+}
+
+[data-view-mode="step-by-step"] .content-block.block-active {
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+

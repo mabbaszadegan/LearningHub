@@ -1,15 +1,114 @@
 @model object
 @using EduTrack.Application.Common.Models.ScheduleItems
+@using EduTrack.Domain.Enums
+@using System.Linq
 @{
     var content = Model as ReminderContent;
 }
 
-<div id="reminder-content" class="reminder-content-container">
-    <div class="loading-placeholder">
-        <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">در حال بارگذاری محتوا...</span>
-        </div>
-        <p class="loading-text">در حال بارگذاری محتوای یادآوری...</p>
-    </div>
-</div>
+<div id="reminder-content" class="reminder-content-container" data-view-mode="unified">
+    @if (content != null)
+    {
+        <!-- Main Message -->
+        @if (!string.IsNullOrEmpty(content.Message))
+        {
+            <div class="content-block content-block-message">
+                <div class="content-block-inner">
+                    <div class="content-block-text">
+                        @Html.Raw(content.Message.Replace("\n", "<br />"))
+                    </div>
+                </div>
+            </div>
+        }
 
+        <!-- Combined Blocks and Question Blocks (sorted by Order) -->
+        {
+            var allBlocks = new List<dynamic>();
+
+            // Add content blocks
+            if (content.Blocks != null && content.Blocks.Any())
+            {
+                foreach (var block in content.Blocks)
+                {
+                    allBlocks.Add(new { Type = "content", Block = (object)block, Order = block.Order });
+                }
+            }
+
+            // Add question blocks
+            if (content.QuestionBlocks != null && content.QuestionBlocks.Any())
+            {
+                foreach (var questionBlock in content.QuestionBlocks)
+                {
+                    allBlocks.Add(new { Type = "question", Block = (object)questionBlock, Order = questionBlock.Order });
+                }
+            }
+
+            // Sort by Order
+            var sortedBlocks = allBlocks.OrderBy(b => b.Order).ToList();
+
+        @if (sortedBlocks.Any())
+        {
+            <div class="content-blocks-wrapper">
+                @foreach (var item in sortedBlocks)
+                {
+                    var blockType = item.Type;
+                    var order = item.Order;
+
+                    @if (blockType == "content")
+                    {
+                        var block = item.Block as ContentBlock;
+                        if (block != null)
+                        {
+                            <div class="content-block content-block-@block.Type.ToString().ToLower()"
+                                 data-block-order="@order"
+                                 data-block-id="@block.Id"
+                                 data-block-type="content">
+                                <div class="content-block-inner">
+                                    @await Html.PartialAsync("_ContentBlock", block)
+                                </div>
+                            </div>
+                        }
+                    }
+                    else if (blockType == "question")
+                    {
+                        var questionBlock = item.Block as ReminderQuestionBlock;
+                        if (questionBlock != null)
+                        {
+                            <div class="content-block content-block-question"
+                                 data-block-order="@order"
+                                 data-block-id="@questionBlock.Id"
+                                 data-block-type="question">
+                                <div class="content-block-inner">
+                                    @await Html.PartialAsync("_QuestionBlock", questionBlock)
+                                </div>
+                            </div>
+                        }
+                    }
+                }
+            </div>
+        }
+        else
+        {
+            <!-- Debug: Show if no blocks found -->
+            <div class="content-empty-state">
+                <i class="fas fa-info-circle"></i>
+                <p>هیچ بلاک محتوایی یافت نشد.</p>
+                <p style="font-size: 0.8rem; color: #999; margin-top: 0.5rem;">
+                    Blocks: @(content.Blocks?.Count ?? 0), 
+                    QuestionBlocks: @(content.QuestionBlocks?.Count ?? 0)
+                </p>
+            </div>
+        }
+        }
+    }
+    else
+    {
+        <div class="content-empty-state">
+            <i class="fas fa-info-circle"></i>
+            <p>محتوای یادآوری یافت نشد.</p>
+            <p style="font-size: 0.8rem; color: #999; margin-top: 0.5rem;">
+                Model type: @(Model?.GetType().Name ?? "null")
+            </p>
+        </div>
+    }
+</div>

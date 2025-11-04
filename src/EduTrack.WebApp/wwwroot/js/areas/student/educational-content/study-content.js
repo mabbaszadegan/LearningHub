@@ -18,9 +18,13 @@ let studySession = {
         this.startHiddenTimer();
         this.startStudySession();
         
-        // Initialize reminder content if needed
+        // Initialize reminder content if needed (only if not already rendered server-side)
         if (window.studyContentConfig?.contentType === 'Reminder') {
-            this.initializeReminderContent();
+            const container = document.getElementById('reminder-content');
+            // Only initialize if container is empty (no server-side rendering)
+            if (container && (!container.querySelector('.content-block') && !container.querySelector('.content-empty-state'))) {
+                this.initializeReminderContent();
+            }
         }
         
         // Apply automatic code highlighting to all code blocks on page load
