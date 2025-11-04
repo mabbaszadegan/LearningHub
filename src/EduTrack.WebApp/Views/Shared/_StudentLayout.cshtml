@@ -130,19 +130,20 @@
     <header class="fixed-header">
         <div class="header-content">
             <div class="header-left">
+                <a href="/Student/Profile" class="header-btn" title="پروفایل">
+                    <i class="fas fa-user-circle"></i>
+                </a>
+                
+                <a href="/Student/Settings" class="header-btn" title="تنظیمات">
+                    <i class="fas fa-cog"></i>
+                </a>
+                
                 <button class="header-btn notifications-btn" title="اعلانات">
                     <i class="fas fa-bell"></i>
                     <span class="notification-badge">3</span>
                 </button>
-                
-                <button class="header-btn logout-btn" title="خروج" onclick="StudentAuth.logout()">
-                    <i class="fas fa-sign-out-alt"></i>
-                </button>
             </div>
             
-            <div class="header-right">
-                <span class="welcome-text">@(User.Identity?.Name?.Split(' ').FirstOrDefault() ?? "کاربر") جان، خوش آمدی</span>
-            </div>
         </div>
     </header>
 
@@ -155,39 +156,22 @@
     <!-- Fixed Footer (Bottom Navigation) -->
     <footer class="fixed-footer">
         <div class="bottom-nav">
-            <div class="nav-item" data-page="courses">
-                <div class="nav-icon">
-                    <i class="fas fa-graduation-cap"></i>
-                </div>
-                <div class="nav-label">دوره‌های موجود</div>
-            </div>
-            
             <div class="nav-item" data-page="home">
                 <div class="nav-icon">
                     <i class="fas fa-home"></i>
                 </div>
-                <div class="nav-label">خانه</div>
+            </div>
+            
+            <div class="nav-item" data-page="courses">
+                <div class="nav-icon">
+                    <i class="fas fa-graduation-cap"></i>
+                </div>
             </div>
             
             <div class="nav-item" data-page="statistics">
                 <div class="nav-icon">
                     <i class="fas fa-chart-bar"></i>
                 </div>
-                <div class="nav-label">آمار</div>
-            </div>
-            
-            <div class="nav-item" data-page="settings">
-                <div class="nav-icon">
-                    <i class="fas fa-cog"></i>
-                </div>
-                <div class="nav-label">تنظیمات</div>
-            </div>
-            
-            <div class="nav-item" data-page="profile">
-                <div class="nav-icon">
-                    <i class="fas fa-user-circle"></i>
-                </div>
-                <div class="nav-label">پروفایل</div>
             </div>
         </div>
     </footer>

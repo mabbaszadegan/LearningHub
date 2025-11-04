@@ -22,12 +22,6 @@ class BottomNavigation {
         if (path.includes('/student/statistics')) {
             return 'statistics';
         }
-        if (path.includes('/student/settings')) {
-            return 'settings';
-        }
-        if (path.includes('/student/profile')) {
-            return 'profile';
-        }
         if (path.includes('/student/course/catalog')) {
             return 'courses';
         }
@@ -38,12 +32,6 @@ class BottomNavigation {
         // Fallback checks
         if (path.includes('/catalog')) {
             return 'courses';
-        }
-        if (path.includes('/profile')) {
-            return 'profile';
-        }
-        if (path.includes('/settings')) {
-            return 'settings';
         }
         if (path.includes('/statistics')) {
             return 'statistics';
@@ -62,7 +50,13 @@ class BottomNavigation {
         document.querySelectorAll('.nav-item').forEach(item => {
             item.addEventListener('click', (e) => {
                 e.preventDefault();
+                e.stopPropagation();
                 const page = item.dataset.page;
+                
+                // Update active state immediately for better UX
+                this.setActivePage(page);
+                
+                // Navigate to page
                 this.navigateToPage(page);
             });
         });
@@ -90,14 +84,18 @@ class BottomNavigation {
         const routes = {
             'home': '/Student/Home',
             'courses': '/Student/Course/Catalog',
-            'statistics': '/Student/Statistics',
-            'settings': '/Student/Settings',
-            'profile': '/Student/Profile'
+            'statistics': '/Student/Statistics'
         };
 
         const route = routes[page];
-        if (route && window.location.pathname !== route) {
-            window.location.href = route;
+        if (route) {
+            const currentPath = window.location.pathname.toLowerCase();
+            const targetPath = route.toLowerCase();
+            
+            // Only navigate if we're not already on the target page
+            if (!currentPath.includes(targetPath.replace('/student/', '').replace('/student', ''))) {
+                window.location.href = route;
+            }
         }
     }
 
