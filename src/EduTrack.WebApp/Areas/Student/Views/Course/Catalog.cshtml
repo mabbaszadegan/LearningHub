@@ -1,18 +1,49 @@
 @using EduTrack.Application.Common.Models.Courses
+@using EduTrack.Domain.Enums
 @model EduTrack.Application.Common.Models.PaginatedList<CourseDto>
 @{
     ViewData["Title"] = "کاتالوگ دوره‌ها";
 }
 
+@functions {
+    string GetDisciplineTypeName(DisciplineType type)
+    {
+        return type switch
+        {
+            DisciplineType.Language => "زبان‌ها",
+            DisciplineType.Math => "ریاضیات",
+            DisciplineType.Programming => "برنامه‌نویسی",
+            DisciplineType.Science => "علوم",
+            DisciplineType.Other => "سایر",
+            _ => "سایر"
+        };
+    }
+
+    string GetDisciplineTypeIcon(DisciplineType type)
+    {
+        return type switch
+        {
+            DisciplineType.Language => "fas fa-language",
+            DisciplineType.Math => "fas fa-calculator",
+            DisciplineType.Programming => "fas fa-code",
+            DisciplineType.Science => "fas fa-flask",
+            DisciplineType.Other => "fas fa-book",
+            _ => "fas fa-book"
+        };
+    }
+}
+
 @section Styles {
     <link rel="stylesheet" href="~/css/areas/student/buttons.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/areas/student/course/mobile-course-list.css" asp-append-version="true" />
 }
 
 <div class="content-container">
-    <!-- Course Catalog Container -->
+    <!-- Course Catalog Container for Desktop -->
     <div class="course-catalog-container">
         @if (Model.Items.Any())
         {
+            <!-- Desktop Layout -->
             <div class="row">
                 @foreach (var course in Model.Items)
                 {
@@ -35,7 +66,7 @@
                                 <div class="course-status">
                                     @if (course.IsActive)
                                     {
-                                        <span class="badge bg-primary">قابل ثبت‌نام</span>
+                                        <span class="badge bg-primary">در دسترس</span>
                                     }
                                     else
                                     {
@@ -54,19 +85,19 @@
                                 <div class="course-stats-grid">
                                     <div class="course-stat-item">
                                         <i class="fas fa-layer-group course-stat-icon"></i>
-                                        <span class="course-stat-text">@course.ChapterCount مبحث</span>
+                                        <span class="course-stat-text">@course.ChapterCount فصل</span>
                                     </div>
                                     <div class="course-stat-item">
                                         <i class="fas fa-play-circle course-stat-icon"></i>
-                                        <span class="course-stat-text">0 زیرمبحث</span>
+                                        <span class="course-stat-text">0 زیرفصل</span>
                                     </div>
                                     <div class="course-stat-item">
                                         <i class="fas fa-users course-stat-icon"></i>
-                                        <span class="course-stat-text">@course.ClassCount دانش‌آموز</span>
+                                        <span class="course-stat-text">@course.ClassCount کلاس</span>
                                     </div>
                                     <div class="course-stat-item">
                                         <i class="fas fa-bookmark course-stat-icon"></i>
-                                        <span class="course-stat-text">@course.ChapterCount محتوا</span>
+                                        <span class="course-stat-text">@course.ChapterCount درس</span>
                                     </div>
                                 </div>
                                 
@@ -98,7 +129,7 @@
                 }
             </div>
             
-            <!-- Pagination -->
+            <!-- Pagination for Desktop -->
             @if (Model.TotalPages > 1)
             {
                 <div class="pagination-container">
@@ -133,55 +164,122 @@
                 </div>
             }
         }
-        else
-        {
-            <div class="empty-state">
-                <i class="fas fa-search"></i>
-                <h3>دوره‌ای یافت نشد</h3>
-                <p>در حال حاضر دوره جدیدی برای ثبت‌نام وجود ندارد</p>
-                <a asp-action="Index" class="btn-continue">
-                    <i class="fas fa-arrow-right"></i>
-                    بازگشت به دوره‌های من
-                </a>
-            </div>
-        }
     </div>
+
+    <!-- Mobile Layout -->
+    @if (Model.Items.Any())
+    {
+        <!-- Search Header -->
+        <div class="mobile-course-search-header">
+            <div class="search-box-container">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" id="courseSearchInput" class="search-input" placeholder="جستجوی دوره..." />
+                <button type="button" class="search-clear-btn" id="searchClearBtn" style="display: none;">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Course Groups -->
+        <div class="mobile-course-groups" id="courseGroupsContainer">
+            @{
+                var groupedCourses = Model.Items
+                    .GroupBy(c => c.DisciplineType)
+                    .Where(g => g.Any()) // Only show groups with courses
+                    .OrderBy(g => g.Key)
+                    .ToList();
+            }
+
+            @foreach (var group in groupedCourses)
+            {
+                var disciplineType = group.Key;
+                var courses = group.ToList();
+                var groupId = $"group-{(int)disciplineType}";
+
+                <div class="course-group" data-discipline-type="@((int)disciplineType)" data-group-id="@groupId">
+                    <div class="course-group-header">
+                        <div class="group-title">
+                            <i class="@GetDisciplineTypeIcon(disciplineType)"></i>
+                            <span>@GetDisciplineTypeName(disciplineType)</span>
+                            <span class="course-count">(@courses.Count)</span>
+                        </div>
+                    </div>
+                    
+                    <div class="course-tiles-scroll">
+                        <div class="course-tiles-container">
+                            @foreach (var course in courses)
+                            {
+                                <div class="course-tile" data-course-id="@course.Id" data-course-title="@course.Title.ToLower()">
+                                    <div class="tile-thumbnail">
+                                        @if (!string.IsNullOrEmpty(course.Thumbnail))
+                                        {
+                                            <img src="@course.Thumbnail" alt="@course.Title">
+                                        }
+                                        else
+                                        {
+                                            <div class="tile-thumbnail-placeholder">
+                                                <i class="fas fa-graduation-cap"></i>
+                                            </div>
+                                        }
+                                        @if (!course.IsActive)
+                                        {
+                                            <div class="tile-inactive-overlay">
+                                                <i class="fas fa-lock"></i>
+                                            </div>
+                                        }
+                                    </div>
+                                    <div class="tile-info">
+                                        <h6 class="tile-title">@course.Title</h6>
+                                        <div class="tile-meta">
+                                            <span class="tile-stat-text">
+                                                <i class="fas fa-layer-group"></i> @course.ChapterCount فصل
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="tile-actions">
+                                        @if (course.IsActive)
+                                        {
+                                            <button type="button" class="tile-enroll-btn" 
+                                                    data-action="enroll" data-course-id="@course.Id">
+                                                <i class="fas fa-plus"></i>
+                                                ثبت‌نام
+                                            </button>
+                                        }
+                                        <a href="@Url.Action("Details", new { id = course.Id })" class="tile-details-btn">
+                                            <i class="fas fa-info-circle"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Empty Search State -->
+        <div class="empty-search-state" id="emptySearchState" style="display: none;">
+            <div class="empty-search-content">
+                <i class="fas fa-search"></i>
+                <h5>نتیجه‌ای یافت نشد</h5>
+                <p>دوره‌ای با این نام وجود ندارد</p>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="empty-state">
+            <i class="fas fa-search"></i>
+            <h3>دوره‌ای یافت نشد</h3>
+            <p>در حال حاضر هیچ دوره‌ای برای نمایش وجود ندارد. لطفاً بعداً دوباره بررسی کنید</p>
+            <a asp-action="Index" class="btn-continue">
+                <i class="fas fa-arrow-right"></i>
+                بازگشت به دوره‌های من
+            </a>
+        </div>
+    }
 </div>
 
 @section Scripts {
-    <script>
-        $(document).ready(function() {
-            // Initialize bottom navigation
-            if (window.bottomNavigation) {
-                window.bottomNavigation.setActivePage('courses');
-            }
-            
-            // Handle enrollment actions
-            $('[data-action="enroll"]').click(function() {
-                const courseId = $(this).data('course-id');
-                enrollInCourse(courseId);
-            });
-        });
-        
-        function enrollInCourse(courseId) {
-            if (confirm('آیا می‌خواهید در این دوره ثبت‌نام کنید؟')) {
-                $.ajax({
-                    url: '@Url.Action("Enroll", "Course")',
-                    type: 'POST',
-                    data: { courseId: courseId },
-                    success: function(response) {
-                        if (response.success) {
-                            toastr.success('با موفقیت در دوره ثبت‌نام کردید');
-                            location.reload();
-                        } else {
-                            toastr.error(response.error || 'خطا در ثبت‌نام');
-                        }
-                    },
-                    error: function() {
-                        toastr.error('خطا در ثبت‌نام');
-                    }
-                });
-            }
-        }
-    </script>
+    <script src="~/js/areas/student/course/mobile-course-list.js" asp-append-version="true"></script>
 }

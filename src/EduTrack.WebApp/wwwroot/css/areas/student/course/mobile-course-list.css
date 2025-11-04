@@ -1,0 +1,455 @@
+/* Mobile Course List - Minimal & Chic Design */
+
+/* Search Header */
+.mobile-course-search-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: #ffffff;
+    padding: 12px 16px;
+    border-bottom: 1px solid #e9ecef;
+    margin: -20px -15px 20px -15px;
+}
+
+.search-box-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 0 16px;
+    height: 44px;
+    border: 1px solid #e9ecef;
+    transition: all 0.3s ease;
+}
+
+.search-box-container:focus-within {
+    border-color: #667eea;
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.search-icon {
+    color: #6c757d;
+    font-size: 16px;
+    margin-left: 8px;
+    pointer-events: none;
+}
+
+.search-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 14px;
+    color: #2c3e50;
+    direction: rtl;
+}
+
+.search-input::placeholder {
+    color: #adb5bd;
+}
+
+.search-clear-btn {
+    background: none;
+    border: none;
+    color: #6c757d;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+
+.search-clear-btn:hover {
+    background: #e9ecef;
+    color: #495057;
+}
+
+/* Course Groups Container */
+.mobile-course-groups {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+/* Course Group */
+.course-group {
+    margin-bottom: 8px;
+}
+
+.course-group-header {
+    margin-bottom: 12px;
+    padding: 0 4px;
+}
+
+.group-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.group-title i {
+    color: #667eea;
+    font-size: 18px;
+}
+
+.course-count {
+    font-size: 14px;
+    font-weight: 500;
+    color: #6c757d;
+    margin-right: auto;
+}
+
+/* Course Tiles Scroll Container */
+.course-tiles-scroll {
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e0 transparent;
+    padding-bottom: 8px;
+    margin: 0 -15px;
+    padding-left: 15px;
+    padding-right: 15px;
+}
+
+.course-tiles-scroll::-webkit-scrollbar {
+    height: 4px;
+}
+
+.course-tiles-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.course-tiles-scroll::-webkit-scrollbar-thumb {
+    background: #cbd5e0;
+    border-radius: 2px;
+}
+
+.course-tiles-scroll::-webkit-scrollbar-thumb:hover {
+    background: #a0aec0;
+}
+
+.course-tiles-container {
+    display: flex;
+    gap: 12px;
+    padding-bottom: 4px;
+}
+
+/* Course Tile */
+.course-tile {
+    flex: 0 0 140px;
+    background: #ffffff;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    border: 1px solid #f0f0f0;
+    position: relative;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+}
+
+.course-tile:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    border-color: #667eea;
+}
+
+.course-tile.hidden {
+    display: none;
+}
+
+/* Tile Thumbnail */
+.tile-thumbnail {
+    position: relative;
+    width: 100%;
+    height: 100px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    overflow: hidden;
+}
+
+.tile-thumbnail img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.tile-thumbnail-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 24px;
+}
+
+/* Progress Overlay */
+.tile-progress-overlay {
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    z-index: 2;
+}
+
+.progress-circle {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.95);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 600;
+    color: #667eea;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.progress-circle span {
+    font-size: 9px;
+    line-height: 1;
+}
+
+/* Completed Badge */
+.tile-completed-badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 24px;
+    height: 24px;
+    background: #28a745;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 12px;
+    z-index: 2;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Tile Info */
+.tile-info {
+    padding: 10px 12px;
+}
+
+.tile-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin: 0 0 6px 0;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: 36px;
+}
+
+.tile-meta {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.tile-progress-text {
+    font-size: 11px;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+/* Tile Link */
+.tile-link {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1;
+}
+
+/* Tile Inactive Overlay */
+.tile-inactive-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 24px;
+    z-index: 2;
+}
+
+/* Tile Actions */
+.tile-actions {
+    padding: 8px 12px;
+    display: flex;
+    gap: 8px;
+    border-top: 1px solid #f0f0f0;
+}
+
+.tile-enroll-btn,
+.tile-details-btn {
+    flex: 1;
+    padding: 6px 8px;
+    border: none;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    text-decoration: none;
+}
+
+.tile-details-btn {
+    flex: 0 0 32px;
+    padding: 6px;
+}
+
+.tile-enroll-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.tile-enroll-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.tile-details-btn {
+    background: #f8f9fa;
+    color: #6c757d;
+}
+
+.tile-details-btn:hover {
+    background: #e9ecef;
+    color: #495057;
+    text-decoration: none;
+}
+
+.tile-stat-text {
+    font-size: 11px;
+    color: #6c757d;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.tile-stat-text i {
+    font-size: 10px;
+}
+
+/* Empty Search State */
+.empty-search-state {
+    text-align: center;
+    padding: 60px 20px;
+}
+
+.empty-search-content {
+    color: #6c757d;
+}
+
+.empty-search-content i {
+    font-size: 48px;
+    color: #dee2e6;
+    margin-bottom: 16px;
+}
+
+.empty-search-content h5 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 8px;
+}
+
+.empty-search-content p {
+    font-size: 14px;
+    color: #6c757d;
+    margin: 0;
+}
+
+/* Hide groups when they have no visible courses */
+.course-group.hidden {
+    display: none;
+}
+
+/* Desktop Styles - Keep Original Layout */
+@media (min-width: 768px) {
+    .mobile-course-search-header {
+        display: none !important;
+    }
+
+    .mobile-course-groups {
+        display: none !important;
+    }
+
+    .empty-search-state {
+        display: none !important;
+    }
+
+    /* Show original course list on desktop */
+    .course-list-container {
+        display: block !important;
+    }
+
+    .course-list-container .row {
+        display: flex !important;
+    }
+
+    .course-catalog-container {
+        display: block !important;
+    }
+
+    .course-catalog-container .row {
+        display: flex !important;
+    }
+}
+
+/* Mobile Only */
+@media (max-width: 767px) {
+    .course-list-container {
+        display: none !important;
+    }
+
+    .course-list-container .row {
+        display: none !important;
+    }
+
+    .course-catalog-container {
+        display: none !important;
+    }
+
+    .course-catalog-container .row {
+        display: none !important;
+    }
+
+    .pagination-container {
+        display: none !important;
+    }
+
+    .mobile-course-groups {
+        display: flex !important;
+    }
+
+    .mobile-course-search-header {
+        display: block !important;
+    }
+}

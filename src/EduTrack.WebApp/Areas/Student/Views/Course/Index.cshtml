@@ -1,18 +1,49 @@
 @using EduTrack.Application.Common.Helpers
+@using EduTrack.Domain.Enums
 @model List<EduTrack.Application.Features.CourseEnrollment.DTOs.StudentCourseEnrollmentSummaryDto>
 @{
     ViewData["Title"] = "دوره‌های من";
 }
 
+@functions {
+    string GetDisciplineTypeName(DisciplineType type)
+    {
+        return type switch
+        {
+            DisciplineType.Language => "زبان‌ها",
+            DisciplineType.Math => "ریاضیات",
+            DisciplineType.Programming => "برنامه‌نویسی",
+            DisciplineType.Science => "علوم",
+            DisciplineType.Other => "سایر",
+            _ => "سایر"
+        };
+    }
+
+    string GetDisciplineTypeIcon(DisciplineType type)
+    {
+        return type switch
+        {
+            DisciplineType.Language => "fas fa-language",
+            DisciplineType.Math => "fas fa-calculator",
+            DisciplineType.Programming => "fas fa-code",
+            DisciplineType.Science => "fas fa-flask",
+            DisciplineType.Other => "fas fa-book",
+            _ => "fas fa-book"
+        };
+    }
+}
+
 @section Styles {
     <link rel="stylesheet" href="~/css/areas/student/course/course-list.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/areas/student/course/mobile-course-list.css" asp-append-version="true" />
 }
 
 <div class="content-container">
-    <!-- Course List Container -->
+    <!-- Course List Container for Desktop -->
     <div class="course-list-container">
         @if (Model.Any())
         {
+            <!-- Desktop Layout -->
             <div class="row">
                 @foreach (var enrollment in Model)
                 {
@@ -103,29 +134,114 @@
                 }
             </div>
         }
-        else
-        {
-            <div class="text-center py-5">
-                <div class="empty-state">
-                    <i class="fas fa-book"></i>
-                    <h4>هنوز در دوره‌ای ثبت‌نام نکرده‌اید</h4>
-                    <p>برای شروع یادگیری، در یکی از دوره‌های موجود ثبت‌نام کنید</p>
-                    <a asp-action="Catalog" class="btn-continue">
-                        <i class="fas fa-search me-2"></i>مشاهده کاتالوگ دوره‌ها
-                    </a>
-                </div>
-            </div>
-        }
     </div>
+
+    <!-- Mobile Layout -->
+    @if (Model.Any())
+    {
+        <!-- Search Header -->
+        <div class="mobile-course-search-header">
+            <div class="search-box-container">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" id="courseSearchInput" class="search-input" placeholder="جستجوی دوره..." />
+                <button type="button" class="search-clear-btn" id="searchClearBtn" style="display: none;">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Course Groups -->
+        <div class="mobile-course-groups" id="courseGroupsContainer">
+            @{
+                var groupedCourses = Model
+                    .GroupBy(c => c.DisciplineType)
+                    .Where(g => g.Any()) // Only show groups with courses
+                    .OrderBy(g => g.Key)
+                    .ToList();
+            }
+
+            @foreach (var group in groupedCourses)
+            {
+                var disciplineType = group.Key;
+                var courses = group.ToList();
+                var groupId = $"group-{(int)disciplineType}";
+
+                <div class="course-group" data-discipline-type="@((int)disciplineType)" data-group-id="@groupId">
+                    <div class="course-group-header">
+                        <div class="group-title">
+                            <i class="@GetDisciplineTypeIcon(disciplineType)"></i>
+                            <span>@GetDisciplineTypeName(disciplineType)</span>
+                            <span class="course-count">(@courses.Count)</span>
+                        </div>
+                    </div>
+                    
+                    <div class="course-tiles-scroll">
+                        <div class="course-tiles-container">
+                            @foreach (var enrollment in courses)
+                            {
+                                <div class="course-tile" data-course-id="@enrollment.CourseId" data-course-title="@enrollment.CourseTitle.ToLower()">
+                                    <div class="tile-thumbnail">
+                                        @if (!string.IsNullOrEmpty(enrollment.CourseThumbnail))
+                                        {
+                                            <img src="@enrollment.CourseThumbnail" alt="@enrollment.CourseTitle">
+                                        }
+                                        else
+                                        {
+                                            <div class="tile-thumbnail-placeholder">
+                                                <i class="fas fa-book"></i>
+                                            </div>
+                                        }
+                                        <div class="tile-progress-overlay">
+                                            <div class="progress-circle" data-progress="@enrollment.ProgressPercentage">
+                                                <span>@enrollment.ProgressPercentage%</span>
+                                            </div>
+                                        </div>
+                                        @if (enrollment.IsCompleted)
+                                        {
+                                            <div class="tile-completed-badge">
+                                                <i class="fas fa-check-circle"></i>
+                                            </div>
+                                        }
+                                    </div>
+                                    <div class="tile-info">
+                                        <h6 class="tile-title">@enrollment.CourseTitle</h6>
+                                        <div class="tile-meta">
+                                            <span class="tile-progress-text">@enrollment.ProgressPercentage% تکمیل شده</span>
+                                        </div>
+                                    </div>
+                                    <a href="@Url.Action("Study", new { id = enrollment.CourseId })" class="tile-link"></a>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Empty Search State -->
+        <div class="empty-search-state" id="emptySearchState" style="display: none;">
+            <div class="empty-search-content">
+                <i class="fas fa-search"></i>
+                <h5>نتیجه‌ای یافت نشد</h5>
+                <p>دوره‌ای با این نام وجود ندارد</p>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="text-center py-5">
+            <div class="empty-state">
+                <i class="fas fa-book"></i>
+                <h4>شما در هیچ دوره‌ای ثبت‌نام نکرده‌اید</h4>
+                <p>می‌توانید از کاتالوگ دوره‌ها، دوره‌های مورد علاقه خود را انتخاب و ثبت‌نام کنید</p>
+                <a asp-action="Catalog" class="btn-continue">
+                    <i class="fas fa-search me-2"></i>مشاهده کاتالوگ دوره‌ها
+                </a>
+            </div>
+        </div>
+    }
 </div>
 
 @section Scripts {
-    <script>
-        $(document).ready(function() {
-            // Initialize bottom navigation
-            if (window.bottomNavigation) {
-                window.bottomNavigation.setActivePage('my-courses');
-            }
-        });
-    </script>
+    <script src="~/js/areas/student/course/mobile-course-list.js" asp-append-version="true"></script>
 }

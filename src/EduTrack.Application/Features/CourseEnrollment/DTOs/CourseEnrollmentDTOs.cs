@@ -60,6 +60,7 @@ public class StudentCourseEnrollmentSummaryDto
     public DateTimeOffset? LastAccessedAt { get; set; }
     public CourseAccessLevel AccessLevel { get; set; }
     public string AccessLevelName { get; set; } = string.Empty;
+    public DisciplineType DisciplineType { get; set; }
     public int TotalLessons { get; set; }
     public int CompletedLessons { get; set; }
     public int TotalExams { get; set; }

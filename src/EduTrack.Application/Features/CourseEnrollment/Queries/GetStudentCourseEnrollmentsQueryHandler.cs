@@ -97,6 +97,7 @@ public class GetStudentCourseEnrollmentsQueryHandler : IRequestHandler<GetStuden
                 LastAccessedAt = enrollment.LastAccessedAt,
                 AccessLevel = access?.AccessLevel ?? CourseAccessLevel.None,
                 AccessLevelName = GetAccessLevelName(access?.AccessLevel ?? CourseAccessLevel.None),
+                DisciplineType = enrollment.Course.DisciplineType,
                 TotalLessons = totalLessons,
                 CompletedLessons = completedLessons,
                 TotalExams = totalExams,
