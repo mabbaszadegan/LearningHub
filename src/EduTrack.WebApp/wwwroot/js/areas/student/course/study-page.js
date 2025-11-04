@@ -1,316 +1,368 @@
 /**
  * Study Page JavaScript
- * Handles schedule items loading, filtering, and display
+ * Manages sidebar, filtering, and interactions for the course study page
  */
 
-let currentFilter = 'all';
-let isLoading = false;
-let allScheduleItems = [];
-let availableTypes = [];
+class StudyPage {
+    constructor() {
+        this.config = window.studyPageConfig || {};
+        this.scheduleItems = this.config.scheduleItems || [];
+        this.chapters = this.config.chapters || [];
+        this.selectedChapterId = null;
+        this.selectedSubChapterId = null;
+        this.selectedTypes = [];
+        
+        this.init();
+    }
 
-$(document).ready(function() {
-    // Load initial schedule items
-    loadScheduleItems();
-    
-    // Handle refresh button
-    $('#refresh-content').on('click', function() {
-        loadScheduleItems();
-    });
+    init() {
+        this.bindEvents();
+        this.initializeFilters();
+        this.hideBottomMenu();
+    }
 
-    // Update last accessed time
-    updateLastAccessed();
+    bindEvents() {
+        // Hamburger menu toggle
+        const hamburgerBtn = document.getElementById('studyHamburgerBtn');
+        const sidebarClose = document.getElementById('studySidebarClose');
+        const sidebarOverlay = document.getElementById('studySidebarOverlay');
+        const sidebar = document.getElementById('studySidebar');
+
+        if (hamburgerBtn) {
+            hamburgerBtn.addEventListener('click', () => this.toggleSidebar());
+        }
+
+        if (sidebarClose) {
+            sidebarClose.addEventListener('click', () => this.closeSidebar());
+        }
+
+        if (sidebarOverlay) {
+            sidebarOverlay.addEventListener('click', () => this.closeSidebar());
+        }
+
+        // Chapter/SubChapter selection
+        document.querySelectorAll('.study-chapter-header').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const chapterId = parseInt(btn.dataset.chapterId);
+                this.toggleChapter(chapterId);
+            });
+        });
+
+        document.querySelectorAll('.study-subchapter-item').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const subChapterId = parseInt(btn.dataset.subchapterId);
+                const chapterId = parseInt(btn.dataset.chapterId);
+                this.selectSubChapter(subChapterId, chapterId);
+            });
+        });
+
+        // All topics filter
+        document.querySelectorAll('.study-filter-item-all').forEach(btn => {
+            btn.addEventListener('click', () => {
+                this.clearFilters();
+            });
+        });
+
+        // Type filter (in header)
+        document.querySelectorAll('.study-type-filter-item-header').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const type = btn.dataset.type;
+                this.toggleTypeFilter(type);
+            });
+        });
+    }
+
+    toggleSidebar() {
+        const sidebar = document.getElementById('studySidebar');
+        const overlay = document.getElementById('studySidebarOverlay');
+        
+        if (sidebar && overlay) {
+            const isActive = sidebar.classList.contains('active');
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+            // Only prevent scrolling on body when sidebar is open on mobile
+            if (window.innerWidth <= 768) {
+                if (isActive) {
+                    document.body.style.overflow = '';
+                } else {
+                    document.body.style.overflow = 'hidden';
+                }
+            }
+        }
+    }
+
+    closeSidebar() {
+        const sidebar = document.getElementById('studySidebar');
+        const overlay = document.getElementById('studySidebarOverlay');
+        
+        if (sidebar && overlay) {
+            sidebar.classList.remove('active');
+            overlay.classList.remove('active');
+            if (window.innerWidth <= 768) {
+                document.body.style.overflow = '';
+            }
+        }
+    }
+
+    toggleChapter(chapterId) {
+        const chapterItem = document.querySelector(`.study-chapter-item[data-chapter-id="${chapterId}"]`);
+        const chapterHeader = document.querySelector(`.study-chapter-header[data-chapter-id="${chapterId}"]`);
+        
+        if (!chapterItem || !chapterHeader) return;
+
+        const isActive = chapterItem.classList.contains('active');
+        
+        // Close all chapters
+        document.querySelectorAll('.study-chapter-item').forEach(item => {
+            item.classList.remove('active');
+        });
+        
+        document.querySelectorAll('.study-chapter-header').forEach(header => {
+            header.classList.remove('active');
+        });
+
+        // Toggle current chapter
+        if (!isActive) {
+            chapterItem.classList.add('active');
+            chapterHeader.classList.add('active');
+        }
+
+        // Select chapter for filtering
+        if (!isActive) {
+            this.selectChapter(chapterId);
+        } else {
+            this.clearFilters();
+        }
+    }
+
+    selectChapter(chapterId) {
+        this.selectedChapterId = chapterId;
+        this.selectedSubChapterId = null;
+        this.updateFilterButtons();
+        this.filterItems();
+    }
+
+    selectSubChapter(subChapterId, chapterId) {
+        this.selectedSubChapterId = subChapterId;
+        this.selectedChapterId = chapterId;
+        this.updateFilterButtons();
+        this.filterItems();
+        
+        // Close sidebar on mobile after selection
+        if (window.innerWidth <= 768) {
+            this.closeSidebar();
+        }
+    }
+
+    clearFilters() {
+        this.selectedChapterId = null;
+        this.selectedSubChapterId = null;
+        this.updateFilterButtons();
+        this.filterItems();
+    }
+
+    toggleTypeFilter(type) {
+        const index = this.selectedTypes.indexOf(type);
+        if (index > -1) {
+            this.selectedTypes.splice(index, 1);
+        } else {
+            this.selectedTypes.push(type);
+        }
+        this.updateFilterButtons();
+        this.filterItems();
+    }
+
+    updateFilterButtons() {
+        // Update "All" button
+        document.querySelectorAll('.study-filter-item-all').forEach(btn => {
+            if (!this.selectedChapterId && !this.selectedSubChapterId) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+
+        // Update chapter buttons
+        document.querySelectorAll('.study-chapter-header').forEach(btn => {
+            const chapterId = parseInt(btn.dataset.chapterId);
+            if (this.selectedChapterId === chapterId && !this.selectedSubChapterId) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+
+        // Update subchapter buttons
+        document.querySelectorAll('.study-subchapter-item').forEach(btn => {
+            const subChapterId = parseInt(btn.dataset.subchapterId);
+            if (this.selectedSubChapterId === subChapterId) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+
+        // Update type filter buttons (in header)
+        document.querySelectorAll('.study-type-filter-item-header').forEach(btn => {
+            const type = btn.dataset.type;
+            if (this.selectedTypes.includes(type)) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+    }
+
+    filterItems() {
+        const items = document.querySelectorAll('.study-item-card');
+        let visibleCount = 0;
+
+        items.forEach(item => {
+            let shouldShow = true;
+
+            // Filter by chapter/subchapter
+            if (this.selectedSubChapterId) {
+                const subChapterIds = item.dataset.subchapterIds ? 
+                    item.dataset.subchapterIds.split(',').map(id => parseInt(id.trim())) : [];
+                shouldShow = shouldShow && subChapterIds.includes(this.selectedSubChapterId);
+            } else if (this.selectedChapterId) {
+                const chapter = this.chapters.find(c => c.id === this.selectedChapterId);
+                if (chapter && chapter.subChapterIds) {
+                    const subChapterIds = item.dataset.subchapterIds ? 
+                        item.dataset.subchapterIds.split(',').map(id => parseInt(id.trim())) : [];
+                    const chapterSubChapterIds = chapter.subChapterIds || [];
+                    shouldShow = shouldShow && subChapterIds.some(id => chapterSubChapterIds.includes(id));
+                } else {
+                    shouldShow = false;
+                }
+            }
+
+            // Filter by type - only apply if types are selected
+            if (this.selectedTypes.length > 0) {
+                const itemType = item.dataset.itemType;
+                if (!itemType || !this.selectedTypes.includes(itemType)) {
+                    shouldShow = false;
+                }
+            }
+
+            if (shouldShow) {
+                item.classList.remove('hidden');
+                visibleCount++;
+            } else {
+                item.classList.add('hidden');
+            }
+        });
+
+        // Show/hide empty state
+        const emptyState = document.querySelector('.study-empty-state');
+        const itemsGrid = document.getElementById('studyItemsGrid');
+        
+        if (visibleCount === 0 && items.length > 0) {
+            if (!emptyState) {
+                this.createEmptyState(itemsGrid);
+            }
+        } else {
+            if (emptyState) {
+                emptyState.remove();
+            }
+        }
+    }
+
+    createEmptyState(container) {
+        const emptyState = document.createElement('div');
+        emptyState.className = 'study-empty-state';
+        emptyState.innerHTML = `
+            <i class="fas fa-filter"></i>
+            <h3>نتیجه‌ای یافت نشد</h3>
+            <p>با فیلترهای انتخابی آیتمی پیدا نشد</p>
+        `;
+        container.appendChild(emptyState);
+    }
+
+    initializeFilters() {
+        // Initialize chapter states
+        this.chapters.forEach(chapter => {
+            const chapterItem = document.querySelector(`.study-chapter-item[data-chapter-id="${chapter.id}"]`);
+            if (chapterItem) {
+                // Check if chapter has subchapters
+                const hasSubChapters = chapter.subChapterIds && chapter.subChapterIds.length > 0;
+                if (!hasSubChapters) {
+                    // If no subchapters, make chapter clickable directly
+                    const chapterHeader = chapterItem.querySelector('.study-chapter-header');
+                    if (chapterHeader) {
+                        chapterHeader.style.cursor = 'pointer';
+                        chapterHeader.addEventListener('click', (e) => {
+                            if (e.target.closest('.study-subchapter-item')) return;
+                            this.selectChapter(chapter.id);
+                        });
+                    }
+                }
+            }
+        });
+    }
+
+    hideBottomMenu() {
+        // Add class to body to hide bottom menu and headers
+        const body = document.body;
+        if (!body.classList.contains('study-page-active')) {
+            body.classList.add('study-page-active');
+        }
+        
+        // Also hide directly using JavaScript as fallback
+        const fixedFooter = document.querySelector('.fixed-footer');
+        if (fixedFooter) {
+            fixedFooter.style.display = 'none';
+        }
+
+        const fixedHeader = document.querySelector('.fixed-header');
+        if (fixedHeader) {
+            fixedHeader.style.display = 'none';
+        }
+
+        const desktopHeader = document.querySelector('.desktop-header');
+        if (desktopHeader) {
+            desktopHeader.style.display = 'none';
+        }
+
+        // Override main-content styles
+        const mainContent = document.querySelector('.main-content');
+        if (mainContent) {
+            mainContent.style.position = 'static';
+            mainContent.style.top = 'auto';
+            mainContent.style.bottom = 'auto';
+            mainContent.style.height = 'auto';
+            mainContent.style.overflow = 'visible';
+            mainContent.style.padding = '0';
+        }
+    }
+}
+
+// Initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+    if (document.querySelector('.study-page-container')) {
+        new StudyPage();
+        
+        // Ensure overlay doesn't block interactions when sidebar is closed
+        const overlay = document.getElementById('studySidebarOverlay');
+        if (overlay && !overlay.classList.contains('active')) {
+            overlay.style.pointerEvents = 'none';
+        }
+    }
 });
 
-function loadScheduleItems() {
-    isLoading = true;
-    $('#schedule-items-list').html(`
-        <div class="loading-placeholder">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">در حال بارگذاری...</span>
-            </div>
-            <p class="loading-text">در حال بارگذاری محتوای آموزشی...</p>
-        </div>
-    `);
-
-    $.ajax({
-        url: window.studyPageConfig.getScheduleItemsUrl,
-        type: 'GET',
-        data: {
-            filter: currentFilter
-        },
-        success: function(response) {
-            if (response.success) {
-                allScheduleItems = response.data;
-                availableTypes = response.availableTypes;
-                
-                // Update filter badges based on available types
-                updateFilterBadges();
-                
-                // Display schedule items
-                displayScheduleItems(allScheduleItems);
-            } else {
-                $('#schedule-items-list').html(`
-                    <div class="error-placeholder">
-                        <i class="fas fa-exclamation-triangle fa-2x text-warning mb-3"></i>
-                        <p class="text-muted">${response.error || 'خطا در بارگذاری محتوای آموزشی'}</p>
-                        <button class="btn btn-modern-primary" onclick="loadScheduleItems()">
-                            <i class="fas fa-redo me-1"></i>تلاش مجدد
-                        </button>
-                    </div>
-                `);
+// Handle window resize to close sidebar on mobile when switching to desktop
+window.addEventListener('resize', () => {
+    if (window.innerWidth > 768) {
+        const studyPage = document.querySelector('.study-page-container');
+        if (studyPage) {
+            const sidebar = document.getElementById('studySidebar');
+            const overlay = document.getElementById('studySidebarOverlay');
+            if (sidebar) sidebar.classList.remove('active');
+            if (overlay) {
+                overlay.classList.remove('active');
+                overlay.style.pointerEvents = 'none';
             }
-        },
-        error: function() {
-            $('#schedule-items-list').html(`
-                <div class="error-placeholder">
-                    <i class="fas fa-exclamation-triangle fa-2x text-warning mb-3"></i>
-                    <p class="text-muted">خطا در بارگذاری محتوای آموزشی</p>
-                    <button class="btn btn-modern-primary" onclick="loadScheduleItems()">
-                        <i class="fas fa-redo me-1"></i>تلاش مجدد
-                    </div>
-                `);
-        },
-        complete: function() {
-            isLoading = false;
+            document.body.style.overflow = '';
         }
-    });
-}
-
-function updateFilterBadges() {
-    var badgesContainer = $('#content-type-badges');
-    var badgesHtml = '';
-    
-    // Always show "All" filter
-    badgesHtml += `
-        <button class="content-type-badge-compact ${currentFilter === 'all' ? 'active' : ''}" data-type="all" title="همه">
-            <i class="fas fa-th-large"></i>
-        </button>
-    `;
-    
-    // Add badges for available types
-    if (availableTypes && availableTypes.length > 0) {
-        availableTypes.forEach(function(typeInfo) {
-            var typeIcon = getTypeIcon(typeInfo.type);
-            var typeTitle = getTypeTitle(typeInfo.type);
-            
-            badgesHtml += `
-                <button class="content-type-badge-compact ${currentFilter === typeInfo.type ? 'active' : ''}" 
-                        data-type="${typeInfo.type}" 
-                        title="${typeTitle} (${typeInfo.count})">
-                    <i class="${typeIcon}"></i>
-                </button>
-            `;
-        });
-    } else {
-        // Fallback: show all possible types if availableTypes is empty
-        var allTypes = ['Reminder', 'Writing', 'Audio', 'GapFill', 'MultipleChoice', 'Match', 'ErrorFinding', 'CodeExercise', 'Quiz'];
-        allTypes.forEach(function(type) {
-            var typeIcon = getTypeIcon(type);
-            var typeTitle = getTypeTitle(type);
-            
-            badgesHtml += `
-                <button class="content-type-badge-compact ${currentFilter === type ? 'active' : ''}" 
-                        data-type="${type}" 
-                        title="${typeTitle}">
-                    <i class="${typeIcon}"></i>
-                </button>
-            `;
-        });
     }
-    
-    badgesContainer.html(badgesHtml);
-    
-    // Re-bind click events
-    $('.content-type-badge-compact').off('click').on('click', function() {
-        $('.content-type-badge-compact').removeClass('active');
-        $(this).addClass('active');
-        
-        currentFilter = $(this).data('type');
-        loadScheduleItems();
-    });
-}
-
-function displayScheduleItems(data) {
-    if (data.length === 0) {
-        $('#schedule-items-list').html(`
-            <div class="empty-placeholder">
-                <i class="fas fa-calendar-times fa-2x text-muted mb-3"></i>
-                <p class="text-muted">محتوای آموزشی یافت نشد</p>
-            </div>
-        `);
-        $('#content-count').text('0');
-        return;
-    }
-
-    var html = generateScheduleItemsHTML(data);
-    $('#schedule-items-list').html(html);
-    $('#content-count').text(data.length);
-}
-
-function generateScheduleItemsHTML(items) {
-    var html = '';
-    items.forEach(function(item) {
-        var statusClass = getStatusClass(item.statusText || 'Active');
-        var statusIcon = getStatusIcon(item.statusText || 'Active');
-        var typeIcon = getTypeIcon(item.type || item.Type || '');
-        var dueDateText = item.dueDate ? formatDate(item.dueDate) : 'بدون مهلت';
-        
-        html += `
-            <div class="schedule-item-card-minimal" data-type="${item.type || item.Type || ''}">
-                <div class="schedule-item-icon-minimal">
-                    <i class="${typeIcon}"></i>
-                </div>
-                <div class="schedule-item-content-minimal">
-                    <div class="schedule-item-header-minimal">
-                        <h6 class="schedule-item-title-minimal">${item.title}</h6>
-                        <span class="status-badge-minimal ${statusClass}">
-                            <i class="${statusIcon}"></i>
-                        </span>
-                    </div>
-                    <p class="schedule-item-description-minimal">${item.description || ''}</p>
-                    <div class="schedule-item-meta-minimal">
-                        <span class="meta-item-minimal">
-                            <i class="fas fa-calendar-alt"></i>
-                            ${dueDateText}
-                        </span>
-                        ${item.maxScore ? `
-                            <span class="meta-item-minimal">
-                                <i class="fas fa-star"></i>
-                                ${item.maxScore}
-                            </span>
-                        ` : ''}
-                        ${item.isMandatory ? `
-                            <span class="meta-item-minimal mandatory">
-                                <i class="fas fa-exclamation-circle"></i>
-                                اجباری
-                            </span>
-                        ` : ''}
-                    </div>
-                </div>
-                <div class="schedule-item-actions-minimal">
-                    <button class="btn-action-minimal primary" onclick="openScheduleItem(${item.id})" title="شروع">
-                        <i class="fas fa-play"></i>
-                    </button>
-                    <button class="btn-action-minimal secondary" onclick="viewScheduleItemDetails(${item.id})" title="جزئیات">
-                        <i class="fas fa-info-circle"></i>
-                    </button>
-                </div>
-            </div>
-        `;
-    });
-    return html;
-}
-
-function getStatusClass(status) {
-    switch (status) {
-        case 'Active': return 'status-active';
-        case 'Completed': return 'status-completed';
-        case 'Expired': return 'status-expired';
-        case 'Draft': return 'status-draft';
-        default: return 'status-active';
-    }
-}
-
-function getStatusIcon(status) {
-    switch (status) {
-        case 'Active': return 'fas fa-play-circle';
-        case 'Completed': return 'fas fa-check-circle';
-        case 'Expired': return 'fas fa-clock';
-        case 'Draft': return 'fas fa-edit';
-        default: return 'fas fa-circle';
-    }
-}
-
-function getTypeIcon(type) {
-    // Handle both string and numeric enum values
-    var typeStr = type.toString();
-    
-    switch (typeStr) {
-        case '0':
-        case 'Reminder': return 'fas fa-sticky-note';
-        case '1':
-        case 'Writing': return 'fas fa-pen';
-        case '2':
-        case 'Audio': return 'fas fa-microphone';
-        case '3':
-        case 'GapFill': return 'fas fa-edit';
-        case '4':
-        case 'MultipleChoice': return 'fas fa-list-ul';
-        case '5':
-        case 'Match': return 'fas fa-link';
-        case '6':
-        case 'ErrorFinding': return 'fas fa-search';
-        case '7':
-        case 'CodeExercise': return 'fas fa-code';
-        case '8':
-        case 'Quiz': return 'fas fa-question-circle';
-        default: return 'fas fa-file';
-    }
-}
-
-function getTypeTitle(type) {
-    // Handle both string and numeric enum values
-    var typeStr = type.toString();
-    
-    switch (typeStr) {
-        case '0':
-        case 'Reminder': return 'یادآوری';
-        case '1':
-        case 'Writing': return 'نوشتاری';
-        case '2':
-        case 'Audio': return 'صوتی';
-        case '3':
-        case 'GapFill': return 'جای خالی';
-        case '4':
-        case 'MultipleChoice': return 'چند گزینه‌ای';
-        case '5':
-        case 'Match': return 'تطبیق';
-        case '6':
-        case 'ErrorFinding': return 'پیدا کردن خطا';
-        case '7':
-        case 'CodeExercise': return 'کدنویسی';
-        case '8':
-        case 'Quiz': return 'کویز';
-        default: return 'فایل';
-    }
-}
-
-function formatDate(date) {
-    return new Date(date).toLocaleDateString('fa-IR');
-}
-
-function openScheduleItem(itemId) {
-    // Navigate to schedule item study page
-    const studyUrl = `/Student/ScheduleItem/Study/${itemId}`;
-    window.location.href = studyUrl;
-}
-
-function viewScheduleItemDetails(itemId) {
-    // Placeholder for viewing schedule item details
-    showToast('نمایش جزئیات...', 'info');
-}
-
-function updateLastAccessed() {
-    // Update last accessed time in progress modal
-    var now = new Date();
-    var timeString = now.toLocaleTimeString('fa-IR');
-    $('#last-accessed-time').text(timeString);
-}
-
-function showToast(message, type) {
-    // Simple toast notification
-    var toastClass = type === 'error' ? 'alert-danger' : 'alert-info';
-    var toastHtml = `
-        <div class="alert ${toastClass} alert-dismissible fade show position-fixed" 
-             style="top: 20px; right: 20px; z-index: 9999;" role="alert">
-            ${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    `;
-    $('body').append(toastHtml);
-    
-    // Auto remove after 3 seconds
-    setTimeout(function() {
-        $('.alert').fadeOut();
-    }, 3000);
-}
+});

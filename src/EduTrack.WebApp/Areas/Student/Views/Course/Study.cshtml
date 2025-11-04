@@ -11,405 +11,164 @@
 
 @section Styles {
     <link rel="stylesheet" href="~/css/areas/student/course/study-page.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/areas/student/course/unified-course-content.css" asp-append-version="true" />
 }
 
-<!-- Breadcrumb Navigation -->
-<nav aria-label="breadcrumb" class="study-breadcrumb">
-    <ol class="breadcrumb">
-        <li class="breadcrumb-item">
-            <a asp-area="Student" asp-controller="Home" asp-action="Index">
-                <i class="fas fa-home me-1"></i>خانه
+<!-- Study Page Container -->
+<div class="study-page-container" data-course-id="@Model.Id">
+    <!-- Header -->
+    <header class="study-page-header">
+        <div class="study-header-content">
+            <!-- Mobile Hamburger Menu -->
+            <button class="study-hamburger-btn" id="studyHamburgerBtn" aria-label="منو">
+                <i class="fas fa-bars"></i>
+            </button>
+            
+            <!-- Course Title -->
+            <div class="study-header-title">
+                <h1>@Model.Title</h1>
+            </div>
+            
+            <!-- Back Button -->
+            <a href="@Url.Action("Index", "Home", new { area = "Student" })" class="study-back-btn" aria-label="بازگشت">
+                <i class="fas fa-arrow-right"></i>
             </a>
-        </li>
-        <li class="breadcrumb-item">
-            <a asp-action="Index">
-                <i class="fas fa-book-open me-1"></i>دوره‌های من
-            </a>
-        </li>
-        <li class="breadcrumb-item">
-            <a asp-action="Details" asp-route-id="@Model.Id">
-                <i class="fas fa-info-circle me-1"></i>@Model.Title
-            </a>
-        </li>
-        <li class="breadcrumb-item active" aria-current="page">
-            <i class="fas fa-play me-1"></i>مطالعه
-        </li>
-    </ol>
-</nav>
-
-<!-- Course Header -->
-<div class="unified-course-header">
-    <div class="course-header-content">
-        <div class="course-header-info">
-            <h1 class="course-main-title">@Model.Title</h1>
-            @if (!string.IsNullOrEmpty(Model.Description))
-            {
-                <p class="course-description">@Model.Description</p>
-            }
         </div>
-        <div class="course-header-actions">
-            <div class="progress-indicator" data-bs-toggle="modal" data-bs-target="#progressModal">
-                <div class="progress-circle-large" style="--progress: @(enrollment?.ProgressPercentage ?? 0)">
-                    <span class="progress-percentage">@(enrollment?.ProgressPercentage ?? 0)%</span>
+        
+        <!-- Type Filter in Header -->
+        @if (scheduleItems.Any())
+        {
+            <div class="study-header-filters">
+                <div class="study-type-filter-header">
+                    @{
+                        var typeGroups = scheduleItems.GroupBy(si => si.Type).OrderBy(g => g.Key);
+                    }
+                    @foreach (var typeGroup in typeGroups)
+                    {
+                        <button class="study-type-filter-item-header" 
+                                data-type="@typeGroup.Key.ToString()" 
+                                data-count="@typeGroup.Count()">
+                            <i class="@GetItemTypeIcon(typeGroup.Key)"></i>
+                            <span>@GetItemTypeName(typeGroup.Key)</span>
+                        </button>
+                    }
                 </div>
-                <span class="progress-label">پیشرفت</span>
             </div>
-            <a asp-action="Details" asp-route-id="@Model.Id" class="btn-header-action" title="جزئیات دوره">
-                <i class="fas fa-info-circle"></i>
-                <span>جزئیات</span>
-            </a>
-        </div>
-    </div>
-</div>
+        }
+    </header>
 
-<!-- Progress Modal -->
-<div class="modal fade" id="progressModal" tabindex="-1" aria-labelledby="progressModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="progressModalLabel">
-                    <i class="fas fa-chart-line me-2"></i>جزئیات پیشرفت دوره
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    <!-- Main Content Area -->
+    <div class="study-main-wrapper">
+        <!-- Sidebar -->
+        <aside class="study-sidebar" id="studySidebar">
+            <div class="study-sidebar-header">
+                <h3>مباحث</h3>
+                <button class="study-sidebar-close" id="studySidebarClose" aria-label="بستن">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
-            <div class="modal-body">
-                <div class="progress-details">
-                    <div class="progress-summary-card">
-                        <div class="progress-circle-large" style="--progress: @(enrollment?.ProgressPercentage ?? 0)">
-                            <span class="progress-percentage-large">@(enrollment?.ProgressPercentage ?? 0)%</span>
-                        </div>
-                        <div class="progress-info">
-                            <h6 class="progress-title">پیشرفت کلی دوره</h6>
-                            <p class="progress-description">@(enrollment?.ProgressPercentage ?? 0) درصد از دوره تکمیل شده است</p>
-                        </div>
-                    </div>
+            
+            <div class="study-sidebar-content">
+                <!-- Chapters List -->
+                <div class="study-chapters-list">
+                    <button class="study-filter-item study-filter-item-all active" data-filter="all" data-type="chapter">
+                        <i class="fas fa-list"></i>
+                        <span>همه مباحث</span>
+                    </button>
                     
-                    <div class="progress-stats-grid">
-                        <div class="stat-card">
-                            <div class="stat-icon">
-                                <i class="fas fa-calendar-alt"></i>
-                            </div>
-                            <div class="stat-content">
-                                <span class="stat-label">تاریخ ثبت‌نام</span>
-                                <span class="stat-value">@(enrollment?.EnrolledAt.ToString("yyyy/MM/dd") ?? "")</span>
-                            </div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-icon">
-                                <i class="fas fa-clock"></i>
-                            </div>
-                            <div class="stat-content">
-                                <span class="stat-label">آخرین بازدید</span>
-                                <span class="stat-value">@(enrollment?.LastAccessedAt?.ToString("yyyy/MM/dd") ?? "هیچ‌گاه")</span>
-                            </div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-icon">
-                                <i class="fas fa-tasks"></i>
-                            </div>
-                            <div class="stat-content">
-                                <span class="stat-label">تکالیف تکمیل شده</span>
-                                <span class="stat-value">@scheduleItems.Count(s => s.Status == ScheduleItemStatus.Completed)</span>
-                            </div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-icon">
-                                <i class="fas fa-star"></i>
-                            </div>
-                            <div class="stat-content">
-                                <span class="stat-label">کل آیتم‌های آموزشی</span>
-                                <span class="stat-value">@scheduleItems.Count</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Unified Content Tabs -->
-<div class="unified-content-container">
-    <ul class="nav nav-tabs unified-content-tabs" id="contentTabs" role="tablist">
-        <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="chapters-tab" data-bs-toggle="tab" data-bs-target="#chapters-content" type="button" role="tab">
-                <i class="fas fa-book me-2"></i>
-                <span>فصول و محتوا</span>
-                <span class="badge">@chapters.Count</span>
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="schedule-items-tab" data-bs-toggle="tab" data-bs-target="#schedule-items-content" type="button" role="tab">
-                <i class="fas fa-tasks me-2"></i>
-                <span>آیتم‌های آموزشی</span>
-                <span class="badge">@scheduleItems.Count</span>
-            </button>
-        </li>
-    </ul>
-
-    <div class="tab-content unified-content-tab-content" id="contentTabsContent">
-        <!-- Chapters Tab -->
-        <div class="tab-pane fade show active" id="chapters-content" role="tabpanel">
-            @if (chapters.Any())
-            {
-                <div class="chapters-container">
                     @foreach (var chapter in chapters.OrderBy(c => c.Order))
                     {
-                        <div class="chapter-card" data-chapter-id="@chapter.Id">
-                            <div class="chapter-header" data-bs-toggle="collapse" data-bs-target="#chapter-@chapter.Id" aria-expanded="true">
-                                <div class="chapter-header-content">
-                                    <div class="chapter-number">@(chapter.Order)</div>
-                                    <div class="chapter-info">
-                                        <h3 class="chapter-title">@chapter.Title</h3>
-                                        @if (!string.IsNullOrEmpty(chapter.Description))
-                                        {
-                                            <p class="chapter-description">@chapter.Description</p>
-                                        }
-                                    </div>
-                                </div>
-                                <div class="chapter-meta">
-                                    <span class="chapter-subchapters-count">
-                                        <i class="fas fa-list-ul"></i>
-                                        @chapter.SubChapterCount زیرفصل
-                                    </span>
-                                    <i class="fas fa-chevron-down chapter-toggle"></i>
-                                </div>
-                            </div>
+                        <div class="study-chapter-item" data-chapter-id="@chapter.Id">
+                            <button class="study-chapter-header" data-chapter-id="@chapter.Id">
+                                <i class="fas fa-chevron-left study-chapter-icon"></i>
+                                <span class="study-chapter-title">@chapter.Title</span>
+                                <span class="study-chapter-count">@(chapter?.SubChapters?.Count ?? 0)</span>
+                            </button>
                             
-                            <div class="collapse show" id="chapter-@chapter.Id">
-                                <div class="chapter-content">
-                                    @if (!string.IsNullOrEmpty(chapter.Objective))
+                            @if (chapter?.SubChapters != null && chapter.SubChapters.Any())
+                            {
+                                <div class="study-subchapters-list" data-chapter-id="@chapter.Id">
+                                    @foreach (var subChapter in chapter.SubChapters.OrderBy(sc => sc.Order))
                                     {
-                                        <div class="chapter-objective">
-                                            <i class="fas fa-bullseye"></i>
-                                            <strong>هدف:</strong> @chapter.Objective
-                                        </div>
-                                    }
-                                    
-                                    @if (chapter.SubChapters != null && chapter.SubChapters.Any())
-                                    {
-                                        <div class="subchapters-list">
-                                            @foreach (var subChapter in chapter.SubChapters.OrderBy(sc => sc.Order))
-                                            {
-                                                <div class="subchapter-item">
-                                                    <div class="subchapter-header">
-                                                        <div class="subchapter-info">
-                                                            <h4 class="subchapter-title">
-                                                                <i class="fas fa-file-alt"></i>
-                                                                @subChapter.Title
-                                                            </h4>
-                                                            @if (!string.IsNullOrEmpty(subChapter.Description))
-                                                            {
-                                                                <p class="subchapter-description">@subChapter.Description</p>
-                                                            }
-                                                        </div>
-                                                    </div>
-                                                    @if (!string.IsNullOrEmpty(subChapter.Objective))
-                                                    {
-                                                        <div class="subchapter-objective">
-                                                            <strong>هدف:</strong> @subChapter.Objective
-                                                        </div>
-                                                    }
-                                                    
-                                                    @{
-                                                        var relatedScheduleItems = scheduleItems.Where(si => 
-                                                            si.SubChapterAssignments != null && 
-                                                            si.SubChapterAssignments.Any(sa => sa.SubChapterId == subChapter.Id)).ToList();
-                                                    }
-                                                    
-                                                    @if (relatedScheduleItems.Any())
-                                                    {
-                                                        <div class="subchapter-activities">
-                                                            <div class="activities-header">
-                                                                <i class="fas fa-tasks"></i>
-                                                                <span>فعالیت‌های مرتبط (@relatedScheduleItems.Count)</span>
-                                                            </div>
-                                                            <div class="activities-list">
-                                                                @foreach (var item in relatedScheduleItems)
-                                                                {
-                                                                    <div class="activity-item-small">
-                                                                        <div class="activity-icon-small">
-                                                                            <i class="@GetItemTypeIcon(item.Type)"></i>
-                                                                        </div>
-                                                                        <div class="activity-info-small">
-                                                                            <span class="activity-title-small">@item.Title</span>
-                                                                            <span class="activity-status-small @GetItemStatusClass(item)">@item.StatusText</span>
-                                                                        </div>
-                                                                        <button class="btn-activity-action" onclick="openScheduleItem(@item.Id)" title="شروع">
-                                                                            <i class="fas fa-play"></i>
-                                                                        </button>
-                                                                    </div>
-                                                                }
-                                                            </div>
-                                                        </div>
-                                                    }
-                                                </div>
-                                            }
-                                        </div>
-                                    }
-                                    else
-                                    {
-                                        <div class="empty-state-small">
-                                            <i class="fas fa-inbox"></i>
-                                            <p>زیرفصلی برای این فصل تعریف نشده است</p>
-                                        </div>
-                                    }
-                                </div>
-                            </div>
-                        </div>
-                    }
-                </div>
-            }
-            else
-            {
-                <div class="empty-state">
-                    <i class="fas fa-book-open fa-3x"></i>
-                    <h4>فصلی تعریف نشده است</h4>
-                    <p>هنوز محتوای آموزشی برای این دوره تعریف نشده است</p>
-                </div>
-            }
-        </div>
-
-        <!-- Schedule Items Tab -->
-        <div class="tab-pane fade" id="schedule-items-content" role="tabpanel">
-            <div class="schedule-items-section">
-                <!-- Filter Section -->
-                <div class="content-filter-compact">
-                    <div class="filter-header-compact">
-                        <div class="filter-info">
-                            <span class="filter-count" id="schedule-items-count">@scheduleItems.Count</span>
-                            <span class="filter-label">آیتم آموزشی</span>
-                        </div>
-                        <button class="refresh-icon-minimal" id="refresh-schedule-items" title="به‌روزرسانی">
-                            <i class="fas fa-sync-alt"></i>
-                        </button>
-                    </div>
-                    <div class="content-type-badges-compact" id="schedule-items-type-badges">
-                        <!-- Dynamic filter badges will be generated here -->
-                    </div>
-                </div>
-
-                <!-- Schedule Items List -->
-                <div class="schedule-items-list" id="schedule-items-list">
-                    @if (scheduleItems.Any())
-                    {
-                        @foreach (var item in scheduleItems.OrderByDescending(si => si.DueDate.HasValue).ThenByDescending(si => si.DueDate))
-                        {
-                            <div class="schedule-item-card-unified" data-type="@item.Type" data-status="@GetItemStatus(item)">
-                                <div class="schedule-item-icon-unified">
-                                    <i class="@GetItemTypeIcon(item.Type)"></i>
-                                </div>
-                                <div class="schedule-item-content-unified">
-                                    <div class="schedule-item-header-unified">
-                                        <h4 class="schedule-item-title-unified">@item.Title</h4>
-                                        <span class="status-badge-unified @GetItemStatusClass(item)">
-                                            <i class="@GetItemStatusIcon(item)"></i>
-                                            @item.StatusText
-                                        </span>
-                                    </div>
-                                    @if (!string.IsNullOrEmpty(item.Description))
-                                    {
-                                        <p class="schedule-item-description-unified">@item.Description</p>
-                                    }
-                                    <div class="schedule-item-meta-unified">
-                                        <div class="meta-item-unified">
-                                            <i class="fas fa-calendar-alt"></i>
-                                            <span>شروع: @item.StartDate.ToString("yyyy/MM/dd")</span>
-                                        </div>
-                                        @if (item.DueDate.HasValue)
-                                        {
-                                            <div class="meta-item-unified">
-                                                <i class="fas fa-clock"></i>
-                                                <span>مهلت: @item.DueDate.Value.ToString("yyyy/MM/dd")</span>
-                                            </div>
-                                        }
-                                        @if (item.MaxScore.HasValue)
-                                        {
-                                            <div class="meta-item-unified">
-                                                <i class="fas fa-star"></i>
-                                                <span>حداکثر نمره: @item.MaxScore</span>
-                                            </div>
-                                        }
-                                        @if (item.IsMandatory)
-                                        {
-                                            <div class="meta-item-unified mandatory">
-                                                <i class="fas fa-exclamation-circle"></i>
-                                                <span>اجباری</span>
-                                            </div>
-                                        }
-                                    </div>
-                                </div>
-                                <div class="schedule-item-actions-unified">
-                                    @if (item.Status == ScheduleItemStatus.Completed)
-                                    {
-                                        <button class="btn-action-unified success" disabled>
-                                            <i class="fas fa-check"></i>
-                                            <span>تکمیل شده</span>
+                                        <button class="study-subchapter-item" 
+                                                data-subchapter-id="@subChapter.Id" 
+                                                data-chapter-id="@chapter.Id">
+                                            <span>@subChapter.Title</span>
                                         </button>
                                     }
-                                    else if (item.IsUpcoming)
-                                    {
-                                        <button class="btn-action-unified warning" disabled>
-                                            <i class="fas fa-clock"></i>
-                                            <span>شروع در آینده</span>
-                                        </button>
-                                    }
-                                    else
-                                    {
-                                        <button class="btn-action-unified primary" onclick="openScheduleItem(@item.Id)">
-                                            <i class="fas fa-play"></i>
-                                            <span>شروع</span>
-                                        </button>
-                                    }
-                                    <button class="btn-action-unified secondary" onclick="viewScheduleItemDetails(@item.Id)" title="جزئیات">
-                                        <i class="fas fa-info-circle"></i>
-                                    </button>
                                 </div>
-                            </div>
-                        }
-                    }
-                    else
-                    {
-                        <div class="empty-state">
-                            <i class="fas fa-calendar-times fa-3x"></i>
-                            <h4>آیتم آموزشی یافت نشد</h4>
-                            <p>هنوز آیتم آموزشی برای این دوره تعریف نشده است</p>
+                            }
                         </div>
                     }
                 </div>
             </div>
-        </div>
+        </aside>
+        
+        <!-- Sidebar Overlay (Mobile) -->
+        <div class="study-sidebar-overlay" id="studySidebarOverlay"></div>
+        
+        <!-- Main Content -->
+        <main class="study-content">
+            <!-- Items Grid -->
+            <div class="study-items-grid" id="studyItemsGrid">
+                @if (scheduleItems.Any())
+                {
+                    @foreach (var item in scheduleItems.OrderBy(si => si.StartDate))
+                    {
+                        <a href="@Url.Action("Study", "ScheduleItem", new { area = "Student", id = item.Id })" 
+                           class="study-item-card" 
+                           data-item-id="@item.Id"
+                           data-item-type="@item.Type.ToString()"
+                           data-status="@GetItemStatus(item)"
+                           data-subchapter-ids="@string.Join(",", item.SubChapterAssignments.Select(sa => sa.SubChapterId))">
+                            <div class="study-item-icon" style="background-color: @GetItemTypeColor(item.Type)">
+                                <i class="@GetItemTypeIcon(item.Type)"></i>
+                            </div>
+                            <div class="study-item-content">
+                                <h4 class="study-item-title">@item.Title</h4>
+                                <div class="study-item-status">
+                                    <span class="study-status-badge @GetItemStatusClass(item)">
+                                        @item.StatusText
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="study-item-arrow">
+                                <i class="fas fa-arrow-left"></i>
+                            </div>
+                        </a>
+                    }
+                }
+                else
+                {
+                    <div class="study-empty-state">
+                        <i class="fas fa-book-open"></i>
+                        <h3>آیتم آموزشی یافت نشد</h3>
+                        <p>هنوز آیتم آموزشی برای این دوره تعریف نشده است</p>
+                    </div>
+                }
+            </div>
+        </main>
     </div>
 </div>
 
 @section Scripts {
     <script>
-        // Configuration for study page
         window.studyPageConfig = {
             courseId: @Model.Id,
-            getScheduleItemsUrl: '@Url.Action("GetScheduleItems", new { id = Model.Id })'
+            scheduleItems: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(scheduleItems.Select(si => new {
+                id = si.Id,
+                type = si.Type.ToString(),
+                title = si.Title,
+                status = GetItemStatus(si),
+                subChapterIds = si.SubChapterAssignments.Select(sa => sa.SubChapterId).ToList()
+            }))),
+            chapters: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(chapters.Select(c => new {
+                id = c.Id,
+                title = c.Title,
+                subChapterIds = c.SubChapters?.Select(sc => sc.Id).ToList() ?? new List<int>()
+            })))
         };
-        
-        // Initialize schedule items filter
-        const scheduleItems = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(scheduleItems.Select(si => new {
-            id = si.Id,
-            type = si.Type.ToString(),
-            title = si.Title,
-            description = si.Description,
-            status = si.Status.ToString(),
-            statusText = si.StatusText,
-            dueDate = si.DueDate,
-            maxScore = si.MaxScore,
-            isMandatory = si.IsMandatory
-        })));
-        
-        // Initialize filter badges
-        $(document).ready(function() {
-            initializeScheduleItemsFilter();
-        });
     </script>
-    <script src="~/js/areas/student/course/unified-course-content.js" asp-append-version="true"></script>
+    <script src="~/js/areas/student/course/study-page.js" asp-append-version="true"></script>
 }
 
 @functions {
@@ -443,18 +202,44 @@
             ScheduleItemType.ErrorFinding => "fas fa-search",
             ScheduleItemType.CodeExercise => "fas fa-code",
             ScheduleItemType.Quiz => "fas fa-question-circle",
+            ScheduleItemType.Ordering => "fas fa-sort",
             _ => "fas fa-file"
         };
     }
     
-    string GetItemStatusIcon(ScheduleItemDto item)
+    string GetItemTypeName(ScheduleItemType type)
     {
-        if (item.Status == ScheduleItemStatus.Completed)
-            return "fas fa-check-circle";
-        if (item.IsOverdue)
-            return "fas fa-exclamation-triangle";
-        if (item.IsUpcoming)
-            return "fas fa-clock";
-        return "fas fa-play-circle";
+        return type switch
+        {
+            ScheduleItemType.Reminder => "یادآوری",
+            ScheduleItemType.Writing => "نوشتاری",
+            ScheduleItemType.Audio => "صوتی",
+            ScheduleItemType.GapFill => "جای خالی",
+            ScheduleItemType.MultipleChoice => "چند گزینه‌ای",
+            ScheduleItemType.Match => "تطبیق",
+            ScheduleItemType.ErrorFinding => "پیدا کردن خطا",
+            ScheduleItemType.CodeExercise => "تمرین کد",
+            ScheduleItemType.Quiz => "کوییز",
+            ScheduleItemType.Ordering => "مرتب‌سازی",
+            _ => "نامشخص"
+        };
+    }
+    
+    string GetItemTypeColor(ScheduleItemType type)
+    {
+        return type switch
+        {
+            ScheduleItemType.Reminder => "#3b82f6",      // آبی
+            ScheduleItemType.Writing => "#10b981",       // سبز
+            ScheduleItemType.Audio => "#8b5cf6",         // بنفش
+            ScheduleItemType.GapFill => "#f59e0b",       // نارنجی
+            ScheduleItemType.MultipleChoice => "#ef4444", // قرمز
+            ScheduleItemType.Match => "#1e40af",         // آبی تیره
+            ScheduleItemType.ErrorFinding => "#eab308",  // زرد
+            ScheduleItemType.CodeExercise => "#374151",  // خاکستری تیره
+            ScheduleItemType.Quiz => "#991b1b",          // قرمز تیره
+            ScheduleItemType.Ordering => "#60a5fa",      // آبی روشن
+            _ => "#6b7280"                               // خاکستری
+        };
     }
 }
