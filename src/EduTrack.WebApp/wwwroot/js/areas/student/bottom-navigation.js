@@ -18,29 +18,40 @@ class BottomNavigation {
     detectCurrentPage() {
         const path = window.location.pathname.toLowerCase();
         
-        if (path.includes('/student/course/scheduleitems')) {
-            return 'my-courses';
+        // Check for specific routes first
+        if (path.includes('/student/statistics')) {
+            return 'statistics';
+        }
+        if (path.includes('/student/settings')) {
+            return 'settings';
+        }
+        if (path.includes('/student/profile')) {
+            return 'profile';
         }
         if (path.includes('/student/course/catalog')) {
             return 'courses';
         }
-        if (path.includes('/student/course/study')) {
-            return 'my-courses';
-        }
-        if (path.includes('/student/course') && !path.includes('/catalog') && !path.includes('/study')) {
-            return 'my-courses';
-        }
-        if (path.includes('/student/home') || path.includes('/student')) {
+        if (path.includes('/student/home') || (path === '/student' || path === '/student/')) {
             return 'home';
         }
-        if (path.includes('/catalog') || path.includes('/courses')) {
+        
+        // Fallback checks
+        if (path.includes('/catalog')) {
             return 'courses';
-        }
-        if (path.includes('/progress')) {
-            return 'progress';
         }
         if (path.includes('/profile')) {
             return 'profile';
+        }
+        if (path.includes('/settings')) {
+            return 'settings';
+        }
+        if (path.includes('/statistics')) {
+            return 'statistics';
+        }
+        
+        // Default to home if in student area
+        if (path.includes('/student')) {
+            return 'home';
         }
         
         return 'home'; // Default
@@ -79,9 +90,9 @@ class BottomNavigation {
         const routes = {
             'home': '/Student/Home',
             'courses': '/Student/Course/Catalog',
-            'my-courses': '/Student/Course',
-            'progress': '/Progress',
-            'profile': '/Profile'
+            'statistics': '/Student/Statistics',
+            'settings': '/Student/Settings',
+            'profile': '/Student/Profile'
         };
 
         const route = routes[page];

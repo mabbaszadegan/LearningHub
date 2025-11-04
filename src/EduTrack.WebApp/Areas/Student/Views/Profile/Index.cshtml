@@ -1,0 +1,172 @@
+@{
+    ViewData["Title"] = "پروفایل";
+    var profileModel = ViewData.Model as dynamic;
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/areas/student/profile.css" asp-append-version="true" />
+}
+
+<div class="content-container">
+    <!-- Header -->
+    <div class="profile-header mb-4">
+        <div class="profile-avatar-container">
+            <div class="profile-avatar">
+                @{
+                    var avatar = profileModel?.Profile?.Avatar as string;
+                }
+                @if (avatar != null && !string.IsNullOrEmpty(avatar))
+                {
+                    <img src="@avatar" alt="@(profileModel?.StudentName ?? "کاربر")" />
+                }
+                else
+                {
+                    <span class="avatar-initials">
+                        @((profileModel?.StudentFirstName?.Substring(0, 1) ?? "U") + (profileModel?.LastName?.Substring(0, 1) ?? ""))
+                    </span>
+                }
+            </div>
+            <h4 class="profile-name">@(profileModel?.StudentName ?? "کاربر")</h4>
+            <p class="text-muted mb-0">@(profileModel?.Email ?? "-")</p>
+        </div>
+    </div>
+
+    <!-- Profile Form -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h6 class="mb-0">
+                <i class="fas fa-user-edit me-2"></i>
+                ویرایش اطلاعات پروفایل
+            </h6>
+        </div>
+        <div class="card-body">
+            <form id="profileForm">
+                @Html.AntiForgeryToken()
+                
+                <div class="form-group mb-3">
+                    <label for="firstName" class="form-label">نام</label>
+                    <input type="text" class="form-control" id="firstName" name="firstName" 
+                           value="@(profileModel?.FirstName ?? "")" required>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label for="lastName" class="form-label">نام خانوادگی</label>
+                    <input type="text" class="form-control" id="lastName" name="lastName" 
+                           value="@(profileModel?.LastName ?? "")" required>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label for="email" class="form-label">ایمیل</label>
+                    <input type="email" class="form-control" id="email" value="@(profileModel?.Email ?? "")" 
+                           disabled readonly>
+                    <small class="form-text text-muted">برای تغییر ایمیل با پشتیبانی تماس بگیرید</small>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label for="phoneNumber" class="form-label">شماره تماس</label>
+                    <input type="tel" class="form-control" id="phoneNumber" name="phoneNumber" 
+                           value="@(profileModel?.Profile?.PhoneNumber ?? "")" 
+                           placeholder="09123456789">
+                </div>
+
+                <div class="form-group mb-3">
+                    <label for="bio" class="form-label">درباره من</label>
+                    <textarea class="form-control" id="bio" name="bio" rows="4" 
+                              placeholder="درباره خودتان بنویسید...">@(profileModel?.Profile?.Bio ?? "")</textarea>
+                    <small class="form-text text-muted">حداکثر 1000 کاراکتر</small>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-save me-2"></i>
+                    ذخیره تغییرات
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Account Info -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h6 class="mb-0">
+                <i class="fas fa-info-circle me-2"></i>
+                اطلاعات حساب کاربری
+            </h6>
+        </div>
+        <div class="card-body">
+            <div class="profile-info-item">
+                <div class="profile-info-label">نام کاربری</div>
+                <div class="profile-info-value">@(profileModel?.UserName ?? "-")</div>
+            </div>
+            <div class="profile-info-item">
+                <div class="profile-info-label">تاریخ عضویت</div>
+                <div class="profile-info-value">@DateTime.Now.ToString("yyyy/MM/dd")</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="profile-actions">
+                <a href="@Url.Action("Index", "Settings")" class="btn btn-outline-primary w-100 mb-3">
+                    <i class="fas fa-cog me-2"></i>
+                    تنظیمات
+                </a>
+                <button type="button" class="btn btn-outline-danger w-100" id="changePasswordBtn">
+                    <i class="fas fa-key me-2"></i>
+                    تغییر رمز عبور
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Initialize bottom navigation
+            if (window.bottomNavigation) {
+                window.bottomNavigation.setActivePage('profile');
+            }
+
+            // Handle form submission
+            $('#profileForm').on('submit', function(e) {
+                e.preventDefault();
+                
+                const formData = {
+                    firstName: $('#firstName').val(),
+                    lastName: $('#lastName').val(),
+                    bio: $('#bio').val(),
+                    phoneNumber: $('#phoneNumber').val(),
+                    __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                };
+
+                $.ajax({
+                    url: '@Url.Action("UpdateProfile")',
+                    type: 'POST',
+                    data: formData,
+                    success: function(response) {
+                        if (response.success) {
+                            toastr.success(response.message || 'پروفایل با موفقیت به‌روزرسانی شد');
+                            // Reload page after a short delay
+                            setTimeout(function() {
+                                location.reload();
+                            }, 1500);
+                        } else {
+                            toastr.error(response.error || 'خطا در به‌روزرسانی پروفایل');
+                        }
+                    },
+                    error: function() {
+                        toastr.error('خطا در به‌روزرسانی پروفایل');
+                    }
+                });
+            });
+
+            // Change password button
+            $('#changePasswordBtn').on('click', function() {
+                toastr.info('برای تغییر رمز عبور با پشتیبانی تماس بگیرید');
+            });
+        });
+    </script>
+}
+

@@ -105,98 +105,123 @@ body {
     top: 60px !important;
     left: 0 !important;
     right: 0 !important;
-    bottom: 80px !important;
+    bottom: 75px !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
     padding: 20px !important;
     background: transparent !important;
 }
 
-/* Fixed Footer */
+/* Fixed Footer - Professional Mobile App Design */
 .fixed-footer {
     position: fixed !important;
     bottom: 0 !important;
     left: 0 !important;
     right: 0 !important;
-    height: 80px !important;
-    background: white !important;
-    border-top: 1px solid #e9ecef !important;
+    height: 75px !important;
+    background: rgba(255, 255, 255, 0.98) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    border-top: 1px solid rgba(0, 0, 0, 0.08) !important;
     z-index: 1000 !important;
-    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1) !important;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08) !important;
     display: flex !important;
     align-items: center !important;
     padding: 0 !important;
     margin: 0 !important;
 }
 
-/* Bottom Navigation */
+/* Bottom Navigation - iOS/Android Style */
 .bottom-nav {
     width: 100%;
     display: flex;
     justify-content: space-around;
-    align-items: center;
+    align-items: flex-start;
     height: 100%;
-    padding: 10px 0;
+    padding: 8px 4px 12px 4px;
+    gap: 4px;
 }
 
 .nav-item {
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     flex: 1;
-    padding: 5px;
-    border-radius: 8px;
+    padding: 8px 4px;
+    border-radius: 12px;
     position: relative;
+    min-width: 0;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.nav-item:active {
+    transform: scale(0.95);
+    background: rgba(102, 126, 234, 0.08);
 }
 
 .nav-item.active {
     color: #667eea;
-    background: rgba(102, 126, 234, 0.1);
 }
 
 .nav-item.active .nav-icon {
-    background: #667eea;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
-    transform: scale(1.1);
+    transform: scale(1.15) translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
 
-.nav-item.active::before {
+.nav-item.active::after {
     content: '';
     position: absolute;
-    top: -2px;
+    top: 0;
     left: 50%;
     transform: translateX(-50%);
-    width: 20px;
+    width: 32px;
     height: 3px;
-    background: #667eea;
-    border-radius: 2px;
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    border-radius: 0 0 3px 3px;
 }
 
 .nav-icon {
-    width: 35px;
-    height: 35px;
-    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
     margin-bottom: 4px;
-    transition: all 0.2s ease;
-    background: #f8f9fa;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: rgba(108, 117, 125, 0.08);
     color: #6c757d;
-    font-size: 16px;
+    font-size: 18px;
+    position: relative;
+}
+
+.nav-item:not(.active) .nav-icon:hover {
+    background: rgba(108, 117, 125, 0.12);
+    transform: scale(1.05);
 }
 
 .nav-label {
-    font-size: 11px;
-    font-weight: 500;
+    font-size: 10px;
+    font-weight: 600;
     color: #6c757d;
     text-align: center;
+    line-height: 1.2;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    transition: all 0.3s ease;
+    letter-spacing: -0.2px;
 }
 
 .nav-item.active .nav-label {
     color: #667eea;
+    font-weight: 700;
 }
 
 /* Content Styling */
@@ -1269,5 +1294,123 @@ body {
     .course-footer-btn {
         width: 100%;
         justify-content: center;
+    }
+}
+
+/* Enrolled Courses List Styles */
+.enrolled-courses-section {
+    margin-bottom: 20px;
+}
+
+.enrolled-courses-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.enrolled-course-item {
+    display: flex;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 1px solid #e9ecef;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.3s ease;
+    background: white;
+}
+
+.enrolled-course-item:last-child {
+    border-bottom: none;
+}
+
+.enrolled-course-item:hover {
+    background: #f8f9fa;
+    text-decoration: none;
+    color: inherit;
+    transform: translateX(-3px);
+}
+
+.enrolled-course-item:active {
+    background: #e9ecef;
+}
+
+.enrolled-course-thumbnail {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-left: 15px;
+    flex-shrink: 0;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.enrolled-course-thumbnail img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.course-thumbnail-placeholder-small {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 24px;
+}
+
+.enrolled-course-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.enrolled-course-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin: 0 0 8px 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.enrolled-course-progress {
+    margin-bottom: 8px;
+}
+
+.enrolled-course-stats {
+    display: flex;
+    align-items: center;
+}
+
+.enrolled-course-action {
+    margin-right: 10px;
+    color: #6c757d;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.enrolled-course-item:hover .enrolled-course-action {
+    color: #667eea;
+    transform: translateX(-3px);
+}
+
+@media (max-width: 768px) {
+    .enrolled-course-item {
+        padding: 12px 15px;
+    }
+    
+    .enrolled-course-thumbnail {
+        width: 50px;
+        height: 50px;
+        margin-left: 12px;
+    }
+    
+    .enrolled-course-title {
+        font-size: 14px;
     }
 }

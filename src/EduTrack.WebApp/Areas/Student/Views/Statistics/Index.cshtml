@@ -1,0 +1,238 @@
+@{
+    ViewData["Title"] = "آمار و پیشرفت";
+    var statsModel = ViewData.Model as dynamic;
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/areas/student/statistics.css" asp-append-version="true" />
+}
+
+<div class="content-container">
+    <!-- Header -->
+    <div class="statistics-header mb-4">
+        <h4 class="statistics-title">
+            <i class="fas fa-chart-bar me-2"></i>
+            آمار و پیشرفت یادگیری
+        </h4>
+        <p class="text-muted mb-0">@(statsModel?.StudentFirstName ?? "دانش‌آموز") عزیز، پیشرفت خود را مشاهده کنید</p>
+    </div>
+
+    <!-- Progress Overview -->
+    @if (statsModel?.ProgressStats != null)
+    {
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-tasks me-2"></i>
+                    نمای کلی پیشرفت
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="progress-overview">
+                    <div class="progress-circle-container">
+                        <div class="progress-circle" data-percentage="@statsModel.ProgressStats.CompletionPercentage">
+                            <svg class="progress-ring" width="120" height="120">
+                                <circle class="progress-ring-circle-bg" cx="60" cy="60" r="54"></circle>
+                                <circle class="progress-ring-circle" cx="60" cy="60" r="54"></circle>
+                            </svg>
+                            <div class="progress-circle-text">
+                                <span class="progress-percentage">@((int)statsModel.ProgressStats.CompletionPercentage)%</span>
+                                <span class="progress-label">تکمیل شده</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="progress-stats-grid">
+                        <div class="progress-stat-item">
+                            <div class="stat-icon bg-primary">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value">@statsModel.ProgressStats.Completed</div>
+                                <div class="stat-label">تکمیل شده</div>
+                            </div>
+                        </div>
+                        <div class="progress-stat-item">
+                            <div class="stat-icon bg-warning">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value">@statsModel.ProgressStats.InProgress</div>
+                                <div class="stat-label">در حال انجام</div>
+                            </div>
+                        </div>
+                        <div class="progress-stat-item">
+                            <div class="stat-icon bg-secondary">
+                                <i class="fas fa-circle"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value">@statsModel.ProgressStats.NotStarted</div>
+                                <div class="stat-label">شروع نشده</div>
+                            </div>
+                        </div>
+                        <div class="progress-stat-item">
+                            <div class="stat-icon bg-info">
+                                <i class="fas fa-list"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value">@statsModel.ProgressStats.Total</div>
+                                <div class="stat-label">کل آیتم‌ها</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Course Statistics -->
+    @{
+        var enrolledCoursesCollection = statsModel?.EnrolledCourses as System.Collections.ICollection;
+        var hasCoursesCollection = enrolledCoursesCollection != null && enrolledCoursesCollection.Count > 0;
+        var coursesList = statsModel?.EnrolledCourses as System.Collections.IEnumerable ?? new List<object>();
+    }
+    @if (hasCoursesCollection)
+    {
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-graduation-cap me-2"></i>
+                    پیشرفت دوره‌ها
+                </h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="course-progress-list">
+                    @foreach (dynamic course in coursesList)
+                    {
+                        <div class="course-progress-item">
+                            <div class="course-progress-info">
+                                <h6 class="course-progress-title">@(course?.CourseTitle ?? "")</h6>
+                                <div class="course-progress-bar-container">
+                                    <div class="progress" style="height: 8px;">
+                                        <div class="progress-bar" role="progressbar" style="width: @(course?.ProgressPercentage ?? 0)%" 
+                                             aria-valuenow="@(course?.ProgressPercentage ?? 0)" aria-valuemin="0" aria-valuemax="100">
+                                        </div>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center mt-2">
+                                        <small class="text-muted">@(course?.ProgressPercentage ?? 0)% تکمیل شده</small>
+                                        <small class="text-muted">
+                                            <i class="fas fa-check-circle me-1"></i>
+                                            @(course?.CompletedLessons ?? 0) درس
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="course-progress-action">
+                                <a href="@Url.Action("Study", "Course", new { id = course?.CourseId ?? 0 })" class="btn btn-sm btn-primary">
+                                    <i class="fas fa-arrow-left"></i>
+                                </a>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Additional Statistics -->
+    @if (statsModel?.StudentStatistics != null)
+    {
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-chart-line me-2"></i>
+                    آمار تفصیلی
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="detailed-stats">
+                    <div class="stat-card">
+                        <div class="stat-card-icon bg-success">
+                            <i class="fas fa-graduation-cap"></i>
+                        </div>
+                        <div class="stat-card-content">
+                            <div class="stat-card-label">درس‌های تکمیل شده</div>
+                            <div class="stat-card-value">@(statsModel.StudentStatistics.CompletedLessons ?? 0) / @(statsModel.StudentStatistics.TotalLessons ?? 0)</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-icon bg-primary">
+                            <i class="fas fa-trophy"></i>
+                        </div>
+                        <div class="stat-card-content">
+                            <div class="stat-card-label">میانگین نمره</div>
+                            <div class="stat-card-value">@(statsModel.StudentStatistics.AverageScore?.ToString("F1") ?? "0")</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-icon bg-warning">
+                            <i class="fas fa-fire"></i>
+                        </div>
+                        <div class="stat-card-content">
+                            <div class="stat-card-label">رکورد متوالی</div>
+                            <div class="stat-card-value">@(statsModel.StudentStatistics.LongestStreak ?? 0) روز</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-icon bg-info">
+                            <i class="fas fa-calendar-check"></i>
+                        </div>
+                        <div class="stat-card-content">
+                            <div class="stat-card-label">رکورد فعلی</div>
+                            <div class="stat-card-value">@(statsModel.StudentStatistics.CurrentStreak ?? 0) روز</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Empty State -->
+    @{
+        var progressStats = statsModel?.ProgressStats as dynamic;
+        var totalProgress = progressStats?.Total ?? 0;
+        var coursesCount = (statsModel?.EnrolledCourses as System.Collections.ICollection)?.Count ?? 0;
+        var isEmpty = (progressStats == null || totalProgress == 0) && coursesCount == 0;
+    }
+    @if (isEmpty)
+    {
+        <div class="empty-state text-center py-5">
+            <i class="fas fa-chart-bar fa-3x text-muted mb-3"></i>
+            <h5>هنوز آمار فعالیتی ندارید</h5>
+            <p class="text-muted">با شروع یادگیری، آمار و پیشرفت شما اینجا نمایش داده می‌شود</p>
+            <a href="@Url.Action("Catalog", "Course")" class="btn btn-primary mt-3">
+                <i class="fas fa-graduation-cap me-2"></i>
+                مشاهده دوره‌ها
+            </a>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Initialize bottom navigation
+            if (window.bottomNavigation) {
+                window.bottomNavigation.setActivePage('statistics');
+            }
+
+            // Animate progress circle
+            const progressCircle = document.querySelector('.progress-circle');
+            if (progressCircle) {
+                const percentage = parseFloat(progressCircle.dataset.percentage) || 0;
+                const circle = progressCircle.querySelector('.progress-ring-circle');
+                const radius = circle.r.baseVal.value;
+                const circumference = radius * 2 * Math.PI;
+                
+                circle.style.strokeDasharray = `${circumference} ${circumference}`;
+                circle.style.strokeDashoffset = circumference;
+                
+                const offset = circumference - (percentage / 100) * circumference;
+                setTimeout(() => {
+                    circle.style.transition = 'stroke-dashoffset 1s ease-in-out';
+                    circle.style.strokeDashoffset = offset;
+                }, 100);
+            }
+        });
+    </script>
+}
+

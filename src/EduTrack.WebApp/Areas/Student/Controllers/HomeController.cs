@@ -3,6 +3,7 @@ using EduTrack.Application.Features.Progress.Queries;
 using EduTrack.Application.Features.Exams.Queries;
 using EduTrack.Application.Features.StudySessions.Queries;
 using EduTrack.Application.Features.ScheduleItems.Queries;
+using EduTrack.Application.Features.CourseEnrollment.Queries;
 using EduTrack.Application.Common.Models;
 using EduTrack.Domain.Entities;
 using EduTrack.WebApp.Models;
@@ -39,6 +40,12 @@ public class HomeController : Controller
             return RedirectToAction("Login", "Account", new { area = "Public" });
         }
 
+        // Get enrolled courses
+        var enrolledCoursesResult = await _mediator.Send(new GetStudentCourseEnrollmentsQuery(currentUser.Id));
+        var enrolledCourses = enrolledCoursesResult.IsSuccess && enrolledCoursesResult.Value != null 
+            ? enrolledCoursesResult.Value 
+            : new List<Application.Features.CourseEnrollment.DTOs.StudentCourseEnrollmentSummaryDto>();
+
         // Get student dashboard data
         var dashboardData = new StudentDashboardViewModel
         {
@@ -54,7 +61,8 @@ public class HomeController : Controller
             LastStudySessions = await GetLastStudySessions(currentUser.Id),
             LastStudyCourses = await GetLastStudyCourses(currentUser.Id),
             StudyStatistics = await GetStudyStatistics(currentUser.Id),
-            AccessibleScheduleItems = await GetAccessibleScheduleItems(currentUser.Id)
+            AccessibleScheduleItems = await GetAccessibleScheduleItems(currentUser.Id),
+            EnrolledCourses = enrolledCourses
         };
 
         return View(dashboardData);
