@@ -20,7 +20,7 @@ class BottomNavigation {
         // Handle browser back/forward buttons
         window.addEventListener('popstate', (event) => {
             if (event.state && event.state.page) {
-                this.loadPageContent(event.state.page);
+                this.loadPageContent(event.state.page, event.state.pageKey);
             } else {
                 // Fallback: reload the page
                 window.location.reload();
@@ -59,19 +59,22 @@ class BottomNavigation {
     }
 
     bindEvents() {
-        // Navigation item clicks
-        document.querySelectorAll('.nav-item').forEach(item => {
-            item.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                const page = item.dataset.page;
-                
-                // Update active state immediately for better UX
-                this.setActivePage(page);
-                
-                // Navigate to page
-                this.navigateToPage(page);
-            });
+        // Use event delegation for navigation items (works even if items are replaced)
+        document.addEventListener('click', (e) => {
+            const navItem = e.target.closest('.nav-item');
+            if (!navItem) return;
+            
+            e.preventDefault();
+            e.stopPropagation();
+            const page = navItem.dataset.page;
+            
+            if (!page) return;
+            
+            // Update active state immediately for better UX
+            this.setActivePage(page);
+            
+            // Navigate to page
+            this.navigateToPage(page);
         });
 
         // Window resize handler
@@ -82,14 +85,17 @@ class BottomNavigation {
 
     setActiveItem() {
         // Remove active class from all items
-        document.querySelectorAll('.nav-item').forEach(item => {
+        const allNavItems = document.querySelectorAll('.nav-item');
+        allNavItems.forEach(item => {
             item.classList.remove('active');
         });
 
         // Add active class to current page
-        const activeItem = document.querySelector(`[data-page="${this.currentPage}"]`);
-        if (activeItem) {
-            activeItem.classList.add('active');
+        if (this.currentPage) {
+            const activeItem = document.querySelector(`.nav-item[data-page="${this.currentPage}"]`);
+            if (activeItem) {
+                activeItem.classList.add('active');
+            }
         }
     }
 
@@ -107,15 +113,15 @@ class BottomNavigation {
         const targetPath = route.toLowerCase();
         
         // Only navigate if we're not already on the target page
-        if (currentPath.includes(targetPath.replace('/student/', '').replace('/student', ''))) {
+        if (currentPath === targetPath || currentPath.includes(targetPath.replace('/student/', '').replace('/student', ''))) {
             return;
         }
 
         // Load content via AJAX
-        this.loadPageContent(route);
+        this.loadPageContent(route, page);
     }
 
-    async loadPageContent(url) {
+    async loadPageContent(url, pageKey = null) {
         const mainContent = document.querySelector('.main-content');
         if (!mainContent) return;
 
@@ -196,7 +202,18 @@ class BottomNavigation {
             });
 
             // Update URL without reload
-            window.history.pushState({ page: url }, '', url);
+            window.history.pushState({ page: url, pageKey: pageKey }, '', url);
+
+            // Update current page if pageKey is provided
+            if (pageKey) {
+                this.currentPage = pageKey;
+                // Immediately update active state after setting currentPage
+                this.setActiveItem();
+            } else {
+                // If no pageKey provided, detect from URL
+                this.currentPage = this.detectCurrentPage();
+                this.setActiveItem();
+            }
 
             // Scroll to top
             mainContent.scrollTop = 0;
@@ -218,8 +235,8 @@ class BottomNavigation {
     }
 
     reinitializePage() {
-        // Reinitialize bottom navigation
-        this.currentPage = this.detectCurrentPage();
+        // Always update active item based on currentPage
+        // Don't override currentPage here - it should already be set correctly
         this.setActiveItem();
 
         // Reinitialize toastr if needed
