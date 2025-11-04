@@ -13,6 +13,19 @@ class BottomNavigation {
         this.bindEvents();
         this.setActiveItem();
         this.handleResponsive();
+        this.handleBrowserHistory();
+    }
+
+    handleBrowserHistory() {
+        // Handle browser back/forward buttons
+        window.addEventListener('popstate', (event) => {
+            if (event.state && event.state.page) {
+                this.loadPageContent(event.state.page);
+            } else {
+                // Fallback: reload the page
+                window.location.reload();
+            }
+        });
     }
 
     detectCurrentPage() {
@@ -88,15 +101,134 @@ class BottomNavigation {
         };
 
         const route = routes[page];
-        if (route) {
-            const currentPath = window.location.pathname.toLowerCase();
-            const targetPath = route.toLowerCase();
-            
-            // Only navigate if we're not already on the target page
-            if (!currentPath.includes(targetPath.replace('/student/', '').replace('/student', ''))) {
-                window.location.href = route;
-            }
+        if (!route) return;
+
+        const currentPath = window.location.pathname.toLowerCase();
+        const targetPath = route.toLowerCase();
+        
+        // Only navigate if we're not already on the target page
+        if (currentPath.includes(targetPath.replace('/student/', '').replace('/student', ''))) {
+            return;
         }
+
+        // Load content via AJAX
+        this.loadPageContent(route);
+    }
+
+    async loadPageContent(url) {
+        const mainContent = document.querySelector('.main-content');
+        if (!mainContent) return;
+
+        // Show loading state
+        const originalContent = mainContent.innerHTML;
+        mainContent.innerHTML = `
+            <div class="page-loading-state">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">در حال بارگذاری...</span>
+                </div>
+                <p>در حال بارگذاری...</p>
+            </div>
+        `;
+
+        try {
+            // Fetch the page content
+            const response = await fetch(url, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'text/html'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const html = await response.text();
+            
+            // Parse the HTML response
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            
+            // Extract main content
+            const newMainContent = doc.querySelector('.main-content');
+            const newContent = newMainContent ? newMainContent.innerHTML : html;
+
+            // Update main content
+            mainContent.innerHTML = newContent;
+
+            // Extract and update title
+            const newTitle = doc.querySelector('title');
+            if (newTitle) {
+                document.title = newTitle.textContent;
+            }
+
+            // Extract and load stylesheets
+            const stylesheets = doc.querySelectorAll('link[rel="stylesheet"]');
+            stylesheets.forEach(link => {
+                const href = link.getAttribute('href');
+                if (href && !document.querySelector(`link[href="${href}"]`)) {
+                    const newLink = document.createElement('link');
+                    newLink.rel = 'stylesheet';
+                    newLink.href = href;
+                    document.head.appendChild(newLink);
+                }
+            });
+
+            // Extract and execute scripts
+            const scripts = doc.querySelectorAll('script');
+            scripts.forEach(script => {
+                if (script.src) {
+                    // External script
+                    if (!document.querySelector(`script[src="${script.src}"]`)) {
+                        const newScript = document.createElement('script');
+                        newScript.src = script.src;
+                        if (script.hasAttribute('asp-append-version')) {
+                            newScript.setAttribute('asp-append-version', 'true');
+                        }
+                        document.body.appendChild(newScript);
+                    }
+                } else {
+                    // Inline script
+                    const newScript = document.createElement('script');
+                    newScript.textContent = script.textContent;
+                    document.body.appendChild(newScript);
+                }
+            });
+
+            // Update URL without reload
+            window.history.pushState({ page: url }, '', url);
+
+            // Scroll to top
+            mainContent.scrollTop = 0;
+
+            // Reinitialize any necessary components
+            this.reinitializePage();
+
+        } catch (error) {
+            console.error('Error loading page:', error);
+            mainContent.innerHTML = `
+                <div class="page-error-state">
+                    <i class="fas fa-exclamation-triangle text-warning"></i>
+                    <h5>خطا در بارگذاری صفحه</h5>
+                    <p>متأسفانه خطایی در بارگذاری صفحه رخ داد.</p>
+                    <button class="btn btn-primary" onclick="location.reload()">تلاش مجدد</button>
+                </div>
+            `;
+        }
+    }
+
+    reinitializePage() {
+        // Reinitialize bottom navigation
+        this.currentPage = this.detectCurrentPage();
+        this.setActiveItem();
+
+        // Reinitialize toastr if needed
+        if (typeof toastr !== 'undefined') {
+            // Toastr will handle its own initialization
+        }
+
+        // Reinitialize any other components that need it
+        // This can be extended based on page-specific needs
     }
 
     handleResponsive() {
