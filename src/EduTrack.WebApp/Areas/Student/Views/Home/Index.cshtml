@@ -1,447 +1,118 @@
 ﻿@model EduTrack.WebApp.Models.StudentDashboardViewModel
 @{
-    ViewData["Title"] = "داشبورد دانش‌آموز";
+    ViewData["Title"] = "صفحه خانه";
 }
 
 @section Styles {
-    <link rel="stylesheet" href="~/css/areas/student/buttons.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/dashboard.css?v=5" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/areas/student/home-page.css" asp-append-version="true" />
 }
 
 <div class="content-container">
+    <!-- Recently Viewed Courses Section -->
+    @if (Model.LastStudyCourses.Any())
+    {
+        <div class="recently-viewed-section">
+            <div class="recently-viewed-header">
+                <h6>
+                    <i class="fas fa-clock"></i>
+                    دوره‌های اخیرا مشاهده شده
+                </h6>
+            </div>
+            <div class="recently-viewed-list">
+                @foreach (var course in Model.LastStudyCourses.Take(10))
+                {
+                    <a href="@Url.Action("Study", "Course", new { id = course.CourseId })" class="recently-viewed-item">
+                        <div class="recently-viewed-thumbnail">
+                            @if (!string.IsNullOrEmpty(course.CourseThumbnail))
+                            {
+                                <img src="@course.CourseThumbnail" alt="@course.CourseTitle" />
+                            }
+                            else
+                            {
+                                <div class="placeholder">
+                                    <i class="fas fa-graduation-cap"></i>
+                                </div>
+                            }
+                        </div>
+                        <div class="recently-viewed-title">@course.CourseTitle</div>
+                        <div class="recently-viewed-time">@course.RelativeTime</div>
+                    </a>
+                }
+            </div>
+        </div>
+    }
+
     <!-- Enrolled Courses Section -->
-    @if (Model.EnrolledCourses.Any())
-    {
-        <div class="card mb-4 enrolled-courses-section">
-            <div class="card-header">
-                <div class="d-flex justify-content-between align-items-center">
-                    <h6 class="mb-0">
-                        <i class="fas fa-book-open me-2"></i>
-                        دوره‌های من
-                    </h6>
-                    <small class="text-muted">@Model.EnrolledCourses.Count دوره</small>
-                </div>
-            </div>
-            <div class="card-body p-0">
-                <div class="enrolled-courses-list">
-                    @foreach (var course in Model.EnrolledCourses)
-                    {
-                        <a href="@Url.Action("Study", "Course", new { id = course.CourseId })" class="enrolled-course-item">
-                            <div class="enrolled-course-thumbnail">
-                                @if (!string.IsNullOrEmpty(course.CourseThumbnail))
-                                {
-                                    <img src="@course.CourseThumbnail" alt="@course.CourseTitle" />
-                                }
-                                else
-                                {
-                                    <div class="course-thumbnail-placeholder-small">
-                                        <i class="fas fa-graduation-cap"></i>
-                                    </div>
-                                }
-                            </div>
-                            <div class="enrolled-course-content">
-                                <h6 class="enrolled-course-title">@course.CourseTitle</h6>
-                                <div class="enrolled-course-progress">
-                                    <div class="d-flex justify-content-between align-items-center mb-1">
-                                        <small class="text-muted">پیشرفت</small>
-                                        <small class="text-primary fw-bold">@course.ProgressPercentage%</small>
-                                    </div>
-                                    <div class="progress" style="height: 6px;">
-                                        <div class="progress-bar" role="progressbar" style="width: @course.ProgressPercentage%" 
-                                             aria-valuenow="@course.ProgressPercentage" aria-valuemin="0" aria-valuemax="100">
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="enrolled-course-stats">
-                                    <small class="text-muted">
-                                        <i class="fas fa-check-circle me-1"></i>
-                                        @course.CompletedLessons درس تکمیل شده
-                                    </small>
-                                </div>
-                            </div>
-                            <div class="enrolled-course-action">
-                                <i class="fas fa-chevron-left"></i>
-                            </div>
-                        </a>
-                    }
-                </div>
-            </div>
-        </div>
-    }
-
-    <!-- Welcome Section -->
-    <div class="card mb-4">
-        <div class="card-header">
-            <i class="fas fa-home me-2"></i>
-            خوش اومدی @Model.StudentFirstName!
-        </div>
-        <div class="card-body">
-            <p class="mb-3">میدونی چقدر درس خوندی تا امروز؟</p>
-            
-            <!-- Study Statistics -->
-            <div class="study-stats-container">
-                <div class="row g-3">
-                    <div class="col-md-3 col-sm-6">
-                        <div class="study-stat-item">
-                            <div class="study-stat-icon">
-                                <i class="fas fa-calendar-day"></i>
-                            </div>
-                            <div class="study-stat-content">
-                                <div class="study-stat-value">@Model.StudyStatistics.TodayStudyTime</div>
-                                <div class="study-stat-label">امروز</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3 col-sm-6">
-                        <div class="study-stat-item">
-                            <div class="study-stat-icon">
-                                <i class="fas fa-calendar-week"></i>
-                            </div>
-                            <div class="study-stat-content">
-                                <div class="study-stat-value">@Model.StudyStatistics.LastWeekStudyTime</div>
-                                <div class="study-stat-label">هفته گذشته</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3 col-sm-6">
-                        <div class="study-stat-item">
-                            <div class="study-stat-icon">
-                                <i class="fas fa-calendar-alt"></i>
-                            </div>
-                            <div class="study-stat-content">
-                                <div class="study-stat-value">@Model.StudyStatistics.LastMonthStudyTime</div>
-                                <div class="study-stat-label">ماه گذشته</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3 col-sm-6">
-                        <div class="study-stat-item">
-                            <div class="study-stat-icon">
-                                <i class="fas fa-clock"></i>
-                            </div>
-                            <div class="study-stat-content">
-                                <div class="study-stat-value">@Model.StudyStatistics.TotalStudyTime</div>
-                                <div class="study-stat-label">در کل</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Average Statistics -->
-                <div class="row g-3 mt-2">
-                    <div class="col-md-4">
-                        <div class="study-stat-item average">
-                            <div class="study-stat-icon">
-                                <i class="fas fa-chart-line"></i>
-                            </div>
-                            <div class="study-stat-content">
-                                <div class="study-stat-value">@Model.StudyStatistics.AverageDailyStudyTime</div>
-                                <div class="study-stat-label">میانگین روزانه</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="study-stat-item average">
-                            <div class="study-stat-icon">
-                                <i class="fas fa-chart-bar"></i>
-                            </div>
-                            <div class="study-stat-content">
-                                <div class="study-stat-value">@Model.StudyStatistics.AverageWeeklyStudyTime</div>
-                                <div class="study-stat-label">میانگین هفتگی</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="study-stat-item average">
-                            <div class="study-stat-icon">
-                                <i class="fas fa-chart-area"></i>
-                            </div>
-                            <div class="study-stat-content">
-                                <div class="study-stat-value">@Model.StudyStatistics.AverageMonthlyStudyTime</div>
-                                <div class="study-stat-label">میانگین ماهانه</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Study History - Modern Minimal Design -->
-    @if (Model.LastStudySessions.Any() || Model.LastStudyCourses.Any())
-    {
-        <div class="card mb-4 study-history-card">
-            <div class="card-header">
-                <div class="d-flex justify-content-between align-items-center">
-                    <h6 class="mb-0">
-                        <i class="fas fa-history me-2"></i>
-                        تاریخچه مطالعه
-                    </h6>
-                    <small class="text-muted">آخرین فعالیت‌های شما</small>
-                </div>
-            </div>
-            <div class="card-body p-0">
-                <div class="row g-0">
-                    <!-- Last Study Sessions -->
-                    @if (Model.LastStudySessions.Any())
-                    {
-                        <div class="col-md-6">
-                            <div class="study-section">
-                                <div class="section-header">
-                                    <h6 class="section-title">
-                                        <i class="fas fa-play-circle me-2"></i>
-                                        آخرین مطالعات
-                                    </h6>
-                                </div>
-                                <div class="study-list">
-                                    @foreach (var session in Model.LastStudySessions.Take(5))
-                                    {
-                                        <div class="study-item">
-                                            <div class="study-content">
-                                                <div class="study-title">@session.ScheduleItemTitle</div>
-                                                <div class="study-course">
-                                                    <small class="text-muted">
-                                                        <i class="fas fa-graduation-cap me-1"></i>
-                                                        @session.CourseTitle
-                                                    </small>
-                                                </div>
-                                                <div class="study-meta">
-                                                    <span class="study-time">@session.RelativeTime</span>
-                                                    <span class="study-duration">@session.FormattedDuration</span>
-                                                </div>
-                                            </div>
-                                            <div class="study-action">
-                                                <a href="@Url.Action("Study", "ScheduleItem", new { id = session.ScheduleItemId })" 
-                                                   class="btn-continue-mini" title="ادامه مطالعه">
-                                                    <i class="fas fa-play"></i>
-                                                </a>
-                                            </div>
-                                        </div>
-                                    }
-                                </div>
-                            </div>
-                        </div>
-                    }
-                    
-                    <!-- Last Study Courses -->
-                    @if (Model.LastStudyCourses.Any())
-                    {
-                        <div class="col-md-6">
-                            <div class="study-section">
-                                <div class="section-header">
-                                    <h6 class="section-title">
-                                        <i class="fas fa-graduation-cap me-2"></i>
-                                        دوره‌های اخیر
-                                    </h6>
-                                </div>
-                                <div class="study-list">
-                                    @foreach (var course in Model.LastStudyCourses.Take(5))
-                                    {
-                                        <div class="study-item">
-                                            <div class="study-content">
-                                                <div class="study-title">@course.CourseTitle</div>
-                                                <div class="study-meta">
-                                                    <span class="study-time">@course.RelativeTime</span>
-                                                    <span class="study-progress">@course.FormattedTotalTime</span>
-                                                </div>
-                                            </div>
-                                            <div class="study-action">
-                                                <a href="@Url.Action("Study", "Course", new { id = course.CourseId })" 
-                                                   class="btn-continue-mini" title="مشاهده آیتم‌های دوره">
-                                                    <i class="fas fa-list"></i>
-                                                </a>
-                                            </div>
-                                        </div>
-                                    }
-                                </div>
-                            </div>
-                        </div>
-                    }
-                </div>
-            </div>
-        </div>
-    }
-
-    <!-- Accessible Schedule Items -->
-    @if (Model.AccessibleScheduleItems.Any())
-    {
-        <div class="card mb-4">
-            <div class="card-header">
-                <div class="d-flex justify-content-between align-items-center">
-                    <h6 class="mb-0">
-                        <i class="fas fa-tasks me-2"></i>
-                        آیتم‌های آموزشی من
-                    </h6>
-                    <small class="text-muted">@Model.AccessibleScheduleItems.Count آیتم</small>
-                </div>
-            </div>
-            <div class="card-body p-0">
-                <div class="schedule-items-list">
-                    @foreach (var item in Model.AccessibleScheduleItems.Take(5))
-                    {
-                        <div class="schedule-item">
-                            <div class="schedule-item-content">
-                                <div class="schedule-item-header">
-                                    <h6 class="schedule-item-title">@item.Title</h6>
-                                    <span class="schedule-item-type">@item.TypeName</span>
-                                </div>
-                                @if (!string.IsNullOrEmpty(item.Description))
-                                {
-                                    <p class="schedule-item-description">@item.Description</p>
-                                }
-                                <div class="schedule-item-meta">
-                                    <div class="schedule-item-dates">
-                                        <small class="text-muted">
-                                            <i class="fas fa-calendar-alt me-1"></i>
-                                            شروع: @item.StartDate.ToString("yyyy/MM/dd HH:mm")
-                                        </small>
-                                        @if (item.DueDate.HasValue)
-                                        {
-                                            <small class="text-muted ms-3">
-                                                <i class="fas fa-clock me-1"></i>
-                                                مهلت: @item.DueDate.Value.ToString("yyyy/MM/dd HH:mm")
-                                            </small>
-                                        }
-                                    </div>
-                                    <div class="schedule-item-status">
-                                        <span class="badge @GetStatusBadgeClass(item.Status)">@item.StatusText</span>
-                                        @if (item.IsMandatory)
-                                        {
-                                            <span class="badge bg-warning">اجباری</span>
-                                        }
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="schedule-item-action">
-                                <a href="@Url.Action("Study", "ScheduleItem", new { id = item.Id })" 
-                                   class="btn-continue-mini" title="شروع مطالعه">
-                                    <i class="fas fa-play"></i>
-                                </a>
-                            </div>
-                        </div>
-                    }
-                </div>
-                @if (Model.AccessibleScheduleItems.Count > 5)
-                {
-                    <div class="text-center p-3 border-top">
-                        <a href="@Url.Action("Index", "ScheduleItem")" class="btn-secondary-action">
-                            <i class="fas fa-list"></i>
-                            مشاهده همه آیتم‌ها
-                        </a>
-                    </div>
-                }
-            </div>
-        </div>
-    }
-
-    <!-- Quick Actions -->
-    <div class="card mb-4">
-        <div class="card-header">
-            <i class="fas fa-bolt me-2"></i>
-            دسترسی سریع
-        </div>
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <a href="@Url.Action("Index", "Catalog")" class="btn-continue w-100">
-                        <i class="fas fa-graduation-cap"></i>
-                        مشاهده دوره‌ها
-                    </a>
-                </div>
-                <div class="col-md-6 mb-3">
-                    <a href="@Url.Action("Index", "Course")" class="btn-secondary-action w-100">
-                        <i class="fas fa-book-open"></i>
-                        دوره‌های من
-                    </a>
-                </div>
-                <div class="col-md-6 mb-3">
-                    <a href="@Url.Action("MyProgress", "Home")" class="btn-success-action w-100">
-                        <i class="fas fa-chart-line"></i>
-                        پیشرفت من
-                    </a>
-                </div>
-                <div class="col-md-6 mb-3">
-                    <a href="@Url.Action("Index", "Profile")" class="btn-warning-action w-100">
-                        <i class="fas fa-user-circle"></i>
-                        پروفایل
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Recent Classes -->
-    <div class="card">
-        <div class="card-header">
-            <i class="fas fa-book-open me-2"></i>
-            کلاس‌های اخیر
-        </div>
-        <div class="card-body">
-            @if (Model.RecentClasses != null && Model.RecentClasses.Any())
+    <div class="enrolled-courses-main">
+        <div class="enrolled-courses-header">
+            <h6>
+                <i class="fas fa-book-open"></i>
+                دوره‌های ثبت‌نام شده
+            </h6>
+            @if (Model.EnrolledCourses.Any())
             {
-                @foreach (var enrollment in Model.RecentClasses.Take(3))
-                {
-                    <div class="course-item mb-3">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="mb-1">کلاس اخیر</h6>
-                                <small class="text-muted">آخرین فعالیت</small>
-                            </div>
-                            <div>
-                                <a href="@Url.Action("Index", "Course")" class="btn-continue btn-sm">
-                                    <i class="fas fa-play"></i>
-                                    ادامه
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                }
-                
-                <div class="text-center mt-3">
-                    <a href="@Url.Action("Index", "Course")" class="btn-secondary-action">
-                        <i class="fas fa-list"></i>
-                        مشاهده همه کلاس‌ها
-                    </a>
-                </div>
-            }
-            else
-            {
-                <div class="empty-state">
-                    <i class="fas fa-book-open"></i>
-                    <h5>کلاسی ندارید</h5>
-                    <p>هنوز در هیچ کلاسی ثبت‌نام نکرده‌اید</p>
-                    <a href="@Url.Action("Index", "Catalog")" class="btn-continue">
-                        <i class="fas fa-graduation-cap"></i>
-                        مشاهده دوره‌ها
-                    </a>
-                </div>
+                <span class="enrolled-courses-count">@Model.EnrolledCourses.Count دوره</span>
             }
         </div>
+
+        @if (Model.EnrolledCourses.Any())
+        {
+            <div class="enrolled-courses-list">
+                @foreach (var course in Model.EnrolledCourses)
+                {
+                    <a href="@Url.Action("Study", "Course", new { id = course.CourseId })" class="enrolled-course-row">
+                        <div class="enrolled-course-thumbnail">
+                            @if (!string.IsNullOrEmpty(course.CourseThumbnail))
+                            {
+                                <img src="@course.CourseThumbnail" alt="@course.CourseTitle" />
+                            }
+                            else
+                            {
+                                <div class="placeholder">
+                                    <i class="fas fa-graduation-cap"></i>
+                                </div>
+                            }
+                        </div>
+                        <div class="enrolled-course-content">
+                            <h6 class="enrolled-course-title">@course.CourseTitle</h6>
+                            <div class="enrolled-course-progress-wrapper">
+                                <div class="enrolled-course-progress-bar">
+                                    <div class="enrolled-course-progress-fill" style="width: @course.ProgressPercentage%"></div>
+                                </div>
+                                <span class="enrolled-course-progress-percentage">@course.ProgressPercentage%</span>
+                            </div>
+                            @if (course.TotalLessons > 0)
+                            {
+                                <div class="enrolled-course-meta">
+                                    <div class="enrolled-course-meta-item">
+                                        <i class="fas fa-check-circle"></i>
+                                        <span>@course.CompletedLessons از @course.TotalLessons درس</span>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                        <div class="enrolled-course-action">
+                            <i class="fas fa-chevron-left"></i>
+                        </div>
+                    </a>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="empty-state-minimal">
+                <i class="fas fa-graduation-cap"></i>
+                <h6>هنوز دوره‌ای ثبت‌نام نکرده‌اید</h6>
+                <p>می‌توانید از کاتالوگ دوره‌ها، دوره‌های مورد علاقه خود را انتخاب کنید</p>
+                <a href="@Url.Action("Index", "Catalog", new { area = "Public" })" class="btn btn-primary btn-sm">
+                    <i class="fas fa-book-open me-2"></i>
+                    مشاهده کاتالوگ دوره‌ها
+                </a>
+            </div>
+        }
     </div>
 </div>
 
-@{
-    string GetStatusBadgeClass(EduTrack.Application.Common.Models.ScheduleItems.ScheduleItemStatus status)
-    {
-        return status switch
-        {
-            EduTrack.Application.Common.Models.ScheduleItems.ScheduleItemStatus.Draft => "bg-secondary",
-            EduTrack.Application.Common.Models.ScheduleItems.ScheduleItemStatus.Published => "bg-info",
-            EduTrack.Application.Common.Models.ScheduleItems.ScheduleItemStatus.Active => "bg-success",
-            EduTrack.Application.Common.Models.ScheduleItems.ScheduleItemStatus.Completed => "bg-primary",
-            EduTrack.Application.Common.Models.ScheduleItems.ScheduleItemStatus.Expired => "bg-danger",
-            _ => "bg-secondary"
-        };
-    }
-}
-
 @section Scripts {
-    <script>
-        $(document).ready(function() {
-            // Initialize bottom navigation
-            if (window.bottomNavigation) {
-                window.bottomNavigation.setActivePage('home');
-            }
-        });
-    </script>
+    <script src="~/js/areas/student/home-page.js" asp-append-version="true"></script>
 }
