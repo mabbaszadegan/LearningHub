@@ -67,6 +67,8 @@ public class GetAvailableCoursesForEnrollmentQueryHandler : IRequestHandler<GetA
                 CreatedAt = c.CreatedAt,
                 UpdatedAt = c.UpdatedAt,
                 CreatedBy = c.CreatedBy,
+                CreatedByName = c.CreatedBy, // Will be updated with actual teacher name if needed
+                DisciplineType = c.DisciplineType,
                 // ModuleCount and LessonCount removed - Modules removed, using Chapters/SubChapters instead
                 ChapterCount = c.Chapters?.Count ?? 0, // تعداد مبحث
                 ClassCount = c.Classes?.Count ?? 0, // تعداد کلاس
