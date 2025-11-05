@@ -62,7 +62,7 @@
     @if (!string.IsNullOrEmpty(Model.Description))
     {
         <div class="content-description">
-            <p>@Model.Description</p>
+            @Html.Raw(Model.Description)
         </div>
     }
 
