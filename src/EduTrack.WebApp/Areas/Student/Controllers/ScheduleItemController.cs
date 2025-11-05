@@ -595,6 +595,7 @@ public class ScheduleItemController : Controller
                 Instruction = data["instruction"]?.ToString() ?? string.Empty,
                 AllowDragDrop = data["allowDragDrop"]?.Value<bool>() ?? true,
                 Direction = data["direction"]?.ToString() ?? "vertical",
+                Alignment = data["alignment"]?.ToString() ?? "right",
                 ShowNumbers = data["showNumbers"]?.Value<bool>() ?? true,
                 IsRequired = data["isRequired"]?.Value<bool>() ?? true
             };

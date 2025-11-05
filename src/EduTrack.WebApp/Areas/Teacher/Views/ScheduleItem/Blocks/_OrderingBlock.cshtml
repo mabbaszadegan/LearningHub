@@ -36,82 +36,39 @@
                     <span>تنظیمات بلاک</span>
                 </div>
                 
-                <div class="direction-settings-section">
-                    <label class="direction-label">جهت مرتب‌سازی:</label>
-                    <div class="direction-options" role="radiogroup" aria-label="جهت مرتب‌سازی">
-                        <label class="direction-option">
-                            <input type="radio" name="direction" value="horizontal-ltr" data-setting="direction" class="direction-input">
-                            <div class="direction-option-content">
-                                <div class="direction-icon">
-                                    <i class="fas fa-arrows-alt-h"></i>
-                                </div>
-                                <div class="direction-preview">
-                                    <span class="preview-item">1</span>
-                                    <span class="preview-item">2</span>
-                                    <span class="preview-item">3</span>
-                                </div>
-                                <div class="direction-info">
-                                    <span class="direction-title">افقی (چپ به راست)</span>
-                                </div>
-                                <div class="direction-check">
-                                    <i class="fas fa-check"></i>
-                                </div>
-                            </div>
-                        </label>
-                        
-                        <label class="direction-option">
-                            <input type="radio" name="direction" value="horizontal-rtl" data-setting="direction" class="direction-input">
-                            <div class="direction-option-content">
-                                <div class="direction-icon">
-                                    <i class="fas fa-arrows-alt-h"></i>
-                                </div>
-                                <div class="direction-preview preview-rtl">
-                                    <span class="preview-item">3</span>
-                                    <span class="preview-item">2</span>
-                                    <span class="preview-item">1</span>
-                                </div>
-                                <div class="direction-info">
-                                    <span class="direction-title">افقی (راست به چپ)</span>
-                                </div>
-                                <div class="direction-check">
-                                    <i class="fas fa-check"></i>
-                                </div>
-                            </div>
-                        </label>
-                        
-                        <label class="direction-option">
-                            <input type="radio" name="direction" value="vertical" data-setting="direction" class="direction-input" checked>
-                            <div class="direction-option-content">
-                                <div class="direction-icon">
-                                    <i class="fas fa-arrows-alt-v"></i>
-                                </div>
-                                <div class="direction-preview preview-vertical">
-                                    <span class="preview-item">1</span>
-                                    <span class="preview-item">2</span>
-                                    <span class="preview-item">3</span>
-                                </div>
-                                <div class="direction-info">
-                                    <span class="direction-title">عمودی</span>
-                                </div>
-                                <div class="direction-check">
-                                    <i class="fas fa-check"></i>
-                                </div>
-                            </div>
-                        </label>
+                <div class="settings-row-minimal">
+                    <div class="setting-group">
+                        <label class="setting-label">جهت:</label>
+                        <div class="direction-options-inline" role="radiogroup" aria-label="جهت مرتب‌سازی">
+                            <label class="direction-option-inline">
+                                <input type="radio" name="direction" value="horizontal-ltr" data-setting="direction" class="direction-input">
+                                <span>افقی چپ→راست</span>
+                            </label>
+                            <label class="direction-option-inline">
+                                <input type="radio" name="direction" value="horizontal-rtl" data-setting="direction" class="direction-input">
+                                <span>افقی راست←چپ</span>
+                            </label>
+                            <label class="direction-option-inline">
+                                <input type="radio" name="direction" value="vertical-left" data-setting="direction" class="direction-input">
+                                <span>عمودی چپ چین</span>
+                            </label>
+                            <label class="direction-option-inline">
+                                <input type="radio" name="direction" value="vertical-right" data-setting="direction" class="direction-input" checked>
+                                <span>عمودی راست چین</span>
+                            </label>
+                        </div>
                     </div>
-                </div>
-                
-                <div class="other-settings-section">
-                    <div class="setting-toggle">
-                        <label class="toggle-label">
+                    
+                    <div class="setting-group">
+                        <label class="toggle-label-minimal">
                             <input type="checkbox" data-setting="allowDragDrop" checked class="toggle-input">
                             <span class="toggle-slider"></span>
-                            <span class="toggle-text">اجازه کشیدن و رها کردن</span>
+                            <span class="toggle-text">کشیدن و رها کردن</span>
                         </label>
                     </div>
                     
-                    <div class="setting-toggle">
-                        <label class="toggle-label">
+                    <div class="setting-group">
+                        <label class="toggle-label-minimal">
                             <input type="checkbox" data-setting="showNumbers" checked class="toggle-input">
                             <span class="toggle-slider"></span>
                             <span class="toggle-text">نمایش شماره</span>

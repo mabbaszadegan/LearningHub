@@ -79,6 +79,7 @@ class OrderingHandler {
                 }
                 block.data = block.data || {};
                 block.data[key] = value;
+                
                 if (key === 'allowDragDrop') {
                     this.initializeDragDrop(blockElement);
                 }
@@ -594,6 +595,12 @@ class OrderingHandler {
                 processedKeys.add(key);
             }
         });
+        
+        // Remove alignment - it's now part of direction
+        if (settings.alignment) {
+            delete settings.alignment;
+        }
+        
         return settings;
     }
 
@@ -640,28 +647,36 @@ class OrderingHandler {
         const processedKeys = new Set();
         
         // Handle backward compatibility for direction
-        if (block.data.direction === 'horizontal') {
-            block.data.direction = 'horizontal-ltr';
+        let direction = block.data.direction || 'vertical-right';
+        if (direction === 'horizontal') {
+            direction = 'horizontal-ltr';
+        } else if (direction === 'vertical') {
+            // Convert old vertical to vertical-right (default)
+            direction = 'vertical-right';
+            if (block.data.alignment === 'left') {
+                direction = 'vertical-left';
+            }
         }
+        block.data.direction = direction;
         
         inputs.forEach(input => {
             const key = input.getAttribute('data-setting');
             if (!key || processedKeys.has(key)) return;
-            if (block.data[key] === undefined) return;
+            if (block.data[key] === undefined && key !== 'direction') return;
             
             if (input.type === 'checkbox') {
                 input.checked = !!block.data[key];
                 processedKeys.add(key);
             } else if (input.type === 'radio') {
                 // For radio buttons, check the one matching the value
-                let value = block.data[key];
+                let value = key === 'direction' ? direction : block.data[key];
                 const matchingRadio = blockElement.querySelector(`[data-setting="${key}"][value="${value}"]`);
                 if (matchingRadio) {
                     matchingRadio.checked = true;
                     processedKeys.add(key);
                 }
             } else {
-                input.value = block.data[key];
+                input.value = key === 'direction' ? direction : block.data[key];
                 processedKeys.add(key);
             }
         });

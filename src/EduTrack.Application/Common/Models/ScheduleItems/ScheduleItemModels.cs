@@ -269,6 +269,7 @@ public class OrderingBlock
     public List<string> CorrectOrder { get; set; } = new();
     public bool AllowDragDrop { get; set; } = true;
     public string Direction { get; set; } = "vertical";
+    public string? Alignment { get; set; } = "right"; // left, right (only for vertical direction)
     public bool ShowNumbers { get; set; } = true;
     public decimal Points { get; set; } = 1;
     public bool IsRequired { get; set; } = true;

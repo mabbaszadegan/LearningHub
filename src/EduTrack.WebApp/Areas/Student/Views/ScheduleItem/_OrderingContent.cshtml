@@ -41,7 +41,30 @@
                         </div>
                     }
 
-                    <div class="sorting-block" data-direction="@direction" data-allow-dnd="@orderingBlock.AllowDragDrop.ToString().ToLower()" data-show-numbers="@orderingBlock.ShowNumbers.ToString().ToLower()">
+                    @{
+                        // Parse direction to handle both old and new formats
+                        var finalDirection = direction;
+                        if (direction == "vertical")
+                        {
+                            // Backward compatibility: use alignment if exists
+                            var alignment = orderingBlock.Alignment ?? "right";
+                            finalDirection = "vertical-" + alignment;
+                        }
+                        else if (direction != "horizontal-ltr" && direction != "horizontal-rtl" && 
+                                 direction != "vertical-left" && direction != "vertical-right")
+                        {
+                            // Handle legacy horizontal
+                            if (direction.StartsWith("horizontal"))
+                            {
+                                finalDirection = direction.Contains("rtl") ? "horizontal-rtl" : "horizontal-ltr";
+                            }
+                            else
+                            {
+                                finalDirection = "vertical-right"; // default
+                            }
+                        }
+                    }
+                    <div class="sorting-block" data-direction="@finalDirection" data-allow-dnd="@orderingBlock.AllowDragDrop.ToString().ToLower()" data-show-numbers="@orderingBlock.ShowNumbers.ToString().ToLower()">
                         <div class="sorting-pool" aria-label="لیست آیتم‌ها" role="list">
                             @foreach (var item in allItems)
                             {
@@ -63,7 +86,7 @@
                             }
                         </div>
 
-                        <div class="sorting-slots @("slots-" + direction)" aria-label="فضاهای خالی" role="list">
+                        <div class="sorting-slots @("slots-" + finalDirection)" aria-label="فضاهای خالی" role="list">
                             @for (var i = 0; i < includedCount; i++)
                             {
                                 var numberLabel = orderingBlock.ShowNumbers ? (i + 1).ToString() : string.Empty;
@@ -83,17 +106,23 @@
         else if (content.Items.Any())
         {
             // Legacy: single ordering block
-            var direction = "vertical";
+            var direction = "vertical-right";
             if (content.Direction != null)
             {
                 var dirLower = content.Direction.ToLower();
-                if (dirLower == "horizontal-ltr" || dirLower == "horizontal-rtl")
+                if (dirLower == "horizontal-ltr" || dirLower == "horizontal-rtl" ||
+                    dirLower == "vertical-left" || dirLower == "vertical-right")
                 {
                     direction = dirLower;
                 }
                 else if (dirLower == "horizontal")
                 {
                     direction = "horizontal-ltr";
+                }
+                else if (dirLower == "vertical")
+                {
+                    // Legacy: use default right alignment
+                    direction = "vertical-right";
                 }
             }
 
