@@ -8,6 +8,7 @@ using EduTrack.Domain.Repositories;
 using MediatR;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System.Text.Json;
 
 namespace EduTrack.Application.Features.ScheduleItems.CommandHandlers;
 
@@ -62,8 +63,20 @@ public class SubmitBlockAnswerCommandHandler : IRequestHandler<SubmitBlockAnswer
                 normalizedAnswer,
                 cancellationToken);
 
-            // Get block metadata (instruction, order, etc.)
+            // Get block metadata and full content (instruction, order, full block content, etc.)
             var blockMetadata = await GetBlockMetadataAsync(scheduleItem, request.BlockId, cancellationToken);
+
+            // Serialize submitted and correct answers properly
+            // Use validationResult.SubmittedAnswer which is already normalized by the validator
+            // This ensures consistency between what was validated and what is stored
+            var submittedAnswerJson = JsonConvert.SerializeObject(
+                validationResult.SubmittedAnswer ?? normalizedAnswer, 
+                Formatting.None);
+            
+            // For correct answer, use the validation result which should have proper types
+            var correctAnswerJson = JsonConvert.SerializeObject(
+                validationResult.CorrectAnswer ?? new Dictionary<string, object>(), 
+                Formatting.None);
 
             // Create attempt entity
             var attempt = ScheduleItemBlockAttempt.Create(
@@ -71,13 +84,14 @@ public class SubmitBlockAnswerCommandHandler : IRequestHandler<SubmitBlockAnswer
                 scheduleItemType: scheduleItem.Type,
                 blockId: request.BlockId,
                 studentId: request.StudentId,
-                submittedAnswerJson: JsonConvert.SerializeObject(request.SubmittedAnswer),
-                correctAnswerJson: JsonConvert.SerializeObject(validationResult.CorrectAnswer ?? new Dictionary<string, object>()),
+                submittedAnswerJson: submittedAnswerJson,
+                correctAnswerJson: correctAnswerJson,
                 isCorrect: validationResult.IsCorrect,
                 pointsEarned: validationResult.PointsEarned,
                 maxPoints: validationResult.MaxPoints,
                 blockInstruction: blockMetadata.Instruction,
-                blockOrder: blockMetadata.Order);
+                blockOrder: blockMetadata.Order,
+                blockContentJson: blockMetadata.BlockContentJson);
 
             await _attemptRepository.AddAsync(attempt, cancellationToken);
 
@@ -142,7 +156,7 @@ public class SubmitBlockAnswerCommandHandler : IRequestHandler<SubmitBlockAnswer
         }
     }
 
-    private Task<(string? Instruction, int? Order)> GetBlockMetadataAsync(
+    private Task<(string? Instruction, int? Order, string? BlockContentJson)> GetBlockMetadataAsync(
         Domain.Entities.ScheduleItem scheduleItem,
         string blockId,
         CancellationToken cancellationToken)
@@ -152,7 +166,7 @@ public class SubmitBlockAnswerCommandHandler : IRequestHandler<SubmitBlockAnswer
             var contentJson = scheduleItem.ContentJson;
             if (string.IsNullOrWhiteSpace(contentJson))
             {
-                return Task.FromResult<(string?, int?)>((null, null));
+                return Task.FromResult<(string?, int?, string?)>((null, null, null));
             }
 
             // Try to parse as OrderingContent
@@ -164,42 +178,146 @@ public class SubmitBlockAnswerCommandHandler : IRequestHandler<SubmitBlockAnswer
                     var block = content.Blocks.FirstOrDefault(b => b.Id == blockId);
                     if (block != null)
                     {
-                        return Task.FromResult<(string?, int?)>((block.Instruction, block.Order));
+                        // Serialize full block content for historical preservation
+                        var blockContentJson = JsonConvert.SerializeObject(block, Formatting.None);
+                        return Task.FromResult<(string?, int?, string?)>((block.Instruction, block.Order, blockContentJson));
                     }
                 }
                 else if (blockId == "main" || blockId == "legacy")
                 {
-                    return Task.FromResult<(string?, int?)>((content?.Instruction, 0));
+                    // For legacy format, create a block-like structure
+                    if (content != null)
+                    {
+                        var legacyBlock = new OrderingBlock
+                        {
+                            Id = "main",
+                            Order = 0,
+                            Instruction = content.Instruction ?? string.Empty,
+                            Items = content.Items ?? new List<OrderingItem>(),
+                            CorrectOrder = content.CorrectOrder ?? new List<string>(),
+                            AllowDragDrop = content.AllowDragDrop,
+                            Direction = content.Direction,
+                            ShowNumbers = content.ShowNumbers,
+                            Points = content.Points,
+                            IsRequired = content.IsRequired
+                        };
+                        var blockContentJson = JsonConvert.SerializeObject(legacyBlock, Formatting.None);
+                        return Task.FromResult<(string?, int?, string?)>((content.Instruction, 0, blockContentJson));
+                    }
                 }
             }
 
             // For other types, return default
-            return Task.FromResult<(string?, int?)>((null, null));
+            return Task.FromResult<(string?, int?, string?)>((null, null, null));
         }
         catch
         {
-            return Task.FromResult<(string?, int?)>((null, null));
+            return Task.FromResult<(string?, int?, string?)>((null, null, null));
         }
     }
 
     private Dictionary<string, object> NormalizeSubmittedAnswer(Dictionary<string, object> submittedAnswer)
     {
-        // Convert Dictionary to JSON and back to JObject to ensure proper type handling
-        // This ensures arrays are properly deserialized as JArray
+        // Convert Dictionary to JSON and back to ensure proper type handling
+        // Convert JTokens to actual .NET types that can be serialized
         try
         {
-            var jsonString = JsonConvert.SerializeObject(submittedAnswer);
-            var jObject = JsonConvert.DeserializeObject<JObject>(jsonString);
-            if (jObject != null)
+            var normalized = new Dictionary<string, object>();
+            foreach (var kvp in submittedAnswer)
             {
-                // Convert JObject back to Dictionary, but keep JTokens for arrays
-                var normalized = new Dictionary<string, object>();
-                foreach (var prop in jObject.Properties())
+                // Handle System.Text.Json JsonElement (ASP.NET Core default)
+                if (kvp.Value is System.Text.Json.JsonElement jsonElement)
                 {
-                    normalized[prop.Name] = prop.Value;
+                    if (jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
+                    {
+                        // Try to convert to List<string> first (for order arrays)
+                        try
+                        {
+                            var stringList = jsonElement.EnumerateArray()
+                                .Select(x => x.GetString() ?? x.ToString())
+                                .ToList();
+                            normalized[kvp.Key] = stringList;
+                        }
+                        catch
+                        {
+                            // Fallback to List<object>
+                            normalized[kvp.Key] = jsonElement.EnumerateArray()
+                                .Select(x => x.GetRawText())
+                                .ToList();
+                        }
+                    }
+                    else if (jsonElement.ValueKind == System.Text.Json.JsonValueKind.String)
+                    {
+                        normalized[kvp.Key] = jsonElement.GetString() ?? string.Empty;
+                    }
+                    else if (jsonElement.ValueKind == System.Text.Json.JsonValueKind.Number)
+                    {
+                        if (jsonElement.TryGetInt32(out var intValue))
+                            normalized[kvp.Key] = intValue;
+                        else if (jsonElement.TryGetDecimal(out var decimalValue))
+                            normalized[kvp.Key] = decimalValue;
+                        else
+                            normalized[kvp.Key] = jsonElement.GetRawText();
+                    }
+                    else if (jsonElement.ValueKind == System.Text.Json.JsonValueKind.True || jsonElement.ValueKind == System.Text.Json.JsonValueKind.False)
+                    {
+                        normalized[kvp.Key] = jsonElement.GetBoolean();
+                    }
+                    else
+                    {
+                        // For other types, serialize and deserialize
+                        normalized[kvp.Key] = System.Text.Json.JsonSerializer.Deserialize<object>(jsonElement.GetRawText()) ?? new object();
+                    }
                 }
-                return normalized;
+                // Handle Newtonsoft.Json JToken
+                else if (kvp.Value is JToken jToken)
+                {
+                    // Convert JToken to actual .NET type
+                    if (jToken.Type == JTokenType.Array)
+                    {
+                        // For arrays, try to convert to List<string> first (for order arrays)
+                        // If that fails, convert to List<object>
+                        try
+                        {
+                            var stringList = jToken.ToObject<List<string>>();
+                            if (stringList != null)
+                            {
+                                normalized[kvp.Key] = stringList;
+                            }
+                            else
+                            {
+                                normalized[kvp.Key] = jToken.ToObject<List<object>>() ?? new List<object>();
+                            }
+                        }
+                        catch
+                        {
+                            normalized[kvp.Key] = jToken.ToObject<List<object>>() ?? new List<object>();
+                        }
+                    }
+                    else if (jToken.Type == JTokenType.String)
+                    {
+                        normalized[kvp.Key] = jToken.ToObject<string>() ?? string.Empty;
+                    }
+                    else if (jToken.Type == JTokenType.Integer)
+                    {
+                        normalized[kvp.Key] = jToken.ToObject<int>();
+                    }
+                    else if (jToken.Type == JTokenType.Boolean)
+                    {
+                        normalized[kvp.Key] = jToken.ToObject<bool>();
+                    }
+                    else
+                    {
+                        // For other types, convert to object
+                        normalized[kvp.Key] = jToken.ToObject<object>() ?? new object();
+                    }
+                }
+                else
+                {
+                    normalized[kvp.Key] = kvp.Value;
+                }
             }
+            return normalized;
         }
         catch
         {

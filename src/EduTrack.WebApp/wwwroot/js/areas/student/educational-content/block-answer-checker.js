@@ -42,10 +42,20 @@
         const submittedAnswer = getSubmittedAnswer(scheduleItemType, blockId);
 
         if (!submittedAnswer) {
-            showError(button, 'لطفاً ابتدا پاسخ را وارد کنید');
+            showError(button, 'لطفاً ابتدا پاسخ را وارد کنید. حداقل یک آیتم باید در جایگاه قرار گیرد.');
             button.disabled = false;
             button.innerHTML = originalText;
             return;
+        }
+
+        // Validate that submitted answer has content
+        if (scheduleItemType === 'Ordering' || scheduleItemType === '8') {
+            if (!submittedAnswer.order || submittedAnswer.order.length === 0) {
+                showError(button, 'لطفاً ابتدا پاسخ را وارد کنید. حداقل یک آیتم باید در جایگاه قرار گیرد.');
+                button.disabled = false;
+                button.innerHTML = originalText;
+                return;
+            }
         }
 
         // Submit answer
@@ -126,15 +136,23 @@
         const dropzones = slots.querySelectorAll('.slot-dropzone');
         const order = [];
 
+        // Get order from dropzones - only include items that are actually in slots
+        // This ensures we capture the exact order as displayed
         dropzones.forEach(function(dropzone) {
             const item = dropzone.querySelector('.sorting-item');
             if (item) {
                 const itemId = item.getAttribute('data-id');
-                if (itemId) {
-                    order.push(itemId);
+                if (itemId && itemId.trim() !== '') {
+                    order.push(itemId.trim());
                 }
             }
         });
+
+        // Validate that we have at least one item
+        if (order.length === 0) {
+            console.warn('No items found in slots for block:', blockId);
+            return null; // Return null to indicate no answer provided
+        }
 
         return {
             order: order

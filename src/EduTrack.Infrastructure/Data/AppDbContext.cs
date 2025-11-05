@@ -882,6 +882,7 @@ public class AppDbContext : IdentityDbContext<User>
             entity.Property(x => x.SubmittedAnswerJson).IsRequired();
             entity.Property(x => x.CorrectAnswerJson).IsRequired();
             entity.Property(x => x.BlockInstruction).HasMaxLength(1000);
+            entity.Property(x => x.BlockContentJson).HasMaxLength(4000); // Store full block content
             entity.Property(x => x.PointsEarned).HasPrecision(18, 2);
             entity.Property(x => x.MaxPoints).HasPrecision(18, 2);
             entity.HasOne(x => x.ScheduleItem)

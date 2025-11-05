@@ -28,6 +28,11 @@ public class ScheduleItemBlockAttempt
     public string? BlockInstruction { get; private set; } // Block/question instruction
     public int? BlockOrder { get; private set; } // Order of block in ScheduleItem
     
+    // Complete block content snapshot (for historical preservation)
+    // Stores the full block content (Items, CorrectOrder, etc.) at the time of attempt
+    // This is important because blocks may be deleted or modified later
+    public string? BlockContentJson { get; private set; }
+    
     public DateTimeOffset AttemptedAt { get; private set; }
     
     // Navigation properties
@@ -48,7 +53,8 @@ public class ScheduleItemBlockAttempt
         decimal pointsEarned,
         decimal maxPoints,
         string? blockInstruction = null,
-        int? blockOrder = null)
+        int? blockOrder = null,
+        string? blockContentJson = null)
     {
         if (scheduleItemId <= 0)
             throw new ArgumentException("Schedule Item ID must be greater than 0", nameof(scheduleItemId));
@@ -84,6 +90,7 @@ public class ScheduleItemBlockAttempt
             MaxPoints = maxPoints,
             BlockInstruction = blockInstruction,
             BlockOrder = blockOrder,
+            BlockContentJson = blockContentJson,
             AttemptedAt = DateTimeOffset.UtcNow
         };
     }
