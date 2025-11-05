@@ -426,78 +426,117 @@ public class ScheduleItemController : Controller
 
     private Application.Common.Models.ScheduleItems.WritingContent ParseWritingFromBlocks(JArray blocksArray, JsonSerializerSettings settings)
     {
-        // For Writing, blocks are question blocks (questionText, questionImage, etc.)
+        // For Writing, blocks can be content blocks and question blocks
         var writing = new Application.Common.Models.ScheduleItems.WritingContent();
-        
-        // Find the first question block (could be questionText, questionImage, etc.)
-        var questionBlock = blocksArray.FirstOrDefault(b => 
+        var contentBlocks = new List<ContentBlock>();
+        var questionBlocks = new List<ReminderQuestionBlock>();
+
+        foreach (var blockToken in blocksArray)
         {
-            var blockType = b["type"]?.ToString().ToLower() ?? "";
-            return blockType.StartsWith("question");
-        }) as JObject;
-        
-        if (questionBlock != null)
-        {
-            var data = questionBlock["data"] as JObject;
-            if (data != null)
+            var block = blockToken as JObject;
+            if (block == null) continue;
+
+            var blockType = block["type"]?.ToString().ToLower();
+            var order = block["order"]?.Value<int>() ?? 0;
+
+            // Check if it's a question block (type starts with "question")
+            if (blockType != null && blockType.StartsWith("question"))
             {
-                // Extract prompt/question text
-                writing.Prompt = data["textContent"]?.ToString() ?? 
-                                data["content"]?.ToString() ?? 
-                                data["questionText"]?.ToString() ?? "";
-                
-                // Extract instructions/hint
-                writing.Instructions = data["instructions"]?.ToString() ?? 
-                                      data["hint"]?.ToString() ?? "";
-                
-                // Extract word limit
-                writing.WordLimit = data["wordLimit"]?.Value<int>() ?? 0;
-                
-                // Extract keywords if available
-                if (data["keywords"] is JArray keywords)
+                var questionBlock = ParseReminderQuestionBlock(block, order, settings);
+                if (questionBlock != null)
                 {
-                    writing.Keywords = keywords.Select(k => k.ToString()).ToList();
+                    questionBlocks.Add(questionBlock);
+                    
+                    // Extract prompt from first question block if not set
+                    if (string.IsNullOrEmpty(writing.Prompt))
+                    {
+                        var data = block["data"] as JObject;
+                        if (data != null)
+                        {
+                            writing.Prompt = data["textContent"]?.ToString() ?? 
+                                            data["content"]?.ToString() ?? 
+                                            data["questionText"]?.ToString() ?? "";
+                            writing.Instructions = data["instructions"]?.ToString() ?? 
+                                                  data["hint"]?.ToString() ?? "";
+                            writing.WordLimit = data["wordLimit"]?.Value<int>() ?? 0;
+                            if (data["keywords"] is JArray keywords)
+                            {
+                                writing.Keywords = keywords.Select(k => k.ToString()).ToList();
+                            }
+                        }
+                    }
                 }
             }
-        }
-        else
-        {
-            // Fallback: try first block (might be regular content block)
-            var firstBlock = blocksArray.FirstOrDefault() as JObject;
-            if (firstBlock != null)
+            else
             {
-                var data = firstBlock["data"] as JObject;
-                if (data != null)
+                // Regular content block
+                var contentBlock = ParseContentBlock(block, order, settings);
+                if (contentBlock != null)
                 {
-                    writing.Prompt = data["textContent"]?.ToString() ?? 
-                                    data["content"]?.ToString() ?? "";
-                    writing.Instructions = data["instructions"]?.ToString() ?? "";
-                    writing.WordLimit = data["wordLimit"]?.Value<int>() ?? 0;
+                    contentBlocks.Add(contentBlock);
                 }
             }
         }
 
+        writing.Blocks = contentBlocks.OrderBy(b => b.Order).ToList();
+        writing.QuestionBlocks = questionBlocks.OrderBy(b => b.Order).ToList();
+        
         return writing;
     }
 
     private Application.Common.Models.ScheduleItems.AudioContent ParseAudioFromBlocks(JArray blocksArray, JsonSerializerSettings settings)
     {
         var audio = new Application.Common.Models.ScheduleItems.AudioContent();
-        var firstBlock = blocksArray.FirstOrDefault() as JObject;
-        
-        if (firstBlock != null)
+        var contentBlocks = new List<ContentBlock>();
+        var questionBlocks = new List<ReminderQuestionBlock>();
+
+        foreach (var blockToken in blocksArray)
         {
-            var data = firstBlock["data"] as JObject;
-            if (data != null)
+            var block = blockToken as JObject;
+            if (block == null) continue;
+
+            var blockType = block["type"]?.ToString().ToLower();
+            var order = block["order"]?.Value<int>() ?? 0;
+
+            // Check if it's a question block (type starts with "question")
+            if (blockType != null && blockType.StartsWith("question"))
             {
-                audio.Instruction = data["instruction"]?.ToString() ?? data["textContent"]?.ToString() ?? "";
-                audio.AudioUrl = data["fileUrl"]?.ToString() ?? "";
-                audio.DurationSeconds = data["duration"]?.Value<int>() ?? 0;
-                audio.AllowRecording = data["allowRecording"]?.Value<bool>() ?? false;
-                audio.RecordingInstructions = data["recordingInstructions"]?.ToString() ?? "";
+                var questionBlock = ParseReminderQuestionBlock(block, order, settings);
+                if (questionBlock != null)
+                {
+                    questionBlocks.Add(questionBlock);
+                }
+            }
+            else
+            {
+                // Regular content block
+                var contentBlock = ParseContentBlock(block, order, settings);
+                if (contentBlock != null)
+                {
+                    contentBlocks.Add(contentBlock);
+                    
+                    // Extract audio-specific data from audio blocks
+                    if (blockType == "audio")
+                    {
+                        var data = block["data"] as JObject;
+                        if (data != null)
+                        {
+                            audio.Instruction = data["instruction"]?.ToString() ?? 
+                                              data["textContent"]?.ToString() ?? 
+                                              audio.Instruction;
+                            audio.AudioUrl = data["fileUrl"]?.ToString() ?? audio.AudioUrl;
+                            audio.DurationSeconds = data["duration"]?.Value<int>() ?? audio.DurationSeconds;
+                            audio.AllowRecording = data["allowRecording"]?.Value<bool>() ?? audio.AllowRecording;
+                            audio.RecordingInstructions = data["recordingInstructions"]?.ToString() ?? audio.RecordingInstructions;
+                        }
+                    }
+                }
             }
         }
 
+        audio.Blocks = contentBlocks.OrderBy(b => b.Order).ToList();
+        audio.QuestionBlocks = questionBlocks.OrderBy(b => b.Order).ToList();
+        
         return audio;
     }
 
@@ -534,57 +573,146 @@ public class ScheduleItemController : Controller
     private OrderingContent ParseOrderingFromBlocks(JArray blocksArray, JsonSerializerSettings settings)
     {
         var ordering = new OrderingContent();
-        var first = blocksArray.FirstOrDefault(b => string.Equals(b?["type"]?.ToString(), "ordering", StringComparison.OrdinalIgnoreCase)) as JObject
-                    ?? blocksArray.FirstOrDefault() as JObject;
-        if (first == null) return ordering;
+        var orderingBlocks = new List<OrderingBlock>();
 
-        var data = first["data"] as JObject;
-        if (data == null) return ordering;
-
-        ordering.Instruction = data["instruction"]?.ToString() ?? string.Empty;
-        ordering.AllowDragDrop = data["allowDragDrop"]?.Value<bool>() ?? true;
-        ordering.Direction = data["direction"]?.ToString() ?? "vertical";
-        ordering.ShowNumbers = data["showNumbers"]?.Value<bool>() ?? true;
-        // points stored as string in builder sometimes
-        var pointsToken = data["points"];
-        if (pointsToken != null)
+        foreach (var blockToken in blocksArray)
         {
-            if (pointsToken.Type == JTokenType.Integer || pointsToken.Type == JTokenType.Float)
-            {
-                ordering.Points = pointsToken.Value<decimal>();
-            }
-            else if (pointsToken.Type == JTokenType.String && decimal.TryParse(pointsToken.ToString(), out var pts))
-            {
-                ordering.Points = pts;
-            }
-        }
-        ordering.IsRequired = data["isRequired"]?.Value<bool>() ?? true;
+            var block = blockToken as JObject;
+            if (block == null) continue;
 
-        // items
-        if (data["items"] is JArray items)
-        {
-            foreach (var t in items)
+            var blockType = block["type"]?.ToString().ToLower();
+            if (!string.Equals(blockType, "ordering", StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            var order = block["order"]?.Value<int>() ?? 0;
+            var data = block["data"] as JObject;
+            if (data == null) continue;
+
+            var orderingBlock = new OrderingBlock
             {
-                if (t is not JObject obj) continue;
-                var item = new OrderingItem
+                Id = block["id"]?.ToString() ?? Guid.NewGuid().ToString(),
+                Order = order,
+                Instruction = data["instruction"]?.ToString() ?? string.Empty,
+                AllowDragDrop = data["allowDragDrop"]?.Value<bool>() ?? true,
+                Direction = data["direction"]?.ToString() ?? "vertical",
+                ShowNumbers = data["showNumbers"]?.Value<bool>() ?? true,
+                IsRequired = data["isRequired"]?.Value<bool>() ?? true
+            };
+
+            // points stored as string in builder sometimes
+            var pointsToken = data["points"];
+            if (pointsToken != null)
+            {
+                if (pointsToken.Type == JTokenType.Integer || pointsToken.Type == JTokenType.Float)
                 {
-                    Id = obj["id"]?.ToString() ?? Guid.NewGuid().ToString(),
-                    Type = obj["type"]?.ToString() ?? "text",
-                    Include = obj["include"]?.Value<bool>() ?? true,
-                    Value = obj["value"]?.ToString(),
-                    FileUrl = obj["fileUrl"]?.ToString(),
-                    FileName = obj["fileName"]?.ToString(),
-                    MimeType = obj["mimeType"]?.ToString(),
-                    FileId = obj["fileId"]?.Type == JTokenType.Integer ? obj["fileId"]!.Value<int?>() : null
-                };
-                ordering.Items.Add(item);
+                    orderingBlock.Points = pointsToken.Value<decimal>();
+                }
+                else if (pointsToken.Type == JTokenType.String && decimal.TryParse(pointsToken.ToString(), out var pts))
+                {
+                    orderingBlock.Points = pts;
+                }
             }
+
+            // items
+            if (data["items"] is JArray items)
+            {
+                foreach (var t in items)
+                {
+                    if (t is not JObject obj) continue;
+                    var item = new OrderingItem
+                    {
+                        Id = obj["id"]?.ToString() ?? Guid.NewGuid().ToString(),
+                        Type = obj["type"]?.ToString() ?? "text",
+                        Include = obj["include"]?.Value<bool>() ?? true,
+                        Value = obj["value"]?.ToString(),
+                        FileUrl = obj["fileUrl"]?.ToString(),
+                        FileName = obj["fileName"]?.ToString(),
+                        MimeType = obj["mimeType"]?.ToString(),
+                        FileId = obj["fileId"]?.Type == JTokenType.Integer ? obj["fileId"]!.Value<int?>() : null
+                    };
+                    orderingBlock.Items.Add(item);
+                }
+            }
+
+            // correct order
+            if (data["correctOrder"] is JArray correct)
+            {
+                orderingBlock.CorrectOrder = correct.Select(x => x?.ToString() ?? string.Empty).Where(x => !string.IsNullOrEmpty(x)).ToList();
+            }
+
+            orderingBlocks.Add(orderingBlock);
         }
 
-        // correct order
-        if (data["correctOrder"] is JArray correct)
+        ordering.Blocks = orderingBlocks.OrderBy(b => b.Order).ToList();
+
+        // Backward compatibility: if no blocks but we have items, use first block as main content
+        if (orderingBlocks.Count == 0)
         {
-            ordering.CorrectOrder = correct.Select(x => x?.ToString() ?? string.Empty).Where(x => !string.IsNullOrEmpty(x)).ToList();
+            var first = blocksArray.FirstOrDefault(b => string.Equals(b?["type"]?.ToString(), "ordering", StringComparison.OrdinalIgnoreCase)) as JObject
+                        ?? blocksArray.FirstOrDefault() as JObject;
+            if (first != null)
+            {
+                var data = first["data"] as JObject;
+                if (data != null)
+                {
+                    ordering.Instruction = data["instruction"]?.ToString() ?? string.Empty;
+                    ordering.AllowDragDrop = data["allowDragDrop"]?.Value<bool>() ?? true;
+                    ordering.Direction = data["direction"]?.ToString() ?? "vertical";
+                    ordering.ShowNumbers = data["showNumbers"]?.Value<bool>() ?? true;
+                    ordering.IsRequired = data["isRequired"]?.Value<bool>() ?? true;
+
+                    var pointsToken = data["points"];
+                    if (pointsToken != null)
+                    {
+                        if (pointsToken.Type == JTokenType.Integer || pointsToken.Type == JTokenType.Float)
+                        {
+                            ordering.Points = pointsToken.Value<decimal>();
+                        }
+                        else if (pointsToken.Type == JTokenType.String && decimal.TryParse(pointsToken.ToString(), out var pts))
+                        {
+                            ordering.Points = pts;
+                        }
+                    }
+
+                    if (data["items"] is JArray items)
+                    {
+                        foreach (var t in items)
+                        {
+                            if (t is not JObject obj) continue;
+                            var item = new OrderingItem
+                            {
+                                Id = obj["id"]?.ToString() ?? Guid.NewGuid().ToString(),
+                                Type = obj["type"]?.ToString() ?? "text",
+                                Include = obj["include"]?.Value<bool>() ?? true,
+                                Value = obj["value"]?.ToString(),
+                                FileUrl = obj["fileUrl"]?.ToString(),
+                                FileName = obj["fileName"]?.ToString(),
+                                MimeType = obj["mimeType"]?.ToString(),
+                                FileId = obj["fileId"]?.Type == JTokenType.Integer ? obj["fileId"]!.Value<int?>() : null
+                            };
+                            ordering.Items.Add(item);
+                        }
+                    }
+
+                    if (data["correctOrder"] is JArray correct)
+                    {
+                        ordering.CorrectOrder = correct.Select(x => x?.ToString() ?? string.Empty).Where(x => !string.IsNullOrEmpty(x)).ToList();
+                    }
+                }
+            }
+        }
+        else if (orderingBlocks.Count > 0)
+        {
+            // Use first block's properties for backward compatibility
+            var firstBlock = orderingBlocks.OrderBy(b => b.Order).First();
+            ordering.Instruction = firstBlock.Instruction;
+            ordering.AllowDragDrop = firstBlock.AllowDragDrop;
+            ordering.Direction = firstBlock.Direction;
+            ordering.ShowNumbers = firstBlock.ShowNumbers;
+            ordering.Points = firstBlock.Points;
+            ordering.IsRequired = firstBlock.IsRequired;
+            ordering.Items = firstBlock.Items;
+            ordering.CorrectOrder = firstBlock.CorrectOrder;
         }
 
         return ordering;

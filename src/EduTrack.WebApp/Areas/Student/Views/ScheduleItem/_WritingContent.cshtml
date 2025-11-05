@@ -1,5 +1,7 @@
 @model object
 @using EduTrack.Application.Common.Models.ScheduleItems
+@using EduTrack.Domain.Enums
+@using System.Linq
 @{
     var content = Model as WritingContent;
 }
@@ -7,41 +9,120 @@
 <div class="writing-content-container">
     @if (content != null)
     {
-        <div class="writing-prompt">
-            <h4>متن سوال:</h4>
-            <p>@content.Prompt</p>
-        </div>
-        
-        @if (!string.IsNullOrEmpty(content.Instructions))
+        <!-- Combined Blocks and Question Blocks (sorted by Order) -->
+        var allBlocks = new List<dynamic>();
+
+        // Add content blocks
+        if (content.Blocks != null && content.Blocks.Any())
         {
-            <div class="writing-instructions">
-                <h5>دستورالعمل‌ها:</h5>
-                <p>@content.Instructions</p>
+            foreach (var block in content.Blocks)
+            {
+                allBlocks.Add(new { Type = "content", Block = (object)block, Order = block.Order });
+            }
+        }
+
+        // Add question blocks
+        if (content.QuestionBlocks != null && content.QuestionBlocks.Any())
+        {
+            foreach (var questionBlock in content.QuestionBlocks)
+            {
+                allBlocks.Add(new { Type = "question", Block = (object)questionBlock, Order = questionBlock.Order });
+            }
+        }
+
+        // Sort by Order
+        var sortedBlocks = allBlocks.OrderBy(b => b.Order).ToList();
+
+        @if (sortedBlocks.Any())
+        {
+            <div class="content-blocks-wrapper">
+                @foreach (var item in sortedBlocks)
+                {
+                    var blockType = item.Type;
+                    var order = item.Order;
+
+                    @if (blockType == "content")
+                    {
+                        var block = item.Block as ContentBlock;
+                        if (block != null)
+                        {
+                            <div class="content-block content-block-@block.Type.ToString().ToLower()"
+                                 data-block-order="@order"
+                                 data-block-id="@block.Id"
+                                 data-block-type="content">
+                                <div class="content-block-inner">
+                                    @await Html.PartialAsync("_ContentBlock", block)
+                                </div>
+                            </div>
+                        }
+                    }
+                    else if (blockType == "question")
+                    {
+                        var questionBlock = item.Block as ReminderQuestionBlock;
+                        if (questionBlock != null)
+                        {
+                            <div class="content-block content-block-question"
+                                 data-block-order="@order"
+                                 data-block-id="@questionBlock.Id"
+                                 data-block-type="question">
+                                <div class="content-block-inner">
+                                    @await Html.PartialAsync("_QuestionBlock", questionBlock)
+                                </div>
+                            </div>
+                        }
+                    }
+                }
             </div>
         }
         
-        <div class="writing-answer-area">
-            <div class="form-group">
-                <label for="writing-answer">پاسخ خود را بنویسید:</label>
-                <textarea id="writing-answer" 
-                          class="form-control" 
-                          rows="10" 
-                          placeholder="پاسخ خود را اینجا بنویسید..."
-                          maxlength="@(content.WordLimit * 10)"></textarea>
-                <div class="word-count">
-                    <span id="word-count">0</span> / <span>@content.WordLimit</span> کلمه
+        <!-- Fallback: Show prompt if no blocks but prompt exists -->
+        @if (!sortedBlocks.Any() && !string.IsNullOrEmpty(content.Prompt))
+        {
+            <div class="writing-prompt">
+                <h4>متن سوال:</h4>
+                <p>@content.Prompt</p>
+            </div>
+            
+            @if (!string.IsNullOrEmpty(content.Instructions))
+            {
+                <div class="writing-instructions">
+                    <h5>دستورالعمل‌ها:</h5>
+                    <p>@content.Instructions</p>
+                </div>
+            }
+        }
+        
+        <!-- Answer area (show if there are question blocks) -->
+        @if (content.QuestionBlocks != null && content.QuestionBlocks.Any())
+        {
+            var wordLimit = content.WordLimit;
+            
+            <div class="writing-answer-area">
+                <div class="form-group">
+                    <label for="writing-answer">پاسخ خود را بنویسید:</label>
+                    <textarea id="writing-answer" 
+                              class="form-control" 
+                              rows="10" 
+                              placeholder="پاسخ خود را اینجا بنویسید..."
+                              maxlength="@(wordLimit > 0 ? wordLimit * 10 : 10000)"></textarea>
+                    @if (wordLimit > 0)
+                    {
+                        <div class="word-count">
+                            <span id="word-count">0</span> / <span>@wordLimit</span> کلمه
+                        </div>
+                    }
                 </div>
             </div>
-        </div>
-        
-        <div class="writing-actions">
-            <button type="button" class="btn btn-primary" id="save-writing-answer">
-                <i class="fas fa-save"></i> ذخیره پاسخ
-            </button>
-            <button type="button" class="btn btn-success" id="submit-writing-answer">
-                <i class="fas fa-paper-plane"></i> ارسال پاسخ
-            </button>
-        </div>
+            
+            <div class="writing-actions">
+                <button type="button" class="btn btn-primary" id="save-writing-answer">
+                    <i class="fas fa-save"></i> ذخیره پاسخ
+                </button>
+                <button type="button" class="btn btn-success" id="submit-writing-answer">
+                    <i class="fas fa-paper-plane"></i> ارسال پاسخ
+                </button>
+            </div>
+        }
     }
     else
     {

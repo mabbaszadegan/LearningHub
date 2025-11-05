@@ -1,5 +1,7 @@
 @model object
 @using EduTrack.Application.Common.Models.ScheduleItems
+@using EduTrack.Domain.Enums
+@using System.Linq
 @{
     var content = Model as AudioContent;
 }
@@ -7,24 +9,95 @@
 <div class="audio-content-container-minimal">
     @if (content != null)
     {
-        @if (!string.IsNullOrEmpty(content.Instruction))
+        <!-- Combined Blocks and Question Blocks (sorted by Order) -->
+        var allBlocks = new List<dynamic>();
+
+        // Add content blocks
+        if (content.Blocks != null && content.Blocks.Any())
         {
-            <div class="audio-instruction-minimal">
-                <p>@content.Instruction</p>
+            foreach (var block in content.Blocks)
+            {
+                allBlocks.Add(new { Type = "content", Block = (object)block, Order = block.Order });
+            }
+        }
+
+        // Add question blocks
+        if (content.QuestionBlocks != null && content.QuestionBlocks.Any())
+        {
+            foreach (var questionBlock in content.QuestionBlocks)
+            {
+                allBlocks.Add(new { Type = "question", Block = (object)questionBlock, Order = questionBlock.Order });
+            }
+        }
+
+        // Sort by Order
+        var sortedBlocks = allBlocks.OrderBy(b => b.Order).ToList();
+
+        @if (sortedBlocks.Any())
+        {
+            <div class="content-blocks-wrapper">
+                @foreach (var item in sortedBlocks)
+                {
+                    var blockType = item.Type;
+                    var order = item.Order;
+
+                    @if (blockType == "content")
+                    {
+                        var block = item.Block as ContentBlock;
+                        if (block != null)
+                        {
+                            <div class="content-block content-block-@block.Type.ToString().ToLower()"
+                                 data-block-order="@order"
+                                 data-block-id="@block.Id"
+                                 data-block-type="content">
+                                <div class="content-block-inner">
+                                    @await Html.PartialAsync("_ContentBlock", block)
+                                </div>
+                            </div>
+                        }
+                    }
+                    else if (blockType == "question")
+                    {
+                        var questionBlock = item.Block as ReminderQuestionBlock;
+                        if (questionBlock != null)
+                        {
+                            <div class="content-block content-block-question"
+                                 data-block-order="@order"
+                                 data-block-id="@questionBlock.Id"
+                                 data-block-type="question">
+                                <div class="content-block-inner">
+                                    @await Html.PartialAsync("_QuestionBlock", questionBlock)
+                                </div>
+                            </div>
+                        }
+                    }
+                }
             </div>
         }
         
-        @if (!string.IsNullOrEmpty(content.AudioUrl))
+        <!-- Fallback: Show instruction and audio player if no blocks -->
+        @if (!sortedBlocks.Any())
         {
-            <div class="audio-player-minimal">
-                <audio controls class="audio-player-minimal-control" preload="metadata">
-                    <source src="@content.AudioUrl" type="audio/mpeg">
-                    مرورگر شما از پخش صدا پشتیبانی نمی‌کند.
-                </audio>
-            </div>
+            @if (!string.IsNullOrEmpty(content.Instruction))
+            {
+                <div class="audio-instruction-minimal">
+                    <p>@content.Instruction</p>
+                </div>
+            }
+            
+            @if (!string.IsNullOrEmpty(content.AudioUrl))
+            {
+                <div class="audio-player-minimal">
+                    <audio controls class="audio-player-minimal-control" preload="metadata">
+                        <source src="@content.AudioUrl" type="audio/mpeg">
+                        مرورگر شما از پخش صدا پشتیبانی نمی‌کند.
+                    </audio>
+                </div>
+            }
         }
         
-        @if (content.AllowRecording)
+        <!-- Recording controls (show if allowed and there are question blocks or legacy audio) -->
+        @if (content.AllowRecording && (content.QuestionBlocks != null && content.QuestionBlocks.Any() || !sortedBlocks.Any()))
         {
             <div class="audio-recording-minimal">
                 @if (!string.IsNullOrEmpty(content.RecordingInstructions))
@@ -55,19 +128,23 @@
             </div>
         }
         
-        <div class="audio-actions-minimal">
-            @if (content.AllowRecording)
-            {
-                <button type="button" class="btn-action btn-action-save" id="save-audio-answer">
-                    <i class="fas fa-save"></i>
-                    <span>ذخیره</span>
+        <!-- Actions (show if there are question blocks or recording is allowed) -->
+        @if ((content.QuestionBlocks != null && content.QuestionBlocks.Any()) || content.AllowRecording)
+        {
+            <div class="audio-actions-minimal">
+                @if (content.AllowRecording)
+                {
+                    <button type="button" class="btn-action btn-action-save" id="save-audio-answer">
+                        <i class="fas fa-save"></i>
+                        <span>ذخیره</span>
+                    </button>
+                }
+                <button type="button" class="btn-action btn-action-submit" id="submit-audio-answer">
+                    <i class="fas fa-paper-plane"></i>
+                    <span>ارسال</span>
                 </button>
-            }
-            <button type="button" class="btn-action btn-action-submit" id="submit-audio-answer">
-                <i class="fas fa-paper-plane"></i>
-                <span>ارسال</span>
-            </button>
-        </div>
+            </div>
+        }
     }
     else
     {

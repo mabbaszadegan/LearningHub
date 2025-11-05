@@ -22,6 +22,21 @@
     border-radius: 10px;
 }
 
+/* Direction-based styles for sorting-pool */
+.sorting-block[data-direction="vertical"] .sorting-pool {
+    flex-direction: column;
+}
+
+.sorting-block[data-direction="horizontal-ltr"] .sorting-pool {
+    flex-direction: row;
+    direction: ltr;
+}
+
+.sorting-block[data-direction="horizontal-rtl"] .sorting-pool {
+    flex-direction: row;
+    direction: rtl;
+}
+
 .sorting-item {
     display: inline-flex;
     align-items: center;

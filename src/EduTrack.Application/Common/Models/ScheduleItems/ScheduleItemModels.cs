@@ -197,6 +197,8 @@ public class WritingContent
     public int WordLimit { get; set; }
     public string Instructions { get; set; } = string.Empty;
     public List<string> Keywords { get; set; } = new();
+    public List<ContentBlock> Blocks { get; set; } = new();
+    public List<ReminderQuestionBlock> QuestionBlocks { get; set; } = new();
 }
 
 public class AudioContent
@@ -206,6 +208,8 @@ public class AudioContent
     public int DurationSeconds { get; set; }
     public bool AllowRecording { get; set; }
     public string RecordingInstructions { get; set; } = string.Empty;
+    public List<ContentBlock> Blocks { get; set; } = new();
+    public List<ReminderQuestionBlock> QuestionBlocks { get; set; } = new();
 }
 
 public class ErrorFindingContent
@@ -250,6 +254,21 @@ public class OrderingContent
     public List<string> CorrectOrder { get; set; } = new();
     public bool AllowDragDrop { get; set; } = true;
     public string Direction { get; set; } = "vertical"; // vertical | horizontal
+    public bool ShowNumbers { get; set; } = true;
+    public decimal Points { get; set; } = 1;
+    public bool IsRequired { get; set; } = true;
+    public List<OrderingBlock> Blocks { get; set; } = new();
+}
+
+public class OrderingBlock
+{
+    public string Id { get; set; } = Guid.NewGuid().ToString();
+    public int Order { get; set; }
+    public string Instruction { get; set; } = string.Empty;
+    public List<OrderingItem> Items { get; set; } = new();
+    public List<string> CorrectOrder { get; set; } = new();
+    public bool AllowDragDrop { get; set; } = true;
+    public string Direction { get; set; } = "vertical";
     public bool ShowNumbers { get; set; } = true;
     public decimal Points { get; set; } = 1;
     public bool IsRequired { get; set; } = true;

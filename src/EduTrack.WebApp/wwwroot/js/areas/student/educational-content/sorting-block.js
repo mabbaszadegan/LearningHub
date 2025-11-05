@@ -2,15 +2,15 @@
     function qs(selector, root) { return (root || document).querySelector(selector); }
     function qsa(selector, root) { return Array.prototype.slice.call((root || document).querySelectorAll(selector)); }
 
-    function initSortingBlock() {
-        var container = qs('.sorting-block');
+    function initSortingBlock(container) {
         if (!container) return;
 
         var allowDnd = (container.getAttribute('data-allow-dnd') || 'true') === 'true';
         if (!allowDnd) return;
 
-        var pool = qs('#sortingPool', container);
-        var slots = qs('#sortingSlots', container);
+        // Support both ID selector and class selector for pool and slots
+        var pool = qs('#sortingPool', container) || qs('.sorting-pool', container);
+        var slots = qs('#sortingSlots', container) || qs('.sorting-slots', container);
         if (!pool || !slots) return;
 
         var draggedEl = null;
@@ -93,10 +93,18 @@
         });
     }
 
+    function initAllSortingBlocks() {
+        // Initialize all sorting blocks on the page
+        var containers = qsa('.sorting-block');
+        containers.forEach(function(container) {
+            initSortingBlock(container);
+        });
+    }
+
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initSortingBlock);
+        document.addEventListener('DOMContentLoaded', initAllSortingBlocks);
     } else {
-        initSortingBlock();
+        initAllSortingBlocks();
     }
 })();
 
