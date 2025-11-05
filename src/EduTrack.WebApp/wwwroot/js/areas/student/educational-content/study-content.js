@@ -1187,12 +1187,12 @@ let studySession = {
         try {
             // Create and complete the session in one operation
             const createAndCompleteData = {
-                ScheduleItemId: window.studyContentConfig.educationalContentId,
+                ScheduleItemId: window.studyContentConfig?.scheduleItemId,
                 StartedAt: new Date(this.startTime).toISOString(),
                 EndedAt: new Date(this.fixedEndTime || Date.now()).toISOString()
             };
             
-            const response = await fetch('/Student/EducationalContent/CreateAndCompleteStudySession', {
+            const response = await fetch('/Student/ScheduleItem/CreateAndCompleteStudySession', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

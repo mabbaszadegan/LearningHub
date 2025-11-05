@@ -67,7 +67,12 @@
     }
 
     <!-- Content Type Specific Rendering -->
-    <div id="schedule-item-content" data-type="@Model.Type" data-item-id="@Model.Id">
+    <div id="schedule-item-content"
+         data-type="@Model.Type"
+         data-item-id="@Model.Id"
+         data-course-id="@(courseId ?? 0)"
+         data-active-session-id="@(activeSession?.Id ?? 0)"
+         data-current-user-id="@currentUserId">
         @switch (Model.Type)
         {
             case ScheduleItemType.Reminder:
@@ -117,6 +122,9 @@
             case ScheduleItemType.Quiz:
                 @await Html.PartialAsync("_QuizContent", parsedContent)
                 break;
+            case ScheduleItemType.Ordering:
+                @await Html.PartialAsync("_OrderingContent", parsedContent)
+                break;
             default:
                 <div class="alert alert-info">
                     <i class="fas fa-info-circle"></i>
@@ -164,31 +172,7 @@
 @section Scripts {
     <script src="~/js/areas/student/educational-content/study-content-view-toggle.js" asp-append-version="true"></script>
     <script src="~/js/areas/student/educational-content/study-content.js" asp-append-version="true"></script>
-    <script>
-        // Configuration for study content page
-        window.studyContentConfig = {
-            scheduleItemId: @Model.Id,
-            contentType: '@Model.Type',
-            contentJson: @Html.Raw(Json.Serialize(Model.ContentJson)),
-            activeSessionId: @(activeSession?.Id ?? 0),
-            currentUserId: '@currentUserId',
-            courseId: @(courseId ?? 0)
-        };
-
-        // Initialize study session and hide header/footer
-        $(document).ready(function() {
-            // Add class to body to hide header and footer
-            document.body.classList.add('study-content-page-active');
-            
-            if (window.studySession) {
-                window.studySession.init();
-            }
-        });
-        
-        // Clean up on page unload
-        window.addEventListener('beforeunload', function() {
-            document.body.classList.remove('study-content-page-active');
-        });
-    </script>
+    <script src="~/js/areas/student/educational-content/study-content-init.js" asp-append-version="true"></script>
+    <script src="~/js/areas/student/educational-content/ordering-content.js" asp-append-version="true"></script>
 }
 

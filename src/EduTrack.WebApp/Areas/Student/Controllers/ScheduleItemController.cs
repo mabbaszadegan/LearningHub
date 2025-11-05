@@ -162,6 +162,42 @@ public class ScheduleItemController : Controller
         return Json(new { success = true, statistics = result.Value });
     }
 
+    /// <summary>
+    /// Create and complete a study session in one operation
+    /// </summary>
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreateAndCompleteStudySession([FromBody] CreateAndCompleteStudySessionRequest request)
+    {
+        try
+        {
+            var currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser == null)
+            {
+                return Json(new { success = false, error = "کاربر یافت نشد" });
+            }
+
+            var result = await _mediator.Send(new CreateAndCompleteStudySessionCommand(
+                currentUser.Id,
+                request.ScheduleItemId,
+                request.StartedAt,
+                request.EndedAt
+            ));
+
+            if (!result.IsSuccess)
+            {
+                return Json(new { success = false, error = result.Error });
+            }
+
+            return Json(new { success = true, sessionId = result.Value!.Id });
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex, "Error in CreateAndCompleteStudySession");
+            return Json(new { success = false, error = "خطا در ثبت جلسه مطالعه" });
+        }
+    }
+
     private object? ParseContentJson(string contentJson, ScheduleItemType type)
     {
         try
@@ -174,8 +210,8 @@ public class ScheduleItemController : Controller
             // Parse JSON to JObject first to check structure
             var jsonObject = JObject.Parse(contentJson);
             
-            // Check if JSON has the new structure: { type: "...", blocks: [...] }
-            if (jsonObject["type"] != null && jsonObject["blocks"] != null)
+            // Check if JSON has the new structure with blocks (supports both { type: "...", blocks: [...] } and { itemType: "...", blocks: [...] })
+            if (jsonObject["blocks"] != null)
             {
                 return ParseNewStructure(jsonObject, type);
             }
@@ -216,6 +252,7 @@ public class ScheduleItemController : Controller
             ScheduleItemType.ErrorFinding => ParseErrorFindingFromBlocks(blocksArray, jsonSettings),
             ScheduleItemType.CodeExercise => ParseCodeExerciseFromBlocks(blocksArray, jsonSettings),
             ScheduleItemType.Quiz => ParseQuizFromBlocks(blocksArray, jsonSettings),
+            ScheduleItemType.Ordering => ParseOrderingFromBlocks(blocksArray, jsonSettings),
             _ => null
         };
     }
@@ -240,6 +277,7 @@ public class ScheduleItemController : Controller
             ScheduleItemType.ErrorFinding => JsonConvert.DeserializeObject<ErrorFindingContent>(contentJson, jsonSettings),
             ScheduleItemType.CodeExercise => JsonConvert.DeserializeObject<CodeExerciseContent>(contentJson, jsonSettings),
             ScheduleItemType.Quiz => JsonConvert.DeserializeObject<QuizContent>(contentJson, jsonSettings),
+            ScheduleItemType.Ordering => JsonConvert.DeserializeObject<OrderingContent>(contentJson, jsonSettings),
             _ => null
         };
         
@@ -263,6 +301,7 @@ public class ScheduleItemController : Controller
                 ScheduleItemType.ErrorFinding => JsonConvert.DeserializeObject<ErrorFindingContent>(contentJson, defaultSettings),
                 ScheduleItemType.CodeExercise => JsonConvert.DeserializeObject<CodeExerciseContent>(contentJson, defaultSettings),
                 ScheduleItemType.Quiz => JsonConvert.DeserializeObject<QuizContent>(contentJson, defaultSettings),
+                ScheduleItemType.Ordering => JsonConvert.DeserializeObject<OrderingContent>(contentJson, defaultSettings),
                 _ => null
             };
         }
@@ -490,5 +529,64 @@ public class ScheduleItemController : Controller
     private QuizContent ParseQuizFromBlocks(JArray blocksArray, JsonSerializerSettings settings)
     {
         return JsonConvert.DeserializeObject<QuizContent>("{}", settings) ?? new QuizContent();
+    }
+
+    private OrderingContent ParseOrderingFromBlocks(JArray blocksArray, JsonSerializerSettings settings)
+    {
+        var ordering = new OrderingContent();
+        var first = blocksArray.FirstOrDefault(b => string.Equals(b?["type"]?.ToString(), "ordering", StringComparison.OrdinalIgnoreCase)) as JObject
+                    ?? blocksArray.FirstOrDefault() as JObject;
+        if (first == null) return ordering;
+
+        var data = first["data"] as JObject;
+        if (data == null) return ordering;
+
+        ordering.Instruction = data["instruction"]?.ToString() ?? string.Empty;
+        ordering.AllowDragDrop = data["allowDragDrop"]?.Value<bool>() ?? true;
+        ordering.Direction = data["direction"]?.ToString() ?? "vertical";
+        ordering.ShowNumbers = data["showNumbers"]?.Value<bool>() ?? true;
+        // points stored as string in builder sometimes
+        var pointsToken = data["points"];
+        if (pointsToken != null)
+        {
+            if (pointsToken.Type == JTokenType.Integer || pointsToken.Type == JTokenType.Float)
+            {
+                ordering.Points = pointsToken.Value<decimal>();
+            }
+            else if (pointsToken.Type == JTokenType.String && decimal.TryParse(pointsToken.ToString(), out var pts))
+            {
+                ordering.Points = pts;
+            }
+        }
+        ordering.IsRequired = data["isRequired"]?.Value<bool>() ?? true;
+
+        // items
+        if (data["items"] is JArray items)
+        {
+            foreach (var t in items)
+            {
+                if (t is not JObject obj) continue;
+                var item = new OrderingItem
+                {
+                    Id = obj["id"]?.ToString() ?? Guid.NewGuid().ToString(),
+                    Type = obj["type"]?.ToString() ?? "text",
+                    Include = obj["include"]?.Value<bool>() ?? true,
+                    Value = obj["value"]?.ToString(),
+                    FileUrl = obj["fileUrl"]?.ToString(),
+                    FileName = obj["fileName"]?.ToString(),
+                    MimeType = obj["mimeType"]?.ToString(),
+                    FileId = obj["fileId"]?.Type == JTokenType.Integer ? obj["fileId"]!.Value<int?>() : null
+                };
+                ordering.Items.Add(item);
+            }
+        }
+
+        // correct order
+        if (data["correctOrder"] is JArray correct)
+        {
+            ordering.CorrectOrder = correct.Select(x => x?.ToString() ?? string.Empty).Where(x => !string.IsNullOrEmpty(x)).ToList();
+        }
+
+        return ordering;
     }
 }

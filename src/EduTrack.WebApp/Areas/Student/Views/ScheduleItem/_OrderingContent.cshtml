@@ -1,0 +1,59 @@
+@model object
+@using EduTrack.Application.Common.Models.ScheduleItems
+@{
+	var content = Model as OrderingContent;
+	var directionClass = (content?.Direction?.ToLower() == "horizontal") ? "ordering-horizontal" : "ordering-vertical";
+}
+
+<div class="ordering-content-container">
+	@if (content != null && content.Items.Any())
+	{
+		@if (!string.IsNullOrWhiteSpace(content.Instruction))
+		{
+			<div class="ordering-instruction-minimal">
+				<p>@content.Instruction</p>
+			</div>
+		}
+
+		<ul class="ordering-list @directionClass" id="orderingList"
+			data-allow-dnd="@content.AllowDragDrop.ToString().ToLower()"
+			data-direction="@content.Direction"
+			data-show-numbers="@content.ShowNumbers.ToString().ToLower()">
+			@{
+				var seq = 1;
+			}
+			@foreach (var item in content.Items.Where(i => i.Include))
+			{
+				<li class="ordering-item" draggable="@(content.AllowDragDrop ? "true" : "false")" data-id="@item.Id" data-type="@item.Type">
+					@if (content.ShowNumbers)
+					{
+						<span class="ordering-number">@seq.</span>
+					}
+					<span class="ordering-handle"><i class="fas fa-grip-vertical"></i></span>
+					@if (string.Equals(item.Type, "text", System.StringComparison.OrdinalIgnoreCase))
+					{
+						<span class="ordering-text">@item.Value</span>
+					}
+					else if (string.Equals(item.Type, "image", System.StringComparison.OrdinalIgnoreCase))
+					{
+						<img class="ordering-image" src="@item.FileUrl" alt="image" />
+					}
+					else if (string.Equals(item.Type, "audio", System.StringComparison.OrdinalIgnoreCase))
+					{
+						<audio class="ordering-audio" controls src="@item.FileUrl"></audio>
+					}
+				</li>
+				seq++;
+			}
+		</ul>
+	}
+	else
+	{
+		<div class="content-empty-state">
+			<i class="fas fa-info-circle"></i>
+			<p>محتوای مرتب‌سازی یافت نشد.</p>
+		</div>
+	}
+</div>
+
+

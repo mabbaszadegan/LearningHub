@@ -243,6 +243,30 @@ public class QuizQuestion
     public decimal Points { get; set; }
 }
 
+public class OrderingContent
+{
+    public string Instruction { get; set; } = string.Empty;
+    public List<OrderingItem> Items { get; set; } = new();
+    public List<string> CorrectOrder { get; set; } = new();
+    public bool AllowDragDrop { get; set; } = true;
+    public string Direction { get; set; } = "vertical"; // vertical | horizontal
+    public bool ShowNumbers { get; set; } = true;
+    public decimal Points { get; set; } = 1;
+    public bool IsRequired { get; set; } = true;
+}
+
+public class OrderingItem
+{
+    public string Id { get; set; } = string.Empty;
+    public string Type { get; set; } = "text"; // text | image | audio
+    public bool Include { get; set; } = true;
+    public string? Value { get; set; } // for text
+    public int? FileId { get; set; }
+    public string? FileName { get; set; }
+    public string? FileUrl { get; set; }
+    public string? MimeType { get; set; }
+}
+
 public class ReminderContent
 {
     public string Message { get; set; } = string.Empty;
