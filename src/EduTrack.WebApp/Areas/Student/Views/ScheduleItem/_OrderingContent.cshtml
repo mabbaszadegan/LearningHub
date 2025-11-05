@@ -2,14 +2,35 @@
 @using EduTrack.Application.Common.Models.ScheduleItems
 @{
     var content = Model as OrderingContent;
-    var directionClass = (content?.Direction?.ToLower() == "horizontal") ? "ordering-horizontal" : "ordering-vertical";
+    var direction = "vertical";
+    var directionClass = "ordering-vertical";
+    
+    if (content?.Direction != null)
+    {
+        var dirLower = content.Direction.ToLower();
+        if (dirLower == "horizontal-ltr" || dirLower == "horizontal-rtl")
+        {
+            direction = dirLower;
+            directionClass = "ordering-horizontal";
+        }
+        else if (dirLower == "horizontal")
+        {
+            // Backward compatibility: treat old "horizontal" as "horizontal-ltr"
+            direction = "horizontal-ltr";
+            directionClass = "ordering-horizontal";
+        }
+        else
+        {
+            direction = "vertical";
+            directionClass = "ordering-vertical";
+        }
+    }
 }
 
 <div class="ordering-content-container">
     @if (content != null && content.Items.Any())
     {
         var includedCount = content.Items.Count(i => i.Include);
-        var direction = content.Direction?.ToLower() == "horizontal" ? "horizontal" : "vertical";
         var allItems = content.Items.OrderBy(_ => Guid.NewGuid()).ToList();
 
 

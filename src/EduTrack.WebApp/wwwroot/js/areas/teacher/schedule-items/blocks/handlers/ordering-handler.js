@@ -70,6 +70,10 @@ class OrderingHandler {
                 let value;
                 if (input.type === 'checkbox') {
                     value = input.checked;
+                } else if (input.type === 'radio') {
+                    // For radio buttons, get the checked one's value
+                    const checkedRadio = blockElement.querySelector(`[data-setting="${key}"]:checked`);
+                    value = checkedRadio ? checkedRadio.value : input.value;
                 } else {
                     value = input.value;
                 }
@@ -569,10 +573,26 @@ class OrderingHandler {
     _readSettings(blockElement) {
         const settings = {};
         const inputs = blockElement.querySelectorAll('[data-setting]');
+        const processedKeys = new Set();
+        
         inputs.forEach(input => {
             const key = input.getAttribute('data-setting');
-            if (!key) return;
-            if (input.type === 'checkbox') settings[key] = input.checked; else settings[key] = input.value;
+            if (!key || processedKeys.has(key)) return;
+            
+            if (input.type === 'checkbox') {
+                settings[key] = input.checked;
+                processedKeys.add(key);
+            } else if (input.type === 'radio') {
+                // For radio buttons, only read the checked one
+                const checkedRadio = blockElement.querySelector(`[data-setting="${key}"]:checked`);
+                if (checkedRadio) {
+                    settings[key] = checkedRadio.value;
+                    processedKeys.add(key);
+                }
+            } else {
+                settings[key] = input.value;
+                processedKeys.add(key);
+            }
         });
         return settings;
     }
@@ -617,11 +637,33 @@ class OrderingHandler {
     applySettingsToUi(blockElement, block) {
         if (!block || !block.data) return;
         const inputs = blockElement.querySelectorAll('[data-setting]');
+        const processedKeys = new Set();
+        
+        // Handle backward compatibility for direction
+        if (block.data.direction === 'horizontal') {
+            block.data.direction = 'horizontal-ltr';
+        }
+        
         inputs.forEach(input => {
             const key = input.getAttribute('data-setting');
-            if (!key) return;
+            if (!key || processedKeys.has(key)) return;
             if (block.data[key] === undefined) return;
-            if (input.type === 'checkbox') input.checked = !!block.data[key]; else input.value = block.data[key];
+            
+            if (input.type === 'checkbox') {
+                input.checked = !!block.data[key];
+                processedKeys.add(key);
+            } else if (input.type === 'radio') {
+                // For radio buttons, check the one matching the value
+                let value = block.data[key];
+                const matchingRadio = blockElement.querySelector(`[data-setting="${key}"][value="${value}"]`);
+                if (matchingRadio) {
+                    matchingRadio.checked = true;
+                    processedKeys.add(key);
+                }
+            } else {
+                input.value = block.data[key];
+                processedKeys.add(key);
+            }
         });
     }
 

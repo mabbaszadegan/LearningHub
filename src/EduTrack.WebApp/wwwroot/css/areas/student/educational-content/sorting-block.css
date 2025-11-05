@@ -78,14 +78,24 @@
     grid-template-columns: 1fr;
 }
 
+.slots-horizontal-ltr,
+.slots-horizontal-rtl,
 .slots-horizontal {
     grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+.slots-horizontal-rtl {
+    direction: rtl;
 }
 
 .sorting-slot {
     display: flex;
     align-items: center;
     gap: 0.5rem;
+}
+
+.slots-horizontal-rtl .sorting-slot {
+    direction: rtl;
 }
 
 .slot-number {

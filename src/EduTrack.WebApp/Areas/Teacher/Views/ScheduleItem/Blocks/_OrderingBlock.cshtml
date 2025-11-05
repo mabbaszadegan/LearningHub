@@ -30,24 +30,94 @@
         </div>
 
         <div class="ordering-settings">
-            <div class="setting-item">
-                <label>جهت مرتب‌سازی:</label>
-                <select class="form-select-sm" data-setting="direction">
-                    <option value="vertical" selected>عمودی</option>
-                    <option value="horizontal">افقی</option>
-                </select>
-            </div>
-            <div class="setting-item">
-                <label>
-                    <input type="checkbox" data-setting="allowDragDrop" checked>
-                    اجازه کشیدن و رها کردن
-                </label>
-            </div>
-            <div class="setting-item">
-                <label>
-                    <input type="checkbox" data-setting="showNumbers" checked>
-                    نمایش شماره
-                </label>
+            <div class="ordering-settings-card">
+                <div class="settings-section-header">
+                    <i class="fas fa-sliders-h"></i>
+                    <span>تنظیمات بلاک</span>
+                </div>
+                
+                <div class="direction-settings-section">
+                    <label class="direction-label">جهت مرتب‌سازی:</label>
+                    <div class="direction-options" role="radiogroup" aria-label="جهت مرتب‌سازی">
+                        <label class="direction-option">
+                            <input type="radio" name="direction" value="horizontal-ltr" data-setting="direction" class="direction-input">
+                            <div class="direction-option-content">
+                                <div class="direction-icon">
+                                    <i class="fas fa-arrows-alt-h"></i>
+                                </div>
+                                <div class="direction-preview">
+                                    <span class="preview-item">1</span>
+                                    <span class="preview-item">2</span>
+                                    <span class="preview-item">3</span>
+                                </div>
+                                <div class="direction-info">
+                                    <span class="direction-title">افقی (چپ به راست)</span>
+                                </div>
+                                <div class="direction-check">
+                                    <i class="fas fa-check"></i>
+                                </div>
+                            </div>
+                        </label>
+                        
+                        <label class="direction-option">
+                            <input type="radio" name="direction" value="horizontal-rtl" data-setting="direction" class="direction-input">
+                            <div class="direction-option-content">
+                                <div class="direction-icon">
+                                    <i class="fas fa-arrows-alt-h"></i>
+                                </div>
+                                <div class="direction-preview preview-rtl">
+                                    <span class="preview-item">3</span>
+                                    <span class="preview-item">2</span>
+                                    <span class="preview-item">1</span>
+                                </div>
+                                <div class="direction-info">
+                                    <span class="direction-title">افقی (راست به چپ)</span>
+                                </div>
+                                <div class="direction-check">
+                                    <i class="fas fa-check"></i>
+                                </div>
+                            </div>
+                        </label>
+                        
+                        <label class="direction-option">
+                            <input type="radio" name="direction" value="vertical" data-setting="direction" class="direction-input" checked>
+                            <div class="direction-option-content">
+                                <div class="direction-icon">
+                                    <i class="fas fa-arrows-alt-v"></i>
+                                </div>
+                                <div class="direction-preview preview-vertical">
+                                    <span class="preview-item">1</span>
+                                    <span class="preview-item">2</span>
+                                    <span class="preview-item">3</span>
+                                </div>
+                                <div class="direction-info">
+                                    <span class="direction-title">عمودی</span>
+                                </div>
+                                <div class="direction-check">
+                                    <i class="fas fa-check"></i>
+                                </div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="other-settings-section">
+                    <div class="setting-toggle">
+                        <label class="toggle-label">
+                            <input type="checkbox" data-setting="allowDragDrop" checked class="toggle-input">
+                            <span class="toggle-slider"></span>
+                            <span class="toggle-text">اجازه کشیدن و رها کردن</span>
+                        </label>
+                    </div>
+                    
+                    <div class="setting-toggle">
+                        <label class="toggle-label">
+                            <input type="checkbox" data-setting="showNumbers" checked class="toggle-input">
+                            <span class="toggle-slider"></span>
+                            <span class="toggle-text">نمایش شماره</span>
+                        </label>
+                    </div>
+                </div>
             </div>
         </div>
 
