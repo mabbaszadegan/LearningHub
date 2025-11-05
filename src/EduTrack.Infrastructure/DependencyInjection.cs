@@ -72,6 +72,8 @@ public static class DependencyInjection
         services.AddScoped<IFileRepository, FileRepository>();
         services.AddScoped<IStudySessionRepository, StudySessionRepository>();
         services.AddScoped<IWrittenContentAnswerRepository, WrittenContentAnswerRepository>();
+        services.AddScoped<IScheduleItemBlockAttemptRepository, ScheduleItemBlockAttemptRepository>();
+        services.AddScoped<IScheduleItemBlockStatisticsRepository, ScheduleItemBlockStatisticsRepository>();
 
         // Register infrastructure services
         services.AddScoped<IFileStorageService, FileStorageService>();

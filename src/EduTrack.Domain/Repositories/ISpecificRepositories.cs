@@ -172,3 +172,69 @@ public interface IWrittenContentAnswerRepository : IRepository<StudentAnswer>
     Task<IEnumerable<StudentAnswer>> GetAnswersNeedingGradingAsync(CancellationToken cancellationToken = default);
     Task<IEnumerable<StudentAnswer>> GetAnswersByTeacherAsync(string teacherId, CancellationToken cancellationToken = default);
 }
+
+/// <summary>
+/// Specific repository for ScheduleItemBlockAttempt entity with domain-specific queries
+/// </summary>
+public interface IScheduleItemBlockAttemptRepository : IRepository<ScheduleItemBlockAttempt>
+{
+    Task<IEnumerable<ScheduleItemBlockAttempt>> GetByStudentAndScheduleItemAsync(
+        string studentId, 
+        int scheduleItemId, 
+        CancellationToken cancellationToken = default);
+    
+    Task<IEnumerable<ScheduleItemBlockAttempt>> GetByStudentAndBlockAsync(
+        string studentId, 
+        int scheduleItemId, 
+        string blockId, 
+        CancellationToken cancellationToken = default);
+    
+    Task<IEnumerable<ScheduleItemBlockAttempt>> GetByStudentAsync(
+        string studentId, 
+        CancellationToken cancellationToken = default);
+    
+    Task<IEnumerable<ScheduleItemBlockAttempt>> GetRecentAttemptsByStudentAsync(
+        string studentId, 
+        int count = 10, 
+        CancellationToken cancellationToken = default);
+    
+    Task<ScheduleItemBlockAttempt?> GetLastAttemptByStudentAndBlockAsync(
+        string studentId, 
+        int scheduleItemId, 
+        string blockId, 
+        CancellationToken cancellationToken = default);
+}
+
+/// <summary>
+/// Specific repository for ScheduleItemBlockStatistics entity with domain-specific queries
+/// </summary>
+public interface IScheduleItemBlockStatisticsRepository : IRepository<ScheduleItemBlockStatistics>
+{
+    Task<ScheduleItemBlockStatistics?> GetByStudentAndBlockAsync(
+        string studentId, 
+        int scheduleItemId, 
+        string blockId, 
+        CancellationToken cancellationToken = default);
+    
+    Task<IEnumerable<ScheduleItemBlockStatistics>> GetByStudentAsync(
+        string studentId, 
+        CancellationToken cancellationToken = default);
+    
+    Task<IEnumerable<ScheduleItemBlockStatistics>> GetByStudentAndScheduleItemAsync(
+        string studentId, 
+        int scheduleItemId, 
+        CancellationToken cancellationToken = default);
+    
+    Task<IEnumerable<ScheduleItemBlockStatistics>> GetBlocksWithMostErrorsAsync(
+        string studentId, 
+        int count = 10, 
+        CancellationToken cancellationToken = default);
+    
+    Task<IEnumerable<ScheduleItemBlockStatistics>> GetBlocksNeverCorrectAsync(
+        string studentId, 
+        CancellationToken cancellationToken = default);
+    
+    Task<IEnumerable<ScheduleItemBlockStatistics>> GetBlocksWithRecentMistakesAsync(
+        string studentId, 
+        CancellationToken cancellationToken = default);
+}

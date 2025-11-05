@@ -1,0 +1,122 @@
+@using EduTrack.Application.Common.Models.ScheduleItems
+@model List<StudentReviewItemDto>
+@{
+    ViewData["Title"] = "مرور خطاها و آمار";
+    var onlyWithErrors = ViewBag.OnlyWithErrors as bool? ?? false;
+    var onlyNeverCorrect = ViewBag.OnlyNeverCorrect as bool? ?? false;
+    var onlyRecentMistakes = ViewBag.OnlyRecentMistakes as bool? ?? false;
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/areas/student/educational-content/review-page.css" asp-append-version="true" />
+}
+
+<div class="review-page-container">
+    <div class="review-header">
+        <h1 class="review-title">
+            <i class="fas fa-chart-line"></i>
+            مرور خطاها و آمار
+        </h1>
+        <p class="review-subtitle">مشاهده و مرور خطاها و پیشرفت در بلاک‌های مختلف</p>
+    </div>
+
+    <!-- Filters -->
+    <div class="review-filters">
+        <a href="@Url.Action("Review", "ScheduleItem")" 
+           class="filter-btn @(!onlyWithErrors && !onlyNeverCorrect && !onlyRecentMistakes ? "active" : "")">
+            همه
+        </a>
+        <a href="@Url.Action("Review", "ScheduleItem", new { onlyWithErrors = true })" 
+           class="filter-btn @(onlyWithErrors ? "active" : "")">
+            با خطا
+        </a>
+        <a href="@Url.Action("Review", "ScheduleItem", new { onlyNeverCorrect = true })" 
+           class="filter-btn @(onlyNeverCorrect ? "active" : "")">
+            هرگز درست نشده
+        </a>
+        <a href="@Url.Action("Review", "ScheduleItem", new { onlyRecentMistakes = true })" 
+           class="filter-btn @(onlyRecentMistakes ? "active" : "")">
+            اشتباهات متوالی
+        </a>
+    </div>
+
+    <!-- Review Items List -->
+    @if (Model != null && Model.Any())
+    {
+        <div class="review-items-list">
+            @foreach (var item in Model)
+            {
+                <div class="review-item-card">
+                    <div class="review-item-header">
+                        <div class="review-item-title-section">
+                            <h3 class="review-item-title">@item.ScheduleItemTitle</h3>
+                            <span class="review-item-type">@item.ScheduleItemType</span>
+                        </div>
+                        <a href="@Url.Action("Study", "ScheduleItem", new { id = item.ScheduleItemId })" 
+                           class="btn-study-again">
+                            <i class="fas fa-redo"></i>
+                            مطالعه مجدد
+                        </a>
+                    </div>
+
+                    @if (!string.IsNullOrWhiteSpace(item.BlockInstruction))
+                    {
+                        <div class="review-item-instruction">
+                            <i class="fas fa-info-circle"></i>
+                            @item.BlockInstruction
+                        </div>
+                    }
+
+                    <div class="review-item-stats">
+                        <div class="stat-item">
+                            <span class="stat-label">تعداد تلاش:</span>
+                            <span class="stat-value">@item.TotalAttempts</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">خطاها:</span>
+                            <span class="stat-value error">@item.IncorrectAttempts</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">نرخ موفقیت:</span>
+                            <span class="stat-value @(item.SuccessRate >= 50 ? "success" : "warning")">
+                                @item.SuccessRate.ToString("F1")%
+                            </span>
+                        </div>
+                        @if (item.ConsecutiveIncorrectAttempts > 0)
+                        {
+                            <div class="stat-item">
+                                <span class="stat-label">اشتباهات متوالی:</span>
+                                <span class="stat-value error">@item.ConsecutiveIncorrectAttempts</span>
+                            </div>
+                        }
+                    </div>
+
+                    @if (item.RecentAttempts != null && item.RecentAttempts.Any())
+                    {
+                        <div class="review-item-recent-attempts">
+                            <h4 class="recent-attempts-title">آخرین تلاش‌ها:</h4>
+                            <div class="attempts-list">
+                                @foreach (var attempt in item.RecentAttempts)
+                                {
+                                    <div class="attempt-item @(attempt.IsCorrect ? "correct" : "incorrect")">
+                                        <i class="fas @(attempt.IsCorrect ? "fa-check-circle" : "fa-times-circle")"></i>
+                                        <span class="attempt-points">@attempt.PointsEarned/@attempt.MaxPoints</span>
+                                        <span class="attempt-date">@attempt.AttemptedAt.ToString("yyyy/MM/dd HH:mm")</span>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="review-empty-state">
+            <i class="fas fa-inbox"></i>
+            <p>هیچ موردی برای نمایش یافت نشد.</p>
+        </div>
+    }
+</div>
+

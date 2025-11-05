@@ -1,5 +1,6 @@
 using EduTrack.Application.Common.Interfaces;
 using EduTrack.Application.Common.Services;
+using EduTrack.Application.Common.Services.Validators;
 using EduTrack.Domain.Services;
 using FluentValidation;
 using MediatR;
@@ -26,6 +27,11 @@ public static class DependencyInjection
         // Register Page Title Section Services
         services.AddScoped<IPageTitleSectionService, PageTitleSectionService>();
         services.AddScoped<IPageTitleSectionFactory, PageTitleSectionFactory>();
+
+        // Register Block Answer Validators
+        services.AddScoped<IBlockAnswerValidator, OrderingBlockValidator>();
+        services.AddScoped<IBlockAnswerValidator, MultipleChoiceBlockValidator>();
+        services.AddScoped<BlockAnswerValidatorFactory>();
 
         return services;
     }

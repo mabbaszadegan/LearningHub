@@ -92,6 +92,10 @@ public class AppDbContext : IdentityDbContext<User>
     
     // Study Session System
     public DbSet<StudySession> StudySessions { get; set; }
+    
+    // Schedule Item Block Attempt System
+    public DbSet<ScheduleItemBlockAttempt> ScheduleItemBlockAttempts { get; set; }
+    public DbSet<ScheduleItemBlockStatistics> ScheduleItemBlockStatistics { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -866,6 +870,52 @@ public class AppDbContext : IdentityDbContext<User>
             entity.HasIndex(x => x.FirstTaughtDate);
             entity.HasIndex(x => x.LastTaughtDate);
             entity.HasIndex(x => x.UpdatedAt);
+        });
+
+        // Configure ScheduleItemBlockAttempt entity
+        builder.Entity<ScheduleItemBlockAttempt>(entity =>
+        {
+            entity.ToTable("ScheduleItemBlockAttempts");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.BlockId).HasMaxLength(200).IsRequired();
+            entity.Property(x => x.StudentId).HasMaxLength(450).IsRequired();
+            entity.Property(x => x.SubmittedAnswerJson).IsRequired();
+            entity.Property(x => x.CorrectAnswerJson).IsRequired();
+            entity.Property(x => x.BlockInstruction).HasMaxLength(1000);
+            entity.Property(x => x.PointsEarned).HasPrecision(18, 2);
+            entity.Property(x => x.MaxPoints).HasPrecision(18, 2);
+            entity.HasOne(x => x.ScheduleItem)
+                .WithMany()
+                .HasForeignKey(x => x.ScheduleItemId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(x => x.Student)
+                .WithMany()
+                .HasForeignKey(x => x.StudentId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasIndex(x => new { x.StudentId, x.ScheduleItemId, x.BlockId });
+            entity.HasIndex(x => x.AttemptedAt);
+            entity.HasIndex(x => new { x.StudentId, x.ScheduleItemId });
+        });
+
+        // Configure ScheduleItemBlockStatistics entity
+        builder.Entity<ScheduleItemBlockStatistics>(entity =>
+        {
+            entity.ToTable("ScheduleItemBlockStatistics");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.BlockId).HasMaxLength(200).IsRequired();
+            entity.Property(x => x.StudentId).HasMaxLength(450).IsRequired();
+            entity.Property(x => x.BlockInstruction).HasMaxLength(1000);
+            entity.HasOne(x => x.ScheduleItem)
+                .WithMany()
+                .HasForeignKey(x => x.ScheduleItemId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(x => x.Student)
+                .WithMany()
+                .HasForeignKey(x => x.StudentId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasIndex(x => new { x.StudentId, x.ScheduleItemId, x.BlockId }).IsUnique();
+            entity.HasIndex(x => new { x.StudentId, x.ScheduleItemId });
+            entity.HasIndex(x => x.LastAttemptAt);
         });
 
     }

@@ -1,6 +1,7 @@
 using EduTrack.Application.Features.StudySessions.Commands;
 using EduTrack.Application.Features.StudySessions.Queries;
 using EduTrack.Application.Features.ScheduleItems.Queries;
+using EduTrack.Application.Features.ScheduleItems.Commands;
 using EduTrack.Application.Features.TeachingPlan.Queries;
 using EduTrack.Application.Common.Models.StudySessions;
 using EduTrack.Application.Common.Models.TeachingPlans;
@@ -97,6 +98,7 @@ public class ScheduleItemController : Controller
         ViewBag.ActiveSession = activeSession;
         ViewBag.CurrentUserId = currentUser.Id;
         ViewBag.CourseId = teachingPlan.CourseId;
+        ViewBag.ScheduleItemId = scheduleItem.Id;
         ViewBag.ParsedContent = parsedContent;
 
         return View(scheduleItem);
@@ -718,4 +720,98 @@ public class ScheduleItemController : Controller
 
         return ordering;
     }
+
+    /// <summary>
+    /// Submit block answer for validation
+    /// </summary>
+    [HttpPost]
+    public async Task<IActionResult> SubmitBlockAnswer([FromBody] SubmitBlockAnswerRequest request)
+    {
+        var currentUser = await _userManager.GetUserAsync(User);
+        if (currentUser == null)
+        {
+            return Unauthorized();
+        }
+
+        var command = new SubmitBlockAnswerCommand(
+            request.ScheduleItemId,
+            request.BlockId,
+            currentUser.Id,
+            request.SubmittedAnswer);
+
+        var result = await _mediator.Send(command);
+
+        if (!result.IsSuccess)
+        {
+            return BadRequest(new { error = result.Error });
+        }
+
+        return Ok(result.Value);
+    }
+
+    /// <summary>
+    /// Get block statistics for current student
+    /// </summary>
+    [HttpGet]
+    public async Task<IActionResult> GetBlockStatistics(int? scheduleItemId = null, string? blockId = null)
+    {
+        var currentUser = await _userManager.GetUserAsync(User);
+        if (currentUser == null)
+        {
+            return Unauthorized();
+        }
+
+        var query = new GetBlockStatisticsQuery(currentUser.Id, scheduleItemId, blockId);
+        var result = await _mediator.Send(query);
+
+        if (!result.IsSuccess)
+        {
+            return BadRequest(new { error = result.Error });
+        }
+
+        return Ok(result.Value);
+    }
+
+    /// <summary>
+    /// Review page - shows student's errors and statistics
+    /// </summary>
+    [HttpGet]
+    public async Task<IActionResult> Review(
+        bool? onlyWithErrors = null,
+        bool? onlyNeverCorrect = null,
+        bool? onlyRecentMistakes = null)
+    {
+        var currentUser = await _userManager.GetUserAsync(User);
+        if (currentUser == null)
+        {
+            return RedirectToAction("Login", "Account", new { area = "Public" });
+        }
+
+        var query = new GetStudentReviewItemsQuery(
+            currentUser.Id,
+            onlyWithErrors,
+            onlyNeverCorrect,
+            onlyRecentMistakes);
+
+        var result = await _mediator.Send(query);
+
+        if (!result.IsSuccess)
+        {
+            TempData["Error"] = result.Error ?? "خطا در بارگذاری اطلاعات";
+            return RedirectToAction("Index", "Home");
+        }
+
+        ViewBag.OnlyWithErrors = onlyWithErrors;
+        ViewBag.OnlyNeverCorrect = onlyNeverCorrect;
+        ViewBag.OnlyRecentMistakes = onlyRecentMistakes;
+
+        return View(result.Value ?? new List<StudentReviewItemDto>());
+    }
+}
+
+public class SubmitBlockAnswerRequest
+{
+    public int ScheduleItemId { get; set; }
+    public string BlockId { get; set; } = string.Empty;
+    public Dictionary<string, object> SubmittedAnswer { get; set; } = new();
 }
