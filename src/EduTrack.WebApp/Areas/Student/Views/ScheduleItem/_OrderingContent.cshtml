@@ -14,24 +14,53 @@
         if (hasMultipleBlocks)
         {
             // Display all ordering blocks
+            var blockIndex = 0;
             @foreach (var orderingBlock in content.Blocks!.OrderBy(b => b.Order))
             {
-                var direction = "vertical";
+                // Parse direction to handle both old and new formats
+                var finalDirection = "vertical-right"; // default
                 if (orderingBlock.Direction != null)
                 {
                     var dirLower = orderingBlock.Direction.ToLower();
-                    if (dirLower == "horizontal-ltr" || dirLower == "horizontal-rtl")
+                    // Check for complete direction values first
+                    if (dirLower == "horizontal-ltr" || dirLower == "horizontal-rtl" ||
+                        dirLower == "vertical-left" || dirLower == "vertical-right")
                     {
-                        direction = dirLower;
+                        finalDirection = dirLower;
                     }
                     else if (dirLower == "horizontal")
                     {
-                        direction = "horizontal-ltr";
+                        // Legacy: default to horizontal-ltr
+                        finalDirection = "horizontal-ltr";
                     }
+                    else if (dirLower == "vertical")
+                    {
+                        // Legacy: use alignment if exists
+                        var alignment = orderingBlock.Alignment ?? "right";
+                        finalDirection = "vertical-" + alignment;
+                    }
+                    else
+                    {
+                        // Fallback: use alignment for vertical, default to right
+                        var alignment = orderingBlock.Alignment ?? "right";
+                        finalDirection = "vertical-" + alignment;
+                    }
+                }
+                else
+                {
+                    // No direction set, use alignment or default
+                    var alignment = orderingBlock.Alignment ?? "right";
+                    finalDirection = "vertical-" + alignment;
                 }
 
                 var includedCount = orderingBlock.Items.Count(i => i.Include);
                 var allItems = orderingBlock.Items.OrderBy(_ => Guid.NewGuid()).ToList();
+
+                // Add separator between blocks (except for the first one)
+                if (blockIndex > 0)
+                {
+                    <div class="ordering-block-separator"></div>
+                }
 
                 <div class="ordering-block-wrapper" data-block-id="@orderingBlock.Id" data-block-order="@orderingBlock.Order">
                     @if (!string.IsNullOrWhiteSpace(orderingBlock.Instruction))
@@ -39,30 +68,6 @@
                         <div class="ordering-instruction-minimal">
                             <p>@orderingBlock.Instruction</p>
                         </div>
-                    }
-
-                    @{
-                        // Parse direction to handle both old and new formats
-                        var finalDirection = direction;
-                        if (direction == "vertical")
-                        {
-                            // Backward compatibility: use alignment if exists
-                            var alignment = orderingBlock.Alignment ?? "right";
-                            finalDirection = "vertical-" + alignment;
-                        }
-                        else if (direction != "horizontal-ltr" && direction != "horizontal-rtl" && 
-                                 direction != "vertical-left" && direction != "vertical-right")
-                        {
-                            // Handle legacy horizontal
-                            if (direction.StartsWith("horizontal"))
-                            {
-                                finalDirection = direction.Contains("rtl") ? "horizontal-rtl" : "horizontal-ltr";
-                            }
-                            else
-                            {
-                                finalDirection = "vertical-right"; // default
-                            }
-                        }
                     }
                     <div class="sorting-block" data-direction="@finalDirection" data-allow-dnd="@orderingBlock.AllowDragDrop.ToString().ToLower()" data-show-numbers="@orderingBlock.ShowNumbers.ToString().ToLower()">
                         <div class="sorting-pool" aria-label="لیست آیتم‌ها" role="list">
@@ -101,6 +106,7 @@
                         </div>
                     </div>
                 </div>
+                blockIndex++;
             }
         }
         else if (content.Items.Any())

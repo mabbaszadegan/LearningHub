@@ -1,5 +1,27 @@
 /* Sorting Block - Minimal, clean, accessible - Duolingo-inspired design */
 
+/* Ordering Content Container */
+.ordering-content-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+/* Ordering Block Wrapper */
+.ordering-block-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+/* Minimal Block Separator */
+.ordering-block-separator {
+    height: 1px;
+    background: linear-gradient(to right, transparent, #e9ecef 20%, #e9ecef 80%, transparent);
+    margin: 1.5rem 0;
+    border: none;
+}
+
 .sorting-block {
     display: grid;
     grid-template-columns: 1fr;
