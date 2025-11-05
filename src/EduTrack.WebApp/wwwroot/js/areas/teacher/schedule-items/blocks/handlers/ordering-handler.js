@@ -38,6 +38,13 @@ class OrderingHandler {
         blockElement.dataset.blockId = block.id;
         blockElement.dataset.blockData = JSON.stringify(block.data || {});
         blockElement.style.display = ''; // Ensure it's visible
+        
+        // Make radio button names unique for this block to avoid conflicts between multiple blocks
+        const uniqueName = `direction-${block.id}`;
+        const directionRadios = blockElement.querySelectorAll('input[name="direction"][data-setting="direction"]');
+        directionRadios.forEach(radio => {
+            radio.name = uniqueName;
+        });
 
         return blockElement;
     }
@@ -71,8 +78,8 @@ class OrderingHandler {
                 if (input.type === 'checkbox') {
                     value = input.checked;
                 } else if (input.type === 'radio') {
-                    // For radio buttons, get the checked one's value
-                    const checkedRadio = blockElement.querySelector(`[data-setting="${key}"]:checked`);
+                    // For radio buttons, get the checked one's value within this block only
+                    const checkedRadio = blockElement.querySelector(`input[data-setting="${key}"]:checked`);
                     value = checkedRadio ? checkedRadio.value : input.value;
                 } else {
                     value = input.value;
@@ -584,8 +591,8 @@ class OrderingHandler {
                 settings[key] = input.checked;
                 processedKeys.add(key);
             } else if (input.type === 'radio') {
-                // For radio buttons, only read the checked one
-                const checkedRadio = blockElement.querySelector(`[data-setting="${key}"]:checked`);
+                // For radio buttons, only read the checked one within this block only
+                const checkedRadio = blockElement.querySelector(`input[data-setting="${key}"]:checked`);
                 if (checkedRadio) {
                     settings[key] = checkedRadio.value;
                     processedKeys.add(key);
@@ -670,7 +677,8 @@ class OrderingHandler {
             } else if (input.type === 'radio') {
                 // For radio buttons, check the one matching the value
                 let value = key === 'direction' ? direction : block.data[key];
-                const matchingRadio = blockElement.querySelector(`[data-setting="${key}"][value="${value}"]`);
+                // Find radio button by data-setting and value within this block only
+                const matchingRadio = blockElement.querySelector(`input[data-setting="${key}"][value="${value}"]`);
                 if (matchingRadio) {
                     matchingRadio.checked = true;
                     processedKeys.add(key);
