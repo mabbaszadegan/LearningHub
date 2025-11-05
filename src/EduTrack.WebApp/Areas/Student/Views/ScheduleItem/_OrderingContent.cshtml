@@ -56,20 +56,24 @@
                 var includedCount = orderingBlock.Items.Count(i => i.Include);
                 var allItems = orderingBlock.Items.OrderBy(_ => Guid.NewGuid()).ToList();
 
-                // Add separator between blocks (except for the first one)
-                if (blockIndex > 0)
-                {
-                    <div class="ordering-block-separator"></div>
-                }
-
-                <div class="ordering-block-wrapper" data-block-id="@orderingBlock.Id" data-block-order="@orderingBlock.Order">
+                <div class="ordering-block-card" data-block-id="@orderingBlock.Id" data-block-order="@orderingBlock.Order">
                     @if (!string.IsNullOrWhiteSpace(orderingBlock.Instruction))
                     {
-                        <div class="ordering-instruction-minimal">
-                            <p>@orderingBlock.Instruction</p>
+                        <div class="ordering-block-header">
+                            <div class="ordering-block-number">@(blockIndex + 1)</div>
+                            <div class="ordering-instruction-minimal">
+                                <p>@orderingBlock.Instruction</p>
+                            </div>
                         </div>
                     }
-                    <div class="sorting-block" data-direction="@finalDirection" data-allow-dnd="@orderingBlock.AllowDragDrop.ToString().ToLower()" data-show-numbers="@orderingBlock.ShowNumbers.ToString().ToLower()">
+                    else
+                    {
+                        <div class="ordering-block-header">
+                            <div class="ordering-block-number">@(blockIndex + 1)</div>
+                        </div>
+                    }
+                    <div class="ordering-block-content">
+                        <div class="sorting-block" data-direction="@finalDirection" data-allow-dnd="@orderingBlock.AllowDragDrop.ToString().ToLower()" data-show-numbers="@orderingBlock.ShowNumbers.ToString().ToLower()">
                         <div class="sorting-pool" aria-label="لیست آیتم‌ها" role="list">
                             @foreach (var item in allItems)
                             {
@@ -104,6 +108,7 @@
                                 </div>
                             }
                         </div>
+                        </div>
                     </div>
                 </div>
                 blockIndex++;
@@ -135,47 +140,59 @@
             var includedCount = content.Items.Count(i => i.Include);
             var allItems = content.Items.OrderBy(_ => Guid.NewGuid()).ToList();
 
-            @if (!string.IsNullOrWhiteSpace(content.Instruction))
-            {
-                <div class="ordering-instruction-minimal">
-                    <p>@content.Instruction</p>
-                </div>
-            }
-
-            <div class="sorting-block" data-direction="@direction" data-allow-dnd="@content.AllowDragDrop.ToString().ToLower()" data-show-numbers="@content.ShowNumbers.ToString().ToLower()">
-                <div class="sorting-pool" id="sortingPool" aria-label="لیست آیتم‌ها" role="list">
-                    @foreach (var item in allItems)
-                    {
-                        <div class="sorting-item" role="listitem" data-id="@item.Id" data-type="@item.Type" tabindex="0">
-                            <span class="sorting-grip" aria-hidden="true"><i class="fas fa-grip-vertical"></i></span>
-                            @if (string.Equals(item.Type, "text", System.StringComparison.OrdinalIgnoreCase))
+            <div class="ordering-block-card">
+                @if (!string.IsNullOrWhiteSpace(content.Instruction))
+                {
+                    <div class="ordering-block-header">
+                        <div class="ordering-block-number">1</div>
+                        <div class="ordering-instruction-minimal">
+                            <p>@content.Instruction</p>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="ordering-block-header">
+                        <div class="ordering-block-number">1</div>
+                    </div>
+                }
+                <div class="ordering-block-content">
+                    <div class="sorting-block" data-direction="@direction" data-allow-dnd="@content.AllowDragDrop.ToString().ToLower()" data-show-numbers="@content.ShowNumbers.ToString().ToLower()">
+                        <div class="sorting-pool" id="sortingPool" aria-label="لیست آیتم‌ها" role="list">
+                            @foreach (var item in allItems)
                             {
-                                <span class="sorting-text">@item.Value</span>
-                            }
-                            else if (string.Equals(item.Type, "image", System.StringComparison.OrdinalIgnoreCase))
-                            {
-                                <img class="sorting-image" src="@item.FileUrl" alt="" />
-                            }
-                            else if (string.Equals(item.Type, "audio", System.StringComparison.OrdinalIgnoreCase))
-                            {
-                                <audio class="sorting-audio" controls src="@item.FileUrl"></audio>
+                                <div class="sorting-item" role="listitem" data-id="@item.Id" data-type="@item.Type" tabindex="0">
+                                    <span class="sorting-grip" aria-hidden="true"><i class="fas fa-grip-vertical"></i></span>
+                                    @if (string.Equals(item.Type, "text", System.StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        <span class="sorting-text">@item.Value</span>
+                                    }
+                                    else if (string.Equals(item.Type, "image", System.StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        <img class="sorting-image" src="@item.FileUrl" alt="" />
+                                    }
+                                    else if (string.Equals(item.Type, "audio", System.StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        <audio class="sorting-audio" controls src="@item.FileUrl"></audio>
+                                    }
+                                </div>
                             }
                         </div>
-                    }
-                </div>
 
-                <div class="sorting-slots @("slots-" + direction)" id="sortingSlots" aria-label="فضاهای خالی" role="list">
-                    @for (var i = 0; i < includedCount; i++)
-                    {
-                        var numberLabel = content.ShowNumbers ? (i + 1).ToString() : string.Empty;
-                        <div class="sorting-slot" role="listitem" data-index="@i">
-                            @if (content.ShowNumbers)
+                        <div class="sorting-slots @("slots-" + direction)" id="sortingSlots" aria-label="فضاهای خالی" role="list">
+                            @for (var i = 0; i < includedCount; i++)
                             {
-                                <span class="slot-number">@numberLabel</span>
+                                var numberLabel = content.ShowNumbers ? (i + 1).ToString() : string.Empty;
+                                <div class="sorting-slot" role="listitem" data-index="@i">
+                                    @if (content.ShowNumbers)
+                                    {
+                                        <span class="slot-number">@numberLabel</span>
+                                    }
+                                    <div class="slot-dropzone" aria-label="رها کردن آیتم"></div>
+                                </div>
                             }
-                            <div class="slot-dropzone" aria-label="رها کردن آیتم"></div>
                         </div>
-                    }
+                    </div>
                 </div>
             </div>
         }
