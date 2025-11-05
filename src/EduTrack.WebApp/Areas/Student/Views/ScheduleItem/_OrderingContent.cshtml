@@ -1,59 +1,69 @@
 @model object
 @using EduTrack.Application.Common.Models.ScheduleItems
 @{
-	var content = Model as OrderingContent;
-	var directionClass = (content?.Direction?.ToLower() == "horizontal") ? "ordering-horizontal" : "ordering-vertical";
+    var content = Model as OrderingContent;
+    var directionClass = (content?.Direction?.ToLower() == "horizontal") ? "ordering-horizontal" : "ordering-vertical";
 }
 
 <div class="ordering-content-container">
-	@if (content != null && content.Items.Any())
-	{
-		@if (!string.IsNullOrWhiteSpace(content.Instruction))
-		{
-			<div class="ordering-instruction-minimal">
-				<p>@content.Instruction</p>
-			</div>
-		}
+    @if (content != null && content.Items.Any())
+    {
+        var includedCount = content.Items.Count(i => i.Include);
+        var direction = content.Direction?.ToLower() == "horizontal" ? "horizontal" : "vertical";
+        var allItems = content.Items.OrderBy(_ => Guid.NewGuid()).ToList();
 
-		<ul class="ordering-list @directionClass" id="orderingList"
-			data-allow-dnd="@content.AllowDragDrop.ToString().ToLower()"
-			data-direction="@content.Direction"
-			data-show-numbers="@content.ShowNumbers.ToString().ToLower()">
-			@{
-				var seq = 1;
-			}
-			@foreach (var item in content.Items.Where(i => i.Include))
-			{
-				<li class="ordering-item" draggable="@(content.AllowDragDrop ? "true" : "false")" data-id="@item.Id" data-type="@item.Type">
-					@if (content.ShowNumbers)
-					{
-						<span class="ordering-number">@seq.</span>
-					}
-					<span class="ordering-handle"><i class="fas fa-grip-vertical"></i></span>
-					@if (string.Equals(item.Type, "text", System.StringComparison.OrdinalIgnoreCase))
-					{
-						<span class="ordering-text">@item.Value</span>
-					}
-					else if (string.Equals(item.Type, "image", System.StringComparison.OrdinalIgnoreCase))
-					{
-						<img class="ordering-image" src="@item.FileUrl" alt="image" />
-					}
-					else if (string.Equals(item.Type, "audio", System.StringComparison.OrdinalIgnoreCase))
-					{
-						<audio class="ordering-audio" controls src="@item.FileUrl"></audio>
-					}
-				</li>
-				seq++;
-			}
-		</ul>
-	}
-	else
-	{
-		<div class="content-empty-state">
-			<i class="fas fa-info-circle"></i>
-			<p>محتوای مرتب‌سازی یافت نشد.</p>
-		</div>
-	}
+
+        @if (!string.IsNullOrWhiteSpace(content.Instruction))
+        {
+            <div class="ordering-instruction-minimal">
+                <p>@content.Instruction</p>
+            </div>
+        }
+
+        <div class="sorting-block" data-direction="@direction" data-allow-dnd="@content.AllowDragDrop.ToString().ToLower()" data-show-numbers="@content.ShowNumbers.ToString().ToLower()">
+            <div class="sorting-pool" id="sortingPool" aria-label="لیست آیتم‌ها" role="list">
+                @foreach (var item in allItems)
+                {
+                    <div class="sorting-item" role="listitem" data-id="@item.Id" data-type="@item.Type" tabindex="0">
+                        <span class="sorting-grip" aria-hidden="true"><i class="fas fa-grip-vertical"></i></span>
+                        @if (string.Equals(item.Type, "text", System.StringComparison.OrdinalIgnoreCase))
+                        {
+                            <span class="sorting-text">@item.Value</span>
+                        }
+                        else if (string.Equals(item.Type, "image", System.StringComparison.OrdinalIgnoreCase))
+                        {
+                            <img class="sorting-image" src="@item.FileUrl" alt="" />
+                        }
+                        else if (string.Equals(item.Type, "audio", System.StringComparison.OrdinalIgnoreCase))
+                        {
+                            <audio class="sorting-audio" controls src="@item.FileUrl"></audio>
+                        }
+                    </div>
+                }
+            </div>
+
+            <div class="sorting-slots @("slots-" + direction)" id="sortingSlots" aria-label="فضاهای خالی" role="list">
+                @for (var i = 0; i < includedCount; i++)
+                {
+                    var numberLabel = content.ShowNumbers ? (i + 1).ToString() : string.Empty;
+                    <div class="sorting-slot" role="listitem" data-index="@i">
+                        @if (content.ShowNumbers)
+                        {
+                            <span class="slot-number">@numberLabel</span>
+                        }
+                        <div class="slot-dropzone" aria-label="رها کردن آیتم"></div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="content-empty-state">
+            <i class="fas fa-info-circle"></i>
+            <p>محتوای مرتب‌سازی یافت نشد.</p>
+        </div>
+    }
 </div>
 
 

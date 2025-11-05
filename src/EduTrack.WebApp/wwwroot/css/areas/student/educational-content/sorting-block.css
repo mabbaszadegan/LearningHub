@@ -1,0 +1,132 @@
+/* Sorting Block - Minimal, clean, accessible */
+
+.sorting-block {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+}
+
+@media (min-width: 768px) {
+    .sorting-block {
+        grid-template-columns: 1fr;
+    }
+}
+
+.sorting-pool {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: #f8f9fa;
+    border: 1px dashed #e2e6ea;
+    border-radius: 10px;
+}
+
+.sorting-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: #fff;
+    border: 1px solid #e5e5e5;
+    border-radius: 10px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    cursor: grab;
+    user-select: none;
+    transition: box-shadow 0.2s ease, transform 0.1s ease;
+}
+
+.sorting-item:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(102,126,234,0.25);
+}
+
+.sorting-item.dragging {
+    opacity: 0.85;
+    transform: scale(0.98);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+}
+
+.sorting-grip {
+    color: #9aa0a6;
+}
+
+/* Media types */
+.sorting-text {
+    font-size: 0.95rem;
+    color: #333;
+}
+
+.sorting-image {
+    display: block;
+    max-width: 140px;
+    max-height: 100px;
+    border-radius: 8px;
+}
+
+.sorting-audio {
+    max-width: 220px;
+}
+
+/* Slots */
+.sorting-slots {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.slots-vertical {
+    grid-template-columns: 1fr;
+}
+
+.slots-horizontal {
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+.sorting-slot {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.slot-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #eef2ff;
+    color: #4f46e5;
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+.slot-dropzone {
+    flex: 1;
+    min-height: 56px;
+    padding: 0.5rem;
+    background: #fff;
+    border: 2px dashed #dce1e7;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.slot-dropzone.over {
+    border-color: #667eea;
+    background: #f5f7ff;
+}
+
+.slot-dropzone.filled {
+    border-style: solid;
+}
+
+/* Item inside slot should look consistent */
+.slot-dropzone .sorting-item {
+    width: 100%;
+    justify-content: flex-start;
+}
+
+
