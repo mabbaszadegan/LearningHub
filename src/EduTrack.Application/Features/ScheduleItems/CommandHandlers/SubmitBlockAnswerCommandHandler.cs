@@ -48,8 +48,24 @@ public class SubmitBlockAnswerCommandHandler : IRequestHandler<SubmitBlockAnswer
                 return Result<BlockAnswerResultDto>.Failure("Schedule item not found");
             }
 
-            // Get validator for this schedule item type
-            var validator = _validatorFactory.GetValidator(scheduleItem.Type);
+            // Try to get validator based on block type first (for ordering blocks in non-ordering items)
+            IBlockAnswerValidator? validator = null;
+            try
+            {
+                var blockType = GetBlockTypeFromContent(scheduleItem.ContentJson, request.BlockId);
+                if (!string.IsNullOrEmpty(blockType) && string.Equals(blockType, "ordering", StringComparison.OrdinalIgnoreCase))
+                {
+                    // Try to get OrderingBlockValidator (it supports Ordering type, but can work with any type)
+                    validator = _validatorFactory.GetValidator(Domain.Enums.ScheduleItemType.Ordering);
+                }
+            }
+            catch
+            {
+                // If block type detection fails, fall back to schedule item type
+            }
+
+            // Fall back to schedule item type validator if block type validator not found
+            validator ??= _validatorFactory.GetValidator(scheduleItem.Type);
 
             // Convert Dictionary to proper format for validator (handle JSON deserialization)
             // When JSON is deserialized to Dictionary<string, object>, arrays become List<object>
@@ -325,6 +341,55 @@ public class SubmitBlockAnswerCommandHandler : IRequestHandler<SubmitBlockAnswer
         }
 
         return submittedAnswer;
+    }
+
+    private string? GetBlockTypeFromContent(string? contentJson, string blockId)
+    {
+        if (string.IsNullOrWhiteSpace(contentJson))
+            return null;
+
+        try
+        {
+            var contentObj = JObject.Parse(contentJson);
+
+            // Check in "blocks" array
+            if (contentObj["blocks"] is JArray blocksArray)
+            {
+                foreach (var blockToken in blocksArray)
+                {
+                    var blockObj = blockToken as JObject;
+                    if (blockObj == null) continue;
+
+                    var currentBlockId = blockObj["id"]?.ToString();
+                    if (string.IsNullOrEmpty(currentBlockId) || !string.Equals(currentBlockId, blockId, StringComparison.OrdinalIgnoreCase))
+                        continue;
+
+                    return blockObj["type"]?.ToString();
+                }
+            }
+
+            // Check in "orderingBlocks" array (for Reminder)
+            if (contentObj["orderingBlocks"] is JArray orderingBlocksArray)
+            {
+                foreach (var blockToken in orderingBlocksArray)
+                {
+                    var blockObj = blockToken as JObject;
+                    if (blockObj == null) continue;
+
+                    var currentBlockId = blockObj["id"]?.ToString();
+                    if (string.IsNullOrEmpty(currentBlockId) || !string.Equals(currentBlockId, blockId, StringComparison.OrdinalIgnoreCase))
+                        continue;
+
+                    return "ordering"; // orderingBlocks always contain ordering blocks
+                }
+            }
+        }
+        catch
+        {
+            // If parsing fails, return null
+        }
+
+        return null;
     }
 }
 

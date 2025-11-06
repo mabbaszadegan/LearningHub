@@ -36,121 +36,64 @@ public class OrderingBlockValidator : IBlockAnswerValidator
             throw new ArgumentException("Schedule item not found", nameof(scheduleItemId));
         }
 
-        if (scheduleItem.Type != ScheduleItemType.Ordering)
-        {
-            throw new ArgumentException("Schedule item is not of Ordering type", nameof(scheduleItemId));
-        }
-
-        // Parse content JSON - use the same method as Student Controller
+        // Parse content JSON - ordering blocks can exist in any schedule item type
         var contentJson = scheduleItem.ContentJson;
         if (string.IsNullOrWhiteSpace(contentJson))
         {
             throw new InvalidOperationException("Schedule item content is empty");
         }
 
-        // Parse JSON directly (same as ParseOrderingFromBlocks in Student Controller)
+        // Parse JSON directly
         var contentObj = JObject.Parse(contentJson);
         OrderingBlock? block = null;
 
-        // Check if JSON has the new structure with blocks
+        // Try to find ordering block in different possible locations
+        // 1. Check in "blocks" array (for Reminder, Written, etc.)
         if (contentObj["blocks"] is JArray blocksArray)
         {
-            // Find the block by ID
-            foreach (var blockToken in blocksArray)
-            {
-                var blockObj = blockToken as JObject;
-                if (blockObj == null) continue;
-
-                var blockType = blockObj["type"]?.ToString().ToLower();
-                if (!string.Equals(blockType, "ordering", StringComparison.OrdinalIgnoreCase))
-                    continue;
-
-                var currentBlockId = blockObj["id"]?.ToString();
-                if (string.IsNullOrEmpty(currentBlockId) || !string.Equals(currentBlockId, blockId, StringComparison.OrdinalIgnoreCase))
-                    continue;
-
-                var order = blockObj["order"]?.Value<int>() ?? 0;
-                var data = blockObj["data"] as JObject;
-                if (data == null) continue;
-
-                // Parse block exactly like ParseOrderingFromBlocks
-                block = new OrderingBlock
-                {
-                    Id = currentBlockId,
-                    Order = order,
-                    Instruction = data["instruction"]?.ToString() ?? string.Empty,
-                    AllowDragDrop = data["allowDragDrop"]?.Value<bool>() ?? true,
-                    Direction = data["direction"]?.ToString() ?? "vertical",
-                    Alignment = data["alignment"]?.ToString() ?? "right",
-                    ShowNumbers = data["showNumbers"]?.Value<bool>() ?? true,
-                    IsRequired = data["isRequired"]?.Value<bool>() ?? true
-                };
-
-                // Parse points
-                var pointsToken = data["points"];
-                if (pointsToken != null)
-                {
-                    if (pointsToken.Type == JTokenType.Integer || pointsToken.Type == JTokenType.Float)
-                    {
-                        block.Points = pointsToken.Value<decimal>();
-                    }
-                    else if (pointsToken.Type == JTokenType.String && decimal.TryParse(pointsToken.ToString(), out var pts))
-                    {
-                        block.Points = pts;
-                    }
-                }
-
-                // Parse items
-                if (data["items"] is JArray items)
-                {
-                    foreach (var t in items)
-                    {
-                        if (t is not JObject itemObj) continue;
-                        var item = new OrderingItem
-                        {
-                            Id = itemObj["id"]?.ToString() ?? Guid.NewGuid().ToString(),
-                            Type = itemObj["type"]?.ToString() ?? "text",
-                            Include = itemObj["include"]?.Value<bool>() ?? true,
-                            Value = itemObj["value"]?.ToString(),
-                            FileUrl = itemObj["fileUrl"]?.ToString(),
-                            FileName = itemObj["fileName"]?.ToString(),
-                            MimeType = itemObj["mimeType"]?.ToString(),
-                            FileId = itemObj["fileId"]?.Type == JTokenType.Integer ? itemObj["fileId"]!.Value<int?>() : null
-                        };
-                        block.Items.Add(item);
-                    }
-                }
-
-                // Parse correctOrder - THIS IS THE KEY PART!
-                if (data["correctOrder"] is JArray correct)
-                {
-                    block.CorrectOrder = correct.Select(x => x?.ToString() ?? string.Empty)
-                        .Where(x => !string.IsNullOrEmpty(x))
-                        .ToList();
-                }
-
-                break; // Found the block, exit loop
-            }
+            block = FindOrderingBlockInArray(blocksArray, blockId);
         }
-        else
+
+        // 2. Check in "orderingBlocks" array (for Reminder)
+        if (block == null && contentObj["orderingBlocks"] is JArray orderingBlocksArray)
         {
-            // Legacy format - parse as old structure
+            block = FindOrderingBlockInArray(orderingBlocksArray, blockId);
+        }
+
+        // 3. For Ordering type items, check legacy format or blocks in OrderingContent
+        if (block == null && scheduleItem.Type == ScheduleItemType.Ordering)
+        {
+            // Try legacy format
             var jsonSettings = new JsonSerializerSettings
             {
                 ContractResolver = new Newtonsoft.Json.Serialization.CamelCasePropertyNamesContractResolver()
             };
 
             var content = JsonConvert.DeserializeObject<OrderingContent>(contentJson, jsonSettings);
-            if (content != null && (blockId == "main" || blockId == "legacy"))
+            if (content != null)
             {
-                block = new OrderingBlock
+                // Check in OrderingContent.Blocks
+                if (content.Blocks != null && content.Blocks.Any())
                 {
-                    Id = "main",
-                    Items = content.Items ?? new List<OrderingItem>(),
-                    CorrectOrder = content.CorrectOrder ?? new List<string>(),
-                    Points = content.Points,
-                    Instruction = content.Instruction ?? string.Empty
-                };
+                    block = content.Blocks.FirstOrDefault(b => b.Id == blockId);
+                }
+                
+                // Legacy format - single ordering block
+                if (block == null && (blockId == "main" || blockId == "legacy"))
+                {
+                    block = new OrderingBlock
+                    {
+                        Id = "main",
+                        Items = content.Items ?? new List<OrderingItem>(),
+                        CorrectOrder = content.CorrectOrder ?? new List<string>(),
+                        Points = content.Points,
+                        Instruction = content.Instruction ?? string.Empty,
+                        AllowDragDrop = content.AllowDragDrop,
+                        Direction = content.Direction,
+                        ShowNumbers = content.ShowNumbers,
+                        IsRequired = content.IsRequired
+                    };
+                }
             }
         }
 
@@ -367,6 +310,88 @@ public class OrderingBlockValidator : IBlockAnswerValidator
         }
 
         return true;
+    }
+
+    private OrderingBlock? FindOrderingBlockInArray(JArray blocksArray, string blockId)
+    {
+        foreach (var blockToken in blocksArray)
+        {
+            var blockObj = blockToken as JObject;
+            if (blockObj == null) continue;
+
+            // Check if this is an ordering block
+            var blockType = blockObj["type"]?.ToString().ToLower();
+            if (!string.Equals(blockType, "ordering", StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            var currentBlockId = blockObj["id"]?.ToString();
+            if (string.IsNullOrEmpty(currentBlockId) || !string.Equals(currentBlockId, blockId, StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            var order = blockObj["order"]?.Value<int>() ?? 0;
+            var data = blockObj["data"] as JObject;
+            if (data == null) continue;
+
+            // Parse block
+            var block = new OrderingBlock
+            {
+                Id = currentBlockId,
+                Order = order,
+                Instruction = data["instruction"]?.ToString() ?? string.Empty,
+                AllowDragDrop = data["allowDragDrop"]?.Value<bool>() ?? true,
+                Direction = data["direction"]?.ToString() ?? "vertical",
+                Alignment = data["alignment"]?.ToString() ?? "right",
+                ShowNumbers = data["showNumbers"]?.Value<bool>() ?? true,
+                IsRequired = data["isRequired"]?.Value<bool>() ?? true
+            };
+
+            // Parse points
+            var pointsToken = data["points"];
+            if (pointsToken != null)
+            {
+                if (pointsToken.Type == JTokenType.Integer || pointsToken.Type == JTokenType.Float)
+                {
+                    block.Points = pointsToken.Value<decimal>();
+                }
+                else if (pointsToken.Type == JTokenType.String && decimal.TryParse(pointsToken.ToString(), out var pts))
+                {
+                    block.Points = pts;
+                }
+            }
+
+            // Parse items
+            if (data["items"] is JArray items)
+            {
+                foreach (var t in items)
+                {
+                    if (t is not JObject itemObj) continue;
+                    var item = new OrderingItem
+                    {
+                        Id = itemObj["id"]?.ToString() ?? Guid.NewGuid().ToString(),
+                        Type = itemObj["type"]?.ToString() ?? "text",
+                        Include = itemObj["include"]?.Value<bool>() ?? true,
+                        Value = itemObj["value"]?.ToString(),
+                        FileUrl = itemObj["fileUrl"]?.ToString(),
+                        FileName = itemObj["fileName"]?.ToString(),
+                        MimeType = itemObj["mimeType"]?.ToString(),
+                        FileId = itemObj["fileId"]?.Type == JTokenType.Integer ? itemObj["fileId"]!.Value<int?>() : null
+                    };
+                    block.Items.Add(item);
+                }
+            }
+
+            // Parse correctOrder
+            if (data["correctOrder"] is JArray correct)
+            {
+                block.CorrectOrder = correct.Select(x => x?.ToString() ?? string.Empty)
+                    .Where(x => !string.IsNullOrEmpty(x))
+                    .ToList();
+            }
+
+            return block;
+        }
+
+        return null;
     }
 }
 
