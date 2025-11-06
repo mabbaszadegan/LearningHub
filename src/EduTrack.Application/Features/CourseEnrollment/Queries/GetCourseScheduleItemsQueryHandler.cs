@@ -43,6 +43,7 @@ public class GetCourseScheduleItemsQueryHandler : IRequestHandler<GetCourseSched
                     .ThenInclude(ga => ga.StudentGroup)
                 .Include(si => si.SubChapterAssignments)
                     .ThenInclude(sca => sca.SubChapter)
+                        .ThenInclude(sc => sc.Chapter)
                 .Include(si => si.StudentAssignments)
                     .ThenInclude(sa => sa.Student)
                 .Include(si => si.Lesson)
@@ -88,7 +89,8 @@ public class GetCourseScheduleItemsQueryHandler : IRequestHandler<GetCourseSched
                     Id = sca.Id,
                     ScheduleItemId = sca.ScheduleItemId,
                     SubChapterId = sca.SubChapterId,
-                    SubChapterTitle = sca.SubChapter?.Title ?? ""
+                    SubChapterTitle = sca.SubChapter?.Title ?? "",
+                    ChapterTitle = sca.SubChapter?.Chapter?.Title ?? ""
                 }).ToList(),
                 StudentAssignments = si.StudentAssignments.Select(sa => new ScheduleItemStudentAssignmentDto
                 {

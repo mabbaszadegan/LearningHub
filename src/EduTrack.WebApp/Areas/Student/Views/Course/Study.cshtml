@@ -44,7 +44,7 @@
                 <select id="sortBy" class="study-sort-select-minimal">
                     <option value="startDate">زمان ایجاد</option>
                     <option value="studyTime">بیشترین زمان</option>
-                    <option value="lastStudy">آخرین مطالعه</option>
+                    <option value="lastStudy" selected>آخرین مطالعه</option>
                     <option value="mandatory">اجباری</option>
                 </select>
             </div>
@@ -152,6 +152,13 @@
                            data-last-study="@(lastStudyDate.HasValue ? lastStudyDate.Value.ToUnixTimeSeconds() : 0)"
                            data-is-mandatory="@(item.IsMandatory ? 1 : 0)"
                            data-created-at="@item.CreatedAt.ToUnixTimeSeconds()">
+                            @if (lastStudyDate.HasValue)
+                            {
+                                <div class="study-item-last-study-badge">
+                                    <i class="fas fa-history"></i>
+                                    <span>@FormatLastStudyDate(lastStudyDate.Value)</span>
+                                </div>
+                            }
                             <div class="study-item-icon" style="background-color: @GetItemTypeColor(item.Type)">
                                 <i class="@GetItemTypeIcon(item.Type)"></i>
                             </div>
@@ -163,8 +170,11 @@
                                         if (firstSubChapter != null)
                                         {
                                             <div class="study-item-chapter-info">
-                                                <span class="chapter-name">@firstSubChapter.ChapterTitle</span>
-                                                <span class="chapter-separator">/</span>
+                                                @if (!string.IsNullOrWhiteSpace(firstSubChapter.ChapterTitle))
+                                                {
+                                                    <span class="chapter-name">@firstSubChapter.ChapterTitle</span>
+                                                    <span class="chapter-separator">/</span>
+                                                }
                                                 <span class="subchapter-name">@firstSubChapter.SubChapterTitle</span>
                                             </div>
                                         }
@@ -178,13 +188,6 @@
                                             <i class="fas fa-book-open stat-icon-minimal"></i>
                                             <span class="stat-mini">@sessionsCount</span>
                                         </div>
-                                        @if (lastStudyDate.HasValue)
-                                        {
-                                            <div class="stat-item stat-last-study">
-                                                <i class="fas fa-history stat-icon-minimal"></i>
-                                                <span class="stat-mini">@FormatLastStudyDate(lastStudyDate.Value)</span>
-                                            </div>
-                                        }
                                     </div>
                                 </div>
                             </div>

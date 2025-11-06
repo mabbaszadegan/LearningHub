@@ -476,6 +476,30 @@ body.study-page-active .main-content {
     color: inherit;
     -webkit-tap-highlight-color: transparent;
     z-index: 1;
+    overflow: hidden;
+}
+
+.study-item-last-study-badge {
+    position: absolute;
+    top: 0.5rem;
+    left: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.6rem;
+    color: #9ca3af;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 0.2rem 0.4rem;
+    border-radius: 6px;
+    backdrop-filter: blur(4px);
+    z-index: 2;
+    font-family: 'Courier New', monospace;
+    line-height: 1;
+}
+
+.study-item-last-study-badge i {
+    font-size: 0.55rem;
+    opacity: 0.7;
 }
 
 .study-item-card:hover,
@@ -624,10 +648,6 @@ body.study-page-active .main-content {
     color: #d1d5db;
 }
 
-.study-item-stats .stat-last-study {
-    margin-top: 0;
-    width: auto;
-}
 
 .study-status-badge {
     font-size: 0.75rem;
@@ -794,6 +814,17 @@ body.study-page-active .main-content {
 
     .study-item-stats .stat-item {
         gap: 0.1rem;
+    }
+
+    .study-item-last-study-badge {
+        top: 0.375rem;
+        left: 0.375rem;
+        font-size: 0.55rem;
+        padding: 0.15rem 0.3rem;
+    }
+
+    .study-item-last-study-badge i {
+        font-size: 0.5rem;
     }
 }
 

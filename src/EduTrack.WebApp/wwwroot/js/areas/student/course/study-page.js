@@ -114,8 +114,8 @@ class StudyPage {
     }
     
     initializeSorting() {
-        // Initial sort by start date
-        this.sortItems('startDate');
+        // Initial sort by last study
+        this.sortItems('lastStudy');
     }
     
     sortItems(sortBy) {
