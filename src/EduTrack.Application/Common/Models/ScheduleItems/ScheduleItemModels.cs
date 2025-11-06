@@ -99,6 +99,33 @@ public class MultipleChoiceContent
     public string AnswerType { get; set; } = "single"; // single, multiple
     public bool RandomizeOptions { get; set; }
     public List<int> CorrectAnswers { get; set; } = new();
+    public List<MultipleChoiceBlock> Blocks { get; set; } = new();
+}
+
+public class MultipleChoiceBlock
+{
+    public string Id { get; set; } = Guid.NewGuid().ToString();
+    public int Order { get; set; }
+    public string Question { get; set; } = string.Empty;
+    public List<MultipleChoiceOption> Options { get; set; } = new();
+    public string AnswerType { get; set; } = "single"; // single, multiple
+    public bool RandomizeOptions { get; set; }
+    public List<int> CorrectAnswers { get; set; } = new();
+    public decimal Points { get; set; } = 1;
+    public bool IsRequired { get; set; } = true;
+    
+    // Stem media properties
+    public string? StemMediaType { get; set; } // image, audio, video
+    public string? StemImageUrl { get; set; }
+    public string? StemImageFileId { get; set; }
+    public string? StemImageFileName { get; set; }
+    public string? StemAudioUrl { get; set; }
+    public string? StemAudioFileId { get; set; }
+    public string? StemAudioFileName { get; set; }
+    public bool StemAudioIsRecorded { get; set; }
+    public string? StemVideoUrl { get; set; }
+    public string? StemVideoFileId { get; set; }
+    public string? StemVideoFileName { get; set; }
 }
 
 public class MultipleChoiceOption

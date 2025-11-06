@@ -66,6 +66,15 @@
                 return;
             }
         }
+        
+        if (scheduleItemType === 'MultipleChoice' || scheduleItemType === '4') {
+            if (!submittedAnswer.selectedOptions || submittedAnswer.selectedOptions.length === 0) {
+                showError(button, 'لطفاً ابتدا پاسخ را انتخاب کنید.');
+                button.disabled = false;
+                button.innerHTML = originalContent;
+                return;
+            }
+        }
 
         // Submit answer
         fetch('/Student/ScheduleItem/SubmitBlockAnswer', {
@@ -172,14 +181,36 @@
     }
 
     function getMultipleChoiceAnswer(blockId) {
-        // Find the multiple choice block
-        const block = document.querySelector(`[data-block-id="${blockId}"]`) || 
-                     document.querySelector('.multiple-choice-block');
-        if (!block) return null;
+        // Find the multiple choice block card
+        const button = document.querySelector(`.btn-check-answer-minimal[data-block-id="${blockId}"]`);
+        let blockCard = button ? button.closest('.mcq-block-card') : null;
+        
+        if (!blockCard) {
+            // Try to find by block order or first block
+            const blockCards = document.querySelectorAll('.mcq-block-card');
+            if (blockCards.length > 0) {
+                blockCard = blockCards[0];
+            }
+        }
+        
+        if (!blockCard) {
+            // Fallback: try to find by data-block-id attribute
+            blockCard = document.querySelector(`.mcq-block-card[data-block-id="${blockId}"]`);
+        }
+        
+        if (!blockCard) {
+            return null;
+        }
+
+        // Find the options container for this specific block
+        const optionsContainer = blockCard.querySelector(`.mcq-options[data-block-id="${blockId}"]`);
+        if (!optionsContainer) {
+            return null;
+        }
 
         const selectedOptions = [];
-        const checkboxes = block.querySelectorAll('input[type="checkbox"]:checked');
-        const radios = block.querySelectorAll('input[type="radio"]:checked');
+        const checkboxes = optionsContainer.querySelectorAll('input[type="checkbox"]:checked');
+        const radios = optionsContainer.querySelectorAll('input[type="radio"]:checked');
 
         if (checkboxes.length > 0) {
             checkboxes.forEach(function(checkbox) {
@@ -195,6 +226,11 @@
                     selectedOptions.push(optionIndex);
                 }
             });
+        }
+
+        // Validate that we have at least one selected option
+        if (selectedOptions.length === 0) {
+            return null; // Return null to indicate no answer provided
         }
 
         return {
@@ -272,16 +308,27 @@
     }
 
     function showError(button, message) {
-        // Find result container
-        const blockCard = button.closest('.ordering-block-card');
-        if (!blockCard) return;
+        // Find result container - try both ordering and MCQ block cards
+        const blockCard = button.closest('.ordering-block-card') || button.closest('.mcq-block-card');
+        if (!blockCard) {
+            // For minimal buttons, just show a simple alert
+            alert(message);
+            return;
+        }
 
         const blockId = button.getAttribute('data-block-id');
         const resultContainer = blockCard.querySelector(`.block-result[data-block-id="${blockId}"]`);
-        if (!resultContainer) return;
+        if (!resultContainer) {
+            // For minimal buttons without result container, show alert
+            alert(message);
+            return;
+        }
 
         const resultContent = resultContainer.querySelector('.result-content');
-        if (!resultContent) return;
+        if (!resultContent) {
+            alert(message);
+            return;
+        }
 
         resultContainer.classList.remove('correct', 'incorrect');
         resultContainer.classList.add('incorrect');
@@ -300,9 +347,11 @@
     }
     
     function loadAnswerHistory() {
-        // Get all ordering blocks on the page
+        // Get all ordering blocks and MCQ blocks on the page
         const orderingBlocks = document.querySelectorAll('.ordering-block-card');
-        if (orderingBlocks.length === 0) return;
+        const mcqBlocks = document.querySelectorAll('.mcq-block-card');
+        
+        if (orderingBlocks.length === 0 && mcqBlocks.length === 0) return;
         
         // Get schedule item ID from first button
         const firstButton = document.querySelector('.btn-check-answer-minimal, .btn-check-answer');
@@ -311,8 +360,19 @@
         const scheduleItemId = firstButton.getAttribute('data-schedule-item-id');
         if (!scheduleItemId) return;
         
-        // Load history for all blocks
+        // Load history for all ordering blocks
         orderingBlocks.forEach(function(blockCard) {
+            const button = blockCard.querySelector('.btn-check-answer-minimal, .btn-check-answer');
+            if (!button) return;
+            
+            const blockId = button.getAttribute('data-block-id');
+            if (!blockId) return;
+            
+            loadAnswerHistoryForBlock(scheduleItemId, blockId);
+        });
+        
+        // Load history for all MCQ blocks
+        mcqBlocks.forEach(function(blockCard) {
             const button = blockCard.querySelector('.btn-check-answer-minimal, .btn-check-answer');
             if (!button) return;
             

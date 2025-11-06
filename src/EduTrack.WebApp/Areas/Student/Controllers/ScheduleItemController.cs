@@ -6,6 +6,8 @@ using EduTrack.Application.Features.TeachingPlan.Queries;
 using EduTrack.Application.Common.Models.StudySessions;
 using EduTrack.Application.Common.Models.TeachingPlans;
 using EduTrack.Application.Common.Models.ScheduleItems;
+using MultipleChoiceContent = EduTrack.Application.Common.Models.ScheduleItems.MultipleChoiceContent;
+using MultipleChoiceBlock = EduTrack.Application.Common.Models.ScheduleItems.MultipleChoiceBlock;
 using EduTrack.Domain.Enums;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -717,9 +719,145 @@ public class ScheduleItemController : Controller
         return JsonConvert.DeserializeObject<GapFillContent>("{}", settings) ?? new GapFillContent();
     }
 
-    private MultipleChoiceContent ParseMultipleChoiceFromBlocks(JArray blocksArray, JsonSerializerSettings settings)
+    private EduTrack.Application.Common.Models.ScheduleItems.MultipleChoiceContent ParseMultipleChoiceFromBlocks(JArray blocksArray, JsonSerializerSettings settings)
     {
-        return JsonConvert.DeserializeObject<MultipleChoiceContent>("{}", settings) ?? new MultipleChoiceContent();
+        var mcqContent = new EduTrack.Application.Common.Models.ScheduleItems.MultipleChoiceContent();
+        var mcqBlocks = new List<EduTrack.Application.Common.Models.ScheduleItems.MultipleChoiceBlock>();
+
+        foreach (var blockToken in blocksArray)
+        {
+            var block = blockToken as JObject;
+            if (block == null) continue;
+
+            var blockType = block["type"]?.ToString().ToLower();
+            if (!string.Equals(blockType, "multiplechoice", StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            var order = block["order"]?.Value<int>() ?? 0;
+            var data = block["data"] as JObject;
+            if (data == null) continue;
+
+            // Each MCQ block can have multiple questions
+            if (data["questions"] is JArray questions)
+            {
+                foreach (var questionToken in questions)
+                {
+                    if (questionToken is not JObject questionObj) continue;
+
+                    var questionId = questionObj["id"]?.ToString() ?? Guid.NewGuid().ToString();
+                    var questionText = questionObj["stem"]?.ToString() ?? string.Empty;
+                    var answerType = questionObj["answerType"]?.ToString() ?? "single";
+                    var randomizeOptions = questionObj["randomizeOptions"]?.Value<bool>() ?? false;
+
+                    var mcqBlock = new EduTrack.Application.Common.Models.ScheduleItems.MultipleChoiceBlock
+                    {
+                        Id = questionId,
+                        Order = order,
+                        Question = questionText,
+                        AnswerType = answerType,
+                        RandomizeOptions = randomizeOptions,
+                        IsRequired = data["isRequired"]?.Value<bool>() ?? true
+                    };
+
+                    // Parse stem media data
+                    if (questionObj["stemData"] is JObject stemData)
+                    {
+                        var mediaType = stemData["mediaType"]?.ToString();
+                        mcqBlock.StemMediaType = mediaType;
+
+                        if (mediaType == "image")
+                        {
+                            mcqBlock.StemImageUrl = stemData["imageUrl"]?.ToString();
+                            mcqBlock.StemImageFileId = stemData["imageFileId"]?.ToString();
+                            mcqBlock.StemImageFileName = stemData["imageFileName"]?.ToString();
+                        }
+                        else if (mediaType == "audio")
+                        {
+                            mcqBlock.StemAudioUrl = stemData["audioUrl"]?.ToString();
+                            mcqBlock.StemAudioFileId = stemData["audioFileId"]?.ToString();
+                            mcqBlock.StemAudioFileName = stemData["audioFileName"]?.ToString();
+                            mcqBlock.StemAudioIsRecorded = stemData["isRecorded"]?.Value<bool>() ?? false;
+                        }
+                        else if (mediaType == "video")
+                        {
+                            mcqBlock.StemVideoUrl = stemData["videoUrl"]?.ToString();
+                            mcqBlock.StemVideoFileId = stemData["videoFileId"]?.ToString();
+                            mcqBlock.StemVideoFileName = stemData["videoFileName"]?.ToString();
+                        }
+                    }
+
+                    // Points stored as string in builder sometimes
+                    var pointsToken = data["points"];
+                    if (pointsToken != null)
+                    {
+                        if (pointsToken.Type == JTokenType.Integer || pointsToken.Type == JTokenType.Float)
+                        {
+                            mcqBlock.Points = pointsToken.Value<decimal>();
+                        }
+                        else if (pointsToken.Type == JTokenType.String && decimal.TryParse(pointsToken.ToString(), out var pts))
+                        {
+                            mcqBlock.Points = pts;
+                        }
+                    }
+
+                    // Parse options
+                    if (questionObj["options"] is JArray options)
+                    {
+                        var correctAnswers = new List<int>();
+                        foreach (var optionToken in options)
+                        {
+                            if (optionToken is not JObject optionObj) continue;
+
+                            var optionIndex = optionObj["index"]?.Value<int>() ?? 0;
+                            var optionType = optionObj["optionType"]?.ToString() ?? "text";
+                            var isCorrect = optionObj["isCorrect"]?.Value<bool>() ?? false;
+
+                            var option = new EduTrack.Application.Common.Models.ScheduleItems.MultipleChoiceOption
+                            {
+                                Index = optionIndex,
+                                OptionType = optionType,
+                                IsCorrect = isCorrect
+                            };
+
+                            if (optionType == "text")
+                            {
+                                option.Text = optionObj["text"]?.ToString() ?? string.Empty;
+                            }
+                            else if (optionType == "image")
+                            {
+                                option.Text = optionObj["text"]?.ToString() ?? string.Empty;
+                                option.ImageUrl = optionObj["imageUrl"]?.ToString();
+                                option.ImageFileId = optionObj["imageFileId"]?.ToString();
+                                option.ImageFileName = optionObj["imageFileName"]?.ToString();
+                            }
+                            else if (optionType == "audio")
+                            {
+                                option.Text = optionObj["text"]?.ToString() ?? string.Empty;
+                                option.AudioUrl = optionObj["audioUrl"]?.ToString();
+                                option.AudioFileId = optionObj["audioFileId"]?.ToString();
+                                option.AudioFileName = optionObj["audioFileName"]?.ToString();
+                                option.IsRecorded = optionObj["isRecorded"]?.Value<bool>() ?? false;
+                                option.AudioDuration = optionObj["audioDuration"]?.Value<int?>();
+                            }
+
+                            mcqBlock.Options.Add(option);
+
+                            if (isCorrect)
+                            {
+                                correctAnswers.Add(optionIndex);
+                            }
+                        }
+
+                        mcqBlock.CorrectAnswers = correctAnswers;
+                    }
+
+                    mcqBlocks.Add(mcqBlock);
+                }
+            }
+        }
+
+        mcqContent.Blocks = mcqBlocks.OrderBy(b => b.Order).ToList();
+        return mcqContent;
     }
 
     private MatchingContent ParseMatchFromBlocks(JArray blocksArray, JsonSerializerSettings settings)

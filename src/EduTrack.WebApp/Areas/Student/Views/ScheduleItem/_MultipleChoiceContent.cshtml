@@ -1,60 +1,211 @@
 @model object
 @using EduTrack.Application.Common.Models.ScheduleItems
+@using System.Linq
 @{
     var content = Model as MultipleChoiceContent;
+    var scheduleItemId = ViewBag.ScheduleItemId as int? ?? 0;
 }
 
 <div class="multiple-choice-content-container">
     @if (content != null)
     {
-        <div class="mcq-question">
-            <h4>@content.Question</h4>
-        </div>
+        // Check if we have multiple blocks or legacy single question
+        var hasMultipleBlocks = content.Blocks != null && content.Blocks.Any();
         
-        <div class="mcq-options" data-answer-type="@content.AnswerType">
-            @foreach (var option in content.Options.OrderBy(o => o.Index))
+        if (hasMultipleBlocks)
+        {
+            // Display all multiple choice blocks
+            var blockIndex = 0;
+            @foreach (var mcqBlock in content.Blocks!.OrderBy(b => b.Order))
             {
-                <div class="mcq-option" data-index="@option.Index">
-                    <label class="mcq-option-label">
-                        <input type="@(content.AnswerType == "multiple" ? "checkbox" : "radio")" 
-                               name="mcq-answer" 
-                               value="@option.Index"
-                               class="mcq-option-input">
-                        <span class="mcq-option-text">
-                            @if (option.OptionType == "text")
+                // Randomize options if needed
+                var options = mcqBlock.RandomizeOptions 
+                    ? mcqBlock.Options.OrderBy(_ => Guid.NewGuid()).ToList() 
+                    : mcqBlock.Options.OrderBy(o => o.Index).ToList();
+
+                <div class="mcq-block-card" data-block-id="@mcqBlock.Id" data-block-order="@mcqBlock.Order">
+                    <div class="mcq-block-header">
+                        <div class="mcq-block-number">@(blockIndex + 1)</div>
+                        @if (!string.IsNullOrWhiteSpace(mcqBlock.Question))
+                        {
+                            <div class="mcq-question-minimal">
+                                <p>@mcqBlock.Question</p>
+                            </div>
+                        }
+                    </div>
+                    @if (!string.IsNullOrEmpty(mcqBlock.StemMediaType))
+                    {
+                        <div class="mcq-stem-media">
+                            @if (mcqBlock.StemMediaType == "image" && !string.IsNullOrEmpty(mcqBlock.StemImageUrl))
                             {
-                                <span>@option.Text</span>
-                            }
-                            else if (option.OptionType == "image" && !string.IsNullOrEmpty(option.ImageUrl))
-                            {
-                                <img src="@option.ImageUrl" alt="@option.Text" class="mcq-option-image">
-                            }
-                            else if (option.OptionType == "audio" && !string.IsNullOrEmpty(option.AudioUrl))
-                            {
-                                <div class="mcq-audio-option">
-                                    <audio controls>
-                                        <source src="@option.AudioUrl" type="audio/mpeg">
-                                    </audio>
-                                    <span>@option.Text</span>
+                                <div class="mcq-stem-image">
+                                    <img src="@mcqBlock.StemImageUrl" alt="@mcqBlock.StemImageFileName" class="mcq-stem-media-image">
                                 </div>
                             }
-                        </span>
-                    </label>
+                            else if (mcqBlock.StemMediaType == "audio" && !string.IsNullOrEmpty(mcqBlock.StemAudioUrl))
+                            {
+                                <div class="mcq-stem-audio">
+                                    <audio controls class="mcq-stem-media-audio">
+                                        <source src="@mcqBlock.StemAudioUrl" type="audio/mpeg">
+                                    </audio>
+                                </div>
+                            }
+                            else if (mcqBlock.StemMediaType == "video" && !string.IsNullOrEmpty(mcqBlock.StemVideoUrl))
+                            {
+                                <div class="mcq-stem-video">
+                                    <video controls class="mcq-stem-media-video">
+                                        <source src="@mcqBlock.StemVideoUrl" type="video/mp4">
+                                    </video>
+                                </div>
+                            }
+                        </div>
+                    }
+                    <div class="mcq-block-content">
+                        <div class="mcq-options" data-answer-type="@mcqBlock.AnswerType" data-block-id="@mcqBlock.Id">
+                            @foreach (var option in options)
+                            {
+                                <div class="mcq-option" data-index="@option.Index">
+                                    <label class="mcq-option-label">
+                                        <input type="@(mcqBlock.AnswerType == "multiple" ? "checkbox" : "radio")" 
+                                               name="mcq-answer-@mcqBlock.Id" 
+                                               value="@option.Index"
+                                               class="mcq-option-input">
+                                        <span class="mcq-option-text">
+                                            @if (option.OptionType == "text")
+                                            {
+                                                <span>@option.Text</span>
+                                            }
+                                            else if (option.OptionType == "image" && !string.IsNullOrEmpty(option.ImageUrl))
+                                            {
+                                                <img src="@option.ImageUrl" alt="@option.Text" class="mcq-option-image">
+                                            }
+                                            else if (option.OptionType == "audio" && !string.IsNullOrEmpty(option.AudioUrl))
+                                            {
+                                                <div class="mcq-audio-option">
+                                                    <audio controls>
+                                                        <source src="@option.AudioUrl" type="audio/mpeg">
+                                                    </audio>
+                                                    @if (!string.IsNullOrEmpty(option.Text))
+                                                    {
+                                                        <span>@option.Text</span>
+                                                    }
+                                                </div>
+                                            }
+                                        </span>
+                                    </label>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                    <div class="mcq-block-actions">
+                        <div class="block-actions-row">
+                            <button type="button" 
+                                    class="btn-check-answer-minimal" 
+                                    data-schedule-item-id="@scheduleItemId"
+                                    data-schedule-item-type="@ScheduleItemType.MultipleChoice"
+                                    data-block-id="@mcqBlock.Id"
+                                    data-block-order="@mcqBlock.Order"
+                                    title="بررسی پاسخ">
+                                <i class="fas fa-check"></i>
+                            </button>
+                            <div class="block-answer-history" data-block-id="@mcqBlock.Id">
+                                <span class="history-correct" data-count="0">0</span>
+                                <span class="history-separator">/</span>
+                                <span class="history-incorrect" data-count="0">0</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
+                blockIndex++;
             }
-        </div>
-        
-        <div class="mcq-actions">
-            <button type="button" class="btn btn-primary" id="submit-mcq-answer">
-                <i class="fas fa-check-circle"></i> ثبت پاسخ
-            </button>
-        </div>
+        }
+        else if (!string.IsNullOrEmpty(content.Question) || content.Options.Any())
+        {
+            // Legacy: single question format
+            var options = content.RandomizeOptions 
+                ? content.Options.OrderBy(_ => Guid.NewGuid()).ToList() 
+                : content.Options.OrderBy(o => o.Index).ToList();
+
+            <div class="mcq-block-card">
+                <div class="mcq-block-header">
+                    <div class="mcq-block-number">1</div>
+                    @if (!string.IsNullOrWhiteSpace(content.Question))
+                    {
+                        <div class="mcq-question-minimal">
+                            <p>@content.Question</p>
+                        </div>
+                    }
+                </div>
+                <div class="mcq-block-content">
+                    <div class="mcq-options" data-answer-type="@content.AnswerType" data-block-id="main">
+                        @foreach (var option in options)
+                        {
+                            <div class="mcq-option" data-index="@option.Index">
+                                <label class="mcq-option-label">
+                                    <input type="@(content.AnswerType == "multiple" ? "checkbox" : "radio")" 
+                                           name="mcq-answer-main" 
+                                           value="@option.Index"
+                                           class="mcq-option-input">
+                                    <span class="mcq-option-text">
+                                        @if (option.OptionType == "text")
+                                        {
+                                            <span>@option.Text</span>
+                                        }
+                                        else if (option.OptionType == "image" && !string.IsNullOrEmpty(option.ImageUrl))
+                                        {
+                                            <img src="@option.ImageUrl" alt="@option.Text" class="mcq-option-image">
+                                        }
+                                        else if (option.OptionType == "audio" && !string.IsNullOrEmpty(option.AudioUrl))
+                                        {
+                                            <div class="mcq-audio-option">
+                                                <audio controls>
+                                                    <source src="@option.AudioUrl" type="audio/mpeg">
+                                                </audio>
+                                                @if (!string.IsNullOrEmpty(option.Text))
+                                                {
+                                                    <span>@option.Text</span>
+                                                }
+                                            </div>
+                                        }
+                                    </span>
+                                </label>
+                            </div>
+                        }
+                    </div>
+                </div>
+                <div class="mcq-block-actions">
+                    <div class="block-actions-row">
+                        <button type="button" 
+                                class="btn-check-answer-minimal" 
+                                data-schedule-item-id="@scheduleItemId"
+                                data-schedule-item-type="@ScheduleItemType.MultipleChoice"
+                                data-block-id="main"
+                                data-block-order="0"
+                                title="بررسی پاسخ">
+                            <i class="fas fa-check"></i>
+                        </button>
+                        <div class="block-answer-history" data-block-id="main">
+                            <span class="history-correct" data-count="0">0</span>
+                            <span class="history-separator">/</span>
+                            <span class="history-incorrect" data-count="0">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="content-empty-state">
+                <i class="fas fa-info-circle"></i>
+                <p>محتوای چندگزینه‌ای یافت نشد.</p>
+            </div>
+        }
     }
     else
     {
-        <div class="alert alert-warning">
-            <i class="fas fa-exclamation-triangle"></i>
-            محتوای چندگزینه‌ای یافت نشد.
+        <div class="content-empty-state">
+            <i class="fas fa-info-circle"></i>
+            <p>محتوای چندگزینه‌ای یافت نشد.</p>
         </div>
     }
 </div>
