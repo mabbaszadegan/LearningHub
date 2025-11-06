@@ -121,6 +121,63 @@ body.study-content-page-active .main-content {
         transform: scale(1.1);
     }
 
+/* Header Actions */
+.header-actions-minimal {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+.study-time-display {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.9);
+    font-family: 'Courier New', monospace;
+    min-width: 60px;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+}
+
+.btn-icon-minimal {
+    background: rgba(255, 255, 255, 0.15);
+    border: none;
+    color: white;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.7rem;
+    padding: 0;
+    flex-shrink: 0;
+}
+
+.btn-icon-minimal:hover {
+    background: rgba(255, 255, 255, 0.25);
+    color: white;
+    transform: scale(1.1);
+}
+
+.btn-icon-minimal:active {
+    transform: scale(0.95);
+}
+
+.btn-icon-minimal i {
+    font-size: 0.7rem;
+    line-height: 1;
+}
+
+/* View Toggle Button */
+.btn-view-toggle {
+    /* Same as btn-icon-minimal, can be customized if needed */
+}
+
 /* Main Content Area */
 .study-content-container {
     max-width: 1200px;

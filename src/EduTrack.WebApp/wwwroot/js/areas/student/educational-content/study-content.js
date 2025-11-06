@@ -15,7 +15,7 @@ let studySession = {
     init() {
         this.sessionId = window.studyContentConfig?.activeSessionId || 0;
         this.bindEvents();
-        this.startHiddenTimer();
+        // Start study session automatically (which starts the timer)
         this.startStudySession();
         
         // Initialize reminder content if needed (only if not already rendered server-side)
@@ -832,10 +832,63 @@ let studySession = {
         // Don't create session in database until user completes study
         // Just track locally for now
         this.sessionId = 0; // No database session yet
+        
+        // Start timer automatically when page loads
+        this.startTimer();
+        this.updateSessionToggleButton();
+        this.updateTimeDisplay();
+    },
+    
+    toggleStudySession() {
+        if (this.isActive) {
+            this.stopTimer();
+            this.updateSessionToggleButton();
+        } else {
+            this.startTimer();
+            this.updateSessionToggleButton();
+        }
+    },
+    
+    updateSessionToggleButton() {
+        const toggleBtn = document.getElementById('study-session-toggle');
+        if (!toggleBtn) return;
+        
+        const icon = toggleBtn.querySelector('i');
+        if (!icon) return;
+        
+        if (this.isActive) {
+            icon.className = 'fas fa-pause';
+            toggleBtn.setAttribute('title', 'توقف مطالعه');
+        } else {
+            icon.className = 'fas fa-play';
+            toggleBtn.setAttribute('title', 'شروع مطالعه');
+        }
+    },
+    
+    updateTimeDisplay() {
+        const timeDisplay = document.getElementById('study-time-display');
+        if (!timeDisplay) return;
+        
+        const totalSeconds = this.elapsedTime;
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
+        
+        const formattedTime = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        timeDisplay.textContent = formattedTime;
     },
     
     bindEvents() {
         const self = this;
+        
+        // Handle study session toggle button
+        const sessionToggleBtn = document.getElementById('study-session-toggle');
+        if (sessionToggleBtn) {
+            sessionToggleBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                self.toggleStudySession();
+            });
+        }
         
         // Handle browser back button
         window.addEventListener('popstate', (e) => {
@@ -947,12 +1000,15 @@ let studySession = {
                 this.elapsedTime = 0;
             }
             
-            // Timer runs in background, no UI updates needed
+            // Timer runs and updates UI
             this.updateInterval = setInterval(() => {
-                // Timer runs silently in background
                 this.elapsedTime = Math.floor((Date.now() - this.startTime) / 1000);
+                this.updateTimeDisplay();
             }, 1000);
             
+            // Update immediately
+            this.updateTimeDisplay();
+            this.updateSessionToggleButton();
         }
     },
     
@@ -963,6 +1019,7 @@ let studySession = {
                 clearInterval(this.updateInterval);
                 this.updateInterval = null;
             }
+            this.updateSessionToggleButton();
         }
     },
     
@@ -1178,34 +1235,95 @@ let studySession = {
             
             // Still navigate back even if save failed
             setTimeout(() => {
-                this.navigateToCourseScheduleItems();
+               // this.navigateToCourseScheduleItems();
             }, 2000);
         });
     },
     
     async saveStudySession() {
         try {
+            // Get schedule item ID from data attribute or config
+            const scheduleItemId = document.getElementById('schedule-item-content')?.dataset?.itemId || 
+                                  window.studyContentConfig?.scheduleItemId;
+            
+            console.log('Schedule Item ID sources:', {
+                fromDataAttribute: document.getElementById('schedule-item-content')?.dataset?.itemId,
+                fromConfig: window.studyContentConfig?.scheduleItemId,
+                final: scheduleItemId
+            });
+            
+            if (!scheduleItemId) {
+                throw new Error('Schedule item ID not found');
+            }
+            
+            // Ensure we have valid start time
+            if (!this.startTime) {
+                console.warn('No start time found, using current time');
+                this.startTime = Date.now() - (this.elapsedTime * 1000);
+            }
+            
+            // Use fixed end time if available (when modal was opened), otherwise current time
+            const endTime = this.fixedEndTime || Date.now();
+            
             // Create and complete the session in one operation
             const createAndCompleteData = {
-                ScheduleItemId: window.studyContentConfig?.scheduleItemId,
+                ScheduleItemId: parseInt(scheduleItemId),
                 StartedAt: new Date(this.startTime).toISOString(),
-                EndedAt: new Date(this.fixedEndTime || Date.now()).toISOString()
+                EndedAt: new Date(endTime).toISOString()
             };
+            
+            console.log('Saving study session with data:', createAndCompleteData);
+            console.log('Elapsed time:', this.elapsedTime, 'seconds');
+            console.log('Start time:', new Date(this.startTime).toISOString());
+            console.log('End time:', new Date(endTime).toISOString());
+            
+            // Get anti-forgery token
+            const tokenElement = document.querySelector('input[name="__RequestVerificationToken"]');
+            const token = tokenElement ? tokenElement.value : '';
+            console.log('Anti-forgery token found:', !!token);
+            
+            // Build headers
+            const headers = {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            };
+            
+            // Add CSRF token if available (ASP.NET Core uses X-CSRF-TOKEN header)
+            if (token) {
+                headers['X-CSRF-TOKEN'] = token;
+            }
             
             const response = await fetch('/Student/ScheduleItem/CreateAndCompleteStudySession', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
-                },
+                headers: headers,
                 body: JSON.stringify(createAndCompleteData)
             });
             
+            console.log('Response status:', response.status);
+            console.log('Response ok:', response.ok);
+            
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                let errorText = '';
+                try {
+                    errorText = await response.text();
+                    console.error('Response error text:', errorText);
+                    
+                    // Try to parse as JSON
+                    try {
+                        const errorJson = JSON.parse(errorText);
+                        console.error('Response error JSON:', errorJson);
+                        throw new Error(errorJson.error || errorJson.message || `HTTP error! status: ${response.status}`);
+                    } catch (parseError) {
+                        // Not JSON, use text
+                        throw new Error(errorText || `HTTP error! status: ${response.status}`);
+                    }
+                } catch (textError) {
+                    throw new Error(`HTTP error! status: ${response.status}, message: ${textError.message}`);
+                }
             }
             
             const result = await response.json();
+            console.log('Response result:', result);
             
             if (!result.success) {
                 throw new Error(result.error || 'خطا در ثبت جلسه مطالعه');
@@ -1214,6 +1332,7 @@ let studySession = {
             return result;
         } catch (error) {
             console.error('Failed to save study session:', error);
+            console.error('Error stack:', error.stack);
             throw error;
         }
     },
