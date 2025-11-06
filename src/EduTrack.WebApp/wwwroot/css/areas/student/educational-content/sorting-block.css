@@ -86,10 +86,16 @@
 }
 
 /* Direction-based styles for sorting-pool */
-.sorting-block[data-direction="vertical-left"] .sorting-pool,
+.sorting-block[data-direction="vertical-left"] .sorting-pool {
+    flex-direction: column;
+    gap: 0.5rem;
+    direction: ltr;
+}
+
 .sorting-block[data-direction="vertical-right"] .sorting-pool {
     flex-direction: column;
     gap: 0.5rem;
+    direction: rtl;
 }
 
 .sorting-block[data-direction="horizontal-ltr"] .sorting-pool {
