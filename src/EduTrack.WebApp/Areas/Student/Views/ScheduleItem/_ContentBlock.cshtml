@@ -55,17 +55,33 @@
         break;
         
     case ContentBlockType.Audio:
-        @if (!string.IsNullOrEmpty(Model.Data.FileUrl) || !string.IsNullOrEmpty(Model.Data.FileId))
         {
-            var audioUrl = !string.IsNullOrEmpty(Model.Data.FileUrl) 
-                ? Model.Data.FileUrl 
-                : $"/FileUpload/GetFile/{Model.Data.FileId}";
-                
+            // Get FileId as string (handle both string and integer)
+            var fileIdStr = Model.Data.FileId?.ToString();
+            var hasFileUrl = !string.IsNullOrWhiteSpace(Model.Data.FileUrl);
+            var hasFileId = !string.IsNullOrWhiteSpace(fileIdStr);
+            
+            // Always show audio block, even if file is missing
             <div class="content-block-audio-minimal">
-                <audio controls class="content-audio-minimal" preload="metadata">
-                    <source src="@audioUrl" type="@(Model.Data.MimeType ?? "audio/mpeg")">
-                    مرورگر شما از پخش صدا پشتیبانی نمی‌کند.
-                </audio>
+                @if (hasFileUrl || hasFileId)
+                {
+                    var audioUrl = hasFileUrl 
+                        ? Model.Data.FileUrl 
+                        : $"/FileUpload/GetFile/{fileIdStr}";
+                        
+                    <audio controls class="content-audio-minimal" preload="metadata">
+                        <source src="@audioUrl" type="@(Model.Data.MimeType ?? "audio/mpeg")">
+                        مرورگر شما از پخش صدا پشتیبانی نمی‌کند.
+                    </audio>
+                }
+                else
+                {
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        فایل صوتی یافت نشد.
+                    </div>
+                }
+                
                 @if (!string.IsNullOrEmpty(Model.Data.Caption))
                 {
                     <div class="content-caption content-caption-bottom">

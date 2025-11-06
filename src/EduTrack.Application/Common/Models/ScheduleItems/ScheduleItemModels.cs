@@ -494,7 +494,7 @@ public class ContentBlockData
     
     // Audio specific settings
     public bool IsRecorded { get; set; } = false;
-    public int? Duration { get; set; } // in seconds
+    public double? Duration { get; set; } // in seconds (can be decimal)
     
     // Code block specific settings
     public string? CodeContent { get; set; }

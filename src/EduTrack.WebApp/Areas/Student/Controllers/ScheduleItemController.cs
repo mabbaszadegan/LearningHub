@@ -410,12 +410,54 @@ public class ScheduleItemController : Controller
             var data = block["data"] as JObject;
             if (data == null) return null;
 
+            var contentBlockData = JsonConvert.DeserializeObject<ContentBlockData>(data.ToString(), settings) ?? new ContentBlockData();
+            
+            // Handle FileId that might be stored as integer in JSON (check both camelCase and PascalCase)
+            var fileIdToken = data["fileId"] ?? data["FileId"] ?? data["fileid"];
+            if (fileIdToken != null)
+            {
+                if (fileIdToken.Type == JTokenType.Integer)
+                {
+                    contentBlockData.FileId = fileIdToken.Value<int>().ToString();
+                }
+                else if (fileIdToken.Type == JTokenType.String)
+                {
+                    var fileIdValue = fileIdToken.Value<string>();
+                    if (!string.IsNullOrWhiteSpace(fileIdValue))
+                    {
+                        contentBlockData.FileId = fileIdValue;
+                    }
+                }
+            }
+            
+            // Handle FileUrl with case variations (check both camelCase and PascalCase)
+            var fileUrlToken = data["fileUrl"] ?? data["FileUrl"] ?? data["fileurl"];
+            if (fileUrlToken != null && fileUrlToken.Type == JTokenType.String)
+            {
+                var fileUrlValue = fileUrlToken.Value<string>();
+                if (!string.IsNullOrWhiteSpace(fileUrlValue))
+                {
+                    contentBlockData.FileUrl = fileUrlValue;
+                }
+            }
+            
+            // Also check for fileId in nested objects or alternative property names
+            if (string.IsNullOrWhiteSpace(contentBlockData.FileId) && string.IsNullOrWhiteSpace(contentBlockData.FileUrl))
+            {
+                // Try to find fileId in alternative locations
+                var altFileId = data["id"] ?? data["Id"];
+                if (altFileId != null && (altFileId.Type == JTokenType.Integer || altFileId.Type == JTokenType.String))
+                {
+                    contentBlockData.FileId = altFileId.ToString();
+                }
+            }
+
             var contentBlock = new ContentBlock
             {
                 Id = block["id"]?.ToString() ?? Guid.NewGuid().ToString(),
                 Type = blockType,
                 Order = order,
-                Data = JsonConvert.DeserializeObject<ContentBlockData>(data.ToString(), settings) ?? new ContentBlockData()
+                Data = contentBlockData
             };
 
             return contentBlock;
@@ -599,6 +641,8 @@ public class ScheduleItemController : Controller
         var contentBlocks = new List<ContentBlock>();
         var questionBlocks = new List<ReminderQuestionBlock>();
 
+        _logger?.LogInformation("ParseAudioFromBlocks: Processing {Count} blocks", blocksArray.Count);
+
         foreach (var blockToken in blocksArray)
         {
             var block = blockToken as JObject;
@@ -607,6 +651,8 @@ public class ScheduleItemController : Controller
             var blockType = block["type"]?.ToString().ToLower();
             var order = block["order"]?.Value<int>() ?? 0;
 
+            _logger?.LogInformation("ParseAudioFromBlocks: Processing block type={Type}, order={Order}", blockType, order);
+
             // Check if it's a question block (type starts with "question")
             if (blockType != null && blockType.StartsWith("question"))
             {
@@ -614,6 +660,7 @@ public class ScheduleItemController : Controller
                 if (questionBlock != null)
                 {
                     questionBlocks.Add(questionBlock);
+                    _logger?.LogInformation("ParseAudioFromBlocks: Added question block, order={Order}", order);
                 }
             }
             else
@@ -623,6 +670,8 @@ public class ScheduleItemController : Controller
                 if (contentBlock != null)
                 {
                     contentBlocks.Add(contentBlock);
+                    _logger?.LogInformation("ParseAudioFromBlocks: Added content block type={Type}, order={Order}, FileId={FileId}, FileUrl={FileUrl}", 
+                        contentBlock.Type, order, contentBlock.Data?.FileId ?? "null", contentBlock.Data?.FileUrl ?? "null");
                     
                     // Extract audio-specific data from audio blocks
                     if (blockType == "audio")
@@ -634,17 +683,31 @@ public class ScheduleItemController : Controller
                                               data["textContent"]?.ToString() ?? 
                                               audio.Instruction;
                             audio.AudioUrl = data["fileUrl"]?.ToString() ?? audio.AudioUrl;
-                            audio.DurationSeconds = data["duration"]?.Value<int>() ?? audio.DurationSeconds;
+                            var durationValue = data["duration"];
+                            if (durationValue != null)
+                            {
+                                if (durationValue.Type == JTokenType.Float || durationValue.Type == JTokenType.Integer)
+                                {
+                                    audio.DurationSeconds = (int)Math.Round(durationValue.Value<double>());
+                                }
+                            }
                             audio.AllowRecording = data["allowRecording"]?.Value<bool>() ?? audio.AllowRecording;
                             audio.RecordingInstructions = data["recordingInstructions"]?.ToString() ?? audio.RecordingInstructions;
                         }
                     }
+                }
+                else
+                {
+                    _logger?.LogWarning("ParseAudioFromBlocks: Failed to parse content block type={Type}, order={Order}", blockType, order);
                 }
             }
         }
 
         audio.Blocks = contentBlocks.OrderBy(b => b.Order).ToList();
         audio.QuestionBlocks = questionBlocks.OrderBy(b => b.Order).ToList();
+        
+        _logger?.LogInformation("ParseAudioFromBlocks: Result - {ContentBlocks} content blocks, {QuestionBlocks} question blocks", 
+            audio.Blocks.Count, audio.QuestionBlocks.Count);
         
         return audio;
     }
