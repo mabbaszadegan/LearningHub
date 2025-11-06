@@ -199,9 +199,6 @@ class ContentBuilderBase {
     }
 
     addBlock(type) {
-        console.log('ContentBuilderBase: addBlock called with type:', type, 'for contentType:', this.config.contentType);
-        console.log('ContentBuilderBase: blocksList available:', !!this.blocksList);
-        
         if (!this.blocksList) {
             console.error('ContentBuilderBase: blocksList not available, cannot add block');
             return;
@@ -215,8 +212,6 @@ class ContentBuilderBase {
             data: this.getDefaultBlockData(type)
         };
         
-        console.log('ContentBuilderBase: Created block:', block);
-        
         this.blocks.push(block);
         
         const renderResult = this.renderBlock(block);
@@ -224,11 +219,13 @@ class ContentBuilderBase {
             console.error('ContentBuilderBase: renderBlock returned nothing, block may not have been rendered');
         }
         
+        // Ensure all block orders are correct after adding
+        this.updateBlockOrders();
+        this.updateBlockOrderAttributes();
+        
         this.updateEmptyState();
         this.updateHiddenField();
         this.scrollToNewBlock(blockId);
-        
-        console.log('ContentBuilderBase: Block added successfully, total blocks:', this.blocks.length);
         
         // Dispatch custom event for sidebar (event-driven approach - no direct call needed)
         this.eventManager.dispatch('blockAdded', {
@@ -421,6 +418,9 @@ class ContentBuilderBase {
         blockElement.dataset.blockData = JSON.stringify(block.data);
         blockElement.dataset.type = block.type; // Keep original type (e.g., questionText)
         blockElement.dataset.templateType = templateType; // Store template type (e.g., text)
+        // Set data-block-order attribute based on block's order field
+        const blockIndex = this.blocks.findIndex(b => b.id === block.id);
+        blockElement.setAttribute('data-block-order', block.order !== undefined ? block.order : (blockIndex >= 0 ? blockIndex : this.blocks.length));
         
         // Configure template for question blocks
         if (block.type.startsWith('question')) {
@@ -636,12 +636,20 @@ class ContentBuilderBase {
         const blockIndex = this.blocks.findIndex(b => b.id === blockId);
         
         if (blockIndex > 0) {
+            // Swap blocks in array
             [this.blocks[blockIndex], this.blocks[blockIndex - 1]] = [this.blocks[blockIndex - 1], this.blocks[blockIndex]];
             
+            // Update order fields based on new positions
+            this.updateBlockOrders();
+            
+            // Update DOM
             const prevBlock = blockElement.previousElementSibling;
             if (prevBlock && (prevBlock.classList.contains('content-block') || prevBlock.classList.contains('content-block-template') || prevBlock.classList.contains('question-block-template'))) {
                 this.blocksList.insertBefore(blockElement, prevBlock);
             }
+            
+            // Update data-block-order attribute in DOM
+            this.updateBlockOrderAttributes();
             
             this.updateHiddenField();
             this.scrollToBlock(blockId);
@@ -665,12 +673,20 @@ class ContentBuilderBase {
         const blockIndex = this.blocks.findIndex(b => b.id === blockId);
         
         if (blockIndex < this.blocks.length - 1) {
+            // Swap blocks in array
             [this.blocks[blockIndex], this.blocks[blockIndex + 1]] = [this.blocks[blockIndex + 1], this.blocks[blockIndex]];
             
+            // Update order fields based on new positions
+            this.updateBlockOrders();
+            
+            // Update DOM
             const nextBlock = blockElement.nextElementSibling;
             if (nextBlock && (nextBlock.classList.contains('content-block') || nextBlock.classList.contains('content-block-template') || nextBlock.classList.contains('question-block-template'))) {
                 this.blocksList.insertBefore(nextBlock, blockElement);
             }
+            
+            // Update data-block-order attribute in DOM
+            this.updateBlockOrderAttributes();
             
             this.updateHiddenField();
             this.scrollToBlock(blockId);
@@ -707,9 +723,14 @@ class ContentBuilderBase {
             // Remove from blocks array
             this.blocks = this.blocks.filter(b => b.id !== blockId);
             
+            // Update order fields after deletion
+            this.updateBlockOrders();
             
             // Remove from DOM
             blockElement.remove();
+            
+            // Update order attributes in DOM
+            this.updateBlockOrderAttributes();
             
             // Update UI
             this.updateEmptyState();
@@ -1015,7 +1036,27 @@ class ContentBuilderBase {
         }
     }
 
+    updateBlockOrders() {
+        // Update order field for each block based on its position in the array
+        this.blocks.forEach((block, index) => {
+            block.order = index;
+        });
+    }
+    
+    updateBlockOrderAttributes() {
+        // Update data-block-order attribute in DOM elements
+        this.blocks.forEach((block, index) => {
+            const blockElement = this.blocksList.querySelector(`[data-block-id="${block.id}"]`);
+            if (blockElement) {
+                blockElement.setAttribute('data-block-order', index);
+            }
+        });
+    }
+    
     updateHiddenField() {
+        // Ensure orders are up to date before saving
+        this.updateBlockOrders();
+        
         const cleanBlocks = this.blocks.map(block => {
             const cleanBlock = { ...block };
             const cleanData = { ...block.data };
@@ -1080,9 +1121,14 @@ class ContentBuilderBase {
                     this.nextBlockId = 1;
                 }
                 
+                // Ensure orders are correct when loading
                 this.blocks.forEach((block, index) => {
+                    block.order = block.order !== undefined ? block.order : index;
                     this.renderBlock(block);
                 });
+                
+                // Update order attributes in DOM after rendering
+                this.updateBlockOrderAttributes();
                 
                 this.updateEmptyState();
                 
@@ -1310,12 +1356,6 @@ class ContentBuilderBase {
 
     // Upload all pending files to server (works for all content types)
     async uploadAllPendingFiles() {
-        console.log('ContentBuilderBase: uploadAllPendingFiles called', {
-            blocksCount: this.blocks.length,
-            pendingFilesCount: this.pendingFiles.size,
-            pendingFilesKeys: Array.from(this.pendingFiles.keys())
-        });
-        
         const pendingBlocks = [];
         
         // Find all blocks with pending files
@@ -1329,11 +1369,6 @@ class ContentBuilderBase {
                     const isPendingInData = blockData.isPending;
                     
                     if (hasPendingFile || isPendingInData) {
-                        console.log('ContentBuilderBase: Found pending block', {
-                            blockId: block.id,
-                            hasPendingFile,
-                            isPendingInData
-                        });
                         pendingBlocks.push({ blockElement, blockData, block });
                     }
                 } catch (e) {
@@ -1343,11 +1378,8 @@ class ContentBuilderBase {
         }
         
         if (pendingBlocks.length === 0) {
-            console.log('ContentBuilderBase: No pending files to upload');
             return; // No pending files
         }
-        
-        console.log('ContentBuilderBase: Uploading', pendingBlocks.length, 'pending files');
         
         // Upload all files
         for (const { blockElement, blockData, block } of pendingBlocks) {
@@ -1374,20 +1406,12 @@ class ContentBuilderBase {
         // Get the file from pending files map
         let fileToUpload = this.pendingFiles.get(blockId);
         
-        console.log('ContentBuilderBase: uploadBlockFile called', {
-            blockId,
-            hasFile: !!fileToUpload,
-            isPending: blockData.isPending,
-            fileName: fileToUpload?.name
-        });
-        
         if (!fileToUpload && blockData.isPending) {
             console.warn(`ContentBuilderBase: No file found for pending block ${blockId}`);
             return null;
         }
         
         if (!fileToUpload) {
-            console.log(`ContentBuilderBase: No file to upload for block ${blockId}`);
             return null;
         }
         

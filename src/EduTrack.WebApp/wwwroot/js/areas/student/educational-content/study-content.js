@@ -20,18 +20,11 @@ let studySession = {
         // Start study session automatically (which starts the timer)
         this.startStudySession();
         
-        // Initialize reminder content if needed (only if not already rendered server-side)
-        if (window.studyContentConfig?.contentType === 'Reminder') {
-            const container = document.getElementById('reminder-content');
-            // Only initialize if container is empty (no server-side rendering)
-            if (container && (!container.querySelector('.content-block') && !container.querySelector('.content-empty-state'))) {
-                this.initializeReminderContent();
-            }
-        }
-        
         // Apply automatic code highlighting to all code blocks on page load
         this.applyAutomaticCodeHighlighting();
         
+        // Ensure blocks are displayed in the correct order as set by teacher
+        this.ensureBlocksOrder();
     },
     
     applyAutomaticCodeHighlighting() {
@@ -148,94 +141,7 @@ let studySession = {
         
         return 'plaintext';
     },
-    
-    initializeReminderContent() {
-        const contentJson = window.studyContentConfig?.contentJson;
-        if (!contentJson) {
-            console.warn('No content JSON found for reminder');
-            this.showReminderError('محتوای یادآوری یافت نشد');
-            return;
-        }
-        
-        try {
-            const reminderContent = typeof contentJson === 'string' ? JSON.parse(contentJson) : contentJson;
-            this.renderReminderContent(reminderContent);
-        } catch (error) {
-            console.error('Error parsing reminder content:', error);
-            this.showReminderError('خطا در بارگذاری محتوای یادآوری');
-        }
-    },
-    
-    renderReminderContent(content) {
-        const container = document.getElementById('reminder-content');
-        if (!container) {
-            console.error('Reminder content container not found');
-            return;
-        }
-        
-        // Clear loading state
-        container.innerHTML = '';
-        
-        // Create body
-        const body = this.createReminderBody(content);
-        container.appendChild(body);
-        
-    },
-    
-    createReminderBody(content) {
-        const body = document.createElement('div');
-        body.className = 'reminder-body';
-        
-        // Add main message if exists
-        const mainMessage = content.message || content.Message;
-        if (mainMessage && mainMessage.trim()) {
-            const messageDiv = document.createElement('div');
-            messageDiv.className = 'reminder-message';
-            // Check if message is HTML or plain text
-            const isHtml = /<[a-z][\s\S]*>/i.test(mainMessage);
-            messageDiv.innerHTML = isHtml ? mainMessage : this.formatTextContent(mainMessage);
-            body.appendChild(messageDiv);
-        }
-        
-        // Add content blocks
-        const blocks = content.blocks || content.Blocks;
-        if (blocks && blocks.length > 0) {
-            const blocksContainer = document.createElement('div');
-            blocksContainer.className = 'content-blocks';
-            
-            // Sort blocks by order
-            const sortedBlocks = blocks.sort((a, b) => (a.order || a.Order || 0) - (b.order || b.Order || 0));
-            
-            let previousBlockElement = null;
-            
-            sortedBlocks.forEach((block, index) => {
-                const blockType = (block.type || block.Type || '').toString().toLowerCase();
-                const blockTypeNum = typeof (block.type || block.Type) === 'number' ? block.type || block.Type : null;
-                const displayMode = block.data?.displayMode || block.data?.DisplayMode || 'player';
-                const attachmentMode = block.data?.attachmentMode || block.data?.AttachmentMode || 'independent';
-                
-                // Check if this is an attached audio icon block (both string 'audio' and number 3)
-                const isAttachedAudio = (blockType === 'audio' || blockTypeNum === 3) && displayMode === 'icon' && attachmentMode === 'attached';
-                if (isAttachedAudio && previousBlockElement) {
-                    // Add audio icon to previous block's header
-                    this.attachAudioIconToBlock(previousBlockElement, block);
-                    // Don't create a new block for attached audio - it's already added to previous block
-                } else {
-                    // Create normal block
-                    const blockElement = this.createContentBlock(block);
-                    if (blockElement) {
-                        blocksContainer.appendChild(blockElement);
-                        previousBlockElement = blockElement;
-                    }
-                }
-            });
-            
-            body.appendChild(blocksContainer);
-        }
-        
-        return body;
-    },
-    
+
     createContentBlock(block) {
         const blockElement = document.createElement('div');
         const blockType = (block.type || block.Type || '').toString().toLowerCase();
@@ -1489,6 +1395,105 @@ let studySession = {
                 alert.remove();
             }
         }, 3000);
+    },
+    
+    ensureBlocksOrder() {
+        // Wait for DOM to be fully loaded
+        setTimeout(() => {
+            // Find the main content container
+            const mainContainer = document.getElementById('schedule-item-content');
+            if (!mainContainer) return;
+            
+            // Find all elements with data-block-order attribute
+            const allBlocks = Array.from(mainContainer.querySelectorAll('[data-block-order]'));
+            
+            if (allBlocks.length === 0) return;
+            
+            // Group blocks by their direct parent container
+            const blocksByParent = new Map();
+            
+            allBlocks.forEach(block => {
+                const parent = block.parentElement;
+                if (!parent) return;
+                
+                // Skip if parent is already a block (nested blocks)
+                if (parent.hasAttribute('data-block-order')) return;
+                
+                if (!blocksByParent.has(parent)) {
+                    blocksByParent.set(parent, []);
+                }
+                blocksByParent.get(parent).push(block);
+            });
+            
+            // Sort blocks in each parent container
+            blocksByParent.forEach((blocks, parent) => {
+                this.sortBlocksInContainer(parent, blocks);
+            });
+        }, 200);
+    },
+    
+    sortBlocksInContainer(container, blocksToSort = null) {
+        // Get blocks to sort - either provided or find them
+        let blocks = blocksToSort;
+        if (!blocks) {
+            // Get all direct children with data-block-order attribute
+            blocks = Array.from(container.children).filter(child => 
+                child.hasAttribute('data-block-order')
+            );
+        } else {
+            // Filter to only direct children if blocks were provided
+            blocks = blocks.filter(block => 
+                block.parentElement === container && block.hasAttribute('data-block-order')
+            );
+        }
+        
+        if (blocks.length === 0) return;
+        
+        // Sort blocks by their order attribute
+        const sortedBlocks = [...blocks].sort((a, b) => {
+            const orderA = parseInt(a.getAttribute('data-block-order') || '0');
+            const orderB = parseInt(b.getAttribute('data-block-order') || '0');
+            return orderA - orderB;
+        });
+        
+        // Check if blocks are already in correct order
+        let needsReorder = false;
+        const allChildren = Array.from(container.children);
+        let sortedIndex = 0;
+        
+        for (let i = 0; i < allChildren.length; i++) {
+            if (allChildren[i].hasAttribute('data-block-order')) {
+                if (allChildren[i] !== sortedBlocks[sortedIndex]) {
+                    needsReorder = true;
+                    break;
+                }
+                sortedIndex++;
+            }
+        }
+        
+        // Reorder blocks in DOM if needed
+        if (needsReorder) {
+            // Store all children (including non-block elements)
+            const allChildren = Array.from(container.children);
+            const nonBlockElements = allChildren.filter(child => 
+                !child.hasAttribute('data-block-order')
+            );
+            
+            // Remove all children temporarily (this preserves the elements, just removes from DOM)
+            allChildren.forEach(child => {
+                if (child.parentElement === container) {
+                    container.removeChild(child);
+                }
+            });
+            
+            // Re-insert in correct order: sorted blocks first, then non-block elements
+            sortedBlocks.forEach(block => {
+                container.appendChild(block);
+            });
+            nonBlockElements.forEach(element => {
+                container.appendChild(element);
+            });
+        }
     }
 };
 
