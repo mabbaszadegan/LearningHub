@@ -228,6 +228,7 @@ public class WritingContent
     public List<string> Keywords { get; set; } = new();
     public List<ContentBlock> Blocks { get; set; } = new();
     public List<ReminderQuestionBlock> QuestionBlocks { get; set; } = new();
+    public List<MultipleChoiceBlock> MultipleChoiceBlocks { get; set; } = new();
 }
 
 public class AudioContent
@@ -239,6 +240,7 @@ public class AudioContent
     public string RecordingInstructions { get; set; } = string.Empty;
     public List<ContentBlock> Blocks { get; set; } = new();
     public List<ReminderQuestionBlock> QuestionBlocks { get; set; } = new();
+    public List<MultipleChoiceBlock> MultipleChoiceBlocks { get; set; } = new();
 }
 
 public class ErrorFindingContent
@@ -324,6 +326,7 @@ public class ReminderContent
     public List<ContentBlock> Blocks { get; set; } = new();
     public List<ReminderQuestionBlock> QuestionBlocks { get; set; } = new();
     public List<OrderingBlock> OrderingBlocks { get; set; } = new();
+    public List<MultipleChoiceBlock> MultipleChoiceBlocks { get; set; } = new();
 }
 
 public class ReminderQuestionBlock

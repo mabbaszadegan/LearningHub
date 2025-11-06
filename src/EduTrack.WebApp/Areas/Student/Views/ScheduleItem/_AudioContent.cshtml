@@ -30,12 +30,24 @@
             }
         }
 
+        // Add multiple choice blocks
+        if (content.MultipleChoiceBlocks != null && content.MultipleChoiceBlocks.Any())
+        {
+            foreach (var mcqBlock in content.MultipleChoiceBlocks)
+            {
+                allBlocks.Add(new { Type = "multiplechoice", Block = (object)mcqBlock, Order = mcqBlock.Order });
+            }
+        }
+
         // Sort by Order
         var sortedBlocks = allBlocks.OrderBy(b => b.Order).ToList();
 
         @if (sortedBlocks.Any())
         {
             <div class="content-blocks-wrapper">
+                @{
+                    var mcqBlockIndex = 0;
+                }
                 @foreach (var item in sortedBlocks)
                 {
                     var blockType = item.Type;
@@ -69,6 +81,28 @@
                                     @await Html.PartialAsync("_QuestionBlock", questionBlock)
                                 </div>
                             </div>
+                        }
+                    }
+                    else if (blockType == "multiplechoice")
+                    {
+                        var mcqBlock = item.Block as MultipleChoiceBlock;
+                        if (mcqBlock != null)
+                        {
+                            <div class="content-block content-block-multiplechoice"
+                                 data-block-order="@order"
+                                 data-block-id="@mcqBlock.Id"
+                                 data-block-type="multiplechoice">
+                                <div class="content-block-inner">
+                                    @{
+                                        var scheduleItemId = ViewBag.ScheduleItemId as int? ?? 0;
+                                        ViewBag.BlockIndex = mcqBlockIndex;
+                                        ViewBag.ScheduleItemType = ScheduleItemType.Audio;
+                                        ViewBag.ScheduleItemId = scheduleItemId;
+                                    }
+                                    @await Html.PartialAsync("_MultipleChoiceBlock", mcqBlock)
+                                </div>
+                            </div>
+                            mcqBlockIndex++;
                         }
                     }
                 }

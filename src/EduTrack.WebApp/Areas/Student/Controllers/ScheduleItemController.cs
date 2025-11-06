@@ -347,6 +347,7 @@ public class ScheduleItemController : Controller
         var contentBlocks = new List<ContentBlock>();
         var questionBlocks = new List<ReminderQuestionBlock>();
         var orderingBlocks = new List<OrderingBlock>();
+        var multipleChoiceBlocks = new List<MultipleChoiceBlock>();
 
         foreach (var blockToken in blocksArray)
         {
@@ -363,6 +364,15 @@ public class ScheduleItemController : Controller
                 if (orderingBlock != null)
                 {
                     orderingBlocks.Add(orderingBlock);
+                }
+            }
+            // Check if it's a multipleChoice block
+            else if (blockType != null && string.Equals(blockType, "multiplechoice", StringComparison.OrdinalIgnoreCase))
+            {
+                var parsedBlocks = ParseMultipleChoiceBlock(block, order, settings);
+                if (parsedBlocks != null && parsedBlocks.Any())
+                {
+                    multipleChoiceBlocks.AddRange(parsedBlocks);
                 }
             }
             // Check if it's a question block (type starts with "question")
@@ -388,6 +398,7 @@ public class ScheduleItemController : Controller
         reminder.Blocks = contentBlocks.OrderBy(b => b.Order).ToList();
         reminder.QuestionBlocks = questionBlocks.OrderBy(b => b.Order).ToList();
         reminder.OrderingBlocks = orderingBlocks.OrderBy(b => b.Order).ToList();
+        reminder.MultipleChoiceBlocks = multipleChoiceBlocks.OrderBy(b => b.Order).ToList();
         return reminder;
     }
 
@@ -463,6 +474,141 @@ public class ScheduleItemController : Controller
             };
 
             return contentBlock;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private List<MultipleChoiceBlock>? ParseMultipleChoiceBlock(JObject block, int order, JsonSerializerSettings settings)
+    {
+        try
+        {
+            var data = block["data"] as JObject;
+            if (data == null) return null;
+
+            var result = new List<MultipleChoiceBlock>();
+
+            // Each MCQ block can have multiple questions
+            if (data["questions"] is JArray questions)
+            {
+                foreach (var questionToken in questions)
+                {
+                    if (questionToken is not JObject questionObj) continue;
+
+                    var questionId = questionObj["id"]?.ToString() ?? Guid.NewGuid().ToString();
+                    var questionText = questionObj["stem"]?.ToString() ?? string.Empty;
+                    var answerType = questionObj["answerType"]?.ToString() ?? "single";
+                    var randomizeOptions = questionObj["randomizeOptions"]?.Value<bool>() ?? false;
+
+                    var mcqBlock = new MultipleChoiceBlock
+                    {
+                        Id = questionId,
+                        Order = order,
+                        Question = questionText,
+                        AnswerType = answerType,
+                        RandomizeOptions = randomizeOptions,
+                        IsRequired = data["isRequired"]?.Value<bool>() ?? true
+                    };
+
+                    // Parse stem media data
+                    if (questionObj["stemData"] is JObject stemData)
+                    {
+                        var mediaType = stemData["mediaType"]?.ToString();
+                        mcqBlock.StemMediaType = mediaType;
+
+                        if (mediaType == "image")
+                        {
+                            mcqBlock.StemImageUrl = stemData["imageUrl"]?.ToString();
+                            mcqBlock.StemImageFileId = stemData["imageFileId"]?.ToString();
+                            mcqBlock.StemImageFileName = stemData["imageFileName"]?.ToString();
+                        }
+                        else if (mediaType == "audio")
+                        {
+                            mcqBlock.StemAudioUrl = stemData["audioUrl"]?.ToString();
+                            mcqBlock.StemAudioFileId = stemData["audioFileId"]?.ToString();
+                            mcqBlock.StemAudioFileName = stemData["audioFileName"]?.ToString();
+                            mcqBlock.StemAudioIsRecorded = stemData["isRecorded"]?.Value<bool>() ?? false;
+                        }
+                        else if (mediaType == "video")
+                        {
+                            mcqBlock.StemVideoUrl = stemData["videoUrl"]?.ToString();
+                            mcqBlock.StemVideoFileId = stemData["videoFileId"]?.ToString();
+                            mcqBlock.StemVideoFileName = stemData["videoFileName"]?.ToString();
+                        }
+                    }
+
+                    // Points stored as string in builder sometimes
+                    var pointsToken = data["points"];
+                    if (pointsToken != null)
+                    {
+                        if (pointsToken.Type == JTokenType.Integer || pointsToken.Type == JTokenType.Float)
+                        {
+                            mcqBlock.Points = pointsToken.Value<decimal>();
+                        }
+                        else if (pointsToken.Type == JTokenType.String && decimal.TryParse(pointsToken.ToString(), out var pts))
+                        {
+                            mcqBlock.Points = pts;
+                        }
+                    }
+
+                    // Parse options
+                    if (questionObj["options"] is JArray options)
+                    {
+                        var correctAnswers = new List<int>();
+                        foreach (var optionToken in options)
+                        {
+                            if (optionToken is not JObject optionObj) continue;
+
+                            var optionIndex = optionObj["index"]?.Value<int>() ?? 0;
+                            var optionType = optionObj["optionType"]?.ToString() ?? "text";
+                            var isCorrect = optionObj["isCorrect"]?.Value<bool>() ?? false;
+
+                            var option = new MultipleChoiceOption
+                            {
+                                Index = optionIndex,
+                                OptionType = optionType,
+                                IsCorrect = isCorrect
+                            };
+
+                            if (optionType == "text")
+                            {
+                                option.Text = optionObj["text"]?.ToString() ?? string.Empty;
+                            }
+                            else if (optionType == "image")
+                            {
+                                option.Text = optionObj["text"]?.ToString() ?? string.Empty;
+                                option.ImageUrl = optionObj["imageUrl"]?.ToString();
+                                option.ImageFileId = optionObj["imageFileId"]?.ToString();
+                                option.ImageFileName = optionObj["imageFileName"]?.ToString();
+                            }
+                            else if (optionType == "audio")
+                            {
+                                option.Text = optionObj["text"]?.ToString() ?? string.Empty;
+                                option.AudioUrl = optionObj["audioUrl"]?.ToString();
+                                option.AudioFileId = optionObj["audioFileId"]?.ToString();
+                                option.AudioFileName = optionObj["audioFileName"]?.ToString();
+                                option.IsRecorded = optionObj["isRecorded"]?.Value<bool>() ?? false;
+                                option.AudioDuration = optionObj["audioDuration"]?.Value<int?>();
+                            }
+
+                            mcqBlock.Options.Add(option);
+
+                            if (isCorrect)
+                            {
+                                correctAnswers.Add(optionIndex);
+                            }
+                        }
+
+                        mcqBlock.CorrectAnswers = correctAnswers;
+                    }
+
+                    result.Add(mcqBlock);
+                }
+            }
+
+            return result.Any() ? result : null;
         }
         catch
         {
@@ -583,6 +729,7 @@ public class ScheduleItemController : Controller
         var writing = new Application.Common.Models.ScheduleItems.WritingContent();
         var contentBlocks = new List<ContentBlock>();
         var questionBlocks = new List<ReminderQuestionBlock>();
+        var multipleChoiceBlocks = new List<MultipleChoiceBlock>();
 
         foreach (var blockToken in blocksArray)
         {
@@ -592,8 +739,17 @@ public class ScheduleItemController : Controller
             var blockType = block["type"]?.ToString().ToLower();
             var order = block["order"]?.Value<int>() ?? 0;
 
+            // Check if it's a multipleChoice block
+            if (blockType != null && string.Equals(blockType, "multiplechoice", StringComparison.OrdinalIgnoreCase))
+            {
+                var parsedBlocks = ParseMultipleChoiceBlock(block, order, settings);
+                if (parsedBlocks != null && parsedBlocks.Any())
+                {
+                    multipleChoiceBlocks.AddRange(parsedBlocks);
+                }
+            }
             // Check if it's a question block (type starts with "question")
-            if (blockType != null && blockType.StartsWith("question"))
+            else if (blockType != null && blockType.StartsWith("question"))
             {
                 var questionBlock = ParseReminderQuestionBlock(block, order, settings);
                 if (questionBlock != null)
@@ -633,6 +789,7 @@ public class ScheduleItemController : Controller
 
         writing.Blocks = contentBlocks.OrderBy(b => b.Order).ToList();
         writing.QuestionBlocks = questionBlocks.OrderBy(b => b.Order).ToList();
+        writing.MultipleChoiceBlocks = multipleChoiceBlocks.OrderBy(b => b.Order).ToList();
         
         return writing;
     }
@@ -642,6 +799,7 @@ public class ScheduleItemController : Controller
         var audio = new Application.Common.Models.ScheduleItems.AudioContent();
         var contentBlocks = new List<ContentBlock>();
         var questionBlocks = new List<ReminderQuestionBlock>();
+        var multipleChoiceBlocks = new List<MultipleChoiceBlock>();
 
         _logger?.LogInformation("ParseAudioFromBlocks: Processing {Count} blocks", blocksArray.Count);
 
@@ -655,8 +813,18 @@ public class ScheduleItemController : Controller
 
             _logger?.LogInformation("ParseAudioFromBlocks: Processing block type={Type}, order={Order}", blockType, order);
 
+            // Check if it's a multipleChoice block
+            if (blockType != null && string.Equals(blockType, "multiplechoice", StringComparison.OrdinalIgnoreCase))
+            {
+                var parsedBlocks = ParseMultipleChoiceBlock(block, order, settings);
+                if (parsedBlocks != null && parsedBlocks.Any())
+                {
+                    multipleChoiceBlocks.AddRange(parsedBlocks);
+                    _logger?.LogInformation("ParseAudioFromBlocks: Added {Count} multipleChoice blocks", parsedBlocks.Count);
+                }
+            }
             // Check if it's a question block (type starts with "question")
-            if (blockType != null && blockType.StartsWith("question"))
+            else if (blockType != null && blockType.StartsWith("question"))
             {
                 var questionBlock = ParseReminderQuestionBlock(block, order, settings);
                 if (questionBlock != null)
@@ -707,9 +875,10 @@ public class ScheduleItemController : Controller
 
         audio.Blocks = contentBlocks.OrderBy(b => b.Order).ToList();
         audio.QuestionBlocks = questionBlocks.OrderBy(b => b.Order).ToList();
+        audio.MultipleChoiceBlocks = multipleChoiceBlocks.OrderBy(b => b.Order).ToList();
         
-        _logger?.LogInformation("ParseAudioFromBlocks: Result - {ContentBlocks} content blocks, {QuestionBlocks} question blocks", 
-            audio.Blocks.Count, audio.QuestionBlocks.Count);
+        _logger?.LogInformation("ParseAudioFromBlocks: Result - {ContentBlocks} content blocks, {QuestionBlocks} question blocks, {MultipleChoiceBlocks} multipleChoice blocks", 
+            audio.Blocks.Count, audio.QuestionBlocks.Count, audio.MultipleChoiceBlocks.Count);
         
         return audio;
     }

@@ -12,12 +12,12 @@ const BlockTypeConfig = {
     'writing': {
         regularBlocks: [],
         questionBlocks: ['questionText', 'questionImage', 'questionVideo', 'questionAudio'],
-        questionTypeBlocks: []
+        questionTypeBlocks: ['multipleChoice']
     },
     'audio': {
         regularBlocks: [],
         questionBlocks: ['questionText', 'questionImage', 'questionVideo', 'questionAudio'],
-        questionTypeBlocks: []
+        questionTypeBlocks: ['multipleChoice']
     },
     'multiplechoice': {
         regularBlocks: [],
