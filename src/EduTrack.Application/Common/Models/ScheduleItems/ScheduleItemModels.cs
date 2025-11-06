@@ -294,6 +294,7 @@ public class ReminderContent
     public bool SendNotification { get; set; }
     public List<ContentBlock> Blocks { get; set; } = new();
     public List<ReminderQuestionBlock> QuestionBlocks { get; set; } = new();
+    public List<OrderingBlock> OrderingBlocks { get; set; } = new();
 }
 
 public class ReminderQuestionBlock
