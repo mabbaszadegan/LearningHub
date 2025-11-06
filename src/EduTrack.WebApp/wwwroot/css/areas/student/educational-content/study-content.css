@@ -611,11 +611,34 @@ body.study-content-page-active .main-content {
         box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
     }
 
+/* Text blocks: Remove wrapper styles to preserve teacher's design exactly */
 .content-block-text {
-    font-size: 1rem;
-    line-height: 1.7;
-    color: #374151;
+    /* Remove all default styles - let teacher's inline styles take precedence */
+    font-size: inherit;
+    line-height: inherit;
+    color: inherit;
+    margin: 0;
+    padding: 0;
+    background: none;
+    border: none;
+    box-shadow: none;
 }
+
+    /* Remove default styles from all child elements - preserve teacher's design */
+    .content-block-text * {
+        /* Let inline styles from teacher's design override everything */
+        margin: revert;
+        padding: revert;
+        color: revert;
+        font-size: revert;
+        line-height: revert;
+        font-weight: revert;
+        font-style: revert;
+        background: revert;
+        border: revert;
+        box-shadow: revert;
+        text-align: revert;
+    }
 
     .content-block-text h1,
     .content-block-text h2,
@@ -623,70 +646,101 @@ body.study-content-page-active .main-content {
     .content-block-text h4,
     .content-block-text h5,
     .content-block-text h6 {
-        color: #1f2937;
-        margin: 1rem 0 0.5rem 0;
-        font-weight: 600;
+        margin: revert;
+        color: revert;
+        font-weight: revert;
     }
 
     .content-block-text p {
-        margin: 0.75rem 0;
+        margin: revert;
     }
 
     .content-block-text ul,
     .content-block-text ol {
-        margin: 0.75rem 0;
-        padding-right: 1.5rem;
+        margin: revert;
+        padding: revert;
     }
 
     .content-block-text li {
-        margin: 0.25rem 0;
+        margin: revert;
     }
 
     .content-block-text strong,
     .content-block-text b {
-        font-weight: 600;
-        color: #1f2937;
+        font-weight: revert;
+        color: revert;
     }
 
     .content-block-text em,
     .content-block-text i {
-        font-style: italic;
-        color: #6b7280;
+        font-style: revert;
+        color: revert;
     }
 
     .content-block-text blockquote {
-        margin: 1rem 0;
-        padding: 1rem 1.5rem;
-        background: #f8fafc;
-        border-right: 4px solid #667eea;
-        border-radius: 0 8px 8px 0;
-        font-style: italic;
-        color: #4b5563;
+        margin: revert;
+        padding: revert;
+        background: revert;
+        border: revert;
+        border-radius: revert;
+        font-style: revert;
+        color: revert;
     }
 
     .content-block-text code {
-        background: #f1f5f9;
-        padding: 0.2rem 0.4rem;
-        border-radius: 4px;
-        font-family: 'Courier New', monospace;
-        font-size: 0.9em;
-        color: #e11d48;
+        background: revert;
+        padding: revert;
+        border-radius: revert;
+        font-family: revert;
+        font-size: revert;
+        color: revert;
     }
 
     .content-block-text pre {
-        background: #1e293b;
-        color: #e2e8f0;
-        padding: 1.5rem;
-        border-radius: 8px;
-        overflow-x: auto;
-        margin: 1rem 0;
+        background: revert;
+        color: revert;
+        padding: revert;
+        border-radius: revert;
+        overflow-x: revert;
+        margin: revert;
     }
 
         .content-block-text pre code {
-            background: none;
-            padding: 0;
-            color: inherit;
+            background: revert;
+            padding: revert;
+            color: revert;
         }
+
+/* Remove wrapper styles from content-block wrapper when it's a text block */
+.content-block.content-block-text {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+}
+
+.content-block.content-block-text:hover {
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+/* Remove styles from inner wrapper for text blocks */
+.content-block.content-block-text .content-block-inner {
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+/* Remove wrapper styles from content-block-text (the actual content div) */
+.content-block-text {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    border-radius: 0;
+    margin: 0;
+}
 
 .content-block-image {
     text-align: center;

@@ -191,7 +191,9 @@ let studySession = {
         if (mainMessage && mainMessage.trim()) {
             const messageDiv = document.createElement('div');
             messageDiv.className = 'reminder-message';
-            messageDiv.innerHTML = this.formatTextContent(mainMessage);
+            // Check if message is HTML or plain text
+            const isHtml = /<[a-z][\s\S]*>/i.test(mainMessage);
+            messageDiv.innerHTML = isHtml ? mainMessage : this.formatTextContent(mainMessage);
             body.appendChild(messageDiv);
         }
         
@@ -219,22 +221,47 @@ let studySession = {
     
     createContentBlock(block) {
         const blockElement = document.createElement('div');
-        blockElement.className = 'content-block';
+        const blockType = (block.type || block.Type || '').toString().toLowerCase();
+        const blockTypeNum = typeof (block.type || block.Type) === 'number' ? block.type || block.Type : null;
         
-        switch ((block.type || block.Type)?.toLowerCase()) {
-            case 'text':
-            case 0: // Text
-                const textContent = block.data?.content || 
-                                  block.data?.textContent || 
-                                  block.data?.Content || 
-                                  block.data?.TextContent || 
-                                  '';
-                blockElement.innerHTML = `
-                    <div class="content-block-text">
-                        ${this.formatTextContent(textContent)}
-                    </div>
-                `;
-                break;
+        // Add base class and type-specific class to match server-side rendering
+        const typeClass = blockTypeNum === 0 ? 'text' : (blockType || 'unknown');
+        blockElement.className = `content-block content-block-${typeClass}`;
+        
+        // Add data attributes to match server-side rendering
+        if (block.id || block.Id) {
+            blockElement.setAttribute('data-block-id', block.id || block.Id);
+        }
+        if (block.order !== undefined || block.Order !== undefined) {
+            blockElement.setAttribute('data-block-order', block.order || block.Order);
+        }
+        blockElement.setAttribute('data-block-type', 'content');
+        
+        // Handle text blocks (both string 'text' and number 0)
+        if (blockType === 'text' || blockTypeNum === 0) {
+            // Prefer Content (HTML) over TextContent (plain text)
+            const htmlContent = block.data?.content || block.data?.Content || '';
+            const plainTextContent = block.data?.textContent || block.data?.TextContent || '';
+            const contentToDisplay = htmlContent || plainTextContent;
+            
+            // If content is HTML (has tags), display it directly without formatting
+            // Otherwise, format plain text
+            const isHtml = /<[a-z][\s\S]*>/i.test(contentToDisplay);
+            const displayContent = isHtml ? contentToDisplay : this.formatTextContent(contentToDisplay);
+            
+            // Add inner wrapper to match server-side structure
+            const innerWrapper = document.createElement('div');
+            innerWrapper.className = 'content-block-inner';
+            
+            const textDiv = document.createElement('div');
+            textDiv.className = 'content-block-text';
+            textDiv.innerHTML = displayContent;
+            
+            innerWrapper.appendChild(textDiv);
+            blockElement.appendChild(innerWrapper);
+        } else {
+            // Handle other block types with switch
+            switch (blockType) {
                 
             case 'image':
             case 1: // Image

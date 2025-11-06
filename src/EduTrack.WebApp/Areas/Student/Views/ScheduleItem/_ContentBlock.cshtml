@@ -6,7 +6,17 @@
 {
     case ContentBlockType.Text:
         <div class="content-block-text">
-            @Html.Raw(Model.Data.Content?.Replace("\n", "<br />") ?? Model.Data.TextContent?.Replace("\n", "<br />") ?? "")
+            @* Display HTML content exactly as saved by teacher, without any modifications *@
+            @if (!string.IsNullOrEmpty(Model.Data.Content))
+            {
+                @* Content is HTML from CKEditor - display as-is *@
+                @Html.Raw(Model.Data.Content)
+            }
+            else if (!string.IsNullOrEmpty(Model.Data.TextContent))
+            {
+                @* TextContent is plain text - convert line breaks only if it's plain text *@
+                @Html.Raw(Model.Data.TextContent.Replace("\n", "<br />"))
+            }
         </div>
         break;
         

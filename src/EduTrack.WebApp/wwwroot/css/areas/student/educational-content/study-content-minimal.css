@@ -41,30 +41,86 @@
     border-right: 4px solid #667eea;
 }
 
-/* Text Block */
+/* Text Block: Remove all default styles to preserve teacher's design exactly */
 .content-block-text {
-    font-size: 1rem;
-    line-height: 1.8;
-    color: #333;
+    /* Remove all default styles - let teacher's inline styles take precedence */
+    font-size: inherit;
+    line-height: inherit;
+    color: inherit;
+    margin: 0;
+    padding: 0;
+    background: none;
+    border: none;
+    box-shadow: none;
 }
 
+    /* Remove default styles from all child elements - preserve teacher's design */
+    .content-block-text * {
+        /* Let inline styles from teacher's design override everything */
+        margin: revert;
+        padding: revert;
+        color: revert;
+        font-size: revert;
+        line-height: revert;
+        font-weight: revert;
+        font-style: revert;
+        background: revert;
+        border: revert;
+        box-shadow: revert;
+        text-align: revert;
+    }
+
 .content-block-text p {
-    margin-bottom: 1rem;
+    margin: revert;
 }
 
 .content-block-text h1,
 .content-block-text h2,
-.content-block-text h3 {
-    margin-top: 1.5rem;
-    margin-bottom: 0.75rem;
-    color: #212529;
-    font-weight: 600;
+.content-block-text h3,
+.content-block-text h4,
+.content-block-text h5,
+.content-block-text h6 {
+    margin: revert;
+    color: revert;
+    font-weight: revert;
 }
 
 .content-block-text ul,
 .content-block-text ol {
-    margin: 1rem 0;
-    padding-right: 1.5rem;
+    margin: revert;
+    padding: revert;
+}
+
+/* Remove wrapper styles from content-block wrapper when it's a text block */
+.content-block.content-block-text {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+}
+
+.content-block.content-block-text:hover {
+    box-shadow: none !important;
+    border-color: transparent !important;
+    transform: none !important;
+}
+
+/* Remove styles from inner wrapper for text blocks */
+.content-block.content-block-text .content-block-inner {
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+/* Remove wrapper styles from content-block-text (the actual content div) */
+.content-block-text {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    border-radius: 0;
+    margin: 0;
 }
 
 /* Image Block */
