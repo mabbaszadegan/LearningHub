@@ -7,6 +7,8 @@
     var activeSession = ViewBag.ActiveSession as dynamic;
     var courseId = ViewBag.CourseId as int?;
     var currentUserId = ViewBag.CurrentUserId as string;
+    var statistics = ViewBag.Statistics as EduTrack.Application.Common.Models.StudySessions.StudySessionStatisticsDto;
+    var totalStudyTimeSeconds = statistics?.TotalStudyTimeSeconds ?? 0;
 }
 
 @section Styles {
@@ -49,10 +51,22 @@
             </a>
             <h1 class="study-title">@Model.Title</h1>
             <div class="header-actions-minimal">
-                <span class="study-time-display" id="study-time-display">00:00:00</span>
-                <button class="btn-icon-minimal" id="study-session-toggle" title="شروع/توقف مطالعه">
-                    <i class="fas fa-play"></i>
-                </button>
+                <span class="study-time-display" id="study-time-display" data-total-seconds="@totalStudyTimeSeconds">
+                    @{
+                        var hours = totalStudyTimeSeconds / 3600;
+                        var minutes = (totalStudyTimeSeconds % 3600) / 60;
+                        var seconds = totalStudyTimeSeconds % 60;
+                    }
+                    <i class="fas fa-clock"></i>
+                    <span>@($"{hours:D2}:{minutes:D2}:{seconds:D2}")</span>
+                </span>
+                @if (statistics?.StudySessionsCount > 0)
+                {
+                    <span class="study-sessions-display">
+                        <i class="fas fa-book-open"></i>
+                        <span>@statistics.StudySessionsCount بار</span>
+                    </span>
+                }
             </div>
         </div>
     </div>
@@ -151,25 +165,6 @@
     </div>
 </div>
 
-<!-- Exit Confirmation Modal -->
-<div class="modal fade" id="exitConfirmationModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">خروج از صفحه مطالعه</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <p>آیا مطمئن هستید که می‌خواهید از صفحه مطالعه خارج شوید؟</p>
-                <p class="text-muted small">زمان مطالعه شما ثبت خواهد شد.</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">لغو</button>
-                <button type="button" class="btn btn-primary" id="confirm-exit">بله، خروج</button>
-            </div>
-        </div>
-    </div>
-</div>
 
 @section Scripts {
     <script src="~/js/areas/student/educational-content/study-content-view-toggle.js" asp-append-version="true"></script>

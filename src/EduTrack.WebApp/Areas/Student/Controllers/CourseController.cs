@@ -1,12 +1,16 @@
 using EduTrack.Application.Common.Models;
 using EduTrack.Application.Common.Models.Courses;
 using EduTrack.Application.Common.Models.TeachingPlans;
+using EduTrack.Application.Common.Models.StudySessions;
 using EduTrack.Application.Features.CourseEnrollment.Commands;
 using EduTrack.Application.Features.CourseEnrollment.DTOs;
 using EduTrack.Application.Features.CourseEnrollment.Queries;
 using EduTrack.Application.Features.Courses.Queries;
 using EduTrack.Application.Features.Chapters.Queries;
+using EduTrack.Application.Features.StudySessions.Queries;
 using EduTrack.Domain.Entities;
+using EduTrack.WebApp.Areas.Student.Models;
+using ScheduleItemDto = EduTrack.Application.Common.Models.TeachingPlans.ScheduleItemDto;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -201,12 +205,30 @@ public class CourseController : Controller
         
         // Get schedule items for the course
         var scheduleItemsResult = await _mediator.Send(new GetCourseScheduleItemsQuery(id, currentUser.Id));
-        var scheduleItems = scheduleItemsResult.IsSuccess ? scheduleItemsResult.Value : new List<ScheduleItemDto>();
+        var scheduleItems = scheduleItemsResult.IsSuccess && scheduleItemsResult.Value != null ? scheduleItemsResult.Value : new List<ScheduleItemDto>();
+        
+        // Get study statistics for each schedule item
+        var scheduleItemsWithStats = new List<ScheduleItemWithStats>();
+        foreach (var item in scheduleItems)
+        {
+            if (item == null) continue;
+            var statsResult = await _mediator.Send(new GetStudySessionStatisticsQuery(currentUser.Id, item.Id));
+            var stats = statsResult.IsSuccess && statsResult.Value != null ? statsResult.Value : new StudySessionStatisticsDto();
+            
+            scheduleItemsWithStats.Add(new ScheduleItemWithStats
+            {
+                Item = item,
+                TotalStudyTimeSeconds = stats?.TotalStudyTimeSeconds ?? 0,
+                StudySessionsCount = stats?.StudySessionsCount ?? 0,
+                LastStudyDate = stats?.LastStudyDate
+            });
+        }
         
         ViewBag.Enrollment = enrollmentResult.Value;
         ViewBag.Progress = progressResult.IsSuccess ? progressResult.Value : null;
         ViewBag.Chapters = chapters;
         ViewBag.ScheduleItems = scheduleItems;
+        ViewBag.ScheduleItemsWithStats = scheduleItemsWithStats;
 
         return View(courseResult.Value);
     }

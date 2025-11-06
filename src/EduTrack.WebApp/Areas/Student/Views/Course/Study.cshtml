@@ -1,12 +1,19 @@
 @using EduTrack.Application.Common.Models.Courses
 @using EduTrack.Application.Common.Models.TeachingPlans
+@using EduTrack.Application.Common.Helpers
 @using EduTrack.Domain.Enums
+@using EduTrack.WebApp.Areas.Student.Models
 @model CourseDto
 @{
     ViewData["Title"] = $"مطالعه: {Model.Title}";
     var chapters = ViewBag.Chapters as List<ChapterDto> ?? new List<ChapterDto>();
     var scheduleItems = ViewBag.ScheduleItems as List<ScheduleItemDto> ?? new List<ScheduleItemDto>();
+    var scheduleItemsWithStats = ViewBag.ScheduleItemsWithStats as List<ScheduleItemWithStats> ?? new List<ScheduleItemWithStats>();
     var enrollment = ViewBag.Enrollment as EduTrack.Application.Features.CourseEnrollment.DTOs.CourseEnrollmentDto;
+    
+    // Calculate total study time and sessions count
+    var totalStudyTimeSeconds = scheduleItemsWithStats.Sum(s => s.TotalStudyTimeSeconds);
+    var totalSessionsCount = scheduleItemsWithStats.Sum(s => s.StudySessionsCount);
 }
 
 @section Styles {
@@ -26,6 +33,21 @@
             <!-- Course Title -->
             <div class="study-header-title">
                 <h1>@Model.Title</h1>
+                <div class="study-header-stats-minimal">
+                    <span class="stat-mini-header">@FormatTime(totalStudyTimeSeconds)</span>
+                    <span class="stat-separator">•</span>
+                    <span class="stat-mini-header">@totalSessionsCount</span>
+                </div>
+            </div>
+            
+            <!-- Sort Control in Header -->
+            <div class="study-header-sort">
+                <select id="sortBy" class="study-sort-select-minimal">
+                    <option value="startDate">زمان ایجاد</option>
+                    <option value="studyTime">بیشترین زمان</option>
+                    <option value="lastStudy">آخرین مطالعه</option>
+                    <option value="mandatory">اجباری</option>
+                </select>
             </div>
             
             <!-- Back Button -->
@@ -112,23 +134,47 @@
             <div class="study-items-grid" id="studyItemsGrid">
                 @if (scheduleItems.Any())
                 {
-                    @foreach (var item in scheduleItems.OrderBy(si => si.StartDate))
+                    @foreach (var statItem in scheduleItemsWithStats)
                     {
+                        var item = statItem.Item;
+                        if (item == null) continue;
+                        
+                        var totalTime = statItem.TotalStudyTimeSeconds;
+                        var sessionsCount = statItem.StudySessionsCount;
+                        var lastStudyDate = statItem.LastStudyDate;
+                        
                         <a href="@Url.Action("Study", "ScheduleItem", new { area = "Student", id = item.Id })" 
                            class="study-item-card" 
                            data-item-id="@item.Id"
                            data-item-type="@item.Type.ToString()"
                            data-status="@GetItemStatus(item)"
-                           data-subchapter-ids="@string.Join(",", item.SubChapterAssignments.Select(sa => sa.SubChapterId))">
+                           data-subchapter-ids="@string.Join(",", item.SubChapterAssignments.Select(sa => sa.SubChapterId))"
+                           data-study-time="@totalTime"
+                           data-last-study="@(lastStudyDate.HasValue ? lastStudyDate.Value.ToUnixTimeSeconds() : 0)"
+                           data-is-mandatory="@(item.IsMandatory ? 1 : 0)"
+                           data-created-at="@item.CreatedAt.ToUnixTimeSeconds()">
                             <div class="study-item-icon" style="background-color: @GetItemTypeColor(item.Type)">
                                 <i class="@GetItemTypeIcon(item.Type)"></i>
                             </div>
                             <div class="study-item-content">
                                 <h4 class="study-item-title">@item.Title</h4>
-                                <div class="study-item-status">
-                                    <span class="study-status-badge @GetItemStatusClass(item)">
-                                        @item.StatusText
-                                    </span>
+                                <div class="study-item-meta">
+                                    @{
+                                        var firstSubChapter = item.SubChapterAssignments.FirstOrDefault();
+                                        if (firstSubChapter != null)
+                                        {
+                                            <div class="study-item-chapter-info">
+                                                <span class="chapter-name">@firstSubChapter.ChapterTitle</span>
+                                                <span class="chapter-separator">/</span>
+                                                <span class="subchapter-name">@firstSubChapter.SubChapterTitle</span>
+                                            </div>
+                                        }
+                                    }
+                                    <div class="study-item-stats">
+                                        <span class="stat-mini">@FormatTime(totalTime)</span>
+                                        <span class="stat-separator">•</span>
+                                        <span class="stat-mini">@sessionsCount</span>
+                                    </div>
                                 </div>
                             </div>
                             <div class="study-item-arrow">
@@ -241,5 +287,25 @@
             ScheduleItemType.Ordering => "#60a5fa",      // آبی روشن
             _ => "#6b7280"                               // خاکستری
         };
+    }
+    
+    string FormatTime(int totalSeconds)
+    {
+        var hours = totalSeconds / 3600;
+        var minutes = (totalSeconds % 3600) / 60;
+        var seconds = totalSeconds % 60;
+        
+        if (hours > 0)
+        {
+            return $"{hours}:{minutes:D2}:{seconds:D2}";
+        }
+        else if (minutes > 0)
+        {
+            return $"{minutes}:{seconds:D2}";
+        }
+        else
+        {
+            return $"{seconds}ث";
+        }
     }
 }

@@ -833,155 +833,94 @@ let studySession = {
         // Just track locally for now
         this.sessionId = 0; // No database session yet
         
-        // Start timer automatically when page loads
+        // Start timer automatically when page loads (hidden, for tracking only)
         this.startTimer();
-        this.updateSessionToggleButton();
-        this.updateTimeDisplay();
-    },
-    
-    toggleStudySession() {
-        if (this.isActive) {
-            this.stopTimer();
-            this.updateSessionToggleButton();
-        } else {
-            this.startTimer();
-            this.updateSessionToggleButton();
-        }
-    },
-    
-    updateSessionToggleButton() {
-        const toggleBtn = document.getElementById('study-session-toggle');
-        if (!toggleBtn) return;
         
-        const icon = toggleBtn.querySelector('i');
-        if (!icon) return;
-        
-        if (this.isActive) {
-            icon.className = 'fas fa-pause';
-            toggleBtn.setAttribute('title', 'توقف مطالعه');
-        } else {
-            icon.className = 'fas fa-play';
-            toggleBtn.setAttribute('title', 'شروع مطالعه');
-        }
+        // Load and display total study time
+        this.loadTotalStudyTime();
     },
     
-    updateTimeDisplay() {
+    async loadTotalStudyTime() {
+        // Get total study time from data attribute (set by server)
         const timeDisplay = document.getElementById('study-time-display');
         if (!timeDisplay) return;
         
-        const totalSeconds = this.elapsedTime;
+        const totalSeconds = parseInt(timeDisplay.dataset.totalSeconds || '0');
+        this.updateTotalTimeDisplay(totalSeconds);
+    },
+    
+    async updateTotalTimeDisplay(totalSeconds) {
+        const timeDisplay = document.getElementById('study-time-display');
+        if (!timeDisplay) return;
+        
         const hours = Math.floor(totalSeconds / 3600);
         const minutes = Math.floor((totalSeconds % 3600) / 60);
         const seconds = totalSeconds % 60;
         
         const formattedTime = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
         timeDisplay.textContent = formattedTime;
+        timeDisplay.dataset.totalSeconds = totalSeconds;
     },
     
     bindEvents() {
         const self = this;
         
-        // Handle study session toggle button
-        const sessionToggleBtn = document.getElementById('study-session-toggle');
-        if (sessionToggleBtn) {
-            sessionToggleBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                self.toggleStudySession();
-            });
-        }
-        
-        // Handle browser back button
-        window.addEventListener('popstate', (e) => {
-            if (self.isActive && self.getElapsedTime() > 5) {
-                self.showExitConfirmation();
-                history.pushState(null, null, window.location.href);
+        // Auto-save study session when page unloads (refresh, close, navigate away)
+        window.addEventListener('beforeunload', function(e) {
+            // Save study session silently
+            if (self.isActive && self.getElapsedTime() > 0) {
+                // Use sendBeacon for reliable delivery during page unload
+                self.saveStudySessionOnUnload();
             }
         });
         
-        // Add history state to prevent back button
-        history.pushState(null, null, window.location.href);
+        // Save on page unload (fallback for browsers that support it)
+        window.addEventListener('pagehide', function() {
+            if (self.isActive && self.getElapsedTime() > 0) {
+                self.saveStudySessionOnUnload();
+            }
+        });
         
-        // Wait for DOM to be fully loaded
-        setTimeout(() => {
-            // Handle specific navigation clicks only
-            const handleNavigationClick = function(e) {
-                const target = e.target;
-                
-                
-                // Check if timer is active and has enough time
-                if (self.isActive && self.getElapsedTime() > 5) {
-                    
-                    // Skip if clicking inside the modal
-                    if (target.closest('#exitConfirmationModal')) {
-                        return;
-                    }
-                    
-                    // Skip if clicking on image action buttons
-                    if (target.closest('.image-action-btn') || target.closest('.image-overlay')) {
-                        return;
-                    }
-                    
-                    // Skip if clicking on audio/video controls
-                    if (target.closest('.speaker-button') || target.closest('.play-button') || 
-                        target.closest('.progress-bar') || target.closest('.audio-controls') ||
-                        target.closest('.video-controls')) {
-                        return;
-                    }
-                    
-                    // Check if it's a link that navigates away
-                    if (target.tagName === 'A') {
-                        const href = target.getAttribute('href');
-                        if (href && !href.startsWith('#') && !href.startsWith('javascript:')) {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            self.showExitConfirmation();
-                            return false;
-                        }
-                    }
-                    
-                    // Check for navbar/menu clicks - ONLY specific navigation elements
-                    if (target.closest('.navbar-brand') || target.closest('.nav-link') || 
-                        target.closest('.navbar-toggler') || target.closest('.dropdown-item')) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        self.showExitConfirmation();
-                        return false;
-                    }
-                    
-                    // Check for breadcrumb clicks
-                    if (target.closest('.breadcrumb') || target.closest('.breadcrumb-item')) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        self.showExitConfirmation();
-                        return false;
-                    }
-                    
-                    // Check for bottom navigation clicks - handle nested elements
-                    if (target.closest('.bottom-nav') || target.closest('.nav-item') || target.closest('.fixed-footer')) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        self.showExitConfirmation();
-                        return false;
-                    }
-                    
-                    // Check for any clickable element that might navigate
-                    if (target.closest('a')) {
-                        const parentLink = target.closest('a');
-                        const parentHref = parentLink.getAttribute('href');
-                        if (parentHref && !parentHref.startsWith('#') && !parentHref.startsWith('javascript:')) {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            self.showExitConfirmation();
-                            return false;
-                        }
-                    }
-                }
+        // Save periodically (every 30 seconds) to prevent data loss
+        setInterval(function() {
+            if (self.isActive && self.getElapsedTime() > 30) {
+                // Only save if at least 30 seconds have passed
+                self.saveStudySessionSilently();
+            }
+        }, 30000); // Every 30 seconds
+    },
+    
+    saveStudySessionOnUnload() {
+        // Use sendBeacon for reliable delivery during page unload
+        try {
+            const scheduleItemId = document.getElementById('schedule-item-content')?.dataset?.itemId || 
+                                  window.studyContentConfig?.scheduleItemId;
+            
+            if (!scheduleItemId || !this.startTime) {
+                return;
+            }
+            
+            const endTime = Date.now();
+            const data = {
+                ScheduleItemId: parseInt(scheduleItemId),
+                StartedAt: new Date(this.startTime).toISOString(),
+                EndedAt: new Date(endTime).toISOString()
             };
             
-            // Bind event to document but only handle navigation elements
-            document.addEventListener('click', handleNavigationClick, true);
-            
-        }, 1000); // Wait 1 second for DOM to be ready
+            const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+            navigator.sendBeacon('/Student/ScheduleItem/CreateAndCompleteStudySession', blob);
+        } catch (error) {
+            console.error('Error saving study session on unload:', error);
+        }
+    },
+    
+    async saveStudySessionSilently() {
+        // Save without showing any UI feedback
+        try {
+            await this.saveStudySession();
+        } catch (error) {
+            console.error('Error saving study session silently:', error);
+        }
     },
     
     startHiddenTimer() {
@@ -1000,15 +939,10 @@ let studySession = {
                 this.elapsedTime = 0;
             }
             
-            // Timer runs and updates UI
+            // Timer runs silently in background (no UI updates needed)
             this.updateInterval = setInterval(() => {
                 this.elapsedTime = Math.floor((Date.now() - this.startTime) / 1000);
-                this.updateTimeDisplay();
             }, 1000);
-            
-            // Update immediately
-            this.updateTimeDisplay();
-            this.updateSessionToggleButton();
         }
     },
     
@@ -1019,7 +953,6 @@ let studySession = {
                 clearInterval(this.updateInterval);
                 this.updateInterval = null;
             }
-            this.updateSessionToggleButton();
         }
     },
     
@@ -1060,185 +993,6 @@ let studySession = {
         return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     },
     
-    showExitConfirmation() {
-        // Stop the timer immediately when modal opens
-        this.stopTimer();
-        
-        // Fix the end time to prevent further changes
-        this.fixedEndTime = Date.now();
-        
-        const currentTime = this.getActualSessionDuration();
-        
-        // Remove any existing modal first
-        const existingModal = document.getElementById('exitConfirmationModal');
-        if (existingModal) {
-            existingModal.remove();
-        }
-        
-        // Create simple modal HTML
-        const modalHtml = `
-            <div id="exitConfirmationModal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 1rem;">
-                <div style="background: white; padding: 2rem; border-radius: 16px; max-width: 450px; width: 100%; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.15);">
-                    <div style="margin-bottom: 1rem;">
-                        <i class="fas fa-clock" style="font-size: 3rem; color: #667eea;"></i>
-                    </div>
-                    <h5 style="margin-bottom: 1rem; color: #1e293b; font-weight: 600;">زمان مطالعه شما</h5>
-                    <div style="margin: 1.5rem 0;">
-                        <div style="width: 120px; height: 120px; border-radius: 50%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; margin: 0 auto; box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);">
-                            <span style="color: white; font-family: 'Courier New', monospace; font-size: 1.2rem; font-weight: bold;">${this.formatTime(currentTime)}</span>
-                        </div>
-                    </div>
-                    <p style="margin-bottom: 1.5rem; color: #64748b; font-size: 1rem;">آیا می‌خواهید این زمان مطالعه ثبت شود؟</p>
-                    <!-- Action buttons row -->
-                    <div style="display: flex; gap: 0.75rem; justify-content: center; align-items: center; margin-bottom: 1rem;">
-                        <button id="exit-without-saving" style="
-                            padding: 0.75rem 1.5rem; 
-                            border: 1px solid #fecaca; 
-                            background: #ffffff; 
-                            color: #dc2626; 
-                            border-radius: 12px; 
-                            cursor: pointer; 
-                            font-weight: 500; 
-                            font-size: 0.9rem;
-                            transition: all 0.2s ease;
-                            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-                            flex: 1;
-                            min-width: 120px;
-                        " onmouseover="this.style.background='#fef2f2'; this.style.borderColor='#fca5a5'; this.style.transform='translateY(-1px)'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.15)'" 
-                           onmouseout="this.style.background='#ffffff'; this.style.borderColor='#fecaca'; this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.1)'">
-                            <i class="fas fa-sign-out-alt" style="margin-left: 0.5rem;"></i> خروج بدون ثبت
-                        </button>
-                        <button id="save-and-exit" style="
-                            padding: 0.75rem 1.5rem; 
-                            border: none; 
-                            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-                            color: white; 
-                            border-radius: 12px; 
-                            cursor: pointer; 
-                            font-weight: 600; 
-                            font-size: 0.9rem;
-                            transition: all 0.2s ease;
-                            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-                            flex: 1;
-                            min-width: 120px;
-                        " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(102, 126, 234, 0.5)'" 
-                           onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(102, 126, 234, 0.4)'">
-                            <i class="fas fa-save" style="margin-left: 0.5rem;"></i> ثبت و خروج
-                        </button>
-                    </div>
-                    
-                    <!-- Cancel button - full width -->
-                    <div style="width: 100%;">
-                        <button id="cancel-exit" style="
-                            width: 100%;
-                            padding: 0.75rem 1.5rem; 
-                            border: 1px solid #e2e8f0; 
-                            background: #ffffff; 
-                            color: #64748b; 
-                            border-radius: 12px; 
-                            cursor: pointer; 
-                            font-weight: 500; 
-                            font-size: 0.9rem;
-                            transition: all 0.2s ease;
-                            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-                        " onmouseover="this.style.background='#f8fafc'; this.style.borderColor='#cbd5e1'; this.style.transform='translateY(-1px)'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.15)'" 
-                           onmouseout="this.style.background='#ffffff'; this.style.borderColor='#e2e8f0'; this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.1)'">
-                            <i class="fas fa-times" style="margin-left: 0.5rem;"></i> انصراف و ادامه مطالعه
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        // Add modal to body
-        document.body.insertAdjacentHTML('beforeend', modalHtml);
-        
-        // Bind events
-        document.getElementById('cancel-exit').onclick = () => {
-            this.hideModal();
-            this.continueStudy();
-        };
-        
-        document.getElementById('exit-without-saving').onclick = () => {
-            this.hideModal();
-            this.exitWithoutSaving();
-        };
-        
-        document.getElementById('save-and-exit').onclick = () => {
-            this.hideModal();
-            this.saveAndExit();
-        };
-        
-        
-        // Prevent body scroll
-        document.body.style.overflow = 'hidden';
-    },
-    
-    showModal() {
-        const modal = document.getElementById('exitConfirmationModal');
-        if (modal) {
-            // Remove any existing backdrop first
-            const existingBackdrop = document.getElementById('modalBackdrop');
-            if (existingBackdrop) {
-                existingBackdrop.remove();
-            }
-            
-            // Add modal backdrop
-            const backdrop = document.createElement('div');
-            backdrop.className = 'modal-backdrop fade show';
-            backdrop.id = 'modalBackdrop';
-            document.body.appendChild(backdrop);
-            
-            // Show modal with proper classes
-            modal.classList.add('show');
-            modal.classList.remove('fade');
-            modal.style.display = 'block';
-            modal.setAttribute('aria-hidden', 'false');
-            
-            // Prevent body scroll and add modal-open class
-            document.body.style.overflow = 'hidden';
-            document.body.classList.add('modal-open');
-            
-        } else {
-            console.error('Modal element not found!');
-        }
-    },
-    
-    hideModal() {
-        const modal = document.getElementById('exitConfirmationModal');
-        if (modal) {
-            modal.remove();
-        }
-        
-        // Restore body scroll
-        document.body.style.overflow = '';
-    },
-    
-    saveAndExit() {
-        if (this.isActive) {
-            this.isActive = false;
-            clearInterval(this.updateInterval);
-        }
-        
-        // Save study session to database
-        this.saveStudySession().then(() => {
-            // Show success message
-            this.showToast('زمان مطالعه با موفقیت ثبت شد', 'success');
-            
-            // Navigate to course schedule items list after a short delay
-            setTimeout(() => {
-                this.navigateToCourseScheduleItems();
-            }, 1000);
-        }).catch((error) => {
-            console.error('Error saving study session:', error);
-            this.showToast('خطا در ثبت زمان مطالعه', 'error');
-            
-            // Still navigate back even if save failed
-            setTimeout(() => {
-               // this.navigateToCourseScheduleItems();
-            }, 2000);
-        });
-    },
     
     async saveStudySession() {
         try {
@@ -1262,8 +1016,8 @@ let studySession = {
                 this.startTime = Date.now() - (this.elapsedTime * 1000);
             }
             
-            // Use fixed end time if available (when modal was opened), otherwise current time
-            const endTime = this.fixedEndTime || Date.now();
+            // Use current time as end time
+            const endTime = Date.now();
             
             // Create and complete the session in one operation
             const createAndCompleteData = {
@@ -1329,6 +1083,14 @@ let studySession = {
                 throw new Error(result.error || 'خطا در ثبت جلسه مطالعه');
             }
             
+            // Update total study time display after successful save
+            if (result.totalStudyTimeSeconds !== undefined) {
+                this.updateTotalTimeDisplay(result.totalStudyTimeSeconds);
+            } else {
+                // Reload total time from server
+                this.loadTotalStudyTime();
+            }
+            
             return result;
         } catch (error) {
             console.error('Failed to save study session:', error);
@@ -1337,43 +1099,18 @@ let studySession = {
         }
     },
     
-    continueStudy() {
-        // Clear the fixed end time since user cancelled
-        this.fixedEndTime = null;
-        
-        // Make sure timer is active and restart it
-        this.isActive = true;
-        if (this.updateInterval) {
-            clearInterval(this.updateInterval);
-        }
-        this.updateInterval = setInterval(() => {
-            this.elapsedTime = Math.floor((Date.now() - this.startTime) / 1000);
-        }, 1000);
-        
-    },
-    
-    async exitWithoutSaving() {
-        
-        // Stop the timer completely
-        this.stopTimer();
-        
-        // Clear the fixed end time since user cancelled
-        this.fixedEndTime = null;
-        
-        // Show a brief message that no time was saved
-        this.showToast('زمان مطالعه ثبت نشد', 'info');
-        
-        // Navigate back to the course schedule items page
-        setTimeout(() => {
-            this.navigateToCourseScheduleItems();
-        }, 1000);
-    },
-    
     navigateToCourseScheduleItems() {
         // Get the course ID from config or URL
         const courseId = window.studyContentConfig?.courseId || this.getCourseIdFromUrl();
+        const scheduleItemId = document.getElementById('schedule-item-content')?.dataset?.itemId || 
+                              window.studyContentConfig?.scheduleItemId;
+        
         if (courseId && courseId > 0) {
-            window.location.href = `/Student/Course/Study/${courseId}`;
+            // Add itemId to URL to highlight it when returning
+            const url = scheduleItemId 
+                ? `/Student/Course/Study/${courseId}?itemId=${scheduleItemId}`
+                : `/Student/Course/Study/${courseId}`;
+            window.location.href = url;
         } else {
             // Fallback to history.back() if we can't determine the course ID
             console.warn('Course ID not found, using history.back()');

@@ -18,7 +18,36 @@ class StudyPage {
     init() {
         this.bindEvents();
         this.initializeFilters();
+        this.initializeSorting();
         this.hideBottomMenu();
+        this.handleReturnFromStudy();
+    }
+    
+    handleReturnFromStudy() {
+        // Check if returning from study page
+        const urlParams = new URLSearchParams(window.location.search);
+        const itemId = urlParams.get('itemId');
+        
+        if (itemId) {
+            // Remove itemId from URL
+            urlParams.delete('itemId');
+            const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
+            window.history.replaceState({}, '', newUrl);
+            
+            // Scroll to and highlight the item
+            setTimeout(() => {
+                const itemCard = document.querySelector(`.study-item-card[data-item-id="${itemId}"]`);
+                if (itemCard) {
+                    itemCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    itemCard.classList.add('selected');
+                    setTimeout(() => {
+                        itemCard.classList.remove('selected');
+                    }, 2000);
+                }
+                
+                // Refresh statistics - page will reload with updated stats from server
+            }, 100);
+        }
     }
 
     bindEvents() {
@@ -60,6 +89,10 @@ class StudyPage {
         document.querySelectorAll('.study-filter-item-all').forEach(btn => {
             btn.addEventListener('click', () => {
                 this.clearFilters();
+                // Close sidebar on mobile when clicking "All topics"
+                if (window.innerWidth <= 768) {
+                    this.closeSidebar();
+                }
             });
         });
 
@@ -70,6 +103,64 @@ class StudyPage {
                 this.toggleTypeFilter(type);
             });
         });
+        
+        // Sort control
+        const sortSelect = document.getElementById('sortBy');
+        if (sortSelect) {
+            sortSelect.addEventListener('change', (e) => {
+                this.sortItems(e.target.value);
+            });
+        }
+    }
+    
+    initializeSorting() {
+        // Initial sort by start date
+        this.sortItems('startDate');
+    }
+    
+    sortItems(sortBy) {
+        const grid = document.getElementById('studyItemsGrid');
+        if (!grid) return;
+        
+        const cards = Array.from(grid.querySelectorAll('.study-item-card:not(.hidden)'));
+        
+        cards.sort((a, b) => {
+            switch (sortBy) {
+                case 'studyTime':
+                    const timeA = parseInt(a.dataset.studyTime || '0');
+                    const timeB = parseInt(b.dataset.studyTime || '0');
+                    return timeB - timeA; // Descending
+                    
+                case 'lastStudy':
+                    const lastA = parseInt(a.dataset.lastStudy || '0');
+                    const lastB = parseInt(b.dataset.lastStudy || '0');
+                    // Items with 0 (no study) should go to the end
+                    if (lastA === 0 && lastB === 0) return 0;
+                    if (lastA === 0) return 1; // A goes to end
+                    if (lastB === 0) return -1; // B goes to end
+                    return lastB - lastA; // Descending (most recent first)
+                    
+                case 'mandatory':
+                    const mandatoryA = parseInt(a.dataset.isMandatory || '0');
+                    const mandatoryB = parseInt(b.dataset.isMandatory || '0');
+                    if (mandatoryB !== mandatoryA) {
+                        return mandatoryB - mandatoryA; // Mandatory first
+                    }
+                    // If both have same mandatory status, sort by start date
+                    const createdAtA = parseInt(a.dataset.createdAt || '0');
+                    const createdAtB = parseInt(b.dataset.createdAt || '0');
+                    return createdAtB - createdAtA;
+                    
+                case 'startDate':
+                default:
+                    const createdA = parseInt(a.dataset.createdAt || '0');
+                    const createdB = parseInt(b.dataset.createdAt || '0');
+                    return createdB - createdA; // Descending (newest first)
+            }
+        });
+        
+        // Re-append sorted cards
+        cards.forEach(card => grid.appendChild(card));
     }
 
     toggleSidebar() {

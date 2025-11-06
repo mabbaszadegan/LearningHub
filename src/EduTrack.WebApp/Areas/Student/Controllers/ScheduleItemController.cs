@@ -84,6 +84,7 @@ public class ScheduleItemController : Controller
         // Get study statistics
         var statisticsResult = await _mediator.Send(new GetStudySessionStatisticsQuery(currentUser.Id, id));
         var statistics = statisticsResult.IsSuccess ? statisticsResult.Value : new StudySessionStatisticsDto();
+        ViewBag.Statistics = statistics;
 
         // Check if there's an active study session
         var activeSessionResult = await _mediator.Send(new GetActiveStudySessionQuery(currentUser.Id, id));
@@ -213,7 +214,12 @@ public class ScheduleItemController : Controller
             }
 
             _logger?.LogInformation("Study session created successfully with ID: {SessionId}", result.Value!.Id);
-            return Json(new { success = true, sessionId = result.Value!.Id });
+            
+            // Get updated total study time
+            var updatedStatistics = await _mediator.Send(new GetStudySessionStatisticsQuery(currentUser.Id, request.ScheduleItemId));
+            var totalStudyTimeSeconds = updatedStatistics.IsSuccess ? updatedStatistics.Value?.TotalStudyTimeSeconds ?? 0 : 0;
+            
+            return Json(new { success = true, sessionId = result.Value!.Id, totalStudyTimeSeconds = totalStudyTimeSeconds });
         }
         catch (Exception ex)
         {
