@@ -112,17 +112,21 @@
                         </div>
                     </div>
                     <div class="ordering-block-actions">
-                        <button type="button" 
-                                class="btn-check-answer" 
-                                data-schedule-item-id="@scheduleItemId"
-                                data-schedule-item-type="@ScheduleItemType.Ordering"
-                                data-block-id="@orderingBlock.Id"
-                                data-block-order="@orderingBlock.Order">
-                            <i class="fas fa-check-circle"></i>
-                            <span>بررسی پاسخ</span>
-                        </button>
-                        <div class="block-result" data-block-id="@orderingBlock.Id" style="display:none;">
-                            <div class="result-content"></div>
+                        <div class="block-actions-row">
+                            <button type="button" 
+                                    class="btn-check-answer-minimal" 
+                                    data-schedule-item-id="@scheduleItemId"
+                                    data-schedule-item-type="@ScheduleItemType.Ordering"
+                                    data-block-id="@orderingBlock.Id"
+                                    data-block-order="@orderingBlock.Order"
+                                    title="بررسی پاسخ">
+                                <i class="fas fa-check"></i>
+                            </button>
+                            <div class="block-answer-history" data-block-id="@orderingBlock.Id">
+                                <span class="history-correct" data-count="0">0</span>
+                                <span class="history-separator">/</span>
+                                <span class="history-incorrect" data-count="0">0</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -210,17 +214,21 @@
                     </div>
                 </div>
                 <div class="ordering-block-actions">
-                    <button type="button" 
-                            class="btn-check-answer" 
-                            data-schedule-item-id="@scheduleItemId"
-                            data-schedule-item-type="@ScheduleItemType.Ordering"
-                            data-block-id="main"
-                            data-block-order="0">
-                        <i class="fas fa-check-circle"></i>
-                        <span>بررسی پاسخ</span>
-                    </button>
-                    <div class="block-result" data-block-id="main" style="display:none;">
-                        <div class="result-content"></div>
+                    <div class="block-actions-row">
+                        <button type="button" 
+                                class="btn-check-answer-minimal" 
+                                data-schedule-item-id="@scheduleItemId"
+                                data-schedule-item-type="@ScheduleItemType.Ordering"
+                                data-block-id="main"
+                                data-block-order="0"
+                                title="بررسی پاسخ">
+                            <i class="fas fa-check"></i>
+                        </button>
+                        <div class="block-answer-history" data-block-id="main">
+                            <span class="history-correct" data-count="0">0</span>
+                            <span class="history-separator">/</span>
+                            <span class="history-incorrect" data-count="0">0</span>
+                        </div>
                     </div>
                 </div>
             </div>

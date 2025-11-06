@@ -12,14 +12,17 @@
     });
 
     function initializeBlockAnswerChecker() {
-        // Attach click handlers to all check answer buttons
-        const checkButtons = document.querySelectorAll('.btn-check-answer');
+        // Attach click handlers to all check answer buttons (both old and new minimal style)
+        const checkButtons = document.querySelectorAll('.btn-check-answer, .btn-check-answer-minimal');
         checkButtons.forEach(function(button) {
             button.addEventListener('click', function(e) {
                 e.preventDefault();
                 handleCheckAnswer(button);
             });
         });
+        
+        // Load answer history for all blocks on page load
+        loadAnswerHistory();
     }
 
     function handleCheckAnswer(button) {
@@ -35,8 +38,14 @@
 
         // Disable button during submission
         button.disabled = true;
-        const originalText = button.innerHTML;
-        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>در حال بررسی...</span>';
+        const isMinimal = button.classList.contains('btn-check-answer-minimal');
+        const originalContent = button.innerHTML;
+        
+        if (isMinimal) {
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        } else {
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>در حال بررسی...</span>';
+        }
 
         // Get submitted answer based on schedule item type
         const submittedAnswer = getSubmittedAnswer(scheduleItemType, blockId);
@@ -44,7 +53,7 @@
         if (!submittedAnswer) {
             showError(button, 'لطفاً ابتدا پاسخ را وارد کنید. حداقل یک آیتم باید در جایگاه قرار گیرد.');
             button.disabled = false;
-            button.innerHTML = originalText;
+            button.innerHTML = originalContent;
             return;
         }
 
@@ -53,7 +62,7 @@
             if (!submittedAnswer.order || submittedAnswer.order.length === 0) {
                 showError(button, 'لطفاً ابتدا پاسخ را وارد کنید. حداقل یک آیتم باید در جایگاه قرار گیرد.');
                 button.disabled = false;
-                button.innerHTML = originalText;
+                button.innerHTML = originalContent;
                 return;
             }
         }
@@ -82,13 +91,16 @@
         .then(function(result) {
             showResult(button, result, blockId);
             button.disabled = false;
-            button.innerHTML = originalText;
+            updateButtonIcon(button, result.isCorrect);
+            // Reload history after answer check
+            loadAnswerHistoryForBlock(scheduleItemId, blockId);
+            button.innerHTML = originalContent;
         })
         .catch(function(error) {
             console.error('Error checking answer:', error);
             showError(button, error.message || 'خطا در بررسی پاسخ');
             button.disabled = false;
-            button.innerHTML = originalText;
+            button.innerHTML = originalContent;
         });
     }
 
@@ -111,7 +123,7 @@
     function getOrderingAnswer(blockId) {
         // Find the sorting block for this blockId
         // First, try to find button with this blockId and get its parent card
-        const button = document.querySelector(`.btn-check-answer[data-block-id="${blockId}"]`);
+        const button = document.querySelector(`.btn-check-answer-minimal[data-block-id="${blockId}"]`);
         let blockCard = button ? button.closest('.ordering-block-card') : null;
         
         if (!blockCard) {
@@ -191,45 +203,72 @@
     }
 
     function showResult(button, result, blockId) {
-        // Find result container
-        const blockCard = button.closest('.ordering-block-card');
-        if (!blockCard) return;
+        // For minimal button, we just update the icon - no need for result container
+        const isMinimal = button.classList.contains('btn-check-answer-minimal');
+        
+        if (!isMinimal) {
+            // Find result container for old style buttons
+            const blockCard = button.closest('.ordering-block-card');
+            if (!blockCard) return;
 
-        const resultContainer = blockCard.querySelector(`.block-result[data-block-id="${blockId}"]`);
-        if (!resultContainer) return;
+            const resultContainer = blockCard.querySelector(`.block-result[data-block-id="${blockId}"]`);
+            if (!resultContainer) return;
 
-        const resultContent = resultContainer.querySelector('.result-content');
-        if (!resultContent) return;
+            const resultContent = resultContainer.querySelector('.result-content');
+            if (!resultContent) return;
 
-        // Clear previous result
-        resultContent.innerHTML = '';
+            // Clear previous result
+            resultContent.innerHTML = '';
 
-        // Add result class
-        resultContainer.classList.remove('correct', 'incorrect');
-        resultContainer.classList.add(result.isCorrect ? 'correct' : 'incorrect');
+            // Add result class
+            resultContainer.classList.remove('correct', 'incorrect');
+            resultContainer.classList.add(result.isCorrect ? 'correct' : 'incorrect');
 
-        // Build result HTML
-        const icon = result.isCorrect 
-            ? '<i class="fas fa-check-circle result-icon correct"></i>'
-            : '<i class="fas fa-times-circle result-icon incorrect"></i>';
+            // Build result HTML
+            const icon = result.isCorrect 
+                ? '<i class="fas fa-check-circle result-icon correct"></i>'
+                : '<i class="fas fa-times-circle result-icon incorrect"></i>';
 
-        const message = result.isCorrect 
-            ? 'عالی! پاسخ شما صحیح است.'
-            : (result.feedback || 'متأسفانه پاسخ شما صحیح نیست. لطفاً دوباره تلاش کنید.');
+            const message = result.isCorrect 
+                ? 'عالی! پاسخ شما صحیح است.'
+                : (result.feedback || 'متأسفانه پاسخ شما صحیح نیست. لطفاً دوباره تلاش کنید.');
 
-        const points = `امتیاز: ${result.pointsEarned}/${result.maxPoints}`;
+            const points = `امتیاز: ${result.pointsEarned}/${result.maxPoints}`;
 
-        resultContent.innerHTML = `
-            ${icon}
-            <div class="result-message">${message}</div>
-            <div class="result-points">${points}</div>
-        `;
+            resultContent.innerHTML = `
+                ${icon}
+                <div class="result-message">${message}</div>
+                <div class="result-points">${points}</div>
+            `;
 
-        // Show result
-        resultContainer.style.display = 'block';
+            // Show result
+            resultContainer.style.display = 'block';
 
-        // Scroll to result if needed
-        resultContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            // Scroll to result if needed
+            resultContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    }
+    
+    function updateButtonIcon(button, isCorrect) {
+        const isMinimal = button.classList.contains('btn-check-answer-minimal');
+        
+        if (isMinimal) {
+            // Remove previous state classes
+            button.classList.remove('correct', 'incorrect');
+            
+            // Add new state class
+            button.classList.add(isCorrect ? 'correct' : 'incorrect');
+            
+            // Update icon
+            const icon = button.querySelector('i');
+            if (icon) {
+                if (isCorrect) {
+                    icon.className = 'fas fa-check';
+                } else {
+                    icon.className = 'fas fa-times';
+                }
+            }
+        }
     }
 
     function showError(button, message) {
@@ -259,11 +298,89 @@
         const tokenElement = document.querySelector('input[name="__RequestVerificationToken"]');
         return tokenElement ? tokenElement.value : '';
     }
+    
+    function loadAnswerHistory() {
+        // Get all ordering blocks on the page
+        const orderingBlocks = document.querySelectorAll('.ordering-block-card');
+        if (orderingBlocks.length === 0) return;
+        
+        // Get schedule item ID from first button
+        const firstButton = document.querySelector('.btn-check-answer-minimal, .btn-check-answer');
+        if (!firstButton) return;
+        
+        const scheduleItemId = firstButton.getAttribute('data-schedule-item-id');
+        if (!scheduleItemId) return;
+        
+        // Load history for all blocks
+        orderingBlocks.forEach(function(blockCard) {
+            const button = blockCard.querySelector('.btn-check-answer-minimal, .btn-check-answer');
+            if (!button) return;
+            
+            const blockId = button.getAttribute('data-block-id');
+            if (!blockId) return;
+            
+            loadAnswerHistoryForBlock(scheduleItemId, blockId);
+        });
+    }
+    
+    function loadAnswerHistoryForBlock(scheduleItemId, blockId) {
+        fetch(`/Student/ScheduleItem/GetBlockStatistics?scheduleItemId=${scheduleItemId}&blockId=${blockId}`, {
+            method: 'GET',
+            headers: {
+                'RequestVerificationToken': getAntiForgeryToken()
+            }
+        })
+        .then(function(response) {
+            if (!response.ok) {
+                return response.json().then(function(data) {
+                    throw new Error(data.error || 'خطا در دریافت تاریخچه');
+                });
+            }
+            return response.json();
+        })
+        .then(function(data) {
+            // Handle both wrapped Result format and direct array format
+            let statsList = null;
+            if (data && data.success && data.value) {
+                statsList = data.value;
+            } else if (Array.isArray(data)) {
+                statsList = data;
+            }
+            
+            if (statsList && statsList.length > 0) {
+                const stats = statsList[0];
+                updateAnswerHistory(blockId, stats.correctAttempts || 0, stats.incorrectAttempts || 0);
+            }
+        })
+        .catch(function(error) {
+            console.error('Error loading answer history:', error);
+            // Silently fail - history is optional
+        });
+    }
+    
+    function updateAnswerHistory(blockId, correctCount, incorrectCount) {
+        const historyElement = document.querySelector(`.block-answer-history[data-block-id="${blockId}"]`);
+        if (!historyElement) return;
+        
+        const correctSpan = historyElement.querySelector('.history-correct');
+        const incorrectSpan = historyElement.querySelector('.history-incorrect');
+        
+        if (correctSpan) {
+            correctSpan.textContent = correctCount;
+            correctSpan.setAttribute('data-count', correctCount);
+        }
+        
+        if (incorrectSpan) {
+            incorrectSpan.textContent = incorrectCount;
+            incorrectSpan.setAttribute('data-count', incorrectCount);
+        }
+    }
 
     // Export for use in other scripts if needed
     window.BlockAnswerChecker = {
         initialize: initializeBlockAnswerChecker,
-        checkAnswer: handleCheckAnswer
+        checkAnswer: handleCheckAnswer,
+        loadHistory: loadAnswerHistory
     };
 })();
 
