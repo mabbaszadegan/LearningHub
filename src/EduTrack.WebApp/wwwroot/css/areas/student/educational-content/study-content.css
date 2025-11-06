@@ -611,6 +611,19 @@ body.study-content-page-active .main-content {
         box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
     }
 
+/* Remove padding from image blocks - clean display */
+.content-block.content-block-image-block {
+    padding: 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+}
+
+.content-block.content-block-image-block:hover {
+    transform: none;
+    box-shadow: none;
+}
+
 /* Text blocks: Remove wrapper styles to preserve teacher's design exactly */
 .content-block-text {
     /* Remove all default styles - let teacher's inline styles take precedence */
@@ -742,24 +755,63 @@ body.study-content-page-active .main-content {
     margin: 0;
 }
 
+/* Image Block - Apply teacher settings exactly */
 .content-block-image {
-    text-align: center;
-    margin: 1rem 0;
     position: relative;
+    margin: 0;
 }
 
-    .content-block-image img {
-        max-width: 100%;
-        height: auto;
-        border-radius: 12px;
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-        transition: transform 0.3s ease;
-        cursor: pointer;
+/* Position alignment - from teacher settings */
+.content-block-image.position-left {
+    text-align: left;
+}
+
+.content-block-image.position-center {
+    text-align: center;
+}
+
+.content-block-image.position-right {
+    text-align: right;
+}
+
+.image-wrapper {
+    position: relative;
+    display: inline-block;
+    max-width: 100%;
+}
+
+.content-block-image img {
+    height: auto;
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+    cursor: pointer;
+}
+
+    .content-block-image img:hover {
+        transform: scale(1.02);
     }
 
-        .content-block-image img:hover {
-            transform: scale(1.02);
-        }
+/* Image sizes - exact match with teacher settings */
+.content-block-image img.content-image-small {
+    max-width: 300px !important;
+    width: auto !important;
+}
+
+.content-block-image img.content-image-medium {
+    max-width: 500px !important;
+    width: auto !important;
+}
+
+.content-block-image img.content-image-large {
+    max-width: 700px !important;
+    width: auto !important;
+}
+
+.content-block-image img.content-image-full {
+    width: 100% !important;
+    max-width: 100% !important;
+}
 
 .image-overlay {
     position: absolute;
@@ -775,6 +827,7 @@ body.study-content-page-active .main-content {
     opacity: 0;
     transition: opacity 0.3s ease;
     border-radius: 12px;
+    z-index: 1;
 }
 
 .content-block-image:hover .image-overlay {
@@ -808,11 +861,65 @@ body.study-content-page-active .main-content {
         color: #333;
     }
 
+/* Image Caption - Apply teacher caption position settings */
 .content-block-image .image-caption {
-    margin-top: 0.75rem;
     font-size: 0.9rem;
     color: #6b7280;
     font-style: italic;
+}
+
+.image-caption-top {
+    margin-bottom: 0.75rem;
+    margin-top: 0;
+}
+
+.image-caption-bottom {
+    margin-top: 0.75rem;
+    margin-bottom: 0;
+}
+
+/* Caption alignment respects image position */
+.position-left .image-caption-top,
+.position-left .image-caption-bottom {
+    text-align: left;
+}
+
+.position-center .image-caption-top,
+.position-center .image-caption-bottom {
+    text-align: center;
+}
+
+.position-right .image-caption-top,
+.position-right .image-caption-bottom {
+    text-align: right;
+}
+
+.image-caption-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
+    color: white;
+    padding: 1rem;
+    margin: 0;
+    font-style: normal;
+    text-align: center;
+    border-radius: 0 0 12px 12px;
+    z-index: 2;
+}
+
+/* Ensure overlay caption respects image position */
+.position-left .image-caption-overlay {
+    text-align: left;
+}
+
+.position-center .image-caption-overlay {
+    text-align: center;
+}
+
+.position-right .image-caption-overlay {
+    text-align: right;
 }
 
 /* Image Modal Styles */

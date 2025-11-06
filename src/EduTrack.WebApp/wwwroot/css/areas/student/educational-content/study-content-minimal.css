@@ -31,6 +31,19 @@
     border-color: #667eea;
 }
 
+/* Remove padding from image blocks - clean display */
+.content-block.content-block-image-block {
+    padding: 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+}
+
+.content-block.content-block-image-block:hover {
+    box-shadow: none;
+    border-color: transparent;
+}
+
 .content-block-inner {
     width: 100%;
 }
@@ -123,48 +136,117 @@
     margin: 0;
 }
 
-/* Image Block */
+/* Image Block - Apply teacher settings exactly */
 .content-block-image {
+    position: relative;
+    margin: 0;
+}
+
+/* Position alignment - from teacher settings */
+.content-block-image.position-left {
+    text-align: left;
+}
+
+.content-block-image.position-center {
     text-align: center;
 }
 
-.content-image {
+.content-block-image.position-right {
+    text-align: right;
+}
+
+.image-wrapper {
+    position: relative;
+    display: inline-block;
     max-width: 100%;
+}
+
+.content-image {
     height: auto;
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.content-image-small {
-    max-width: 300px;
+/* Image sizes - exact match with teacher settings */
+.content-block-image img.content-image-small {
+    max-width: 300px !important;
+    width: auto !important;
 }
 
-.content-image-medium {
-    max-width: 600px;
+.content-block-image img.content-image-medium {
+    max-width: 500px !important;
+    width: auto !important;
 }
 
-.content-image-large {
-    max-width: 900px;
+.content-block-image img.content-image-large {
+    max-width: 700px !important;
+    width: auto !important;
 }
 
-.content-image-full {
-    width: 100%;
+.content-block-image img.content-image-full {
+    width: 100% !important;
+    max-width: 100% !important;
 }
 
+/* Image Caption - Apply teacher caption position settings */
 .content-caption {
-    margin-top: 0.75rem;
     font-size: 0.9rem;
     color: #6c757d;
     font-style: italic;
 }
 
 .content-caption-bottom {
-    text-align: center;
+    margin-top: 0.75rem;
+    margin-bottom: 0;
 }
 
 .content-caption-top {
     margin-bottom: 0.75rem;
     margin-top: 0;
+}
+
+/* Caption alignment respects image position */
+.position-left .content-caption-top,
+.position-left .content-caption-bottom {
+    text-align: left;
+}
+
+.position-center .content-caption-top,
+.position-center .content-caption-bottom {
+    text-align: center;
+}
+
+.position-right .content-caption-top,
+.position-right .content-caption-bottom {
+    text-align: right;
+}
+
+.content-caption-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
+    color: white;
+    padding: 1rem;
+    margin: 0;
+    font-style: normal;
+    text-align: center;
+    border-radius: 0 0 8px 8px;
+    z-index: 2;
+}
+
+/* Ensure overlay caption respects image position */
+.position-left .content-caption-overlay {
+    text-align: left;
+}
+
+.position-center .content-caption-overlay {
+    text-align: center;
+}
+
+.position-right .content-caption-overlay {
+    text-align: right;
 }
 
 /* Video Block */

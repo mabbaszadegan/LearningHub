@@ -265,28 +265,60 @@ let studySession = {
                 
             case 'image':
             case 1: // Image
+                // Get image data - handle both camelCase and PascalCase
                 const imageUrl = block.data?.fileUrl || block.data?.FileUrl;
                 const imageCaption = block.data?.caption || block.data?.Caption;
+                
+                // Read teacher settings - handle both camelCase and PascalCase
+                const imageSize = (block.data?.size || block.data?.Size || 'medium').toLowerCase();
+                const imagePosition = (block.data?.position || block.data?.Position || 'center').toLowerCase();
+                const captionPosition = (block.data?.captionPosition || block.data?.CaptionPosition || 'bottom').toLowerCase();
+                
                 if (imageUrl) {
                     const imageId = `image-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
                     
+                    // Add class to block element to remove padding
+                    blockElement.classList.add('content-block-image-block');
+                    
+                    // Build caption HTML based on position
+                    let captionHtml = '';
+                    if (imageCaption) {
+                        const captionClass = `image-caption image-caption-${captionPosition}`;
+                        captionHtml = `<div class="${captionClass}">${this.escapeHtml(imageCaption)}</div>`;
+                    }
+                    
+                    // Apply teacher settings: size and position
+                    const imageContainerClass = `content-block-image position-${imagePosition}`;
+                    const imageClass = `content-image content-image-${imageSize}`;
+                    
+                    // For overlay caption, we need special structure
+                    const hasOverlayCaption = imageCaption && captionPosition === 'overlay';
+                    
                     blockElement.innerHTML = `
-                        <div class="content-block-image">
-                            <img src="${imageUrl}" 
-                                 alt="${imageCaption || 'تصویر'}" 
-                                 loading="lazy" 
-                                 id="${imageId}" 
-                                 data-image-url="${imageUrl}" 
-                                 data-image-caption="${imageCaption || ''}">
-                            <div class="image-overlay">
-                                <button type="button" class="image-action-btn" onclick="studySession.openImageModal('${imageId}'); return false;" title="بزرگنمایی">
-                                    <i class="fas fa-search-plus"></i>
-                                </button>
-                                <button type="button" class="image-action-btn" onclick="studySession.downloadImage('${imageUrl}', '${imageCaption || 'تصویر'}'); return false;" title="دانلود">
-                                    <i class="fas fa-download"></i>
-                                </button>
+                        <div class="${imageContainerClass}">
+                            ${!hasOverlayCaption && captionPosition === 'top' ? captionHtml : ''}
+                            <div class="image-wrapper">
+                                <img src="${imageUrl}" 
+                                     alt="${this.escapeHtml(imageCaption || 'تصویر')}" 
+                                     loading="lazy" 
+                                     id="${imageId}" 
+                                     class="${imageClass}"
+                                     data-image-url="${imageUrl}" 
+                                     data-image-caption="${this.escapeHtml(imageCaption || '')}"
+                                     data-size="${imageSize}"
+                                     data-position="${imagePosition}"
+                                     data-caption-position="${captionPosition}">
+                                <div class="image-overlay">
+                                    <button type="button" class="image-action-btn" onclick="studySession.openImageModal('${imageId}'); return false;" title="بزرگنمایی">
+                                        <i class="fas fa-search-plus"></i>
+                                    </button>
+                                    <button type="button" class="image-action-btn" onclick="studySession.downloadImage('${imageUrl}', '${this.escapeHtml(imageCaption || 'تصویر')}'); return false;" title="دانلود">
+                                        <i class="fas fa-download"></i>
+                                    </button>
+                                </div>
+                                ${hasOverlayCaption ? captionHtml : ''}
                             </div>
-                            ${imageCaption ? `<div class="image-caption">${imageCaption}</div>` : ''}
+                            ${!hasOverlayCaption && captionPosition === 'bottom' ? captionHtml : ''}
                         </div>
                     `;
                 } else {

@@ -27,17 +27,32 @@
                 ? Model.Data.FileUrl 
                 : $"/FileUpload/GetFile/{Model.Data.FileId}";
                 
-            <div class="content-block-image">
-                <img src="@imageUrl" 
-                     alt="@(Model.Data.Caption ?? "تصویر")" 
-                     class="content-image content-image-@(Model.Data.Size ?? "medium")"
-                     loading="lazy" />
-                @if (!string.IsNullOrEmpty(Model.Data.Caption))
-                {
-                    <div class="content-caption content-caption-@(Model.Data.CaptionPosition ?? "bottom")">
-                        @Model.Data.Caption
+            var imageSize = Model.Data.Size ?? "medium";
+            var imagePosition = Model.Data.Position ?? "center";
+            var captionPosition = Model.Data.CaptionPosition ?? "bottom";
+            var hasOverlayCaption = !string.IsNullOrEmpty(Model.Data.Caption) && captionPosition == "overlay";
+            
+            <div class="content-block-image-block">
+                <div class="content-block-image position-@imagePosition">
+                    @if (!hasOverlayCaption && captionPosition == "top" && !string.IsNullOrEmpty(Model.Data.Caption))
+                    {
+                        <div class="image-caption image-caption-top">@Model.Data.Caption</div>
+                    }
+                    <div class="image-wrapper">
+                        <img src="@imageUrl" 
+                             alt="@(Model.Data.Caption ?? "تصویر")" 
+                             class="content-image content-image-@imageSize"
+                             loading="lazy" />
+                        @if (hasOverlayCaption)
+                        {
+                            <div class="image-caption image-caption-overlay">@Model.Data.Caption</div>
+                        }
                     </div>
-                }
+                    @if (!hasOverlayCaption && captionPosition == "bottom" && !string.IsNullOrEmpty(Model.Data.Caption))
+                    {
+                        <div class="image-caption image-caption-bottom">@Model.Data.Caption</div>
+                    }
+                </div>
             </div>
         }
         break;
