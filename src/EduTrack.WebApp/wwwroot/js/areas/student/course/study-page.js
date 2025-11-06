@@ -135,7 +135,12 @@ class StudyPage {
                     const lastA = parseInt(a.dataset.lastStudy || '0');
                     const lastB = parseInt(b.dataset.lastStudy || '0');
                     // Items with 0 (no study) should go to the end
-                    if (lastA === 0 && lastB === 0) return 0;
+                    if (lastA === 0 && lastB === 0) {
+                        // If both have no study, sort by creation date
+                        const createdA = parseInt(a.dataset.createdAt || '0');
+                        const createdB = parseInt(b.dataset.createdAt || '0');
+                        return createdB - createdA;
+                    }
                     if (lastA === 0) return 1; // A goes to end
                     if (lastB === 0) return -1; // B goes to end
                     return lastB - lastA; // Descending (most recent first)
@@ -343,6 +348,12 @@ class StudyPage {
                 item.classList.add('hidden');
             }
         });
+
+        // Re-apply current sort after filtering
+        const sortSelect = document.getElementById('sortBy');
+        if (sortSelect) {
+            this.sortItems(sortSelect.value);
+        }
 
         // Show/hide empty state
         const emptyState = document.querySelector('.study-empty-state');

@@ -34,9 +34,8 @@
             <div class="study-header-title">
                 <h1>@Model.Title</h1>
                 <div class="study-header-stats-minimal">
+                    <i class="fas fa-clock stat-icon-minimal"></i>
                     <span class="stat-mini-header">@FormatTime(totalStudyTimeSeconds)</span>
-                    <span class="stat-separator">•</span>
-                    <span class="stat-mini-header">@totalSessionsCount</span>
                 </div>
             </div>
             
@@ -171,9 +170,21 @@
                                         }
                                     }
                                     <div class="study-item-stats">
-                                        <span class="stat-mini">@FormatTime(totalTime)</span>
-                                        <span class="stat-separator">•</span>
-                                        <span class="stat-mini">@sessionsCount</span>
+                                        <div class="stat-item">
+                                            <i class="fas fa-clock stat-icon-minimal"></i>
+                                            <span class="stat-mini">@FormatTime(totalTime)</span>
+                                        </div>
+                                        <div class="stat-item">
+                                            <i class="fas fa-book-open stat-icon-minimal"></i>
+                                            <span class="stat-mini">@sessionsCount</span>
+                                        </div>
+                                        @if (lastStudyDate.HasValue)
+                                        {
+                                            <div class="stat-item stat-last-study">
+                                                <i class="fas fa-history stat-icon-minimal"></i>
+                                                <span class="stat-mini">@FormatLastStudyDate(lastStudyDate.Value)</span>
+                                            </div>
+                                        }
                                     </div>
                                 </div>
                             </div>
@@ -306,6 +317,62 @@
         else
         {
             return $"{seconds}ث";
+        }
+    }
+    
+    string FormatLastStudyDate(DateTimeOffset date)
+    {
+        // Convert both to UTC for accurate comparison
+        var now = DateTimeOffset.UtcNow;
+        var dateUtc = date.ToUniversalTime();
+        var diff = now - dateUtc;
+        
+        // If date is in the future (shouldn't happen, but handle it)
+        if (diff.TotalSeconds < 0)
+        {
+            return "همین الان";
+        }
+        
+        // Less than 1 minute
+        if (diff.TotalSeconds < 60)
+        {
+            return "همین الان";
+        }
+        // Less than 1 hour
+        else if (diff.TotalMinutes < 60)
+        {
+            var minutes = (int)diff.TotalMinutes;
+            return $"{minutes} دقیقه پیش";
+        }
+        // Less than 24 hours
+        else if (diff.TotalHours < 24)
+        {
+            var hours = (int)diff.TotalHours;
+            return $"{hours} ساعت پیش";
+        }
+        // Less than 7 days
+        else if (diff.TotalDays < 7)
+        {
+            var days = (int)diff.TotalDays;
+            return $"{days} روز پیش";
+        }
+        // Less than 30 days
+        else if (diff.TotalDays < 30)
+        {
+            var weeks = (int)(diff.TotalDays / 7);
+            return $"{weeks} هفته پیش";
+        }
+        // Less than 365 days
+        else if (diff.TotalDays < 365)
+        {
+            var months = (int)(diff.TotalDays / 30);
+            return $"{months} ماه پیش";
+        }
+        // More than 1 year
+        else
+        {
+            var years = (int)(diff.TotalDays / 365);
+            return $"{years} سال پیش";
         }
     }
 }

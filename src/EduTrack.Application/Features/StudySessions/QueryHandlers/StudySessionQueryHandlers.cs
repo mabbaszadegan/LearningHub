@@ -164,16 +164,23 @@ public class GetStudySessionStatisticsQueryHandler : IRequestHandler<GetStudySes
         {
             var totalTime = await _studySessionRepository.GetTotalStudyTimeAsync(request.StudentId, request.ScheduleItemId);
             var sessionsCount = await _studySessionRepository.GetStudySessionsCountAsync(request.StudentId, request.ScheduleItemId);
-            var recentSessions = await _studySessionRepository.GetRecentSessionsAsync(request.StudentId, 5);
+            
+            // Get all sessions for this specific schedule item
+            var allItemSessions = await _studySessionRepository.GetByStudentAndScheduleItemAsync(request.StudentId, request.ScheduleItemId);
+            var itemRecentSessions = allItemSessions
+                .Where(s => s.IsCompleted)
+                .OrderByDescending(s => s.EndedAt ?? s.StartedAt)
+                .Take(5)
+                .ToList();
 
-            var lastStudyDate = recentSessions.FirstOrDefault()?.EndedAt;
+            var lastStudyDate = itemRecentSessions.FirstOrDefault()?.EndedAt ?? itemRecentSessions.FirstOrDefault()?.StartedAt;
 
             var statistics = new StudySessionStatisticsDto
             {
                 TotalStudyTimeSeconds = totalTime,
                 StudySessionsCount = sessionsCount,
                 LastStudyDate = lastStudyDate,
-                RecentSessions = recentSessions.Select(MapToDto).ToList()
+                RecentSessions = itemRecentSessions.Select(MapToDto).ToList()
             };
 
             return Result<StudySessionStatisticsDto>.Success(statistics);
