@@ -206,10 +206,27 @@ let studySession = {
             // Sort blocks by order
             const sortedBlocks = blocks.sort((a, b) => (a.order || a.Order || 0) - (b.order || b.Order || 0));
             
-            sortedBlocks.forEach(block => {
-                const blockElement = this.createContentBlock(block);
-                if (blockElement) {
-                    blocksContainer.appendChild(blockElement);
+            let previousBlockElement = null;
+            
+            sortedBlocks.forEach((block, index) => {
+                const blockType = (block.type || block.Type || '').toString().toLowerCase();
+                const blockTypeNum = typeof (block.type || block.Type) === 'number' ? block.type || block.Type : null;
+                const displayMode = block.data?.displayMode || block.data?.DisplayMode || 'player';
+                const attachmentMode = block.data?.attachmentMode || block.data?.AttachmentMode || 'independent';
+                
+                // Check if this is an attached audio icon block (both string 'audio' and number 3)
+                const isAttachedAudio = (blockType === 'audio' || blockTypeNum === 3) && displayMode === 'icon' && attachmentMode === 'attached';
+                if (isAttachedAudio && previousBlockElement) {
+                    // Add audio icon to previous block's header
+                    this.attachAudioIconToBlock(previousBlockElement, block);
+                    // Don't create a new block for attached audio - it's already added to previous block
+                } else {
+                    // Create normal block
+                    const blockElement = this.createContentBlock(block);
+                    if (blockElement) {
+                        blocksContainer.appendChild(blockElement);
+                        previousBlockElement = blockElement;
+                    }
                 }
             });
             
@@ -243,58 +260,59 @@ let studySession = {
             const htmlContent = block.data?.content || block.data?.Content || '';
             const plainTextContent = block.data?.textContent || block.data?.TextContent || '';
             const contentToDisplay = htmlContent || plainTextContent;
-            
+
             // If content is HTML (has tags), display it directly without formatting
             // Otherwise, format plain text
             const isHtml = /<[a-z][\s\S]*>/i.test(contentToDisplay);
             const displayContent = isHtml ? contentToDisplay : this.formatTextContent(contentToDisplay);
-            
+
             // Add inner wrapper to match server-side structure
             const innerWrapper = document.createElement('div');
             innerWrapper.className = 'content-block-inner';
-            
+
             const textDiv = document.createElement('div');
             textDiv.className = 'content-block-text';
             textDiv.innerHTML = displayContent;
-            
+
             innerWrapper.appendChild(textDiv);
             blockElement.appendChild(innerWrapper);
-        } else {
+            return blockElement;
+        }
+        else {
             // Handle other block types with switch
             switch (blockType) {
-                
-            case 'image':
-            case 1: // Image
-                // Get image data - handle both camelCase and PascalCase
-                const imageUrl = block.data?.fileUrl || block.data?.FileUrl;
-                const imageCaption = block.data?.caption || block.data?.Caption;
-                
-                // Read teacher settings - handle both camelCase and PascalCase
-                const imageSize = (block.data?.size || block.data?.Size || 'medium').toLowerCase();
-                const imagePosition = (block.data?.position || block.data?.Position || 'center').toLowerCase();
-                const captionPosition = (block.data?.captionPosition || block.data?.CaptionPosition || 'bottom').toLowerCase();
-                
-                if (imageUrl) {
-                    const imageId = `image-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-                    
-                    // Add class to block element to remove padding
-                    blockElement.classList.add('content-block-image-block');
-                    
-                    // Build caption HTML based on position
-                    let captionHtml = '';
-                    if (imageCaption) {
-                        const captionClass = `image-caption image-caption-${captionPosition}`;
-                        captionHtml = `<div class="${captionClass}">${this.escapeHtml(imageCaption)}</div>`;
-                    }
-                    
-                    // Apply teacher settings: size and position
-                    const imageContainerClass = `content-block-image position-${imagePosition}`;
-                    const imageClass = `content-image content-image-${imageSize}`;
-                    
-                    // For overlay caption, we need special structure
-                    const hasOverlayCaption = imageCaption && captionPosition === 'overlay';
-                    
-                    blockElement.innerHTML = `
+                case 'image':
+                case 1: // Image
+                    // Get image data - handle both camelCase and PascalCase
+                    const imageUrl = block.data?.fileUrl || block.data?.FileUrl;
+                    const imageCaption = block.data?.caption || block.data?.Caption;
+
+                    // Read teacher settings - handle both camelCase and PascalCase
+                    const imageSize = (block.data?.size || block.data?.Size || 'medium').toLowerCase();
+                    const imagePosition = (block.data?.position || block.data?.Position || 'center').toLowerCase();
+                    const captionPosition = (block.data?.captionPosition || block.data?.CaptionPosition || 'bottom').toLowerCase();
+
+                    if (imageUrl) {
+                        const imageId = `image-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+
+                        // Add class to block element to remove padding
+                        blockElement.classList.add('content-block-image-block');
+
+                        // Build caption HTML based on position
+                        let captionHtml = '';
+                        if (imageCaption) {
+                            const captionClass = `image-caption image-caption-${captionPosition}`;
+                            captionHtml = `<div class="${captionClass}">${this.escapeHtml(imageCaption)}</div>`;
+                        }
+
+                        // Apply teacher settings: size and position
+                        const imageContainerClass = `content-block-image position-${imagePosition}`;
+                        const imageClass = `content-image content-image-${imageSize}`;
+
+                        // For overlay caption, we need special structure
+                        const hasOverlayCaption = imageCaption && captionPosition === 'overlay';
+
+                        blockElement.innerHTML = `
                         <div class="${imageContainerClass}">
                             ${!hasOverlayCaption && captionPosition === 'top' ? captionHtml : ''}
                             <div class="image-wrapper">
@@ -321,19 +339,18 @@ let studySession = {
                             ${!hasOverlayCaption && captionPosition === 'bottom' ? captionHtml : ''}
                         </div>
                     `;
-                } else {
-                    console.warn('Image block without file URL:', block);
-                    return null;
-                }
-                break;
-                
-            case 'video':
-            case 2: // Video
-                const videoUrl = block.data?.fileUrl || block.data?.FileUrl;
-                const videoMimeType = block.data?.mimeType || block.data?.MimeType || 'video/mp4';
-                const videoCaption = block.data?.caption || block.data?.Caption;
-                if (videoUrl) {
-                    blockElement.innerHTML = `
+                    } else {
+                        console.warn('Image block without file URL:', block);
+                        return null;
+                    }
+                    break;
+                case 'video':
+                case 2: // Video
+                    const videoUrl = block.data?.fileUrl || block.data?.FileUrl;
+                    const videoMimeType = block.data?.mimeType || block.data?.MimeType || 'video/mp4';
+                    const videoCaption = block.data?.caption || block.data?.Caption;
+                    if (videoUrl) {
+                        blockElement.innerHTML = `
                         <div class="content-block-video">
                             <video controls preload="metadata">
                                 <source src="${videoUrl}" type="${videoMimeType}">
@@ -342,38 +359,37 @@ let studySession = {
                             ${videoCaption ? `<div class="image-caption">${videoCaption}</div>` : ''}
                         </div>
                     `;
-                } else {
-                    console.warn('Video block without file URL:', block);
-                    return null;
-                }
-                break;
-                
-            case 'audio':
-            case 3: // Audio
-                const audioUrl = block.data?.fileUrl || block.data?.FileUrl;
-                const audioMimeType = block.data?.mimeType || block.data?.MimeType || 'audio/mpeg';
-                const audioDuration = block.data?.duration || block.data?.Duration;
-                const audioCaption = block.data?.caption || block.data?.Caption;
-                const displayMode = block.data?.displayMode || block.data?.DisplayMode || 'player';
-                const attachmentMode = block.data?.attachmentMode || block.data?.AttachmentMode || 'independent';
-                
-                if (audioUrl) {
-                    const duration = audioDuration ? this.formatDuration(audioDuration) : '';
-                    const audioId = `audio-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-                    
-                    // Determine if this block should be attached to previous block
-                    const isAttached = displayMode === 'icon' && attachmentMode === 'attached';
-                    const audioClass = isAttached ? 'content-block-audio content-block-audio-attached' : 'content-block-audio';
-                    
-                    if (displayMode === 'icon') {
-                        // Icon mode - simple icon that can be clicked to play
-                        blockElement.innerHTML = `
+                    } else {
+                        console.warn('Video block without file URL:', block);
+                        return null;
+                    }
+                    break;
+                case 'audio':
+                case 3: // Audio
+                    const audioUrl = block.data?.fileUrl || block.data?.FileUrl;
+                    const audioMimeType = block.data?.mimeType || block.data?.MimeType || 'audio/mpeg';
+                    const audioDuration = block.data?.duration || block.data?.Duration;
+                    const audioCaption = block.data?.caption || block.data?.Caption;
+                    const displayMode = block.data?.displayMode || block.data?.DisplayMode || 'player';
+                    const attachmentMode = block.data?.attachmentMode || block.data?.AttachmentMode || 'independent';
+
+                    if (audioUrl) {
+                        const duration = audioDuration ? this.formatDuration(audioDuration) : '';
+                        const audioId = `audio-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+
+                        // Determine if this block should be attached to previous block
+                        const isAttached = displayMode === 'icon' && attachmentMode === 'attached';
+                        const audioClass = isAttached ? 'content-block-audio content-block-audio-attached' : 'content-block-audio';
+
+                        if (displayMode === 'icon') {
+                            // Icon mode - minimal icon that can be clicked to play (only for independent mode)
+                            blockElement.innerHTML = `
                             <div class="${audioClass}">
-                                <div class="audio-icon-container">
-                                    <button type="button" class="audio-icon-button" id="audio-icon-${audioId}" data-audio-id="${audioId}" title="پخش فایل صوتی">
+                                <div class="audio-icon-container audio-icon-standalone">
+                                    <button type="button" class="audio-icon-button-minimal" id="audio-icon-${audioId}" data-audio-id="${audioId}" title="پخش فایل صوتی">
                                         <i class="fas fa-volume-up"></i>
                                     </button>
-                                    ${audioCaption ? `<span class="audio-icon-caption">${this.escapeHtml(audioCaption)}</span>` : ''}
+                                    ${audioCaption ? `<span class="audio-icon-caption-minimal">${this.escapeHtml(audioCaption)}</span>` : ''}
                                 </div>
                                 <audio class="hidden-audio" id="${audioId}" preload="metadata">
                                     <source src="${audioUrl}" type="${audioMimeType}">
@@ -381,68 +397,63 @@ let studySession = {
                                 </audio>
                             </div>
                         `;
-                        
-                        // Initialize icon click handler
-                        setTimeout(() => {
-                            this.initializeAudioIcon(audioId, audioUrl);
-                        }, 100);
-                    } else {
-                        // Player mode - full audio player
-                        blockElement.innerHTML = `
+
+                            // Initialize icon click handler
+                            setTimeout(() => {
+                                this.initializeAudioIcon(audioId, audioUrl);
+                            }, 100);
+                        } else {
+                            // Player mode - minimal audio player
+                            blockElement.innerHTML = `
                             <div class="${audioClass}">
-                                <div class="audio-player-container">
-                                    <div class="custom-audio-player">
-                                        <div class="speaker-button" id="speaker-${audioId}" data-audio-id="${audioId}">
-                                            <i class="fas fa-volume-up speaker-icon"></i>
-                                        </div>
-                                        <div class="audio-title">فایل صوتی</div>
-                                        <div class="audio-info">
-                                            ${duration ? `<span class="audio-duration">${duration}</span>` : ''}
-                                            <span class="audio-status" id="status-${audioId}">آماده پخش</span>
-                                        </div>
-                                        <div class="progress-container">
-                                            <div class="progress-bar" id="progress-${audioId}">
-                                                <div class="progress-fill" id="progress-fill-${audioId}"></div>
+                                <div class="audio-player-minimal">
+                                    <button type="button" class="audio-play-button-minimal" id="speaker-${audioId}" data-audio-id="${audioId}" title="پخش/توقف">
+                                        <i class="fas fa-play"></i>
+                                    </button>
+                                    <div class="audio-player-info-minimal">
+                                        <div class="audio-progress-minimal">
+                                            <div class="progress-bar-minimal" id="progress-${audioId}">
+                                                <div class="progress-fill-minimal" id="progress-fill-${audioId}"></div>
                                             </div>
-                                            <div class="time-display">
-                                                <span id="current-time-${audioId}">00:00</span>
-                                                <span id="total-time-${audioId}">${duration || '00:00'}</span>
-                                            </div>
+                                        </div>
+                                        <div class="audio-time-minimal">
+                                            <span id="current-time-${audioId}">00:00</span>
+                                            <span>/</span>
+                                            <span id="total-time-${audioId}">${duration || '00:00'}</span>
                                         </div>
                                     </div>
                                     <audio class="hidden-audio" id="${audioId}" preload="metadata">
                                         <source src="${audioUrl}" type="${audioMimeType}">
                                         مرورگر شما از پخش صدا پشتیبانی نمی‌کند.
                                     </audio>
-                                    ${audioCaption ? `<div class="audio-caption">${audioCaption}</div>` : ''}
+                                    ${audioCaption ? `<div class="audio-caption-minimal">${audioCaption}</div>` : ''}
                                 </div>
                             </div>
                         `;
-                        
-                        // Initialize custom audio player after DOM is ready
-                        setTimeout(() => {
-                            this.initializeCustomAudioPlayer(audioId, audioUrl);
-                        }, 100);
+
+                            // Initialize minimal audio player after DOM is ready
+                            setTimeout(() => {
+                                this.initializeMinimalAudioPlayer(audioId, audioUrl);
+                            }, 100);
+                        }
+                    } else {
+                        console.warn('Audio block without file URL:', block);
+                        return null;
                     }
-                } else {
-                    console.warn('Audio block without file URL:', block);
-                    return null;
-                }
-                break;
-                
-            case 'code':
-            case 4: // Code
-                const codeContent = block.data?.codeContent || block.data?.CodeContent || '';
-                const language = block.data?.language || block.data?.Language || 'plaintext';
-                const theme = block.data?.theme || block.data?.Theme || 'default';
-                const codeTitle = block.data?.codeTitle || block.data?.CodeTitle || '';
-                const showLineNumbers = block.data?.showLineNumbers !== false;
-                const enableCopyButton = block.data?.enableCopyButton !== false;
-                
-                if (codeContent) {
-                    const codeId = `code-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-                    
-                    blockElement.innerHTML = `
+                    break;
+                case 'code':
+                case 4: // Code
+                    const codeContent = block.data?.codeContent || block.data?.CodeContent || '';
+                    const language = block.data?.language || block.data?.Language || 'plaintext';
+                    const theme = block.data?.theme || block.data?.Theme || 'default';
+                    const codeTitle = block.data?.codeTitle || block.data?.CodeTitle || '';
+                    const showLineNumbers = block.data?.showLineNumbers !== false;
+                    const enableCopyButton = block.data?.enableCopyButton !== false;
+
+                    if (codeContent) {
+                        const codeId = `code-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+
+                        blockElement.innerHTML = `
                         <div class="content-block-code">
                             <div class="code-header">
                                 ${codeTitle ? `<div class="code-title">${codeTitle}</div>` : ''}
@@ -464,17 +475,16 @@ let studySession = {
                             </div>
                         </div>
                     `;
-                } else {
-                    console.warn('Code block without content:', block);
+                    } else {
+                        console.warn('Code block without content:', block);
+                        return null;
+                    }
+                    break;
+                default:
+                    console.warn('Unknown content block type:', block.type);
                     return null;
-                }
-                break;
-                
-            default:
-                console.warn('Unknown content block type:', block.type);
-                return null;
+            }
         }
-        
         return blockElement;
     },
     
@@ -848,6 +858,127 @@ let studySession = {
         if (audio) {
             audio.pause();
         }
+    },
+    
+    attachAudioIconToBlock(blockElement, audioBlock) {
+        // Find or create block header
+        let blockHeader = blockElement.querySelector('.content-block-header');
+        if (!blockHeader) {
+            // Create header if it doesn't exist
+            blockHeader = document.createElement('div');
+            blockHeader.className = 'content-block-header';
+            
+            // Insert header at the beginning of block element
+            // For text blocks, insert before innerWrapper if it exists
+            const innerWrapper = blockElement.querySelector('.content-block-inner');
+            if (innerWrapper) {
+                blockElement.insertBefore(blockHeader, innerWrapper);
+            } else {
+                blockElement.insertBefore(blockHeader, blockElement.firstChild);
+            }
+        }
+        
+        // Create audio icon
+        const audioUrl = audioBlock.data?.fileUrl || audioBlock.data?.FileUrl;
+        const audioMimeType = audioBlock.data?.mimeType || audioBlock.data?.MimeType || 'audio/mpeg';
+        const audioId = `audio-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+        
+        const audioIconContainer = document.createElement('div');
+        audioIconContainer.className = 'audio-icon-header';
+        audioIconContainer.innerHTML = `
+            <button type="button" class="audio-icon-button-header" id="audio-icon-${audioId}" data-audio-id="${audioId}" title="پخش فایل صوتی">
+                <i class="fas fa-volume-up"></i>
+            </button>
+            <audio class="hidden-audio" id="${audioId}" preload="metadata">
+                <source src="${audioUrl}" type="${audioMimeType}">
+                مرورگر شما از پخش صدا پشتیبانی نمی‌کند.
+            </audio>
+        `;
+        
+        blockHeader.appendChild(audioIconContainer);
+        
+        // Initialize icon click handler
+        setTimeout(() => {
+            this.initializeAudioIcon(audioId, audioUrl);
+        }, 100);
+    },
+    
+    initializeMinimalAudioPlayer(audioId, audioUrl) {
+        const audio = document.getElementById(audioId);
+        const playButton = document.getElementById(`speaker-${audioId}`);
+        const progressBar = document.getElementById(`progress-${audioId}`);
+        const progressFill = document.getElementById(`progress-fill-${audioId}`);
+        const currentTimeElement = document.getElementById(`current-time-${audioId}`);
+        const totalTimeElement = document.getElementById(`total-time-${audioId}`);
+        
+        if (!audio || !playButton || !progressBar || !progressFill || !currentTimeElement || !totalTimeElement) {
+            console.warn('Minimal audio player elements not found for:', audioId);
+            return;
+        }
+        
+        let isPlaying = false;
+        let isDragging = false;
+        
+        // Play button click handler
+        playButton.addEventListener('click', () => {
+            if (isPlaying) {
+                audio.pause();
+            } else {
+                audio.play().catch(error => {
+                    console.error('Error playing audio:', error);
+                });
+            }
+        });
+        
+        // Progress bar click handler
+        progressBar.addEventListener('click', (e) => {
+            if (audio.duration) {
+                const rect = progressBar.getBoundingClientRect();
+                const clickX = e.clientX - rect.left;
+                const percentage = clickX / rect.width;
+                const newTime = percentage * audio.duration;
+                audio.currentTime = newTime;
+            }
+        });
+        
+        // Audio event listeners
+        audio.addEventListener('loadedmetadata', () => {
+            const duration = this.formatDuration(audio.duration);
+            totalTimeElement.textContent = duration;
+        });
+        
+        audio.addEventListener('timeupdate', () => {
+            if (!isDragging) {
+                const percentage = (audio.currentTime / audio.duration) * 100;
+                progressFill.style.width = `${percentage}%`;
+                currentTimeElement.textContent = this.formatDuration(audio.currentTime);
+            }
+        });
+        
+        audio.addEventListener('play', () => {
+            isPlaying = true;
+            playButton.classList.add('playing');
+            playButton.querySelector('i').className = 'fas fa-pause';
+        });
+        
+        audio.addEventListener('pause', () => {
+            isPlaying = false;
+            playButton.classList.remove('playing');
+            playButton.querySelector('i').className = 'fas fa-play';
+        });
+        
+        audio.addEventListener('ended', () => {
+            isPlaying = false;
+            playButton.classList.remove('playing');
+            playButton.querySelector('i').className = 'fas fa-play';
+            progressFill.style.width = '0%';
+            currentTimeElement.textContent = '00:00';
+        });
+        
+        audio.addEventListener('error', () => {
+            console.error('Audio loading error:', audio.error);
+            playButton.classList.add('error');
+        });
     },
     
     openImageModal(imageId) {
