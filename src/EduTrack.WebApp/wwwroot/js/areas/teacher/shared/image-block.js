@@ -216,7 +216,13 @@ window.ImageBlockManager = class ImageBlockManager {
     
     findActiveContentBuilder(blockElement) {
         const blockId = blockElement.dataset.blockId;
-        // Try reminderBlockManager first
+        // Try unifiedContentManager first (new unified system)
+        if (window.unifiedContentManager && window.unifiedContentManager.pendingFiles) {
+            if (window.unifiedContentManager.blocks && window.unifiedContentManager.blocks.find(b => b.id === blockId)) {
+                return window.unifiedContentManager;
+            }
+        }
+        // Try reminderBlockManager
         if (window.reminderBlockManager && window.reminderBlockManager.pendingFiles) {
             if (window.reminderBlockManager.blocks.find(b => b.id === blockId)) {
                 return window.reminderBlockManager;

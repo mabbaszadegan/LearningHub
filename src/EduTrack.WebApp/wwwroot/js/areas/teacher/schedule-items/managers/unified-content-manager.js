@@ -529,17 +529,37 @@ class UnifiedContentManager extends ContentBuilderBase {
     }
 
     // Compatibility methods for form manager integration
-    collectStep4Data() {
-        return new Promise((resolve) => {
-            this.collectCurrentBlockData();
-            const content = this.getContent();
-            resolve({
-                ContentJson: JSON.stringify(content)
-            });
-        });
+    async collectStep4Data() {
+        // First, upload all pending files before collecting data
+        if (this.uploadAllPendingFiles && typeof this.uploadAllPendingFiles === 'function') {
+            try {
+                await this.uploadAllPendingFiles();
+            } catch (error) {
+                console.error('Error uploading pending files:', error);
+                throw new Error(`خطا در آپلود فایل‌ها: ${error.message}`);
+            }
+        }
+        
+        // Then collect current block data
+        this.collectCurrentBlockData();
+        const content = this.getContent();
+        return {
+            ContentJson: JSON.stringify(content)
+        };
     }
 
-    collectContentData() {
+    async collectContentData() {
+        // First, upload all pending files before collecting data
+        if (this.uploadAllPendingFiles && typeof this.uploadAllPendingFiles === 'function') {
+            try {
+                await this.uploadAllPendingFiles();
+            } catch (error) {
+                console.error('Error uploading pending files:', error);
+                throw new Error(`خطا در آپلود فایل‌ها: ${error.message}`);
+            }
+        }
+        
+        // Then collect current block data
         this.collectCurrentBlockData();
         const content = this.getContent();
         return content;

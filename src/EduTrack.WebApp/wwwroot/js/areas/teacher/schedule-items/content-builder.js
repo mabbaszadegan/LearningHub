@@ -1310,6 +1310,12 @@ class ContentBuilderBase {
 
     // Upload all pending files to server (works for all content types)
     async uploadAllPendingFiles() {
+        console.log('ContentBuilderBase: uploadAllPendingFiles called', {
+            blocksCount: this.blocks.length,
+            pendingFilesCount: this.pendingFiles.size,
+            pendingFilesKeys: Array.from(this.pendingFiles.keys())
+        });
+        
         const pendingBlocks = [];
         
         // Find all blocks with pending files
@@ -1319,7 +1325,15 @@ class ContentBuilderBase {
                 try {
                     const blockData = JSON.parse(blockElement.dataset.blockData || '{}');
                     // Check if we have a pending file for this block
-                    if (this.pendingFiles.has(block.id) || blockData.isPending) {
+                    const hasPendingFile = this.pendingFiles.has(block.id);
+                    const isPendingInData = blockData.isPending;
+                    
+                    if (hasPendingFile || isPendingInData) {
+                        console.log('ContentBuilderBase: Found pending block', {
+                            blockId: block.id,
+                            hasPendingFile,
+                            isPendingInData
+                        });
                         pendingBlocks.push({ blockElement, blockData, block });
                     }
                 } catch (e) {
@@ -1329,8 +1343,11 @@ class ContentBuilderBase {
         }
         
         if (pendingBlocks.length === 0) {
+            console.log('ContentBuilderBase: No pending files to upload');
             return; // No pending files
         }
+        
+        console.log('ContentBuilderBase: Uploading', pendingBlocks.length, 'pending files');
         
         // Upload all files
         for (const { blockElement, blockData, block } of pendingBlocks) {
@@ -1357,12 +1374,22 @@ class ContentBuilderBase {
         // Get the file from pending files map
         let fileToUpload = this.pendingFiles.get(blockId);
         
+        console.log('ContentBuilderBase: uploadBlockFile called', {
+            blockId,
+            hasFile: !!fileToUpload,
+            isPending: blockData.isPending,
+            fileName: fileToUpload?.name
+        });
+        
         if (!fileToUpload && blockData.isPending) {
             console.warn(`ContentBuilderBase: No file found for pending block ${blockId}`);
             return null;
         }
         
-        if (!fileToUpload) return null;
+        if (!fileToUpload) {
+            console.log(`ContentBuilderBase: No file to upload for block ${blockId}`);
+            return null;
+        }
         
         this.showUploadProgress(blockElement);
         

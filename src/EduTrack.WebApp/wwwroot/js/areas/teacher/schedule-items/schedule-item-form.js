@@ -1193,7 +1193,7 @@ class ModernScheduleItemFormManager {
             // Add content data from Step 4 manager
             const manager = window.unifiedContentManager || window.step4Manager;
             if (manager && typeof manager.collectContentData === 'function') {
-                formData.contentData = manager.collectContentData();
+                formData.contentData = await manager.collectContentData();
             }
 
             // Submit form
