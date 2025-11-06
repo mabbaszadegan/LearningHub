@@ -11,6 +11,8 @@ let studySession = {
     sessionId: null,
     updateInterval: null,
     fixedEndTime: null, // Fixed end time when modal is open
+    isSaving: false, // Flag to prevent duplicate saves
+    lastSavedStartTime: null, // Track the start time of the last saved session
     
     init() {
         this.sessionId = window.studyContentConfig?.activeSessionId || 0;
@@ -893,12 +895,22 @@ let studySession = {
     saveStudySessionOnUnload() {
         // Use sendBeacon for reliable delivery during page unload
         try {
+            // Prevent duplicate saves - if already saving or already saved this session, skip
+            if (this.isSaving || (this.lastSavedStartTime && this.lastSavedStartTime === this.startTime)) {
+                console.log('Skipping duplicate save on unload');
+                return;
+            }
+            
             const scheduleItemId = document.getElementById('schedule-item-content')?.dataset?.itemId || 
                                   window.studyContentConfig?.scheduleItemId;
             
             if (!scheduleItemId || !this.startTime) {
                 return;
             }
+            
+            // Mark as saving to prevent duplicate calls
+            this.isSaving = true;
+            this.lastSavedStartTime = this.startTime;
             
             const endTime = Date.now();
             const data = {
@@ -911,15 +923,24 @@ let studySession = {
             navigator.sendBeacon('/Student/ScheduleItem/CreateAndCompleteStudySession', blob);
         } catch (error) {
             console.error('Error saving study session on unload:', error);
+            // Reset flag on error so it can be retried
+            this.isSaving = false;
         }
     },
     
     async saveStudySessionSilently() {
         // Save without showing any UI feedback
         try {
+            // Prevent duplicate saves - if already saving or already saved this session, skip
+            if (this.isSaving || (this.lastSavedStartTime && this.lastSavedStartTime === this.startTime)) {
+                console.log('Skipping duplicate silent save');
+                return;
+            }
             await this.saveStudySession();
         } catch (error) {
             console.error('Error saving study session silently:', error);
+            // Reset flag on error so it can be retried
+            this.isSaving = false;
         }
     },
     
@@ -937,6 +958,9 @@ let studySession = {
             if (!this.startTime) {
                 this.startTime = Date.now();
                 this.elapsedTime = 0;
+                // Reset save flags when starting a new session
+                this.isSaving = false;
+                this.lastSavedStartTime = null;
             }
             
             // Timer runs silently in background (no UI updates needed)
@@ -996,6 +1020,21 @@ let studySession = {
     
     async saveStudySession() {
         try {
+            // Prevent duplicate saves - if already saving or already saved this session, skip
+            if (this.isSaving) {
+                console.log('Already saving study session, skipping duplicate call');
+                return;
+            }
+            
+            // Check if this session has already been saved
+            if (this.lastSavedStartTime && this.lastSavedStartTime === this.startTime) {
+                console.log('This session has already been saved, skipping duplicate save');
+                return;
+            }
+            
+            // Mark as saving to prevent duplicate calls
+            this.isSaving = true;
+            
             // Get schedule item ID from data attribute or config
             const scheduleItemId = document.getElementById('schedule-item-content')?.dataset?.itemId || 
                                   window.studyContentConfig?.scheduleItemId;
@@ -1007,6 +1046,7 @@ let studySession = {
             });
             
             if (!scheduleItemId) {
+                this.isSaving = false;
                 throw new Error('Schedule item ID not found');
             }
             
@@ -1057,6 +1097,7 @@ let studySession = {
             console.log('Response ok:', response.ok);
             
             if (!response.ok) {
+                this.isSaving = false;
                 let errorText = '';
                 try {
                     errorText = await response.text();
@@ -1080,8 +1121,13 @@ let studySession = {
             console.log('Response result:', result);
             
             if (!result.success) {
+                this.isSaving = false;
                 throw new Error(result.error || 'خطا در ثبت جلسه مطالعه');
             }
+            
+            // Mark this session as saved to prevent duplicate saves
+            this.lastSavedStartTime = this.startTime;
+            this.isSaving = false;
             
             // Update total study time display after successful save
             if (result.totalStudyTimeSeconds !== undefined) {
@@ -1093,6 +1139,7 @@ let studySession = {
             
             return result;
         } catch (error) {
+            this.isSaving = false;
             console.error('Failed to save study session:', error);
             console.error('Error stack:', error.stack);
             throw error;

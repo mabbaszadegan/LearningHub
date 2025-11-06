@@ -68,6 +68,16 @@ public class CreateAndCompleteStudySessionCommandHandler : IRequestHandler<Creat
     {
         try
         {
+            // Check if there's a previous completed session and validate that the new session's start time
+            // is not before the last session's end time
+            var lastEndedAt = await _studySessionRepository.GetLastEndedAtAsync(request.StudentId, request.ScheduleItemId);
+            
+            if (lastEndedAt.HasValue && request.StartedAt < lastEndedAt.Value)
+            {
+                return Result<StudySessionDto>.Failure(
+                    $"زمان شروع جلسه جدید نمی‌تواند قبل از آخرین زمان پایان مطالعه ({lastEndedAt.Value:yyyy-MM-dd HH:mm:ss}) باشد. زمان شروع: {request.StartedAt:yyyy-MM-dd HH:mm:ss}");
+            }
+
             // Create a completed study session directly
             var studySession = StudySession.CreateCompleted(request.StudentId, request.ScheduleItemId, request.StartedAt, request.EndedAt);
             var createdSession = await _studySessionRepository.AddAsync(studySession);

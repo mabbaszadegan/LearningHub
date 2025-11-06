@@ -128,4 +128,16 @@ public class StudySessionRepository : IStudySessionRepository
             .Take(count)
             .ToListAsync();
     }
+
+    public async Task<DateTimeOffset?> GetLastEndedAtAsync(string studentId, int scheduleItemId)
+    {
+        return await _context.StudySessions
+            .Where(s => s.StudentId == studentId && 
+                       s.ScheduleItemId == scheduleItemId && 
+                       s.IsCompleted && 
+                       s.EndedAt != null)
+            .OrderByDescending(s => s.EndedAt)
+            .Select(s => s.EndedAt!.Value)
+            .FirstOrDefaultAsync();
+    }
 }

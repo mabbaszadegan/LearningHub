@@ -20,4 +20,5 @@ public interface IStudySessionRepository
     Task<int> GetTotalStudyTimeAsync(string studentId, int scheduleItemId);
     Task<int> GetStudySessionsCountAsync(string studentId, int scheduleItemId);
     Task<IEnumerable<StudySession>> GetRecentSessionsAsync(string studentId, int count = 10);
+    Task<DateTimeOffset?> GetLastEndedAtAsync(string studentId, int scheduleItemId);
 }
