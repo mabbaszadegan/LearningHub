@@ -114,6 +114,25 @@
             <textarea placeholder="توضیحات فایل صوتی (اختیاری)" rows="2" data-caption="true"></textarea>
         </div>
         
+        <div class="audio-settings">
+            <div class="settings-grid">
+                <div class="setting-item">
+                    <label>مدل نمایش:</label>
+                    <select class="form-select-sm" data-setting="displayMode">
+                        <option value="player" selected>پلیر</option>
+                        <option value="icon">آیکن</option>
+                    </select>
+                </div>
+                <div class="setting-item" id="attachment-mode-setting" style="display: none;">
+                    <label>حالت اتصال:</label>
+                    <select class="form-select-sm" data-setting="attachmentMode">
+                        <option value="independent" selected>مستقل</option>
+                        <option value="attached">چسبیده به بلاک قبل</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
         @if (isQuestionBlock)
         {
             <div class="question-hint">

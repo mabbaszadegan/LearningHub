@@ -145,6 +145,8 @@ public class GapFillContent
     // Audio specific settings
     public bool IsRecorded { get; set; } = false;
     public int? Duration { get; set; } // in seconds
+    public string? DisplayMode { get; set; } = "player"; // "icon" or "player"
+    public string? AttachmentMode { get; set; } = "independent"; // "independent" or "attached" (only for icon mode)
 }
 
 public class GapFillGap
@@ -329,6 +331,8 @@ public class ReminderQuestionData
     // Audio specific settings
     public bool IsRecorded { get; set; } = false;
     public int? Duration { get; set; } // in seconds
+    public string? DisplayMode { get; set; } = "player"; // "icon" or "player"
+    public string? AttachmentMode { get; set; } = "independent"; // "independent" or "attached" (only for icon mode)
 }
 
 public enum ReminderQuestionType
@@ -495,6 +499,8 @@ public class ContentBlockData
     // Audio specific settings
     public bool IsRecorded { get; set; } = false;
     public double? Duration { get; set; } // in seconds (can be decimal)
+    public string? DisplayMode { get; set; } = "player"; // "icon" or "player"
+    public string? AttachmentMode { get; set; } = "independent"; // "independent" or "attached" (only for icon mode)
     
     // Code block specific settings
     public string? CodeContent { get; set; }

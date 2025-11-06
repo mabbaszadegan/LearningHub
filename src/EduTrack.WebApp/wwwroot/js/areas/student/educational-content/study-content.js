@@ -354,45 +354,76 @@ let studySession = {
                 const audioMimeType = block.data?.mimeType || block.data?.MimeType || 'audio/mpeg';
                 const audioDuration = block.data?.duration || block.data?.Duration;
                 const audioCaption = block.data?.caption || block.data?.Caption;
+                const displayMode = block.data?.displayMode || block.data?.DisplayMode || 'player';
+                const attachmentMode = block.data?.attachmentMode || block.data?.AttachmentMode || 'independent';
+                
                 if (audioUrl) {
                     const duration = audioDuration ? this.formatDuration(audioDuration) : '';
                     const audioId = `audio-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
                     
-                    blockElement.innerHTML = `
-                        <div class="content-block-audio">
-                            <div class="audio-player-container">
-                                <div class="custom-audio-player">
-                                    <div class="speaker-button" id="speaker-${audioId}" data-audio-id="${audioId}">
-                                        <i class="fas fa-volume-up speaker-icon"></i>
-                                    </div>
-                                    <div class="audio-title">فایل صوتی</div>
-                                    <div class="audio-info">
-                                        ${duration ? `<span class="audio-duration">${duration}</span>` : ''}
-                                        <span class="audio-status" id="status-${audioId}">آماده پخش</span>
-                                    </div>
-                                    <div class="progress-container">
-                                        <div class="progress-bar" id="progress-${audioId}">
-                                            <div class="progress-fill" id="progress-fill-${audioId}"></div>
-                                        </div>
-                                        <div class="time-display">
-                                            <span id="current-time-${audioId}">00:00</span>
-                                            <span id="total-time-${audioId}">${duration || '00:00'}</span>
-                                        </div>
-                                    </div>
+                    // Determine if this block should be attached to previous block
+                    const isAttached = displayMode === 'icon' && attachmentMode === 'attached';
+                    const audioClass = isAttached ? 'content-block-audio content-block-audio-attached' : 'content-block-audio';
+                    
+                    if (displayMode === 'icon') {
+                        // Icon mode - simple icon that can be clicked to play
+                        blockElement.innerHTML = `
+                            <div class="${audioClass}">
+                                <div class="audio-icon-container">
+                                    <button type="button" class="audio-icon-button" id="audio-icon-${audioId}" data-audio-id="${audioId}" title="پخش فایل صوتی">
+                                        <i class="fas fa-volume-up"></i>
+                                    </button>
+                                    ${audioCaption ? `<span class="audio-icon-caption">${this.escapeHtml(audioCaption)}</span>` : ''}
                                 </div>
                                 <audio class="hidden-audio" id="${audioId}" preload="metadata">
                                     <source src="${audioUrl}" type="${audioMimeType}">
                                     مرورگر شما از پخش صدا پشتیبانی نمی‌کند.
                                 </audio>
-                                ${audioCaption ? `<div class="audio-caption">${audioCaption}</div>` : ''}
                             </div>
-                        </div>
-                    `;
-                    
-                    // Initialize custom audio player after DOM is ready
-                    setTimeout(() => {
-                        this.initializeCustomAudioPlayer(audioId, audioUrl);
-                    }, 100);
+                        `;
+                        
+                        // Initialize icon click handler
+                        setTimeout(() => {
+                            this.initializeAudioIcon(audioId, audioUrl);
+                        }, 100);
+                    } else {
+                        // Player mode - full audio player
+                        blockElement.innerHTML = `
+                            <div class="${audioClass}">
+                                <div class="audio-player-container">
+                                    <div class="custom-audio-player">
+                                        <div class="speaker-button" id="speaker-${audioId}" data-audio-id="${audioId}">
+                                            <i class="fas fa-volume-up speaker-icon"></i>
+                                        </div>
+                                        <div class="audio-title">فایل صوتی</div>
+                                        <div class="audio-info">
+                                            ${duration ? `<span class="audio-duration">${duration}</span>` : ''}
+                                            <span class="audio-status" id="status-${audioId}">آماده پخش</span>
+                                        </div>
+                                        <div class="progress-container">
+                                            <div class="progress-bar" id="progress-${audioId}">
+                                                <div class="progress-fill" id="progress-fill-${audioId}"></div>
+                                            </div>
+                                            <div class="time-display">
+                                                <span id="current-time-${audioId}">00:00</span>
+                                                <span id="total-time-${audioId}">${duration || '00:00'}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <audio class="hidden-audio" id="${audioId}" preload="metadata">
+                                        <source src="${audioUrl}" type="${audioMimeType}">
+                                        مرورگر شما از پخش صدا پشتیبانی نمی‌کند.
+                                    </audio>
+                                    ${audioCaption ? `<div class="audio-caption">${audioCaption}</div>` : ''}
+                                </div>
+                            </div>
+                        `;
+                        
+                        // Initialize custom audio player after DOM is ready
+                        setTimeout(() => {
+                            this.initializeCustomAudioPlayer(audioId, audioUrl);
+                        }, 100);
+                    }
                 } else {
                     console.warn('Audio block without file URL:', block);
                     return null;
@@ -750,6 +781,54 @@ let studySession = {
         
         progressBar.addEventListener('touchend', () => {
             isDragging = false;
+        });
+    },
+    
+    initializeAudioIcon(audioId, audioUrl) {
+        const audio = document.getElementById(audioId);
+        const iconButton = document.getElementById(`audio-icon-${audioId}`);
+        
+        if (!audio || !iconButton) {
+            console.warn('Audio icon elements not found for:', audioId);
+            return;
+        }
+        
+        let isPlaying = false;
+        
+        // Icon button click handler
+        iconButton.addEventListener('click', () => {
+            if (isPlaying) {
+                audio.pause();
+            } else {
+                audio.play().catch(error => {
+                    console.error('Error playing audio:', error);
+                });
+            }
+        });
+        
+        // Audio event listeners
+        audio.addEventListener('play', () => {
+            isPlaying = true;
+            iconButton.classList.add('playing');
+            iconButton.querySelector('i').className = 'fas fa-volume-mute';
+        });
+        
+        audio.addEventListener('pause', () => {
+            isPlaying = false;
+            iconButton.classList.remove('playing');
+            iconButton.querySelector('i').className = 'fas fa-volume-up';
+        });
+        
+        audio.addEventListener('ended', () => {
+            isPlaying = false;
+            iconButton.classList.remove('playing');
+            iconButton.querySelector('i').className = 'fas fa-volume-up';
+        });
+        
+        audio.addEventListener('error', () => {
+            console.error('Audio loading error:', audio.error);
+            iconButton.classList.add('error');
+            iconButton.title = 'خطا در بارگذاری فایل صوتی';
         });
     },
     

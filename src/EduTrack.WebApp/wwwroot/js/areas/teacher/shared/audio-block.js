@@ -111,6 +111,18 @@ window.AudioBlockManager = class AudioBlockManager {
             }
         });
 
+        // Handle settings changes
+        document.addEventListener('change', (e) => {
+            if (e.target.closest('.audio-settings [data-setting]')) {
+                const setting = e.target.dataset.setting;
+                const value = e.target.value;
+                const blockElement = e.target.closest('.content-block-template, .content-block');
+                if (blockElement) {
+                    this.updateAudioSettings(blockElement, setting, value);
+                }
+            }
+        });
+
         // Handle audio events
         document.addEventListener('loadedmetadata', (e) => {
             if (e.target.classList.contains('preview-audio')) {
@@ -469,6 +481,26 @@ window.AudioBlockManager = class AudioBlockManager {
         // Also directly sync with content builder
         this.syncWithContentBuilder(blockElement);
     }
+
+    updateAudioSettings(blockElement, setting, value) {
+        // Update setting in block data
+        this.updateBlockData(blockElement, { [setting]: value });
+        
+        // If display mode changed, show/hide attachment mode setting
+        if (setting === 'displayMode') {
+            const attachmentModeSetting = blockElement.querySelector('#attachment-mode-setting');
+            if (attachmentModeSetting) {
+                if (value === 'icon') {
+                    attachmentModeSetting.style.display = 'block';
+                } else {
+                    attachmentModeSetting.style.display = 'none';
+                }
+            }
+        }
+        
+        this.triggerBlockChange(blockElement);
+        this.syncWithContentBuilder(blockElement);
+    }
     
     syncWithContentBuilder(blockElement) {
         // Find the active content builder (reminderBlockManager or writtenBlockManager)
@@ -658,6 +690,25 @@ window.AudioBlockManager = class AudioBlockManager {
         // Populate settings
         const sizeSelect = blockElement.querySelector('select[data-setting="size"]');
         if (sizeSelect) sizeSelect.value = data.size || 'medium';
+        
+        // Populate display mode setting
+        const displayModeSelect = blockElement.querySelector('select[data-setting="displayMode"]');
+        if (displayModeSelect) {
+            displayModeSelect.value = data.displayMode || 'player';
+            // Trigger change to show/hide attachment mode setting
+            if (displayModeSelect.value === 'icon') {
+                const attachmentModeSetting = blockElement.querySelector('#attachment-mode-setting');
+                if (attachmentModeSetting) {
+                    attachmentModeSetting.style.display = 'block';
+                }
+            }
+        }
+        
+        // Populate attachment mode setting
+        const attachmentModeSelect = blockElement.querySelector('select[data-setting="attachmentMode"]');
+        if (attachmentModeSelect) {
+            attachmentModeSelect.value = data.attachmentMode || 'independent';
+        }
         
         // Populate question-specific fields if this is a question block
         this.populateQuestionFields(blockElement, data);
