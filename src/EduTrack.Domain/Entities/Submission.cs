@@ -10,6 +10,7 @@ public class Submission
     public int Id { get; private set; }
     public int ScheduleItemId { get; private set; }
     public string StudentId { get; private set; } = string.Empty;
+    public int? StudentProfileId { get; private set; }
     public DateTimeOffset? SubmittedAt { get; private set; }
     public SubmissionStatus Status { get; private set; } = SubmissionStatus.NotStarted;
     public decimal? Grade { get; private set; }
@@ -24,12 +25,13 @@ public class Submission
     public ScheduleItem ScheduleItem { get; private set; } = null!;
     public User Student { get; private set; } = null!;
     public User? Teacher { get; private set; }
+    public StudentProfile? StudentProfile { get; private set; }
 
     // Private constructor for EF Core
     private Submission() { }
 
     public static Submission Create(int scheduleItemId, string studentId, string payloadJson, 
-        string? attachmentsJson = null)
+        string? attachmentsJson = null, int? studentProfileId = null)
     {
         if (scheduleItemId <= 0)
             throw new ArgumentException("Schedule Item ID must be greater than 0", nameof(scheduleItemId));
@@ -40,15 +42,28 @@ public class Submission
         if (string.IsNullOrWhiteSpace(payloadJson))
             throw new ArgumentException("Payload JSON cannot be null or empty", nameof(payloadJson));
 
+        if (studentProfileId.HasValue && studentProfileId.Value <= 0)
+            throw new ArgumentException("Student profile ID must be greater than 0", nameof(studentProfileId));
+
         return new Submission
         {
             ScheduleItemId = scheduleItemId,
             StudentId = studentId,
+            StudentProfileId = studentProfileId,
             PayloadJson = payloadJson,
             AttachmentsJson = attachmentsJson,
             Status = SubmissionStatus.NotStarted,
             UpdatedAt = DateTimeOffset.UtcNow
         };
+    }
+
+    public void AssignToStudentProfile(int? studentProfileId)
+    {
+        if (studentProfileId.HasValue && studentProfileId.Value <= 0)
+            throw new ArgumentException("Student profile ID must be greater than 0", nameof(studentProfileId));
+
+        StudentProfileId = studentProfileId;
+        UpdatedAt = DateTimeOffset.UtcNow;
     }
 
     public void Start()

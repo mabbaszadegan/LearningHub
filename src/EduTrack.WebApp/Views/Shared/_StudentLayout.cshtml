@@ -150,6 +150,7 @@
     <!-- Main Content Area -->
     <main class="main-content">
         <partial name="_Toast" />
+        @await Component.InvokeAsync("StudentProfileSelector")
         @RenderBody()
     </main>
 
@@ -187,6 +188,7 @@
     <script src="~/js/pwa.js" asp-append-version="true"></script>
     <script src="~/js/areas/student/bottom-navigation.js" asp-append-version="true"></script>
     <script src="~/js/areas/student/desktop-header.js" asp-append-version="true"></script>
+    <script src="~/js/areas/student/student-profile-selector.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

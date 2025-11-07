@@ -17,7 +17,10 @@ public class GetWrittenContentAnswerQueryHandler : IRequestHandler<GetWrittenCon
     public async Task<WrittenContentAnswer?> Handle(GetWrittenContentAnswerQuery request, CancellationToken cancellationToken)
     {
         var answer = await _answerRepository.GetAnswerByStudentAndScheduleItemAsync(
-            request.StudentId, request.ScheduleItemId, cancellationToken);
+            request.StudentId,
+            request.ScheduleItemId,
+            request.StudentProfileId,
+            cancellationToken);
 
         if (answer == null)
         {
@@ -30,6 +33,7 @@ public class GetWrittenContentAnswerQueryHandler : IRequestHandler<GetWrittenCon
             Id = answer.Id,
             ScheduleItemId = answer.InteractiveQuestionId, // Using InteractiveQuestionId as ScheduleItemId
             StudentId = answer.StudentId,
+            StudentProfileId = answer.StudentProfileId,
             SubmittedAt = answer.AnsweredAt,
             GradedAt = answer.GradedAt,
             TotalScore = answer.PointsEarned,

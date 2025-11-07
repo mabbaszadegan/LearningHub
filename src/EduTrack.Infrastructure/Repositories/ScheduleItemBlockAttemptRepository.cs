@@ -14,15 +14,31 @@ public class ScheduleItemBlockAttemptRepository : Repository<ScheduleItemBlockAt
     {
     }
 
+    private static IQueryable<ScheduleItemBlockAttempt> FilterByStudent(
+        IQueryable<ScheduleItemBlockAttempt> query,
+        string studentId,
+        int? studentProfileId)
+    {
+        query = query.Where(a => a.StudentId == studentId);
+
+        if (studentProfileId.HasValue)
+        {
+            query = query.Where(a => a.StudentProfileId == studentProfileId.Value);
+        }
+
+        return query;
+    }
+
     public async Task<IEnumerable<ScheduleItemBlockAttempt>> GetByStudentAndScheduleItemAsync(
         string studentId, 
         int scheduleItemId, 
+        int? studentProfileId = null,
         CancellationToken cancellationToken = default)
     {
-        return await _dbSet
-            .Include(a => a.ScheduleItem)
-            .Include(a => a.Student)
-            .Where(a => a.StudentId == studentId && a.ScheduleItemId == scheduleItemId)
+        var query = FilterByStudent(_dbSet.Include(a => a.ScheduleItem).Include(a => a.Student), studentId, studentProfileId)
+            .Where(a => a.ScheduleItemId == scheduleItemId);
+
+        return await query
             .OrderByDescending(a => a.AttemptedAt)
             .ToListAsync(cancellationToken);
     }
@@ -31,37 +47,38 @@ public class ScheduleItemBlockAttemptRepository : Repository<ScheduleItemBlockAt
         string studentId, 
         int scheduleItemId, 
         string blockId, 
+        int? studentProfileId = null,
         CancellationToken cancellationToken = default)
     {
-        return await _dbSet
-            .Include(a => a.ScheduleItem)
-            .Include(a => a.Student)
-            .Where(a => a.StudentId == studentId && a.ScheduleItemId == scheduleItemId && a.BlockId == blockId)
+        var query = FilterByStudent(_dbSet.Include(a => a.ScheduleItem).Include(a => a.Student), studentId, studentProfileId)
+            .Where(a => a.ScheduleItemId == scheduleItemId && a.BlockId == blockId);
+
+        return await query
             .OrderByDescending(a => a.AttemptedAt)
             .ToListAsync(cancellationToken);
     }
 
     public async Task<IEnumerable<ScheduleItemBlockAttempt>> GetByStudentAsync(
-        string studentId, 
+        string studentId,
+        int? studentProfileId = null,
         CancellationToken cancellationToken = default)
     {
-        return await _dbSet
-            .Include(a => a.ScheduleItem)
-            .Include(a => a.Student)
-            .Where(a => a.StudentId == studentId)
+        var query = FilterByStudent(_dbSet.Include(a => a.ScheduleItem).Include(a => a.Student), studentId, studentProfileId);
+
+        return await query
             .OrderByDescending(a => a.AttemptedAt)
             .ToListAsync(cancellationToken);
     }
 
     public async Task<IEnumerable<ScheduleItemBlockAttempt>> GetRecentAttemptsByStudentAsync(
         string studentId, 
+        int? studentProfileId = null,
         int count = 10, 
         CancellationToken cancellationToken = default)
     {
-        return await _dbSet
-            .Include(a => a.ScheduleItem)
-            .Include(a => a.Student)
-            .Where(a => a.StudentId == studentId)
+        var query = FilterByStudent(_dbSet.Include(a => a.ScheduleItem).Include(a => a.Student), studentId, studentProfileId);
+
+        return await query
             .OrderByDescending(a => a.AttemptedAt)
             .Take(count)
             .ToListAsync(cancellationToken);
@@ -71,12 +88,13 @@ public class ScheduleItemBlockAttemptRepository : Repository<ScheduleItemBlockAt
         string studentId, 
         int scheduleItemId, 
         string blockId, 
+        int? studentProfileId = null,
         CancellationToken cancellationToken = default)
     {
-        return await _dbSet
-            .Include(a => a.ScheduleItem)
-            .Include(a => a.Student)
-            .Where(a => a.StudentId == studentId && a.ScheduleItemId == scheduleItemId && a.BlockId == blockId)
+        var query = FilterByStudent(_dbSet.Include(a => a.ScheduleItem).Include(a => a.Student), studentId, studentProfileId)
+            .Where(a => a.ScheduleItemId == scheduleItemId && a.BlockId == blockId);
+
+        return await query
             .OrderByDescending(a => a.AttemptedAt)
             .FirstOrDefaultAsync(cancellationToken);
     }

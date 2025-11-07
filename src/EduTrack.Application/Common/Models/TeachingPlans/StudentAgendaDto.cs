@@ -6,6 +6,7 @@ public class StudentAgendaDto
 {
     public string StudentId { get; set; } = string.Empty;
     public string StudentName { get; set; } = string.Empty;
+    public int? StudentProfileId { get; set; }
     public int CourseId { get; set; }
     public string CourseTitle { get; set; } = string.Empty;
     public LearningMode LearningMode { get; set; }

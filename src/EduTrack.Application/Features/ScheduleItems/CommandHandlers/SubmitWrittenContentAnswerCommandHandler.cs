@@ -38,7 +38,10 @@ public class SubmitWrittenContentAnswerCommandHandler : IRequestHandler<SubmitWr
 
         // Check if student already submitted an answer
         var existingAnswer = await _answerRepository.GetAnswerByStudentAndScheduleItemAsync(
-            request.StudentId, request.ScheduleItemId, cancellationToken);
+            request.StudentId,
+            request.ScheduleItemId,
+            request.StudentProfileId,
+            cancellationToken);
 
         if (existingAnswer != null)
         {
@@ -49,7 +52,8 @@ public class SubmitWrittenContentAnswerCommandHandler : IRequestHandler<SubmitWr
         var answer = StudentAnswer.Create(
             interactiveQuestionId: request.ScheduleItemId, // Using ScheduleItemId as InteractiveQuestionId
             studentId: request.StudentId,
-            answerText: string.Join("\n---\n", request.QuestionAnswers.Select(qa => $"{qa.QuestionBlockId}: {qa.AnswerText}"))
+            answerText: string.Join("\n---\n", request.QuestionAnswers.Select(qa => $"{qa.QuestionBlockId}: {qa.AnswerText}")),
+            studentProfileId: request.StudentProfileId
         );
 
         await _answerRepository.AddAsync(answer, cancellationToken);

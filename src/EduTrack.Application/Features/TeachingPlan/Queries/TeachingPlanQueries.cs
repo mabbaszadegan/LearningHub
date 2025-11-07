@@ -55,13 +55,10 @@ public record GetSubmissionsNeedingReviewQuery() : IRequest<Result<List<Submissi
 public record GetSubmissionsByTeacherQuery(string TeacherId) : IRequest<Result<List<SubmissionDto>>>;
 
 // Student Agenda Queries
-public record GetStudentAgendaQuery(string StudentId, int? CourseId = null) : IRequest<Result<StudentAgendaDto>>;
+public record GetStudentAgendaQuery(string StudentId, int? CourseId = null, int? StudentProfileId = null) : IRequest<Result<StudentAgendaDto>>;
 
 // Group Progress Queries
 public record GetGroupProgressQuery(int TeachingPlanId, int? GroupId = null) : IRequest<Result<List<GroupProgressDto>>>;
-
-// Course Enrollment Queries
-public record GetCourseEnrollmentByStudentAndCourseQuery(string StudentId, int CourseId) : IRequest<Result<CourseEnrollmentDto>>;
 
 // Course Queries
 public record GetCourseStudentsQuery(int CourseId) : IRequest<Result<List<UserDto>>>;
@@ -70,7 +67,7 @@ public record GetCourseStudentsQuery(int CourseId) : IRequest<Result<List<UserDt
 public record GetLessonsByCourseIdQuery(int CourseId) : IRequest<Result<List<LessonDto>>>;
 
 // Student Enrollment Queries
-public record GetStudentCourseEnrollmentsQuery(string StudentId) : IRequest<Result<List<CourseEnrollmentDto>>>;
+public record GetStudentCourseEnrollmentsQuery(string StudentId, int? StudentProfileId = null) : IRequest<Result<List<CourseEnrollmentDto>>>;
 
 // Available Students Query
 public record GetAvailableStudentsForTeachingPlanQuery(int TeachingPlanId) : IRequest<Result<List<UserDto>>>;

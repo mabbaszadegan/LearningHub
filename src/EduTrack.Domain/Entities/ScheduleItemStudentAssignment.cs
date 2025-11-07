@@ -8,28 +8,34 @@ public class ScheduleItemStudentAssignment
     public int Id { get; private set; }
     public int ScheduleItemId { get; private set; }
     public string StudentId { get; private set; } = string.Empty;
+    public int? StudentProfileId { get; private set; }
     public DateTimeOffset CreatedAt { get; private set; }
     public DateTimeOffset UpdatedAt { get; private set; }
     
     // Navigation properties
     public ScheduleItem ScheduleItem { get; private set; } = null!;
     public User Student { get; private set; } = null!;
+    public StudentProfile? StudentProfile { get; private set; }
     
     // Private constructor for EF Core
     private ScheduleItemStudentAssignment() { }
     
-    public static ScheduleItemStudentAssignment Create(int scheduleItemId, string studentId)
+    public static ScheduleItemStudentAssignment Create(int scheduleItemId, string studentId, int? studentProfileId = null)
     {
         if (scheduleItemId <= 0)
             throw new ArgumentException("Schedule Item ID must be greater than 0", nameof(scheduleItemId));
         
         if (string.IsNullOrWhiteSpace(studentId))
             throw new ArgumentException("Student ID cannot be null or empty", nameof(studentId));
+
+        if (studentProfileId.HasValue && studentProfileId.Value <= 0)
+            throw new ArgumentException("Student profile ID must be greater than 0", nameof(studentProfileId));
         
         return new ScheduleItemStudentAssignment
         {
             ScheduleItemId = scheduleItemId,
             StudentId = studentId,
+            StudentProfileId = studentProfileId,
             CreatedAt = DateTimeOffset.UtcNow,
             UpdatedAt = DateTimeOffset.UtcNow
         };

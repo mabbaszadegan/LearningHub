@@ -28,6 +28,7 @@ public class GetWrittenContentAnswerByIdQueryHandler : IRequestHandler<GetWritte
             Id = answer.Id,
             ScheduleItemId = answer.InteractiveQuestionId, // Using InteractiveQuestionId as ScheduleItemId
             StudentId = answer.StudentId,
+            StudentProfileId = answer.StudentProfileId,
             SubmittedAt = answer.AnsweredAt,
             GradedAt = answer.GradedAt,
             TotalScore = answer.PointsEarned,

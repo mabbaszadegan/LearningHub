@@ -168,7 +168,7 @@ public class ScheduleItemRepository : Repository<ScheduleItem>, IScheduleItemRep
         return Task.CompletedTask;
     }
 
-    public async Task<IEnumerable<ScheduleItem>> GetScheduleItemsAccessibleToStudentAsync(string studentId, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<ScheduleItem>> GetScheduleItemsAccessibleToStudentAsync(string studentId, int? studentProfileId = null, CancellationToken cancellationToken = default)
     {
         // Get all schedule items that the student has access to based on the rules:
         // 1. Direct assignment to the student
@@ -182,12 +182,19 @@ public class ScheduleItemRepository : Repository<ScheduleItem>, IScheduleItemRep
                 .ThenInclude(sca => sca.SubChapter)
             .Include(si => si.StudentAssignments)
                 .ThenInclude(sa => sa.Student)
+            .Include(si => si.StudentAssignments)
+                .ThenInclude(sa => sa.StudentProfile)
             .Include(si => si.TeachingPlan)
             .Include(si => si.Group)
             .Include(si => si.Lesson)
             .Where(si => 
                 // Rule 1: Direct assignment to student
-                si.StudentAssignments.Any(sa => sa.StudentId == studentId) ||
+                si.StudentAssignments.Any(sa =>
+                    sa.StudentId == studentId &&
+                    (
+                        (studentProfileId.HasValue && sa.StudentProfileId == studentProfileId.Value) ||
+                        (!studentProfileId.HasValue && sa.StudentProfileId == null)
+                    )) ||
                 
                 // Rule 2: Assignment to student's group AND no individual students in that group are assigned
                 si.GroupAssignments.Any(ga => 

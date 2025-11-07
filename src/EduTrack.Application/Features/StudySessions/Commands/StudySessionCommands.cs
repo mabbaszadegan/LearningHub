@@ -11,11 +11,13 @@ public class StartStudySessionCommand : IRequest<Result<StudySessionDto>>
 {
     public string StudentId { get; set; } = string.Empty;
     public int ScheduleItemId { get; set; }
+    public int? StudentProfileId { get; set; }
 
-    public StartStudySessionCommand(string studentId, int scheduleItemId)
+    public StartStudySessionCommand(string studentId, int scheduleItemId, int? studentProfileId = null)
     {
         StudentId = studentId;
         ScheduleItemId = scheduleItemId;
+        StudentProfileId = studentProfileId;
     }
 }
 
@@ -28,13 +30,15 @@ public class CreateAndCompleteStudySessionCommand : IRequest<Result<StudySession
     public int ScheduleItemId { get; set; }
     public DateTimeOffset StartedAt { get; set; }
     public DateTimeOffset EndedAt { get; set; }
+    public int? StudentProfileId { get; set; }
 
-    public CreateAndCompleteStudySessionCommand(string studentId, int scheduleItemId, DateTimeOffset startedAt, DateTimeOffset endedAt)
+    public CreateAndCompleteStudySessionCommand(string studentId, int scheduleItemId, DateTimeOffset startedAt, DateTimeOffset endedAt, int? studentProfileId = null)
     {
         StudentId = studentId;
         ScheduleItemId = scheduleItemId;
         StartedAt = startedAt;
         EndedAt = endedAt;
+        StudentProfileId = studentProfileId;
     }
 }
 

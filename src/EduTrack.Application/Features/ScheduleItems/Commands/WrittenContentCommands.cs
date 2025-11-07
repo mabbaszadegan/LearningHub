@@ -7,7 +7,8 @@ namespace EduTrack.Application.Features.ScheduleItems.Commands;
 public record SubmitWrittenContentAnswerCommand(
     int ScheduleItemId,
     string StudentId,
-    List<WrittenQuestionAnswer> QuestionAnswers
+    List<WrittenQuestionAnswer> QuestionAnswers,
+    int? StudentProfileId = null
 ) : IRequest<int>;
 
 // Grade written content answer by teacher

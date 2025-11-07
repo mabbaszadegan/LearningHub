@@ -77,6 +77,14 @@
         }
     </header>
 
+    @if (!string.IsNullOrEmpty(ViewBag.ActiveProfileName as string))
+    {
+        <div class="alert alert-info mb-3">
+            <i class="fas fa-user-graduate me-2"></i>
+            نمایش محتوا برای پروفایل: <strong>@(ViewBag.ActiveProfileName as string)</strong>
+        </div>
+    }
+
     <!-- Main Content Area -->
     <div class="study-main-wrapper">
         <!-- Sidebar -->

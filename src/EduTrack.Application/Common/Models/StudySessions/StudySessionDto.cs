@@ -29,6 +29,7 @@ public class StudySessionDto
     public int Id { get; set; }
     public string StudentId { get; set; } = string.Empty;
     public int ScheduleItemId { get; set; }
+    public int? StudentProfileId { get; set; }
     public DateTimeOffset StartedAt { get; set; }
     public DateTimeOffset? EndedAt { get; set; }
     public int DurationSeconds { get; set; }
@@ -45,6 +46,7 @@ public class CreateStudySessionDto
 {
     public string StudentId { get; set; } = string.Empty;
     public int ScheduleItemId { get; set; }
+    public int? StudentProfileId { get; set; }
 }
 
 /// <summary>
@@ -79,6 +81,7 @@ public class StudySessionHistoryDto
     public int Id { get; set; }
     public string StudentId { get; set; } = string.Empty;
     public int ScheduleItemId { get; set; }
+    public int? StudentProfileId { get; set; }
     public string ScheduleItemTitle { get; set; } = string.Empty;
     public string? ScheduleItemDescription { get; set; }
     public int CourseId { get; set; }

@@ -6,7 +6,8 @@ namespace EduTrack.Application.Features.ScheduleItems.Queries;
 // Get written content answer by student and schedule item
 public record GetWrittenContentAnswerQuery(
     int ScheduleItemId,
-    string StudentId
+    string StudentId,
+    int? StudentProfileId = null
 ) : IRequest<WrittenContentAnswer?>;
 
 // Get all answers for a written content schedule item (for teacher grading)

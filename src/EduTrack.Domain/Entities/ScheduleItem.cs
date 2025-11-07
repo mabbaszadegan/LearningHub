@@ -241,16 +241,29 @@ public class ScheduleItem
         if (studentAssignment == null)
             throw new ArgumentNullException(nameof(studentAssignment));
 
-        if (StudentAssignments.Any(sa => sa.StudentId == studentAssignment.StudentId))
+        var hasConflict = StudentAssignments.Any(sa =>
+            (studentAssignment.StudentProfileId.HasValue && sa.StudentProfileId.HasValue && sa.StudentProfileId == studentAssignment.StudentProfileId) ||
+            (!studentAssignment.StudentProfileId.HasValue && !sa.StudentProfileId.HasValue && sa.StudentId == studentAssignment.StudentId) ||
+            (studentAssignment.StudentProfileId.HasValue && !sa.StudentProfileId.HasValue && sa.StudentId == studentAssignment.StudentId));
+
+        if (hasConflict)
             throw new InvalidOperationException("Student already assigned to this schedule item");
 
         StudentAssignments.Add(studentAssignment);
         UpdatedAt = DateTimeOffset.UtcNow;
     }
 
-    public void RemoveStudentAssignment(string studentId)
+    public void RemoveStudentAssignment(string studentId, int? studentProfileId = null)
     {
-        var assignment = StudentAssignments.FirstOrDefault(sa => sa.StudentId == studentId);
+        if (string.IsNullOrWhiteSpace(studentId))
+            throw new ArgumentException("Student ID cannot be null or empty", nameof(studentId));
+
+        if (studentProfileId.HasValue && studentProfileId.Value <= 0)
+            throw new ArgumentException("Student profile ID must be greater than 0", nameof(studentProfileId));
+
+        var assignment = StudentAssignments.FirstOrDefault(sa =>
+            (studentProfileId.HasValue && sa.StudentProfileId == studentProfileId.Value) ||
+            (!studentProfileId.HasValue && sa.StudentProfileId == null && sa.StudentId == studentId));
         if (assignment != null)
         {
             StudentAssignments.Remove(assignment);
@@ -261,6 +274,14 @@ public class ScheduleItem
     public bool IsAssignedToStudent(string studentId)
     {
         return StudentAssignments.Any(sa => sa.StudentId == studentId);
+    }
+
+    public bool IsAssignedToStudentProfile(int studentProfileId)
+    {
+        if (studentProfileId <= 0)
+            throw new ArgumentException("Student profile ID must be greater than 0", nameof(studentProfileId));
+
+        return StudentAssignments.Any(sa => sa.StudentProfileId == studentProfileId);
     }
 
     public bool IsAssignedToAllStudents()

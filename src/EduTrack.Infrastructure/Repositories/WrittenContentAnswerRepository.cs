@@ -14,27 +14,49 @@ public class WrittenContentAnswerRepository : Repository<StudentAnswer>, IWritte
     {
     }
 
-    public async Task<StudentAnswer?> GetAnswerByStudentAndScheduleItemAsync(string studentId, int scheduleItemId, CancellationToken cancellationToken = default)
+    private static IQueryable<StudentAnswer> FilterByStudent(
+        IQueryable<StudentAnswer> query,
+        string studentId,
+        int? studentProfileId)
     {
-        return await _dbSet
-            .Include(sa => sa.Student)
-            .FirstOrDefaultAsync(sa => sa.StudentId == studentId && sa.InteractiveQuestionId == scheduleItemId, cancellationToken);
+        query = query.Where(sa => sa.StudentId == studentId);
+
+        if (studentProfileId.HasValue)
+        {
+            query = query.Where(sa => sa.StudentProfileId == studentProfileId.Value);
+        }
+
+        return query;
     }
 
-    public async Task<IEnumerable<StudentAnswer>> GetAnswersByScheduleItemAsync(int scheduleItemId, CancellationToken cancellationToken = default)
+    public async Task<StudentAnswer?> GetAnswerByStudentAndScheduleItemAsync(string studentId, int scheduleItemId, int? studentProfileId = null, CancellationToken cancellationToken = default)
     {
-        return await _dbSet
+        var query = FilterByStudent(_dbSet.Include(sa => sa.Student), studentId, studentProfileId);
+
+        return await query.FirstOrDefaultAsync(sa => sa.InteractiveQuestionId == scheduleItemId, cancellationToken);
+    }
+
+    public async Task<IEnumerable<StudentAnswer>> GetAnswersByScheduleItemAsync(int scheduleItemId, int? studentProfileId = null, CancellationToken cancellationToken = default)
+    {
+        var query = _dbSet
             .Include(sa => sa.Student)
-            .Where(sa => sa.InteractiveQuestionId == scheduleItemId)
+            .Where(sa => sa.InteractiveQuestionId == scheduleItemId);
+
+        if (studentProfileId.HasValue)
+        {
+            query = query.Where(sa => sa.StudentProfileId == studentProfileId.Value);
+        }
+
+        return await query
             .OrderBy(sa => sa.AnsweredAt)
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<IEnumerable<StudentAnswer>> GetAnswersByStudentAsync(string studentId, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<StudentAnswer>> GetAnswersByStudentAsync(string studentId, int? studentProfileId = null, CancellationToken cancellationToken = default)
     {
-        return await _dbSet
-            .Include(sa => sa.InteractiveQuestion)
-            .Where(sa => sa.StudentId == studentId)
+        var query = FilterByStudent(_dbSet.Include(sa => sa.InteractiveQuestion), studentId, studentProfileId);
+
+        return await query
             .OrderByDescending(sa => sa.AnsweredAt)
             .ToListAsync(cancellationToken);
     }

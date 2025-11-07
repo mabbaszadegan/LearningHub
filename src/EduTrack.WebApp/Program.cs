@@ -37,6 +37,14 @@ builder.Services.AddControllersWithViews(options =>
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromHours(8);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
+
 // Configure Identity
 builder.Services.AddIdentity<User, IdentityRole>(options =>
 {
@@ -76,6 +84,7 @@ builder.Services.ConfigureApplicationCookie(options =>
 
 // Add claims transformer to include user roles in claims
 builder.Services.AddScoped<IClaimsTransformation, ClaimsTransformer>();
+builder.Services.AddScoped<IStudentProfileContext, StudentProfileContext>();
 
 // Add HTTP context accessor
 builder.Services.AddHttpContextAccessor();
@@ -141,6 +150,8 @@ app.UseStaticFiles(new StaticFileOptions
 });
 
 app.UseRouting();
+
+app.UseSession();
 
 app.UseAuthentication();
 app.UseAuthorization();

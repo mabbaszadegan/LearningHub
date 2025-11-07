@@ -22,6 +22,22 @@
     </div>
 </div>
 
+@if (!ViewBag.ActiveProfileId.HasValue)
+{
+    <div class="alert alert-warning mb-3">
+        <i class="fas fa-user-clock me-2"></i>
+        برای مشاهده آیتم‌ها ابتدا یک پروفایل یادگیرنده فعال انتخاب کنید.
+        <a href="@Url.Action("Index", "Profile", new { area = "Student" })#student-profiles" class="alert-link">مدیریت پروفایل‌ها</a>
+    </div>
+}
+else if (!string.IsNullOrEmpty(ViewBag.ActiveProfileName as string))
+{
+    <div class="alert alert-info mb-3">
+        <i class="fas fa-user-graduate me-2"></i>
+        نمایش آیتم‌ها برای پروفایل: <strong>@(ViewBag.ActiveProfileName as string)</strong>
+    </div>
+}
+
 <!-- Filters Section -->
 <div class="filters-section">
     <div class="filters-container">

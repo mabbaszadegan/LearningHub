@@ -9,6 +9,8 @@ public class CourseEnrollmentDto
 {
     public int Id { get; set; }
     public string StudentId { get; set; } = string.Empty;
+    public int? StudentProfileId { get; set; }
+    public string? StudentProfileName { get; set; }
     public int CourseId { get; set; }
     public string StudentName { get; set; } = string.Empty;
     public string CourseTitle { get; set; } = string.Empty;
@@ -61,6 +63,8 @@ public class StudentCourseEnrollmentSummaryDto
     public CourseAccessLevel AccessLevel { get; set; }
     public string AccessLevelName { get; set; } = string.Empty;
     public DisciplineType DisciplineType { get; set; }
+    public int? StudentProfileId { get; set; }
+    public string? StudentProfileName { get; set; }
     public int TotalLessons { get; set; }
     public int CompletedLessons { get; set; }
     public int TotalExams { get; set; }
@@ -117,6 +121,8 @@ public class StudentCourseProgressDto
     public string CourseTitle { get; set; } = string.Empty;
     public string StudentId { get; set; } = string.Empty;
     public string StudentName { get; set; } = string.Empty;
+    public int? StudentProfileId { get; set; }
+    public string? StudentProfileName { get; set; }
     public int ProgressPercentage { get; set; }
     public DateTimeOffset EnrolledAt { get; set; }
     public DateTimeOffset? LastAccessedAt { get; set; }

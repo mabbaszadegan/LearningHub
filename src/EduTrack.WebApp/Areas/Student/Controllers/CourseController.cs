@@ -10,6 +10,7 @@ using EduTrack.Application.Features.Chapters.Queries;
 using EduTrack.Application.Features.StudySessions.Queries;
 using EduTrack.Domain.Entities;
 using EduTrack.WebApp.Areas.Student.Models;
+using EduTrack.WebApp.Services;
 using ScheduleItemDto = EduTrack.Application.Common.Models.TeachingPlans.ScheduleItemDto;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -29,15 +30,18 @@ public class CourseController : Controller
     private readonly IMediator _mediator;
     private readonly UserManager<User> _userManager;
     private readonly ILogger<CourseController> _logger;
+    private readonly IStudentProfileContext _studentProfileContext;
 
     public CourseController(
         IMediator mediator,
         UserManager<User> userManager,
-        ILogger<CourseController> logger)
+        ILogger<CourseController> logger,
+        IStudentProfileContext studentProfileContext)
     {
         _mediator = mediator;
         _userManager = userManager;
         _logger = logger;
+        _studentProfileContext = studentProfileContext;
     }
 
     /// <summary>
@@ -52,10 +56,14 @@ public class CourseController : Controller
             return RedirectToAction("Login", "Account", new { area = "Public" });
         }
 
-        var result = await _mediator.Send(new GetStudentCourseEnrollmentsQuery(currentUser.Id));
+        var activeProfileId = await _studentProfileContext.GetActiveProfileIdAsync();
+        var activeProfileName = await _studentProfileContext.GetActiveProfileNameAsync();
+        var result = await _mediator.Send(new GetStudentCourseEnrollmentsQuery(currentUser.Id, activeProfileId));
         
         if (result.IsSuccess)
         {
+            ViewBag.ActiveProfileId = activeProfileId;
+            ViewBag.ActiveProfileName = activeProfileName;
             return View(result.Value);
         }
 
@@ -75,11 +83,15 @@ public class CourseController : Controller
             return RedirectToAction("Login", "Account", new { area = "Public" });
         }
 
-        var result = await _mediator.Send(new GetAvailableCoursesForEnrollmentQuery(currentUser.Id, pageNumber, pageSize));
+        var activeProfileId = await _studentProfileContext.GetActiveProfileIdAsync();
+        var activeProfileName = await _studentProfileContext.GetActiveProfileNameAsync();
+        var result = await _mediator.Send(new GetAvailableCoursesForEnrollmentQuery(currentUser.Id, activeProfileId, pageNumber, pageSize));
         
         if (result.IsSuccess)
         {
             ViewBag.CurrentUserId = currentUser.Id;
+            ViewBag.ActiveProfileId = activeProfileId;
+            ViewBag.ActiveProfileName = activeProfileName;
             return View(result.Value);
         }
 
@@ -99,7 +111,14 @@ public class CourseController : Controller
             return RedirectToAction("Login", "Account", new { area = "Public" });
         }
 
-        // Get course details
+        var activeProfileId = await _studentProfileContext.GetActiveProfileIdAsync();
+        var activeProfileName = await _studentProfileContext.GetActiveProfileNameAsync();
+        if (!activeProfileId.HasValue)
+        {
+            TempData["Error"] = "برای ادامه ابتدا یک پروفایل یادگیرنده فعال انتخاب کنید.";
+            return RedirectToAction("Index", "Profile");
+        }
+
         var courseResult = await _mediator.Send(new GetCourseByIdQuery(id));
         if (!courseResult.IsSuccess)
         {
@@ -108,16 +127,18 @@ public class CourseController : Controller
         }
 
         // Check if student is enrolled
-        var enrollmentResult = await _mediator.Send(new GetCourseEnrollmentQuery(id, currentUser.Id));
+        var enrollmentResult = await _mediator.Send(new GetCourseEnrollmentQuery(id, currentUser.Id, activeProfileId));
         var isEnrolled = enrollmentResult.IsSuccess;
 
         // Check if student can enroll
-        var canEnrollResult = await _mediator.Send(new CanEnrollInCourseQuery(id, currentUser.Id));
+        var canEnrollResult = await _mediator.Send(new CanEnrollInCourseQuery(id, currentUser.Id, activeProfileId));
         var canEnroll = canEnrollResult.IsSuccess && canEnrollResult.Value;
 
         ViewBag.IsEnrolled = isEnrolled;
         ViewBag.CanEnroll = canEnroll;
         ViewBag.CurrentUserId = currentUser.Id;
+        ViewBag.ActiveProfileId = activeProfileId;
+        ViewBag.ActiveProfileName = activeProfileName;
 
         return View(courseResult.Value);
     }
@@ -134,7 +155,13 @@ public class CourseController : Controller
             return Json(new { success = false, error = "کاربر یافت نشد" });
         }
 
-        var result = await _mediator.Send(new EnrollInCourseCommand(courseId, currentUser.Id));
+        var activeProfileId = await _studentProfileContext.GetActiveProfileIdAsync();
+        if (!activeProfileId.HasValue)
+        {
+            return Json(new { success = false, error = "برای ثبت‌نام ابتدا یک پروفایل یادگیرنده فعال انتخاب کنید." });
+        }
+
+        var result = await _mediator.Send(new EnrollInCourseCommand(courseId, currentUser.Id, activeProfileId));
         
         if (result.IsSuccess)
         {
@@ -157,7 +184,13 @@ public class CourseController : Controller
             return Json(new { success = false, error = "کاربر یافت نشد" });
         }
 
-        var result = await _mediator.Send(new UnenrollFromCourseCommand(courseId, currentUser.Id));
+        var activeProfileId = await _studentProfileContext.GetActiveProfileIdAsync();
+        if (!activeProfileId.HasValue)
+        {
+            return Json(new { success = false, error = "پروفایل یادگیرنده فعال یافت نشد." });
+        }
+
+        var result = await _mediator.Send(new UnenrollFromCourseCommand(courseId, currentUser.Id, activeProfileId));
         
         if (result.IsSuccess)
         {
@@ -181,7 +214,15 @@ public class CourseController : Controller
         }
 
         // Check if student is enrolled
-        var enrollmentResult = await _mediator.Send(new GetCourseEnrollmentQuery(id, currentUser.Id));
+        var activeProfileId = await _studentProfileContext.GetActiveProfileIdAsync();
+        var activeProfileName = await _studentProfileContext.GetActiveProfileNameAsync();
+        if (!activeProfileId.HasValue)
+        {
+            TempData["Error"] = "برای مشاهده محتوا ابتدا یک پروفایل یادگیرنده فعال انتخاب کنید.";
+            return RedirectToAction("Index", "Profile");
+        }
+
+        var enrollmentResult = await _mediator.Send(new GetCourseEnrollmentQuery(id, currentUser.Id, activeProfileId));
         if (!enrollmentResult.IsSuccess)
         {
             TempData["Error"] = "شما در این دوره ثبت‌نام نکرده‌اید";
@@ -197,14 +238,14 @@ public class CourseController : Controller
         }
 
         // Get course progress
-        var progressResult = await _mediator.Send(new GetStudentCourseProgressQuery(id, currentUser.Id));
+        var progressResult = await _mediator.Send(new GetStudentCourseProgressQuery(id, currentUser.Id, activeProfileId));
         
         // Get course chapters with subchapters
         var chaptersResult = await _mediator.Send(new GetChaptersByCourseIdQuery(id));
         var chapters = chaptersResult.IsSuccess ? chaptersResult.Value : new List<ChapterDto>();
         
         // Get schedule items for the course
-        var scheduleItemsResult = await _mediator.Send(new GetCourseScheduleItemsQuery(id, currentUser.Id));
+        var scheduleItemsResult = await _mediator.Send(new GetCourseScheduleItemsQuery(id, currentUser.Id, activeProfileId));
         var scheduleItems = scheduleItemsResult.IsSuccess && scheduleItemsResult.Value != null ? scheduleItemsResult.Value : new List<ScheduleItemDto>();
         
         // Get study statistics for each schedule item
@@ -229,6 +270,8 @@ public class CourseController : Controller
         ViewBag.Chapters = chapters;
         ViewBag.ScheduleItems = scheduleItems;
         ViewBag.ScheduleItemsWithStats = scheduleItemsWithStats;
+        ViewBag.ActiveProfileId = activeProfileId;
+        ViewBag.ActiveProfileName = activeProfileName;
 
         return View(courseResult.Value);
     }
@@ -272,7 +315,8 @@ public class CourseController : Controller
 
             _logger.LogInformation("Loading available courses for user: {UserId}", currentUser.Id);
 
-            var result = await _mediator.Send(new GetAvailableCoursesForEnrollmentQuery(currentUser.Id, pageNumber, pageSize));
+            var activeProfileId = await _studentProfileContext.GetActiveProfileIdAsync();
+            var result = await _mediator.Send(new GetAvailableCoursesForEnrollmentQuery(currentUser.Id, activeProfileId, pageNumber, pageSize));
             
             if (result.IsSuccess)
             {
@@ -309,7 +353,8 @@ public class CourseController : Controller
             return Json(new { success = false, error = "کاربر یافت نشد" });
         }
 
-        var result = await _mediator.Send(new GetStudentCourseEnrollmentsQuery(currentUser.Id));
+        var activeProfileId = await _studentProfileContext.GetActiveProfileIdAsync();
+        var result = await _mediator.Send(new GetStudentCourseEnrollmentsQuery(currentUser.Id, activeProfileId));
         
         if (result.IsSuccess)
         {
@@ -332,6 +377,7 @@ public class CourseController : Controller
         }
 
         // Get course details
+        var activeProfileId = await _studentProfileContext.GetActiveProfileIdAsync();
         var courseResult = await _mediator.Send(new GetCourseByIdQuery(id));
         if (!courseResult.IsSuccess)
         {
@@ -339,16 +385,18 @@ public class CourseController : Controller
         }
 
         // Check if student is enrolled
-        var enrollmentResult = await _mediator.Send(new GetCourseEnrollmentQuery(id, currentUser.Id));
+        var enrollmentResult = await _mediator.Send(new GetCourseEnrollmentQuery(id, currentUser.Id, activeProfileId));
         var isEnrolled = enrollmentResult.IsSuccess;
 
         // Check if student can enroll
-        var canEnrollResult = await _mediator.Send(new CanEnrollInCourseQuery(id, currentUser.Id));
+        var canEnrollResult = await _mediator.Send(new CanEnrollInCourseQuery(id, currentUser.Id, activeProfileId));
         var canEnroll = canEnrollResult.IsSuccess && canEnrollResult.Value;
 
         ViewBag.IsEnrolled = isEnrolled;
         ViewBag.CanEnroll = canEnroll;
         ViewBag.CurrentUserId = currentUser.Id;
+        ViewBag.ActiveProfileId = activeProfileId;
+        ViewBag.ActiveProfileName = await _studentProfileContext.GetActiveProfileNameAsync();
 
         return PartialView("_CourseDetailsPartial", courseResult.Value);
     }
@@ -366,7 +414,16 @@ public class CourseController : Controller
         }
 
         // Check if student is enrolled
-        var enrollmentResult = await _mediator.Send(new GetCourseEnrollmentQuery(id, currentUser.Id));
+        var activeProfileId = await _studentProfileContext.GetActiveProfileIdAsync();
+        if (!activeProfileId.HasValue)
+        {
+            TempData["Error"] = "برای مشاهده آیتم‌ها ابتدا یک پروفایل یادگیرنده فعال انتخاب کنید.";
+            return RedirectToAction("Index", "Profile");
+        }
+
+        var activeProfileName = await _studentProfileContext.GetActiveProfileNameAsync();
+
+        var enrollmentResult = await _mediator.Send(new GetCourseEnrollmentQuery(id, currentUser.Id, activeProfileId));
         if (!enrollmentResult.IsSuccess)
         {
             TempData["Error"] = "شما در این دوره ثبت‌نام نکرده‌اید";
@@ -382,7 +439,7 @@ public class CourseController : Controller
         }
 
         // Get schedule items for the course
-        var scheduleItemsResult = await _mediator.Send(new GetCourseScheduleItemsQuery(id, currentUser.Id));
+        var scheduleItemsResult = await _mediator.Send(new GetCourseScheduleItemsQuery(id, currentUser.Id, activeProfileId));
         if (!scheduleItemsResult.IsSuccess)
         {
             TempData["Error"] = scheduleItemsResult.Error;
@@ -391,6 +448,8 @@ public class CourseController : Controller
 
         ViewBag.Course = courseResult.Value;
         ViewBag.Enrollment = enrollmentResult.Value;
+        ViewBag.ActiveProfileId = activeProfileId;
+        ViewBag.ActiveProfileName = activeProfileName;
 
         return View(scheduleItemsResult.Value);
     }
@@ -408,14 +467,20 @@ public class CourseController : Controller
         }
 
         // Check if student is enrolled
-        var enrollmentResult = await _mediator.Send(new GetCourseEnrollmentQuery(id, currentUser.Id));
+        var activeProfileId = await _studentProfileContext.GetActiveProfileIdAsync();
+        if (!activeProfileId.HasValue)
+        {
+            return Json(new { success = false, error = "ابتدا یک پروفایل یادگیرنده فعال انتخاب کنید." });
+        }
+
+        var enrollmentResult = await _mediator.Send(new GetCourseEnrollmentQuery(id, currentUser.Id, activeProfileId));
         if (!enrollmentResult.IsSuccess)
         {
             return Json(new { success = false, error = "شما در این دوره ثبت‌نام نکرده‌اید" });
         }
 
         // Get schedule items for the course
-        var scheduleItemsResult = await _mediator.Send(new GetCourseScheduleItemsQuery(id, currentUser.Id));
+        var scheduleItemsResult = await _mediator.Send(new GetCourseScheduleItemsQuery(id, currentUser.Id, activeProfileId));
         if (!scheduleItemsResult.IsSuccess)
         {
             return Json(new { success = false, error = scheduleItemsResult.Error });

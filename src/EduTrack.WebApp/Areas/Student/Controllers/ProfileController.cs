@@ -1,5 +1,12 @@
+using System;
+using System.Threading.Tasks;
+using EduTrack.Application.Features.StudentProfiles;
+using EduTrack.Application.Features.StudentProfiles.Commands;
+using EduTrack.Application.Features.StudentProfiles.Queries;
 using EduTrack.Domain.Entities;
 using EduTrack.Domain.Repositories;
+using EduTrack.WebApp.Areas.Student.Models;
+using EduTrack.WebApp.Services;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -16,17 +23,23 @@ public class ProfileController : Controller
     private readonly UserManager<User> _userManager;
     private readonly IRepository<Profile> _profileRepository;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IMediator _mediator;
+    private readonly IStudentProfileContext _studentProfileContext;
 
     public ProfileController(
         ILogger<ProfileController> logger,
         UserManager<User> userManager,
         IRepository<Profile> profileRepository,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        IMediator mediator,
+        IStudentProfileContext studentProfileContext)
     {
         _logger = logger;
         _userManager = userManager;
         _profileRepository = profileRepository;
         _unitOfWork = unitOfWork;
+        _mediator = mediator;
+        _studentProfileContext = studentProfileContext;
     }
 
     public async Task<IActionResult> Index()
@@ -41,21 +54,27 @@ public class ProfileController : Controller
         var profile = await _profileRepository.GetAll()
             .FirstOrDefaultAsync(p => p.UserId == currentUser.Id);
 
-        var viewModel = new
+        var studentProfiles = await _studentProfileContext.GetProfilesForCurrentUserAsync(false);
+        var activeProfileId = await _studentProfileContext.GetActiveProfileIdAsync();
+        var activeProfileName = await _studentProfileContext.GetActiveProfileNameAsync();
+
+        var viewModel = new StudentProfilePageViewModel
         {
             StudentName = currentUser.FullName,
             StudentFirstName = currentUser.FirstName,
-            Email = currentUser.Email,
-            UserName = currentUser.UserName,
-            FirstName = currentUser.FirstName,
-            LastName = currentUser.LastName,
-            Profile = profile != null ? new
+            StudentLastName = currentUser.LastName,
+            Email = currentUser.Email ?? string.Empty,
+            UserName = currentUser.UserName ?? string.Empty,
+            AccountProfile = profile != null ? new AccountProfileInfo
             {
                 Bio = profile.Bio,
                 Avatar = profile.Avatar,
                 PhoneNumber = profile.PhoneNumber,
                 DateOfBirth = profile.DateOfBirth
-            } : null
+            } : null,
+            StudentProfiles = studentProfiles,
+            ActiveStudentProfileId = activeProfileId,
+            ActiveStudentProfileName = activeProfileName
         };
 
         return View(viewModel);
@@ -112,6 +131,138 @@ public class ProfileController : Controller
             _logger.LogError(ex, "Error updating profile");
             return Json(new { success = false, error = "خطا در به‌روزرسانی پروفایل" });
         }
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreateStudentProfile(string displayName, string? gradeLevel, DateTimeOffset? dateOfBirth, string? notes)
+    {
+        var currentUser = await _userManager.GetUserAsync(User);
+        if (currentUser == null)
+        {
+            return Json(new { success = false, error = "کاربر یافت نشد" });
+        }
+
+        var result = await _mediator.Send(new CreateStudentProfileCommand(currentUser.Id, displayName, gradeLevel, dateOfBirth, notes));
+
+        if (!result.IsSuccess)
+        {
+            return Json(new { success = false, error = result.Error });
+        }
+
+        var activeProfileId = await _studentProfileContext.GetActiveProfileIdAsync();
+        if (!activeProfileId.HasValue && result.Value != null)
+        {
+            await _studentProfileContext.SetActiveProfileAsync(result.Value.Id, HttpContext.RequestAborted);
+        }
+
+        return Json(new { success = true, profile = result.Value });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> UpdateStudentProfile(int profileId, string displayName, string? gradeLevel, DateTimeOffset? dateOfBirth, string? notes)
+    {
+        var currentUser = await _userManager.GetUserAsync(User);
+        if (currentUser == null)
+        {
+            return Json(new { success = false, error = "کاربر یافت نشد" });
+        }
+
+        var result = await _mediator.Send(new UpdateStudentProfileCommand(profileId, currentUser.Id, displayName, gradeLevel, dateOfBirth, notes));
+
+        if (!result.IsSuccess)
+        {
+            return Json(new { success = false, error = result.Error });
+        }
+
+        var activeProfileId = await _studentProfileContext.GetActiveProfileIdAsync();
+        if (result.Value != null && result.Value.Id == activeProfileId)
+        {
+            await _studentProfileContext.SetActiveProfileAsync(result.Value.Id, HttpContext.RequestAborted);
+        }
+
+        return Json(new { success = true, profile = result.Value });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ArchiveStudentProfile(int profileId)
+    {
+        var currentUser = await _userManager.GetUserAsync(User);
+        if (currentUser == null)
+        {
+            return Json(new { success = false, error = "کاربر یافت نشد" });
+        }
+
+        var result = await _mediator.Send(new ArchiveStudentProfileCommand(profileId, currentUser.Id));
+
+        if (!result.IsSuccess)
+        {
+            return Json(new { success = false, error = result.Error });
+        }
+
+        if (result.Value?.Id == await _studentProfileContext.GetActiveProfileIdAsync())
+        {
+            await _studentProfileContext.SetActiveProfileAsync(null, HttpContext.RequestAborted);
+        }
+
+        return Json(new { success = true, profile = result.Value });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> RestoreStudentProfile(int profileId)
+    {
+        var currentUser = await _userManager.GetUserAsync(User);
+        if (currentUser == null)
+        {
+            return Json(new { success = false, error = "کاربر یافت نشد" });
+        }
+
+        var result = await _mediator.Send(new RestoreStudentProfileCommand(profileId, currentUser.Id));
+
+        if (!result.IsSuccess)
+        {
+            return Json(new { success = false, error = result.Error });
+        }
+
+        return Json(new { success = true, profile = result.Value });
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetStudentProfiles()
+    {
+        var currentUser = await _userManager.GetUserAsync(User);
+        if (currentUser == null)
+        {
+            return Json(new { success = false, error = "کاربر یافت نشد" });
+        }
+
+        var result = await _mediator.Send(new GetStudentProfilesQuery(currentUser.Id));
+        if (!result.IsSuccess)
+        {
+            return Json(new { success = false, error = result.Error });
+        }
+
+        var activeProfileId = await _studentProfileContext.GetActiveProfileIdAsync();
+
+        return Json(new { success = true, profiles = result.Value, activeProfileId });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> SetActiveProfile(string? profileId)
+    {
+        int? parsedProfileId = null;
+        if (!string.IsNullOrWhiteSpace(profileId) && int.TryParse(profileId, out var parsed))
+        {
+            parsedProfileId = parsed;
+        }
+
+        await _studentProfileContext.SetActiveProfileAsync(parsedProfileId, HttpContext.RequestAborted);
+
+        return Json(new { success = true, reload = true });
     }
 }
 

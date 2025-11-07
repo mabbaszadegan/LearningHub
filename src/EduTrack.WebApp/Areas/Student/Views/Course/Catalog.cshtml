@@ -3,6 +3,8 @@
 @model EduTrack.Application.Common.Models.PaginatedList<CourseDto>
 @{
     ViewData["Title"] = "کاتالوگ دوره‌ها";
+    var activeProfileId = ViewBag.ActiveProfileId as int?;
+    var hasActiveProfile = activeProfileId.HasValue;
 }
 
 @functions {
@@ -39,6 +41,15 @@
 }
 
 <div class="content-container">
+    @if (!hasActiveProfile)
+    {
+        <div class="alert alert-warning mb-3">
+            <i class="fas fa-user-clock me-2"></i>
+            برای ثبت‌نام در دوره‌ها ابتدا یک پروفایل یادگیرنده فعال انتخاب یا ایجاد کنید.
+            <a href="@Url.Action("Index", "Profile", new { area = "Student" })#student-profiles" class="alert-link">مدیریت پروفایل‌ها</a>
+        </div>
+    }
+
     <!-- Course Catalog Container for Desktop -->
     <div class="course-catalog-container">
         @if (Model.Items.Any())
@@ -105,7 +116,7 @@
                                     @if (course.IsActive)
                                     {
                                         <button type="button" class="btn-success-action w-100" 
-                                                data-action="enroll" data-course-id="@course.Id">
+                                                data-action="enroll" data-course-id="@course.Id" @(hasActiveProfile ? string.Empty : "disabled")>
                                             <i class="fas fa-plus"></i>
                                             <span>ثبت‌نام در دوره</span>
                                         </button>
@@ -240,7 +251,7 @@
                                         @if (course.IsActive)
                                         {
                                             <button type="button" class="tile-enroll-btn" 
-                                                    data-action="enroll" data-course-id="@course.Id">
+                                                    data-action="enroll" data-course-id="@course.Id" @(hasActiveProfile ? string.Empty : "disabled")>
                                                 <i class="fas fa-plus"></i>
                                                 ثبت‌نام
                                             </button>

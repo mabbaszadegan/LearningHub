@@ -1,0 +1,40 @@
+@model EduTrack.WebApp.Areas.Student.Models.StudentProfileSelectorViewModel
+
+<div class="student-profile-selector" data-component="student-profile-selector">
+    @if (Model.Profiles == null || !Model.Profiles.Any())
+    {
+        <div class="student-profile-selector__empty">
+            <i class="fas fa-user-plus"></i>
+            <div class="student-profile-selector__empty-text">
+                <strong>هنوز پروفایلی ایجاد نکرده‌اید</strong>
+                <span>برای ثبت‌نام در دوره‌ها ابتدا یک پروفایل یادگیرنده بسازید.</span>
+            </div>
+            <a class="btn btn-sm btn-primary" href="@Url.Action("Index", "Profile", new { area = "Student" })#student-profiles">ایجاد پروفایل جدید</a>
+        </div>
+    }
+    else
+    {
+        <form id="studentProfileSelectorForm" class="student-profile-selector__content" method="post" action="@Url.Action("SetActiveProfile", "Profile", new { area = "Student" })">
+            @Html.AntiForgeryToken()
+            <label class="student-profile-selector__label" for="studentProfileSelectorSelect">
+                پروفایل فعال
+            </label>
+            <div class="student-profile-selector__controls">
+                <select id="studentProfileSelectorSelect"
+                        name="profileId"
+                        class="form-select"
+                        data-selected-profile="@(Model.ActiveProfileId?.ToString() ?? string.Empty)">
+                    <option value="">— بدون پروفایل —</option>
+                    @foreach (var profile in Model.Profiles)
+                    {
+                    <option value="@profile.Id" selected="@(profile.Id == Model.ActiveProfileId ? "selected" : null)">@profile.DisplayName</option>
+                    }
+                </select>
+                <a class="btn btn-link" href="@Url.Action("Index", "Profile", new { area = "Student" })#student-profiles">
+                    مدیریت پروفایل‌ها
+                </a>
+            </div>
+        </form>
+    }
+</div>
+

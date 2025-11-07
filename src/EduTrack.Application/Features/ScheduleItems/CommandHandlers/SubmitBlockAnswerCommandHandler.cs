@@ -117,7 +117,8 @@ public class SubmitBlockAnswerCommandHandler : IRequestHandler<SubmitBlockAnswer
                 maxPoints: validationResult.MaxPoints,
                 blockInstruction: blockMetadata.Instruction,
                 blockOrder: blockMetadata.Order,
-                blockContentJson: blockMetadata.BlockContentJson);
+                blockContentJson: blockMetadata.BlockContentJson,
+                studentProfileId: request.StudentProfileId);
 
             await _attemptRepository.AddAsync(attempt, cancellationToken);
 
@@ -126,6 +127,7 @@ public class SubmitBlockAnswerCommandHandler : IRequestHandler<SubmitBlockAnswer
                 request.StudentId,
                 request.ScheduleItemId,
                 request.BlockId,
+                request.StudentProfileId,
                 cancellationToken);
 
             if (statistics == null)
@@ -136,6 +138,7 @@ public class SubmitBlockAnswerCommandHandler : IRequestHandler<SubmitBlockAnswer
                     scheduleItem.Type,
                     request.BlockId,
                     request.StudentId,
+                    request.StudentProfileId,
                     blockMetadata.Instruction,
                     blockMetadata.Order);
 

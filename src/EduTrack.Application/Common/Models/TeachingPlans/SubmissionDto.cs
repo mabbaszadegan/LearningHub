@@ -9,6 +9,7 @@ public class SubmissionDto
     public string ScheduleItemTitle { get; set; } = string.Empty;
     public string StudentId { get; set; } = string.Empty;
     public string StudentName { get; set; } = string.Empty;
+    public int? StudentProfileId { get; set; }
     public DateTimeOffset? SubmittedAt { get; set; }
     public SubmissionStatus Status { get; set; }
     public decimal? Grade { get; set; }

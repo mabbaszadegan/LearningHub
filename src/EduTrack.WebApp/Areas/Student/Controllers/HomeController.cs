@@ -11,6 +11,7 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using EduTrack.WebApp.Services;
 
 namespace EduTrack.WebApp.Areas.Student.Controllers;
 
@@ -21,15 +22,18 @@ public class HomeController : Controller
     private readonly ILogger<HomeController> _logger;
     private readonly UserManager<User> _userManager;
     private readonly IMediator _mediator;
+    private readonly IStudentProfileContext _studentProfileContext;
 
     public HomeController(
         ILogger<HomeController> logger,
         UserManager<User> userManager,
-        IMediator mediator)
+        IMediator mediator,
+        IStudentProfileContext studentProfileContext)
     {
         _logger = logger;
         _userManager = userManager;
         _mediator = mediator;
+        _studentProfileContext = studentProfileContext;
     }
 
     public async Task<IActionResult> Index()
@@ -40,8 +44,11 @@ public class HomeController : Controller
             return RedirectToAction("Login", "Account", new { area = "Public" });
         }
 
+        var activeProfileId = await _studentProfileContext.GetActiveProfileIdAsync();
+        var activeProfileName = await _studentProfileContext.GetActiveProfileNameAsync();
+
         // Get enrolled courses
-        var enrolledCoursesResult = await _mediator.Send(new GetStudentCourseEnrollmentsQuery(currentUser.Id));
+        var enrolledCoursesResult = await _mediator.Send(new GetStudentCourseEnrollmentsQuery(currentUser.Id, activeProfileId));
         var enrolledCourses = enrolledCoursesResult.IsSuccess && enrolledCoursesResult.Value != null 
             ? enrolledCoursesResult.Value 
             : new List<Application.Features.CourseEnrollment.DTOs.StudentCourseEnrollmentSummaryDto>();
@@ -62,7 +69,9 @@ public class HomeController : Controller
             LastStudyCourses = await GetLastStudyCourses(currentUser.Id),
             StudyStatistics = await GetStudyStatistics(currentUser.Id),
             AccessibleScheduleItems = await GetAccessibleScheduleItems(currentUser.Id),
-            EnrolledCourses = enrolledCourses
+            EnrolledCourses = enrolledCourses,
+            ActiveStudentProfileId = activeProfileId,
+            ActiveStudentProfileName = activeProfileName
         };
 
         return View(dashboardData);

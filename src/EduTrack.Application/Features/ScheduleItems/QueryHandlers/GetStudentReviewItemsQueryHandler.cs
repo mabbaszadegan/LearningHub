@@ -34,19 +34,32 @@ public class GetStudentReviewItemsQueryHandler : IRequestHandler<GetStudentRevie
 
             if (request.OnlyNeverCorrect == true)
             {
-                statistics = await _statisticsRepository.GetBlocksNeverCorrectAsync(request.StudentId, cancellationToken);
+                statistics = await _statisticsRepository.GetBlocksNeverCorrectAsync(
+                    request.StudentId,
+                    studentProfileId: request.StudentProfileId,
+                    cancellationToken: cancellationToken);
             }
             else if (request.OnlyRecentMistakes == true)
             {
-                statistics = await _statisticsRepository.GetBlocksWithRecentMistakesAsync(request.StudentId, cancellationToken);
+                statistics = await _statisticsRepository.GetBlocksWithRecentMistakesAsync(
+                    request.StudentId,
+                    studentProfileId: request.StudentProfileId,
+                    cancellationToken: cancellationToken);
             }
             else if (request.OnlyWithErrors == true)
             {
-                statistics = await _statisticsRepository.GetBlocksWithMostErrorsAsync(request.StudentId, request.Limit ?? 10, cancellationToken);
+                statistics = await _statisticsRepository.GetBlocksWithMostErrorsAsync(
+                    request.StudentId,
+                    studentProfileId: request.StudentProfileId,
+                    count: request.Limit ?? 10,
+                    cancellationToken: cancellationToken);
             }
             else
             {
-                statistics = await _statisticsRepository.GetByStudentAsync(request.StudentId, cancellationToken);
+                statistics = await _statisticsRepository.GetByStudentAsync(
+                    request.StudentId,
+                    studentProfileId: request.StudentProfileId,
+                    cancellationToken: cancellationToken);
             }
 
             if (request.Limit.HasValue)
@@ -74,7 +87,8 @@ public class GetStudentReviewItemsQueryHandler : IRequestHandler<GetStudentRevie
                     request.StudentId,
                     stat.ScheduleItemId,
                     stat.BlockId,
-                    cancellationToken);
+                    studentProfileId: request.StudentProfileId,
+                    cancellationToken: cancellationToken);
 
                 var attemptSummaries = recentAttempts
                     .OrderByDescending(a => a.AttemptedAt)

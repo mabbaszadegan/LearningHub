@@ -32,6 +32,7 @@ public class UnenrollFromCourseCommandHandler : IRequestHandler<UnenrollFromCour
     private readonly IRepository<Domain.Entities.CourseEnrollment> _enrollmentRepository;
     private readonly IRepository<Course> _courseRepository;
     private readonly IRepository<Domain.Entities.CourseAccess> _accessRepository;
+    private readonly IStudentProfileRepository _studentProfileRepository;
     private readonly IUserService _userService;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IClock _clock;
@@ -41,6 +42,7 @@ public class UnenrollFromCourseCommandHandler : IRequestHandler<UnenrollFromCour
         IRepository<Domain.Entities.CourseEnrollment> enrollmentRepository,
         IRepository<Course> courseRepository,
         IRepository<Domain.Entities.CourseAccess> accessRepository,
+        IStudentProfileRepository studentProfileRepository,
         IUserService userService,
         IUnitOfWork unitOfWork,
         IClock clock,
@@ -49,6 +51,7 @@ public class UnenrollFromCourseCommandHandler : IRequestHandler<UnenrollFromCour
         _enrollmentRepository = enrollmentRepository;
         _courseRepository = courseRepository;
         _accessRepository = accessRepository;
+        _studentProfileRepository = studentProfileRepository;
         _userService = userService;
         _unitOfWork = unitOfWork;
         _clock = clock;
@@ -77,9 +80,29 @@ public class UnenrollFromCourseCommandHandler : IRequestHandler<UnenrollFromCour
             return Result<bool>.Failure("User does not have student role");
         }
 
-        // Check if student is enrolled
-        var enrollment = await _enrollmentRepository.GetAll()
-            .FirstOrDefaultAsync(e => e.CourseId == request.CourseId && e.StudentId == request.StudentId, cancellationToken);
+        if (request.StudentProfileId.HasValue)
+        {
+            var profile = await _studentProfileRepository.GetByIdForUserAsync(request.StudentProfileId.Value, request.StudentId, cancellationToken);
+            if (profile == null)
+            {
+                return Result<bool>.Failure("پروفایل دانش‌آموز معتبر نیست");
+            }
+        }
+
+        // Check if student is enrolled for this profile context
+        var enrollmentQuery = _enrollmentRepository.GetAll()
+            .Where(e => e.CourseId == request.CourseId && e.StudentId == request.StudentId);
+
+        if (request.StudentProfileId.HasValue)
+        {
+            enrollmentQuery = enrollmentQuery.Where(e => e.StudentProfileId == request.StudentProfileId);
+        }
+        else
+        {
+            enrollmentQuery = enrollmentQuery.Where(e => e.StudentProfileId == null);
+        }
+
+        var enrollment = await enrollmentQuery.FirstOrDefaultAsync(cancellationToken);
 
         if (enrollment == null)
         {

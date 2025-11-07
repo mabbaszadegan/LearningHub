@@ -12,6 +12,7 @@ public class ScheduleItemDto
     public List<int> GroupIds { get; set; } = new List<int>();
     public List<int> SubChapterIds { get; set; } = new List<int>();
     public List<string> StudentIds { get; set; } = new List<string>();
+    public List<int?> StudentProfileIds { get; set; } = new List<int?>();
     public ScheduleItemType Type { get; set; }
     public string TypeName { get; set; } = string.Empty;
     public string Title { get; set; } = string.Empty;
@@ -441,6 +442,7 @@ public class WrittenContentAnswer
     public int Id { get; set; }
     public int ScheduleItemId { get; set; }
     public string StudentId { get; set; } = string.Empty;
+    public int? StudentProfileId { get; set; }
     public List<WrittenQuestionAnswer> QuestionAnswers { get; set; } = new();
     public DateTimeOffset SubmittedAt { get; set; }
     public DateTimeOffset? GradedAt { get; set; }
@@ -473,6 +475,7 @@ public class ReminderContentAnswer
     public int Id { get; set; }
     public int ScheduleItemId { get; set; }
     public string StudentId { get; set; } = string.Empty;
+    public int? StudentProfileId { get; set; }
     public List<ReminderQuestionAnswer> QuestionAnswers { get; set; } = new();
     public DateTimeOffset SubmittedAt { get; set; }
     public DateTimeOffset? GradedAt { get; set; }

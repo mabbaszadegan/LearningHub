@@ -45,6 +45,7 @@ public class GetStudySessionByIdQueryHandler : IRequestHandler<GetStudySessionBy
             Id = studySession.Id,
             StudentId = studySession.StudentId,
             ScheduleItemId = studySession.ScheduleItemId,
+            StudentProfileId = studySession.StudentProfileId,
             StartedAt = studySession.StartedAt,
             EndedAt = studySession.EndedAt,
             DurationSeconds = studySession.DurationSeconds,
@@ -71,7 +72,10 @@ public class GetActiveStudySessionQueryHandler : IRequestHandler<GetActiveStudyS
     {
         try
         {
-            var activeSession = await _studySessionRepository.GetActiveSessionAsync(request.StudentId, request.ScheduleItemId);
+            var activeSession = await _studySessionRepository.GetActiveSessionAsync(
+                request.StudentId,
+                request.ScheduleItemId,
+                request.StudentProfileId);
             if (activeSession == null)
             {
                 return Result<StudySessionDto>.Failure("جلسه فعال یافت نشد");
@@ -92,6 +96,7 @@ public class GetActiveStudySessionQueryHandler : IRequestHandler<GetActiveStudyS
             Id = studySession.Id,
             StudentId = studySession.StudentId,
             ScheduleItemId = studySession.ScheduleItemId,
+            StudentProfileId = studySession.StudentProfileId,
             StartedAt = studySession.StartedAt,
             EndedAt = studySession.EndedAt,
             DurationSeconds = studySession.DurationSeconds,
@@ -118,7 +123,10 @@ public class GetStudySessionsByStudentAndScheduleItemQueryHandler : IRequestHand
     {
         try
         {
-            var sessions = await _studySessionRepository.GetByStudentAndScheduleItemAsync(request.StudentId, request.ScheduleItemId);
+            var sessions = await _studySessionRepository.GetByStudentAndScheduleItemAsync(
+                request.StudentId,
+                request.ScheduleItemId,
+                request.StudentProfileId);
             var sessionDtos = sessions.Select(MapToDto);
 
             return Result<IEnumerable<StudySessionDto>>.Success(sessionDtos);
@@ -136,6 +144,7 @@ public class GetStudySessionsByStudentAndScheduleItemQueryHandler : IRequestHand
             Id = studySession.Id,
             StudentId = studySession.StudentId,
             ScheduleItemId = studySession.ScheduleItemId,
+            StudentProfileId = studySession.StudentProfileId,
             StartedAt = studySession.StartedAt,
             EndedAt = studySession.EndedAt,
             DurationSeconds = studySession.DurationSeconds,
@@ -162,11 +171,20 @@ public class GetStudySessionStatisticsQueryHandler : IRequestHandler<GetStudySes
     {
         try
         {
-            var totalTime = await _studySessionRepository.GetTotalStudyTimeAsync(request.StudentId, request.ScheduleItemId);
-            var sessionsCount = await _studySessionRepository.GetStudySessionsCountAsync(request.StudentId, request.ScheduleItemId);
+            var totalTime = await _studySessionRepository.GetTotalStudyTimeAsync(
+                request.StudentId,
+                request.ScheduleItemId,
+                request.StudentProfileId);
+            var sessionsCount = await _studySessionRepository.GetStudySessionsCountAsync(
+                request.StudentId,
+                request.ScheduleItemId,
+                request.StudentProfileId);
             
             // Get all sessions for this specific schedule item
-            var allItemSessions = await _studySessionRepository.GetByStudentAndScheduleItemAsync(request.StudentId, request.ScheduleItemId);
+            var allItemSessions = await _studySessionRepository.GetByStudentAndScheduleItemAsync(
+                request.StudentId,
+                request.ScheduleItemId,
+                request.StudentProfileId);
             var itemRecentSessions = allItemSessions
                 .Where(s => s.IsCompleted)
                 .OrderByDescending(s => s.EndedAt ?? s.StartedAt)
@@ -198,6 +216,7 @@ public class GetStudySessionStatisticsQueryHandler : IRequestHandler<GetStudySes
             Id = studySession.Id,
             StudentId = studySession.StudentId,
             ScheduleItemId = studySession.ScheduleItemId,
+            StudentProfileId = studySession.StudentProfileId,
             StartedAt = studySession.StartedAt,
             EndedAt = studySession.EndedAt,
             DurationSeconds = studySession.DurationSeconds,
@@ -227,7 +246,10 @@ public class GetLastStudySessionsQueryHandler : IRequestHandler<GetLastStudySess
         try
         {
             // Get the most recent study sessions for the student
-            var recentSessions = await _studySessionRepository.GetRecentSessionsAsync(request.StudentId, request.Count);
+            var recentSessions = await _studySessionRepository.GetRecentSessionsAsync(
+                request.StudentId,
+                request.StudentProfileId,
+                request.Count);
             
             if (!recentSessions.Any())
             {
@@ -262,6 +284,7 @@ public class GetLastStudySessionsQueryHandler : IRequestHandler<GetLastStudySess
                     Id = session.Id,
                     StudentId = session.StudentId,
                     ScheduleItemId = session.ScheduleItemId,
+                    StudentProfileId = session.StudentProfileId,
                     ScheduleItemTitle = scheduleItem.Title,
                     ScheduleItemDescription = scheduleItem.Description,
                     CourseId = teachingPlan.CourseId,
@@ -306,7 +329,9 @@ public class GetAllStudySessionsQueryHandler : IRequestHandler<GetAllStudySessio
         try
         {
             // Get all study sessions for the student
-            var allSessions = await _studySessionRepository.GetByStudentIdAsync(request.StudentId);
+            var allSessions = await _studySessionRepository.GetByStudentIdAsync(
+                request.StudentId,
+                request.StudentProfileId);
             
             if (!allSessions.Any())
             {
@@ -341,6 +366,7 @@ public class GetAllStudySessionsQueryHandler : IRequestHandler<GetAllStudySessio
                     Id = session.Id,
                     StudentId = session.StudentId,
                     ScheduleItemId = session.ScheduleItemId,
+                    StudentProfileId = session.StudentProfileId,
                     ScheduleItemTitle = scheduleItem.Title,
                     ScheduleItemDescription = scheduleItem.Description,
                     CourseId = teachingPlan.CourseId,
@@ -385,7 +411,9 @@ public class GetLastStudyCoursesQueryHandler : IRequestHandler<GetLastStudyCours
         try
         {
             // Get all study sessions for the student
-            var allSessions = await _studySessionRepository.GetByStudentIdAsync(request.StudentId);
+            var allSessions = await _studySessionRepository.GetByStudentIdAsync(
+                request.StudentId,
+                request.StudentProfileId);
             
             if (!allSessions.Any())
             {

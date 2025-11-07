@@ -10,6 +10,7 @@ namespace EduTrack.Application.Features.CourseEnrollment.Queries;
 /// </summary>
 public record GetStudentCourseEnrollmentsQuery(
     string StudentId,
+    int? StudentProfileId = null,
     bool IncludeCompleted = true,
     bool IncludeInactive = false) : IRequest<Result<List<StudentCourseEnrollmentSummaryDto>>>;
 
@@ -18,14 +19,16 @@ public record GetStudentCourseEnrollmentsQuery(
 /// </summary>
 public record GetCourseEnrollmentQuery(
     int CourseId,
-    string StudentId) : IRequest<Result<CourseEnrollmentDto>>;
+    string StudentId,
+    int? StudentProfileId = null) : IRequest<Result<CourseEnrollmentDto>>;
 
 /// <summary>
 /// Query to get course access details
 /// </summary>
 public record GetCourseAccessQuery(
     int CourseId,
-    string StudentId) : IRequest<Result<CourseAccessDto>>;
+    string StudentId,
+    int? StudentProfileId = null) : IRequest<Result<CourseAccessDto>>;
 
 /// <summary>
 /// Query to get all students enrolled in a course
@@ -48,6 +51,7 @@ public record GetCourseEnrollmentStatsQuery(
 /// </summary>
 public record GetAvailableCoursesForEnrollmentQuery(
     string StudentId,
+    int? StudentProfileId = null,
     int PageNumber = 1,
     int PageSize = 20) : IRequest<Result<PaginatedList<CourseDto>>>;
 
@@ -56,14 +60,16 @@ public record GetAvailableCoursesForEnrollmentQuery(
 /// </summary>
 public record CanEnrollInCourseQuery(
     int CourseId,
-    string StudentId) : IRequest<Result<bool>>;
+    string StudentId,
+    int? StudentProfileId = null) : IRequest<Result<bool>>;
 
 /// <summary>
 /// Query to get student's course progress
 /// </summary>
 public record GetStudentCourseProgressQuery(
     int CourseId,
-    string StudentId) : IRequest<Result<StudentCourseProgressDto>>;
+    string StudentId,
+    int? StudentProfileId = null) : IRequest<Result<StudentCourseProgressDto>>;
 
 /// <summary>
 /// Query to get recent course enrollments

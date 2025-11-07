@@ -41,6 +41,8 @@ public class ScheduleItemDto
     public List<ScheduleItemGroupAssignmentDto> GroupAssignments { get; set; } = new();
     public List<ScheduleItemSubChapterAssignmentDto> SubChapterAssignments { get; set; } = new();
     public List<ScheduleItemStudentAssignmentDto> StudentAssignments { get; set; } = new();
+    public List<string> StudentIds { get; set; } = new();
+    public List<int?> StudentProfileIds { get; set; } = new();
     public bool IsAssignedToAllGroups { get; set; }
     
     // Additional properties for status and step tracking

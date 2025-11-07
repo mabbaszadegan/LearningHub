@@ -29,8 +29,19 @@ public class GetAvailableCoursesForEnrollmentQueryHandler : IRequestHandler<GetA
         try
         {
             // Get courses that student is already enrolled in
-            var enrolledCourseIds = await _enrollmentRepository.GetAll()
-                .Where(e => e.StudentId == request.StudentId && e.IsActive)
+            var enrollmentQuery = _enrollmentRepository.GetAll()
+                .Where(e => e.StudentId == request.StudentId && e.IsActive);
+
+            if (request.StudentProfileId.HasValue)
+            {
+                enrollmentQuery = enrollmentQuery.Where(e => e.StudentProfileId == request.StudentProfileId);
+            }
+            else
+            {
+                enrollmentQuery = enrollmentQuery.Where(e => e.StudentProfileId == null);
+            }
+
+            var enrolledCourseIds = await enrollmentQuery
                 .Select(e => e.CourseId)
                 .ToListAsync(cancellationToken);
 
@@ -137,14 +148,22 @@ public class GetCourseEnrollmentQueryHandler : IRequestHandler<GetCourseEnrollme
     {
         try
         {
-            var enrollment = await _enrollmentRepository.GetAll()
+            var enrollmentQuery = _enrollmentRepository.GetAll()
                 .Include(e => e.Course)
                 .Include(e => e.Student)
-                .FirstOrDefaultAsync(e =>
-                                        e.CourseId == request.CourseId &&
-                                        e.StudentId == request.StudentId &&
-                                        e.IsActive,
-                                        cancellationToken);
+                .Include(e => e.StudentProfile)
+                .Where(e => e.CourseId == request.CourseId && e.StudentId == request.StudentId && e.IsActive);
+
+            if (request.StudentProfileId.HasValue)
+            {
+                enrollmentQuery = enrollmentQuery.Where(e => e.StudentProfileId == request.StudentProfileId);
+            }
+            else
+            {
+                enrollmentQuery = enrollmentQuery.Where(e => e.StudentProfileId == null);
+            }
+
+            var enrollment = await enrollmentQuery.FirstOrDefaultAsync(cancellationToken);
 
             if (enrollment == null)
             {
@@ -155,6 +174,8 @@ public class GetCourseEnrollmentQueryHandler : IRequestHandler<GetCourseEnrollme
             {
                 Id = enrollment.Id,
                 StudentId = enrollment.StudentId,
+                StudentProfileId = enrollment.StudentProfileId,
+                StudentProfileName = enrollment.StudentProfile?.DisplayName,
                 CourseId = enrollment.CourseId,
                 StudentName = $"{enrollment.Student?.FirstName} {enrollment.Student?.LastName}".Trim(),
                 CourseTitle = enrollment.Course?.Title ?? "",
@@ -204,8 +225,19 @@ public class CanEnrollInCourseQueryHandler : IRequestHandler<CanEnrollInCourseQu
 
         // Check if student has any enrollment record (active or inactive)
         // Once a student unenrolls, they cannot re-enroll to maintain restriction
-        var existingEnrollment = await _enrollmentRepository.GetAll()
-            .FirstOrDefaultAsync(e => e.CourseId == request.CourseId && e.StudentId == request.StudentId && e.IsActive, cancellationToken);
+        var enrollmentQuery = _enrollmentRepository.GetAll()
+            .Where(e => e.CourseId == request.CourseId && e.StudentId == request.StudentId && e.IsActive);
+
+        if (request.StudentProfileId.HasValue)
+        {
+            enrollmentQuery = enrollmentQuery.Where(e => e.StudentProfileId == request.StudentProfileId);
+        }
+        else
+        {
+            enrollmentQuery = enrollmentQuery.Where(e => e.StudentProfileId == null);
+        }
+
+        var existingEnrollment = await enrollmentQuery.FirstOrDefaultAsync(cancellationToken);
 
         if (existingEnrollment != null)
         {
@@ -238,10 +270,22 @@ public class GetStudentCourseProgressQueryHandler : IRequestHandler<GetStudentCo
     public async Task<Result<StudentCourseProgressDto>> Handle(GetStudentCourseProgressQuery request, CancellationToken cancellationToken)
     {
         // Check if student is enrolled
-        var enrollment = await _enrollmentRepository.GetAll()
+        var enrollmentQuery = _enrollmentRepository.GetAll()
             .Include(e => e.Course)
             .Include(e => e.Student)
-            .FirstOrDefaultAsync(e => e.CourseId == request.CourseId && e.StudentId == request.StudentId, cancellationToken);
+            .Include(e => e.StudentProfile)
+            .Where(e => e.CourseId == request.CourseId && e.StudentId == request.StudentId);
+
+        if (request.StudentProfileId.HasValue)
+        {
+            enrollmentQuery = enrollmentQuery.Where(e => e.StudentProfileId == request.StudentProfileId);
+        }
+        else
+        {
+            enrollmentQuery = enrollmentQuery.Where(e => e.StudentProfileId == null);
+        }
+
+        var enrollment = await enrollmentQuery.FirstOrDefaultAsync(cancellationToken);
 
         if (enrollment == null)
         {
@@ -276,6 +320,8 @@ public class GetStudentCourseProgressQueryHandler : IRequestHandler<GetStudentCo
             CourseTitle = course.Title,
             StudentId = request.StudentId,
             StudentName = enrollment.Student?.FirstName + " " + enrollment.Student?.LastName,
+            StudentProfileId = enrollment.StudentProfileId,
+            StudentProfileName = enrollment.StudentProfile?.DisplayName,
             ProgressPercentage = progressPercentage,
             EnrolledAt = enrollment.EnrolledAt,
             LastAccessedAt = enrollment.LastAccessedAt,

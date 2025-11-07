@@ -10,6 +10,7 @@ public class StudySession
 {
     public int Id { get; private set; }
     public string StudentId { get; private set; } = string.Empty;
+    public int? StudentProfileId { get; private set; }
     public int ScheduleItemId { get; private set; }
     public DateTimeOffset StartedAt { get; private set; }
     public DateTimeOffset? EndedAt { get; private set; }
@@ -21,14 +22,18 @@ public class StudySession
     // Navigation properties
     public User Student { get; private set; } = null!;
     public ScheduleItem ScheduleItem { get; private set; } = null!;
+    public StudentProfile? StudentProfile { get; private set; }
 
     // Private constructor for EF Core
     private StudySession() { }
 
-    public static StudySession CreateCompleted(string studentId, int scheduleItemId, DateTimeOffset startedAt, DateTimeOffset endedAt)
+    public static StudySession CreateCompleted(string studentId, int scheduleItemId, DateTimeOffset startedAt, DateTimeOffset endedAt, int? studentProfileId = null)
     {
         if (string.IsNullOrWhiteSpace(studentId))
             throw new ArgumentException("Student ID cannot be null or empty", nameof(studentId));
+
+        if (studentProfileId.HasValue && studentProfileId.Value <= 0)
+            throw new ArgumentException("Student profile ID must be greater than 0", nameof(studentProfileId));
         
         if (scheduleItemId <= 0)
             throw new ArgumentException("Schedule Item ID must be greater than 0", nameof(scheduleItemId));
@@ -42,6 +47,7 @@ public class StudySession
         return new StudySession
         {
             StudentId = studentId,
+            StudentProfileId = studentProfileId,
             ScheduleItemId = scheduleItemId,
             StartedAt = startedAt,
             EndedAt = endedAt,
@@ -52,10 +58,13 @@ public class StudySession
         };
     }
 
-    public static StudySession Create(string studentId, int scheduleItemId)
+    public static StudySession Create(string studentId, int scheduleItemId, int? studentProfileId = null)
     {
         if (string.IsNullOrWhiteSpace(studentId))
             throw new ArgumentException("Student ID cannot be null or empty", nameof(studentId));
+
+        if (studentProfileId.HasValue && studentProfileId.Value <= 0)
+            throw new ArgumentException("Student profile ID must be greater than 0", nameof(studentProfileId));
         
         if (scheduleItemId <= 0)
             throw new ArgumentException("ScheduleItem ID must be greater than 0", nameof(scheduleItemId));
@@ -63,6 +72,7 @@ public class StudySession
         return new StudySession
         {
             StudentId = studentId,
+            StudentProfileId = studentProfileId,
             ScheduleItemId = scheduleItemId,
             StartedAt = DateTimeOffset.UtcNow,
             CreatedAt = DateTimeOffset.UtcNow,

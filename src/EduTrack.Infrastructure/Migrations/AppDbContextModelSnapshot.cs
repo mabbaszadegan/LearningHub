@@ -426,6 +426,9 @@ namespace EduTrack.Infrastructure.Migrations
                         .HasMaxLength(450)
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<int?>("StudentProfileId")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("IsActive");
@@ -436,8 +439,15 @@ namespace EduTrack.Infrastructure.Migrations
 
                     b.HasIndex("StudentId");
 
+                    b.HasIndex("StudentProfileId");
+
                     b.HasIndex("CourseId", "StudentId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[StudentProfileId] IS NULL");
+
+                    b.HasIndex("CourseId", "StudentId", "StudentProfileId")
+                        .IsUnique()
+                        .HasFilter("[StudentProfileId] IS NOT NULL");
 
                     b.ToTable("CourseEnrollments");
                 });
@@ -1321,6 +1331,9 @@ namespace EduTrack.Infrastructure.Migrations
                         .HasMaxLength(450)
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<int?>("StudentProfileId")
+                        .HasColumnType("int");
+
                     b.Property<string>("SubmittedAnswerJson")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -1331,9 +1344,11 @@ namespace EduTrack.Infrastructure.Migrations
 
                     b.HasIndex("ScheduleItemId");
 
-                    b.HasIndex("StudentId", "ScheduleItemId");
+                    b.HasIndex("StudentProfileId");
 
-                    b.HasIndex("StudentId", "ScheduleItemId", "BlockId");
+                    b.HasIndex("StudentId", "StudentProfileId", "ScheduleItemId");
+
+                    b.HasIndex("StudentId", "StudentProfileId", "ScheduleItemId", "BlockId");
 
                     b.ToTable("ScheduleItemBlockAttempts", (string)null);
                 });
@@ -1393,6 +1408,9 @@ namespace EduTrack.Infrastructure.Migrations
                         .HasMaxLength(450)
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<int?>("StudentProfileId")
+                        .HasColumnType("int");
+
                     b.Property<int>("TotalAttempts")
                         .HasColumnType("int");
 
@@ -1405,10 +1423,17 @@ namespace EduTrack.Infrastructure.Migrations
 
                     b.HasIndex("ScheduleItemId");
 
-                    b.HasIndex("StudentId", "ScheduleItemId");
+                    b.HasIndex("StudentProfileId");
 
                     b.HasIndex("StudentId", "ScheduleItemId", "BlockId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[StudentProfileId] IS NULL");
+
+                    b.HasIndex("StudentId", "StudentProfileId", "ScheduleItemId");
+
+                    b.HasIndex("StudentId", "StudentProfileId", "ScheduleItemId", "BlockId")
+                        .IsUnique()
+                        .HasFilter("[StudentProfileId] IS NOT NULL");
 
                     b.ToTable("ScheduleItemBlockStatistics", (string)null);
                 });
@@ -1460,6 +1485,9 @@ namespace EduTrack.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<int?>("StudentProfileId")
+                        .HasColumnType("int");
+
                     b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("datetimeoffset");
 
@@ -1469,8 +1497,15 @@ namespace EduTrack.Infrastructure.Migrations
 
                     b.HasIndex("StudentId");
 
+                    b.HasIndex("StudentProfileId");
+
                     b.HasIndex("ScheduleItemId", "StudentId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[StudentProfileId] IS NULL");
+
+                    b.HasIndex("ScheduleItemId", "StudentId", "StudentProfileId")
+                        .IsUnique()
+                        .HasFilter("[StudentProfileId] IS NOT NULL");
 
                     b.ToTable("ScheduleItemStudentAssignment");
                 });
@@ -1580,6 +1615,9 @@ namespace EduTrack.Infrastructure.Migrations
                         .HasMaxLength(450)
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<int?>("StudentProfileId")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("AnsweredAt");
@@ -1589,6 +1627,16 @@ namespace EduTrack.Infrastructure.Migrations
                     b.HasIndex("SelectedChoiceId");
 
                     b.HasIndex("StudentId");
+
+                    b.HasIndex("StudentProfileId");
+
+                    b.HasIndex("InteractiveQuestionId", "StudentId")
+                        .IsUnique()
+                        .HasFilter("[StudentProfileId] IS NULL");
+
+                    b.HasIndex("InteractiveQuestionId", "StudentId", "StudentProfileId")
+                        .IsUnique()
+                        .HasFilter("[StudentProfileId] IS NOT NULL");
 
                     b.ToTable("StudentAnswers");
                 });
@@ -1614,6 +1662,57 @@ namespace EduTrack.Infrastructure.Migrations
                     b.HasIndex("TeachingPlanId");
 
                     b.ToTable("StudentGroups");
+                });
+
+            modelBuilder.Entity("EduTrack.Domain.Entities.StudentProfile", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AvatarUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset?>("DateOfBirth")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("GradeLevel")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<bool>("IsArchived")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IsArchived");
+
+                    b.HasIndex("UserId", "DisplayName");
+
+                    b.ToTable("StudentProfiles");
                 });
 
             modelBuilder.Entity("EduTrack.Domain.Entities.StudySession", b =>
@@ -1644,7 +1743,11 @@ namespace EduTrack.Infrastructure.Migrations
 
                     b.Property<string>("StudentId")
                         .IsRequired()
+                        .HasMaxLength(450)
                         .HasColumnType("nvarchar(450)");
+
+                    b.Property<int?>("StudentProfileId")
+                        .HasColumnType("int");
 
                     b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("datetimeoffset");
@@ -1655,7 +1758,11 @@ namespace EduTrack.Infrastructure.Migrations
 
                     b.HasIndex("StudentId");
 
-                    b.ToTable("StudySessions");
+                    b.HasIndex("StudentProfileId");
+
+                    b.HasIndex("StudentId", "StudentProfileId", "ScheduleItemId");
+
+                    b.ToTable("StudySessions", (string)null);
                 });
 
             modelBuilder.Entity("EduTrack.Domain.Entities.SubChapter", b =>
@@ -1741,6 +1848,9 @@ namespace EduTrack.Infrastructure.Migrations
                         .HasMaxLength(450)
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<int?>("StudentProfileId")
+                        .HasColumnType("int");
+
                     b.Property<DateTimeOffset?>("SubmittedAt")
                         .HasColumnType("datetimeoffset");
 
@@ -1759,12 +1869,19 @@ namespace EduTrack.Infrastructure.Migrations
 
                     b.HasIndex("StudentId");
 
+                    b.HasIndex("StudentProfileId");
+
                     b.HasIndex("SubmittedAt");
 
                     b.HasIndex("TeacherId");
 
                     b.HasIndex("ScheduleItemId", "StudentId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[StudentProfileId] IS NULL");
+
+                    b.HasIndex("ScheduleItemId", "StudentId", "StudentProfileId")
+                        .IsUnique()
+                        .HasFilter("[StudentProfileId] IS NOT NULL");
 
                     b.ToTable("Submissions");
                 });
@@ -2534,9 +2651,16 @@ namespace EduTrack.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("EduTrack.Domain.Entities.StudentProfile", "StudentProfile")
+                        .WithMany("CourseEnrollments")
+                        .HasForeignKey("StudentProfileId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
                     b.Navigation("Course");
 
                     b.Navigation("Student");
+
+                    b.Navigation("StudentProfile");
                 });
 
             modelBuilder.Entity("EduTrack.Domain.Entities.Enrollment", b =>
@@ -2788,9 +2912,16 @@ namespace EduTrack.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("EduTrack.Domain.Entities.StudentProfile", "StudentProfile")
+                        .WithMany("BlockAttempts")
+                        .HasForeignKey("StudentProfileId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
                     b.Navigation("ScheduleItem");
 
                     b.Navigation("Student");
+
+                    b.Navigation("StudentProfile");
                 });
 
             modelBuilder.Entity("EduTrack.Domain.Entities.ScheduleItemBlockStatistics", b =>
@@ -2807,9 +2938,16 @@ namespace EduTrack.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("EduTrack.Domain.Entities.StudentProfile", "StudentProfile")
+                        .WithMany("BlockStatistics")
+                        .HasForeignKey("StudentProfileId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
                     b.Navigation("ScheduleItem");
 
                     b.Navigation("Student");
+
+                    b.Navigation("StudentProfile");
                 });
 
             modelBuilder.Entity("EduTrack.Domain.Entities.ScheduleItemGroupAssignment", b =>
@@ -2845,9 +2983,16 @@ namespace EduTrack.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("EduTrack.Domain.Entities.StudentProfile", "StudentProfile")
+                        .WithMany("ScheduleItemAssignments")
+                        .HasForeignKey("StudentProfileId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
                     b.Navigation("ScheduleItem");
 
                     b.Navigation("Student");
+
+                    b.Navigation("StudentProfile");
                 });
 
             modelBuilder.Entity("EduTrack.Domain.Entities.ScheduleItemSubChapterAssignment", b =>
@@ -2906,11 +3051,18 @@ namespace EduTrack.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("EduTrack.Domain.Entities.StudentProfile", "StudentProfile")
+                        .WithMany("StudentAnswers")
+                        .HasForeignKey("StudentProfileId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
                     b.Navigation("InteractiveQuestion");
 
                     b.Navigation("SelectedChoice");
 
                     b.Navigation("Student");
+
+                    b.Navigation("StudentProfile");
                 });
 
             modelBuilder.Entity("EduTrack.Domain.Entities.StudentGroup", b =>
@@ -2924,23 +3076,41 @@ namespace EduTrack.Infrastructure.Migrations
                     b.Navigation("TeachingPlan");
                 });
 
+            modelBuilder.Entity("EduTrack.Domain.Entities.StudentProfile", b =>
+                {
+                    b.HasOne("EduTrack.Domain.Entities.User", "User")
+                        .WithMany("StudentProfiles")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("EduTrack.Domain.Entities.StudySession", b =>
                 {
                     b.HasOne("EduTrack.Domain.Entities.ScheduleItem", "ScheduleItem")
                         .WithMany()
                         .HasForeignKey("ScheduleItemId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("EduTrack.Domain.Entities.User", "Student")
                         .WithMany()
                         .HasForeignKey("StudentId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("EduTrack.Domain.Entities.StudentProfile", "StudentProfile")
+                        .WithMany("StudySessions")
+                        .HasForeignKey("StudentProfileId")
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.Navigation("ScheduleItem");
 
                     b.Navigation("Student");
+
+                    b.Navigation("StudentProfile");
                 });
 
             modelBuilder.Entity("EduTrack.Domain.Entities.SubChapter", b =>
@@ -2968,6 +3138,11 @@ namespace EduTrack.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
+                    b.HasOne("EduTrack.Domain.Entities.StudentProfile", "StudentProfile")
+                        .WithMany("Submissions")
+                        .HasForeignKey("StudentProfileId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
                     b.HasOne("EduTrack.Domain.Entities.User", "Teacher")
                         .WithMany()
                         .HasForeignKey("TeacherId")
@@ -2976,6 +3151,8 @@ namespace EduTrack.Infrastructure.Migrations
                     b.Navigation("ScheduleItem");
 
                     b.Navigation("Student");
+
+                    b.Navigation("StudentProfile");
 
                     b.Navigation("Teacher");
                 });
@@ -3268,6 +3445,23 @@ namespace EduTrack.Infrastructure.Migrations
                     b.Navigation("TopicCoverages");
                 });
 
+            modelBuilder.Entity("EduTrack.Domain.Entities.StudentProfile", b =>
+                {
+                    b.Navigation("BlockAttempts");
+
+                    b.Navigation("BlockStatistics");
+
+                    b.Navigation("CourseEnrollments");
+
+                    b.Navigation("ScheduleItemAssignments");
+
+                    b.Navigation("StudentAnswers");
+
+                    b.Navigation("StudySessions");
+
+                    b.Navigation("Submissions");
+                });
+
             modelBuilder.Entity("EduTrack.Domain.Entities.SubChapter", b =>
                 {
                     b.Navigation("PlanProgresses");
@@ -3312,6 +3506,8 @@ namespace EduTrack.Infrastructure.Migrations
                     b.Navigation("Profile");
 
                     b.Navigation("Progresses");
+
+                    b.Navigation("StudentProfiles");
 
                     b.Navigation("Submissions");
 

@@ -1,6 +1,12 @@
+@using System.Collections.Generic;
+@using System.Linq;
+@using EduTrack.Application.Features.StudentProfiles;
+@model EduTrack.WebApp.Areas.Student.Models.StudentProfilePageViewModel
 @{
     ViewData["Title"] = "پروفایل";
-    var profileModel = ViewData.Model as dynamic;
+    IReadOnlyList<StudentProfileDto> studentProfiles = Model.StudentProfiles ?? Array.Empty<StudentProfileDto>();
+    var activeProfileId = Model.ActiveStudentProfileId;
+    var activeProfileName = Model.ActiveStudentProfileName;
 }
 
 @section Styles {
@@ -12,22 +18,20 @@
     <div class="profile-header mb-4">
         <div class="profile-avatar-container">
             <div class="profile-avatar">
-                @{
-                    var avatar = profileModel?.Profile?.Avatar as string;
-                }
-                @if (avatar != null && !string.IsNullOrEmpty(avatar))
+                @if (!string.IsNullOrEmpty(Model?.AccountProfile?.Avatar))
                 {
-                    <img src="@avatar" alt="@(profileModel?.StudentName ?? "کاربر")" />
+                    <img src="@Model.AccountProfile!.Avatar" alt="@(Model?.StudentName ?? "کاربر")" />
                 }
                 else
                 {
                     <span class="avatar-initials">
-                        @((profileModel?.StudentFirstName?.Substring(0, 1) ?? "U") + (profileModel?.LastName?.Substring(0, 1) ?? ""))
+                        @(string.IsNullOrEmpty(Model?.StudentFirstName) ? "U" : Model.StudentFirstName.Substring(0, 1))
+                        @(string.IsNullOrEmpty(Model?.StudentLastName) ? string.Empty : Model.StudentLastName.Substring(0, 1))
                     </span>
                 }
             </div>
-            <h4 class="profile-name">@(profileModel?.StudentName ?? "کاربر")</h4>
-            <p class="text-muted mb-0">@(profileModel?.Email ?? "-")</p>
+            <h4 class="profile-name">@(Model?.StudentName ?? "کاربر")</h4>
+            <p class="text-muted mb-0">@(Model?.Email ?? "-")</p>
         </div>
     </div>
 
@@ -46,18 +50,18 @@
                 <div class="form-group mb-3">
                     <label for="firstName" class="form-label">نام</label>
                     <input type="text" class="form-control" id="firstName" name="firstName" 
-                           value="@(profileModel?.FirstName ?? "")" required>
+                           value="@(Model?.StudentFirstName ?? string.Empty)" required>
                 </div>
 
                 <div class="form-group mb-3">
                     <label for="lastName" class="form-label">نام خانوادگی</label>
                     <input type="text" class="form-control" id="lastName" name="lastName" 
-                           value="@(profileModel?.LastName ?? "")" required>
+                           value="@(Model?.StudentLastName ?? string.Empty)" required>
                 </div>
 
                 <div class="form-group mb-3">
                     <label for="email" class="form-label">ایمیل</label>
-                    <input type="email" class="form-control" id="email" value="@(profileModel?.Email ?? "")" 
+                    <input type="email" class="form-control" id="email" value="@(Model?.Email ?? string.Empty)" 
                            disabled readonly>
                     <small class="form-text text-muted">برای تغییر ایمیل با پشتیبانی تماس بگیرید</small>
                 </div>
@@ -65,14 +69,14 @@
                 <div class="form-group mb-3">
                     <label for="phoneNumber" class="form-label">شماره تماس</label>
                     <input type="tel" class="form-control" id="phoneNumber" name="phoneNumber" 
-                           value="@(profileModel?.Profile?.PhoneNumber ?? "")" 
+                           value="@(Model?.AccountProfile?.PhoneNumber ?? string.Empty)" 
                            placeholder="09123456789">
                 </div>
 
                 <div class="form-group mb-3">
                     <label for="bio" class="form-label">درباره من</label>
                     <textarea class="form-control" id="bio" name="bio" rows="4" 
-                              placeholder="درباره خودتان بنویسید...">@(profileModel?.Profile?.Bio ?? "")</textarea>
+                              placeholder="درباره خودتان بنویسید...">@(Model?.AccountProfile?.Bio ?? string.Empty)</textarea>
                     <small class="form-text text-muted">حداکثر 1000 کاراکتر</small>
                 </div>
 
@@ -95,12 +99,118 @@
         <div class="card-body">
             <div class="profile-info-item">
                 <div class="profile-info-label">نام کاربری</div>
-                <div class="profile-info-value">@(profileModel?.UserName ?? "-")</div>
+                <div class="profile-info-value">@(Model?.UserName ?? "-")</div>
             </div>
             <div class="profile-info-item">
                 <div class="profile-info-label">تاریخ عضویت</div>
                 <div class="profile-info-value">@DateTime.Now.ToString("yyyy/MM/dd")</div>
             </div>
+        </div>
+    </div>
+
+    <!-- Student Profiles -->
+    <div class="card mb-4" id="student-profiles">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h6 class="mb-0">
+                <i class="fas fa-users me-2"></i>
+                پروفایل‌های یادگیرنده
+            </h6>
+            <span class="badge bg-light text-dark">
+                تعداد پروفایل‌ها: @studentProfiles.Count
+            </span>
+        </div>
+        <div class="card-body">
+            @if (activeProfileId.HasValue && !string.IsNullOrEmpty(activeProfileName))
+            {
+                <div class="alert alert-info mb-3">
+                    <i class="fas fa-user-check me-2"></i>
+                    پروفایل فعال فعلی: <strong>@activeProfileName</strong>
+                </div>
+            }
+
+            <div class="student-profiles-list"
+                 data-active-profile-id="@(activeProfileId?.ToString() ?? string.Empty)"
+                 data-update-url="@Url.Action("UpdateStudentProfile")"
+                 data-archive-url="@Url.Action("ArchiveStudentProfile")"
+                 data-restore-url="@Url.Action("RestoreStudentProfile")"
+                 data-set-active-url="@Url.Action("SetActiveProfile")">
+                @if (!studentProfiles.Any())
+                {
+                    <div class="alert alert-info mb-4">
+                        هنوز پروفایلی ایجاد نکرده‌اید. از فرم زیر برای افزودن پروفایل جدید استفاده کنید.
+                    </div>
+                }
+                else
+                {
+                    foreach (var profile in studentProfiles)
+                    {
+                        var isActive = activeProfileId.HasValue && profile.Id == activeProfileId.Value;
+                        <div class="student-profile-entry"
+                             data-profile-id="@profile.Id"
+                             data-display-name="@profile.DisplayName"
+                             data-grade-level="@(profile.GradeLevel ?? string.Empty)"
+                             data-date-of-birth="@(profile.DateOfBirth?.ToString("yyyy-MM-dd") ?? string.Empty)"
+                             data-notes="@(profile.Notes ?? string.Empty)">
+                            <div class="student-profile-entry__info">
+                                <h6 class="mb-1">@profile.DisplayName</h6>
+                                <div class="student-profile-entry__meta text-muted">
+                                    @if (!string.IsNullOrWhiteSpace(profile.GradeLevel))
+                                    {
+                                        <span><i class="fas fa-award me-1"></i>@profile.GradeLevel</span>
+                                    }
+                                    @if (profile.DateOfBirth.HasValue)
+                                    {
+                                        <span><i class="fas fa-birthday-cake me-1"></i>@profile.DateOfBirth.Value.ToString("yyyy/MM/dd")</span>
+                                    }
+                                </div>
+                            </div>
+                            <div class="student-profile-entry__actions">
+                                @if (isActive)
+                                {
+                                    <span class="badge bg-success me-2">فعال</span>
+                                }
+                                <button class="btn btn-sm btn-outline-primary me-2" data-action="set-active" @(isActive ? "disabled" : string.Empty)>انتخاب</button>
+                                <button class="btn btn-sm btn-outline-secondary me-2" data-action="edit">ویرایش</button>
+                                <button class="btn btn-sm btn-outline-danger" data-action="archive">آرشیو</button>
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+
+            <hr class="my-4" />
+
+            <form id="createStudentProfileForm" action="@Url.Action("CreateStudentProfile")" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" id="profileId" name="profileId" value="" />
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label" for="newProfileDisplayName">نام نمایشی</label>
+                        <input type="text" class="form-control" id="newProfileDisplayName" name="displayName" placeholder="مثلاً: علی (پایه هفتم)" required />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label" for="newProfileGradeLevel">مقطع تحصیلی</label>
+                        <input type="text" class="form-control" id="newProfileGradeLevel" name="gradeLevel" placeholder="مثلاً: پایه هفتم" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label" for="newProfileDateOfBirth">تاریخ تولد</label>
+                        <input type="date" class="form-control" id="newProfileDateOfBirth" name="dateOfBirth" />
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label" for="newProfileNotes">توضیحات</label>
+                        <textarea class="form-control" id="newProfileNotes" name="notes" rows="2" placeholder="نکات مهم درباره این یادگیرنده"></textarea>
+                    </div>
+                </div>
+                <div class="mt-3 d-flex justify-content-end gap-2">
+                    <button type="button" class="btn btn-outline-secondary d-none" id="cancelProfileEditBtn">
+                        لغو و ایجاد جدید
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="createStudentProfileSubmitBtn">
+                        <i class="fas fa-plus me-2"></i>
+                        ایجاد پروفایل جدید
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -122,51 +232,6 @@
 </div>
 
 @section Scripts {
-    <script>
-        $(document).ready(function() {
-            // Initialize bottom navigation
-            if (window.bottomNavigation) {
-                window.bottomNavigation.setActivePage('profile');
-            }
-
-            // Handle form submission
-            $('#profileForm').on('submit', function(e) {
-                e.preventDefault();
-                
-                const formData = {
-                    firstName: $('#firstName').val(),
-                    lastName: $('#lastName').val(),
-                    bio: $('#bio').val(),
-                    phoneNumber: $('#phoneNumber').val(),
-                    __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
-                };
-
-                $.ajax({
-                    url: '@Url.Action("UpdateProfile")',
-                    type: 'POST',
-                    data: formData,
-                    success: function(response) {
-                        if (response.success) {
-                            toastr.success(response.message || 'پروفایل با موفقیت به‌روزرسانی شد');
-                            // Reload page after a short delay
-                            setTimeout(function() {
-                                location.reload();
-                            }, 1500);
-                        } else {
-                            toastr.error(response.error || 'خطا در به‌روزرسانی پروفایل');
-                        }
-                    },
-                    error: function() {
-                        toastr.error('خطا در به‌روزرسانی پروفایل');
-                    }
-                });
-            });
-
-            // Change password button
-            $('#changePasswordBtn').on('click', function() {
-                toastr.info('برای تغییر رمز عبور با پشتیبانی تماس بگیرید');
-            });
-        });
-    </script>
+    <script src="~/js/areas/student/profile.js" asp-append-version="true"></script>
 }
 

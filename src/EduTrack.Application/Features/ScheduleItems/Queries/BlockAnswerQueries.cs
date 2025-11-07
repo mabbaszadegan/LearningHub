@@ -10,7 +10,8 @@ namespace EduTrack.Application.Features.ScheduleItems.Queries;
 public record GetBlockStatisticsQuery(
     string StudentId,
     int? ScheduleItemId = null,
-    string? BlockId = null
+    string? BlockId = null,
+    int? StudentProfileId = null
 ) : IRequest<Result<List<BlockStatisticsDto>>>;
 
 /// <summary>
@@ -21,7 +22,8 @@ public record GetStudentReviewItemsQuery(
     bool? OnlyWithErrors = null,
     bool? OnlyNeverCorrect = null,
     bool? OnlyRecentMistakes = null,
-    int? Limit = null
+    int? Limit = null,
+    int? StudentProfileId = null
 ) : IRequest<Result<List<StudentReviewItemDto>>>;
 
 /// <summary>
@@ -30,6 +32,7 @@ public record GetStudentReviewItemsQuery(
 public record GetBlockAttemptsQuery(
     string StudentId,
     int ScheduleItemId,
-    string BlockId
+    string BlockId,
+    int? StudentProfileId = null
 ) : IRequest<Result<List<BlockAttemptSummaryDto>>>;
 

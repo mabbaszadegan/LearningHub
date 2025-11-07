@@ -8,6 +8,8 @@ public class StudentDashboardViewModel
 {
     public string StudentName { get; set; } = string.Empty;
     public string StudentFirstName { get; set; } = string.Empty;
+    public int? ActiveStudentProfileId { get; set; }
+    public string? ActiveStudentProfileName { get; set; }
     public int TotalClasses { get; set; }
     public int CompletedLessons { get; set; }
     public int TotalExams { get; set; }

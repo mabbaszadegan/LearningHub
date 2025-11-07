@@ -24,7 +24,7 @@ public class StartStudySessionCommandHandler : IRequestHandler<StartStudySession
         try
         {
             // Always create a new study session - no need to check for active sessions
-            var studySession = StudySession.Create(request.StudentId, request.ScheduleItemId);
+            var studySession = StudySession.Create(request.StudentId, request.ScheduleItemId, request.StudentProfileId);
             var createdSession = await _studySessionRepository.AddAsync(studySession);
 
             return Result<StudySessionDto>.Success(MapToDto(createdSession));
@@ -42,6 +42,7 @@ public class StartStudySessionCommandHandler : IRequestHandler<StartStudySession
             Id = studySession.Id,
             StudentId = studySession.StudentId,
             ScheduleItemId = studySession.ScheduleItemId,
+            StudentProfileId = studySession.StudentProfileId,
             StartedAt = studySession.StartedAt,
             EndedAt = studySession.EndedAt,
             DurationSeconds = studySession.DurationSeconds,
@@ -70,7 +71,7 @@ public class CreateAndCompleteStudySessionCommandHandler : IRequestHandler<Creat
         {
             // Check if there's a previous completed session and validate that the new session's start time
             // is not before the last session's end time
-            var lastEndedAt = await _studySessionRepository.GetLastEndedAtAsync(request.StudentId, request.ScheduleItemId);
+            var lastEndedAt = await _studySessionRepository.GetLastEndedAtAsync(request.StudentId, request.ScheduleItemId, request.StudentProfileId);
             
             if (lastEndedAt.HasValue && request.StartedAt < lastEndedAt.Value)
             {
@@ -79,7 +80,7 @@ public class CreateAndCompleteStudySessionCommandHandler : IRequestHandler<Creat
             }
 
             // Create a completed study session directly
-            var studySession = StudySession.CreateCompleted(request.StudentId, request.ScheduleItemId, request.StartedAt, request.EndedAt);
+            var studySession = StudySession.CreateCompleted(request.StudentId, request.ScheduleItemId, request.StartedAt, request.EndedAt, request.StudentProfileId);
             var createdSession = await _studySessionRepository.AddAsync(studySession);
 
             return Result<StudySessionDto>.Success(MapToDto(createdSession));
@@ -97,6 +98,7 @@ public class CreateAndCompleteStudySessionCommandHandler : IRequestHandler<Creat
             Id = studySession.Id,
             StudentId = studySession.StudentId,
             ScheduleItemId = studySession.ScheduleItemId,
+            StudentProfileId = studySession.StudentProfileId,
             StartedAt = studySession.StartedAt,
             EndedAt = studySession.EndedAt,
             DurationSeconds = studySession.DurationSeconds,

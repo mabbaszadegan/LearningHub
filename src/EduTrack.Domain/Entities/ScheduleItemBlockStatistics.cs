@@ -13,6 +13,7 @@ public class ScheduleItemBlockStatistics
     public ScheduleItemType ScheduleItemType { get; private set; }
     public string BlockId { get; private set; } = string.Empty;
     public string StudentId { get; private set; } = string.Empty;
+    public int? StudentProfileId { get; private set; }
     
     // Aggregate statistics
     public int TotalAttempts { get; private set; }
@@ -37,6 +38,7 @@ public class ScheduleItemBlockStatistics
     // Navigation properties
     public ScheduleItem ScheduleItem { get; private set; } = null!;
     public User Student { get; private set; } = null!;
+    public StudentProfile? StudentProfile { get; private set; }
     
     // Private constructor for EF Core
     private ScheduleItemBlockStatistics() { }
@@ -46,6 +48,7 @@ public class ScheduleItemBlockStatistics
         ScheduleItemType scheduleItemType,
         string blockId,
         string studentId,
+        int? studentProfileId = null,
         string? blockInstruction = null,
         int? blockOrder = null)
     {
@@ -57,6 +60,9 @@ public class ScheduleItemBlockStatistics
         
         if (string.IsNullOrWhiteSpace(studentId))
             throw new ArgumentException("Student ID cannot be null or empty", nameof(studentId));
+
+        if (studentProfileId.HasValue && studentProfileId.Value <= 0)
+            throw new ArgumentException("Student profile ID must be greater than 0", nameof(studentProfileId));
         
         var now = DateTimeOffset.UtcNow;
         
@@ -66,6 +72,7 @@ public class ScheduleItemBlockStatistics
             ScheduleItemType = scheduleItemType,
             BlockId = blockId,
             StudentId = studentId,
+            StudentProfileId = studentProfileId,
             BlockInstruction = blockInstruction,
             BlockOrder = blockOrder,
             TotalAttempts = 0,

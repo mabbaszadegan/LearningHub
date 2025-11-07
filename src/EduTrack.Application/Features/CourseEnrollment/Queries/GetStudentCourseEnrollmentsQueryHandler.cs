@@ -1,3 +1,4 @@
+using System.Linq;
 using EduTrack.Application.Common.Models;
 using EduTrack.Application.Features.CourseEnrollment.DTOs;
 using EduTrack.Domain.Repositories;
@@ -41,7 +42,13 @@ public class GetStudentCourseEnrollmentsQueryHandler : IRequestHandler<GetStuden
         var query = _enrollmentRepository.GetAll()
             .Include(e => e.Course)
             .Include(e => e.Student)
+            .Include(e => e.StudentProfile)
             .Where(e => e.StudentId == request.StudentId);
+
+        if (request.StudentProfileId.HasValue)
+        {
+            query = query.Where(e => e.StudentProfileId == request.StudentProfileId);
+        }
 
         if (!request.IncludeCompleted)
         {
@@ -73,7 +80,7 @@ public class GetStudentCourseEnrollmentsQueryHandler : IRequestHandler<GetStuden
             var averageScore = 0.0; // TODO: Calculate from attempts
 
             // Get schedule items statistics for this course
-            var scheduleItemStats = await GetScheduleItemStats(enrollment.CourseId, request.StudentId, cancellationToken);
+            var scheduleItemStats = await GetScheduleItemStats(enrollment.CourseId, request.StudentId, enrollment.StudentProfileId, cancellationToken);
 
             // Get course structure statistics
             var totalChapters = await _chapterRepository.GetAll()
@@ -98,6 +105,8 @@ public class GetStudentCourseEnrollmentsQueryHandler : IRequestHandler<GetStuden
                 AccessLevel = access?.AccessLevel ?? CourseAccessLevel.None,
                 AccessLevelName = GetAccessLevelName(access?.AccessLevel ?? CourseAccessLevel.None),
                 DisciplineType = enrollment.Course.DisciplineType,
+                StudentProfileId = enrollment.StudentProfileId,
+                StudentProfileName = enrollment.StudentProfile?.DisplayName,
                 TotalLessons = totalLessons,
                 CompletedLessons = completedLessons,
                 TotalExams = totalExams,
@@ -131,13 +140,24 @@ public class GetStudentCourseEnrollmentsQueryHandler : IRequestHandler<GetStuden
         };
     }
 
-    private async Task<List<ScheduleItemTypeStatsDto>> GetScheduleItemStats(int courseId, string studentId, CancellationToken cancellationToken)
+    private async Task<List<ScheduleItemTypeStatsDto>> GetScheduleItemStats(int courseId, string studentId, int? studentProfileId, CancellationToken cancellationToken)
     {
         // Get all schedule items for this course
         var scheduleItems = await _scheduleItemRepository.GetAll()
             .Include(si => si.TeachingPlan)
+            .Include(si => si.StudentAssignments)
             .Where(si => si.TeachingPlan.CourseId == courseId)
             .ToListAsync(cancellationToken);
+
+        // Filter schedule items based on student profile context if assignments exist
+        scheduleItems = scheduleItems
+            .Where(si =>
+                !si.StudentAssignments.Any() ||
+                si.StudentAssignments.Any(sa => sa.StudentId == studentId &&
+                    (studentProfileId.HasValue
+                        ? sa.StudentProfileId == studentProfileId
+                        : sa.StudentProfileId == null)))
+            .ToList();
 
         // Group by type and calculate statistics
         var statsByType = scheduleItems

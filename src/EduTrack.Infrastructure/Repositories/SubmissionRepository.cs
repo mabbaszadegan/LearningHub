@@ -15,16 +15,32 @@ public class SubmissionRepository : Repository<Submission>, ISubmissionRepositor
     {
     }
 
-    public async Task<IEnumerable<Submission>> GetSubmissionsByStudentAsync(string studentId, CancellationToken cancellationToken = default)
+    private static IQueryable<Submission> FilterByStudent(
+        IQueryable<Submission> query,
+        string studentId,
+        int? studentProfileId)
     {
-        return await _dbSet
-            .Where(s => s.StudentId == studentId)
+        query = query.Where(s => s.StudentId == studentId);
+
+        if (studentProfileId.HasValue)
+        {
+            query = query.Where(s => s.StudentProfileId == studentProfileId.Value);
+        }
+
+        return query;
+    }
+
+    public async Task<IEnumerable<Submission>> GetSubmissionsByStudentAsync(string studentId, int? studentProfileId = null, CancellationToken cancellationToken = default)
+    {
+        var query = FilterByStudent(_dbSet.AsQueryable(), studentId, studentProfileId)
             .Include(s => s.ScheduleItem)
             .ThenInclude(si => si.TeachingPlan)
             .ThenInclude(tp => tp.Course)
             .Include(s => s.Teacher)
-            .OrderByDescending(s => s.UpdatedAt)
-            .ToListAsync(cancellationToken);
+            .Include(s => s.StudentProfile)
+            .OrderByDescending(s => s.UpdatedAt);
+
+        return await query.ToListAsync(cancellationToken);
     }
 
     public async Task<IEnumerable<Submission>> GetSubmissionsByScheduleItemAsync(int scheduleItemId, CancellationToken cancellationToken = default)
@@ -32,6 +48,7 @@ public class SubmissionRepository : Repository<Submission>, ISubmissionRepositor
         return await _dbSet
             .Where(s => s.ScheduleItemId == scheduleItemId)
             .Include(s => s.Student)
+            .Include(s => s.StudentProfile)
             .Include(s => s.Teacher)
             .OrderBy(s => s.Student.FirstName)
             .ThenBy(s => s.Student.LastName)
@@ -43,6 +60,7 @@ public class SubmissionRepository : Repository<Submission>, ISubmissionRepositor
         return await _dbSet
             .Where(s => s.Status == status)
             .Include(s => s.Student)
+            .Include(s => s.StudentProfile)
             .Include(s => s.ScheduleItem)
             .ThenInclude(si => si.TeachingPlan)
             .ThenInclude(tp => tp.Course)
@@ -50,15 +68,18 @@ public class SubmissionRepository : Repository<Submission>, ISubmissionRepositor
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<Submission?> GetSubmissionByStudentAndItemAsync(string studentId, int scheduleItemId, CancellationToken cancellationToken = default)
+    public async Task<Submission?> GetSubmissionByStudentAndItemAsync(string studentId, int scheduleItemId, int? studentProfileId = null, CancellationToken cancellationToken = default)
     {
-        return await _dbSet
+        var query = FilterByStudent(_dbSet.AsQueryable(), studentId, studentProfileId)
+            .Where(s => s.ScheduleItemId == scheduleItemId)
             .Include(s => s.ScheduleItem)
-            .ThenInclude(si => si.TeachingPlan)
-            .ThenInclude(tp => tp.Course)
+                .ThenInclude(si => si.TeachingPlan)
+                .ThenInclude(tp => tp.Course)
             .Include(s => s.Student)
             .Include(s => s.Teacher)
-            .FirstOrDefaultAsync(s => s.StudentId == studentId && s.ScheduleItemId == scheduleItemId, cancellationToken);
+            .Include(s => s.StudentProfile);
+
+        return await query.FirstOrDefaultAsync(cancellationToken);
     }
 
     public async Task<IEnumerable<Submission>> GetSubmissionsNeedingReviewAsync(CancellationToken cancellationToken = default)
@@ -66,6 +87,7 @@ public class SubmissionRepository : Repository<Submission>, ISubmissionRepositor
         return await _dbSet
             .Where(s => s.Status == SubmissionStatus.Submitted)
             .Include(s => s.Student)
+            .Include(s => s.StudentProfile)
             .Include(s => s.ScheduleItem)
             .ThenInclude(si => si.TeachingPlan)
             .ThenInclude(tp => tp.Course)
@@ -78,6 +100,7 @@ public class SubmissionRepository : Repository<Submission>, ISubmissionRepositor
         return await _dbSet
             .Where(s => s.TeacherId == teacherId)
             .Include(s => s.Student)
+            .Include(s => s.StudentProfile)
             .Include(s => s.ScheduleItem)
             .ThenInclude(si => si.TeachingPlan)
             .ThenInclude(tp => tp.Course)

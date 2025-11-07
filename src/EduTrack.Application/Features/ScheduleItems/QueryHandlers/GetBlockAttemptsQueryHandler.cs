@@ -26,7 +26,8 @@ public class GetBlockAttemptsQueryHandler : IRequestHandler<GetBlockAttemptsQuer
                 request.StudentId,
                 request.ScheduleItemId,
                 request.BlockId,
-                cancellationToken);
+                studentProfileId: request.StudentProfileId,
+                cancellationToken: cancellationToken);
 
             var result = attempts
                 .OrderByDescending(a => a.AttemptedAt)

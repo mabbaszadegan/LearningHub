@@ -44,7 +44,10 @@ public class GetStudentAgendaQueryHandler : IRequestHandler<GetStudentAgendaQuer
         }
 
         // Get student's submissions
-        var submissions = await _submissionRepository.GetSubmissionsByStudentAsync(studentId, cancellationToken);
+        var submissions = await _submissionRepository.GetSubmissionsByStudentAsync(
+            studentId,
+            request.StudentProfileId,
+            cancellationToken);
         var submissionLookup = submissions.ToDictionary(s => s.ScheduleItemId, s => s);
 
         var now = DateTimeOffset.UtcNow;
@@ -88,6 +91,7 @@ public class GetStudentAgendaQueryHandler : IRequestHandler<GetStudentAgendaQuer
         {
             StudentId = studentId,
             StudentName = _currentUserService.UserName ?? "Unknown",
+            StudentProfileId = request.StudentProfileId,
             CourseId = request.CourseId ?? 0,
             CourseTitle = courseTitle,
             LearningMode = Domain.Enums.LearningMode.SelfStudy, // TODO: Get from enrollment
@@ -128,7 +132,9 @@ public class GetStudentAgendaQueryHandler : IRequestHandler<GetStudentAgendaQuer
             IsOverdue = item.IsOverdue(),
             IsUpcoming = item.IsUpcoming(),
             IsActive = item.IsActive(),
-            TimeUntilDue = item.GetTimeUntilDue()
+            TimeUntilDue = item.GetTimeUntilDue(),
+            StudentIds = item.StudentAssignments.Select(sa => sa.StudentId).ToList(),
+            StudentProfileIds = item.StudentAssignments.Select(sa => sa.StudentProfileId).ToList()
         };
     }
 }

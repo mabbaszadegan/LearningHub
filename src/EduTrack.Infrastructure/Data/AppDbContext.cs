@@ -41,6 +41,7 @@ public class AppDbContext : IdentityDbContext<User>
     }
 
     public DbSet<Profile> Profiles { get; set; }
+    public DbSet<StudentProfile> StudentProfiles { get; set; }
     public DbSet<Course> Courses { get; set; }
     public DbSet<Lesson> Lessons { get; set; }
     public DbSet<Resource> Resources { get; set; }
@@ -114,6 +115,10 @@ public class AppDbContext : IdentityDbContext<User>
             entity.Property(e => e.FirstName).HasMaxLength(100);
             entity.Property(e => e.LastName).HasMaxLength(100);
             entity.HasIndex(e => e.Email).IsUnique();
+            entity.HasMany(e => e.StudentProfiles)
+                .WithOne(p => p.User)
+                .HasForeignKey(p => p.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         // Configure Profile entity
@@ -128,6 +133,22 @@ public class AppDbContext : IdentityDbContext<User>
                 .WithOne(e => e.Profile)
                 .HasForeignKey<Profile>(e => e.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<StudentProfile>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.UserId).HasMaxLength(450).IsRequired();
+            entity.Property(e => e.DisplayName).HasMaxLength(200).IsRequired();
+            entity.Property(e => e.AvatarUrl).HasMaxLength(500);
+            entity.Property(e => e.GradeLevel).HasMaxLength(100);
+            entity.Property(e => e.Notes).HasMaxLength(1000);
+            entity.HasOne(e => e.User)
+                .WithMany(u => u.StudentProfiles)
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasIndex(e => new { e.UserId, e.DisplayName });
+            entity.HasIndex(e => e.IsArchived);
         });
 
         // Configure Course entity
@@ -217,9 +238,15 @@ public class AppDbContext : IdentityDbContext<User>
                 .WithMany(e => e.CourseEnrollments)
                 .HasForeignKey(e => e.StudentId)
                 .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.StudentProfile)
+                .WithMany(p => p.CourseEnrollments)
+                .HasForeignKey(e => e.StudentProfileId)
+                .OnDelete(DeleteBehavior.NoAction);
             entity.HasIndex(e => e.StudentId);
+            entity.HasIndex(e => e.StudentProfileId);
             entity.HasIndex(e => e.IsActive);
-            entity.HasIndex(e => new { e.CourseId, e.StudentId }).IsUnique();
+            entity.HasIndex(e => new { e.CourseId, e.StudentId }).IsUnique().HasFilter("[StudentProfileId] IS NULL");
+            entity.HasIndex(e => new { e.CourseId, e.StudentId, e.StudentProfileId }).IsUnique().HasFilter("[StudentProfileId] IS NOT NULL");
             entity.HasIndex(e => e.LastAccessedAt);
         });
 
@@ -481,9 +508,18 @@ public class AppDbContext : IdentityDbContext<User>
                 .WithMany()
                 .HasForeignKey(e => e.SelectedChoiceId)
                 .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(e => e.StudentProfile)
+                .WithMany(p => p.StudentAnswers)
+                .HasForeignKey(e => e.StudentProfileId)
+                .OnDelete(DeleteBehavior.NoAction);
             entity.HasIndex(e => e.StudentId);
             entity.HasIndex(e => e.InteractiveQuestionId);
             entity.HasIndex(e => e.AnsweredAt);
+            entity.HasIndex(e => e.StudentProfileId);
+            entity.HasIndex(e => new { e.InteractiveQuestionId, e.StudentId, e.StudentProfileId }).IsUnique();
+            entity.HasIndex(e => new { e.InteractiveQuestionId, e.StudentId })
+                .IsUnique()
+                .HasFilter("[StudentProfileId] IS NULL");
         });
 
         // Configure InteractiveLessonAssignment entity
@@ -679,9 +715,17 @@ public class AppDbContext : IdentityDbContext<User>
                 .WithMany()
                 .HasForeignKey(e => e.StudentId)
                 .OnDelete(DeleteBehavior.Cascade);
-            entity.HasIndex(e => new { e.ScheduleItemId, e.StudentId }).IsUnique();
+            entity.HasOne(e => e.StudentProfile)
+                .WithMany(p => p.ScheduleItemAssignments)
+                .HasForeignKey(e => e.StudentProfileId)
+                .OnDelete(DeleteBehavior.NoAction);
+            entity.HasIndex(e => new { e.ScheduleItemId, e.StudentId, e.StudentProfileId }).IsUnique();
+            entity.HasIndex(e => new { e.ScheduleItemId, e.StudentId })
+                .IsUnique()
+                .HasFilter("[StudentProfileId] IS NULL");
             entity.HasIndex(e => e.ScheduleItemId);
             entity.HasIndex(e => e.StudentId);
+            entity.HasIndex(e => e.StudentProfileId);
         });
 
         // Configure Submission entity
@@ -700,6 +744,10 @@ public class AppDbContext : IdentityDbContext<User>
                 .WithMany(e => e.Submissions)
                 .HasForeignKey(e => e.StudentId)
                 .OnDelete(DeleteBehavior.NoAction);
+            entity.HasOne(e => e.StudentProfile)
+                .WithMany(p => p.Submissions)
+                .HasForeignKey(e => e.StudentProfileId)
+                .OnDelete(DeleteBehavior.NoAction);
             entity.HasOne(e => e.Teacher)
                 .WithMany()
                 .HasForeignKey(e => e.TeacherId)
@@ -708,7 +756,11 @@ public class AppDbContext : IdentityDbContext<User>
             entity.HasIndex(e => e.ScheduleItemId);
             entity.HasIndex(e => e.Status);
             entity.HasIndex(e => e.SubmittedAt);
-            entity.HasIndex(e => new { e.ScheduleItemId, e.StudentId }).IsUnique();
+            entity.HasIndex(e => new { e.ScheduleItemId, e.StudentId, e.StudentProfileId }).IsUnique();
+            entity.HasIndex(e => new { e.ScheduleItemId, e.StudentId })
+                .IsUnique()
+                .HasFilter("[StudentProfileId] IS NULL");
+            entity.HasIndex(e => e.StudentProfileId);
         });
 
         // Update Course entity to include DisciplineType
@@ -872,6 +924,28 @@ public class AppDbContext : IdentityDbContext<User>
             entity.HasIndex(x => x.UpdatedAt);
         });
 
+        builder.Entity<StudySession>(entity =>
+        {
+            entity.ToTable("StudySessions");
+            entity.HasKey(x => x.Id);
+            entity.Property(e => e.StudentId).HasMaxLength(450).IsRequired();
+            entity.HasOne(e => e.Student)
+                .WithMany()
+                .HasForeignKey(e => e.StudentId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.StudentProfile)
+                .WithMany(p => p.StudySessions)
+                .HasForeignKey(e => e.StudentProfileId)
+                .OnDelete(DeleteBehavior.NoAction);
+            entity.HasOne(e => e.ScheduleItem)
+                .WithMany()
+                .HasForeignKey(e => e.ScheduleItemId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasIndex(e => new { e.StudentId, e.StudentProfileId, e.ScheduleItemId });
+            entity.HasIndex(e => e.StudentId);
+            entity.HasIndex(e => e.StudentProfileId);
+        });
+
         // Configure ScheduleItemBlockAttempt entity
         builder.Entity<ScheduleItemBlockAttempt>(entity =>
         {
@@ -893,9 +967,14 @@ public class AppDbContext : IdentityDbContext<User>
                 .WithMany()
                 .HasForeignKey(x => x.StudentId)
                 .OnDelete(DeleteBehavior.Cascade);
-            entity.HasIndex(x => new { x.StudentId, x.ScheduleItemId, x.BlockId });
+            entity.HasOne(x => x.StudentProfile)
+                .WithMany(p => p.BlockAttempts)
+                .HasForeignKey(x => x.StudentProfileId)
+                .OnDelete(DeleteBehavior.NoAction);
+            entity.HasIndex(x => new { x.StudentId, x.StudentProfileId, x.ScheduleItemId, x.BlockId });
             entity.HasIndex(x => x.AttemptedAt);
-            entity.HasIndex(x => new { x.StudentId, x.ScheduleItemId });
+            entity.HasIndex(x => new { x.StudentId, x.StudentProfileId, x.ScheduleItemId });
+            entity.HasIndex(x => x.StudentProfileId);
         });
 
         // Configure ScheduleItemBlockStatistics entity
@@ -914,9 +993,17 @@ public class AppDbContext : IdentityDbContext<User>
                 .WithMany()
                 .HasForeignKey(x => x.StudentId)
                 .OnDelete(DeleteBehavior.Cascade);
-            entity.HasIndex(x => new { x.StudentId, x.ScheduleItemId, x.BlockId }).IsUnique();
-            entity.HasIndex(x => new { x.StudentId, x.ScheduleItemId });
+            entity.HasOne(x => x.StudentProfile)
+                .WithMany(p => p.BlockStatistics)
+                .HasForeignKey(x => x.StudentProfileId)
+                .OnDelete(DeleteBehavior.NoAction);
+            entity.HasIndex(x => new { x.StudentId, x.StudentProfileId, x.ScheduleItemId, x.BlockId }).IsUnique();
+            entity.HasIndex(x => new { x.StudentId, x.ScheduleItemId, x.BlockId })
+                .IsUnique()
+                .HasFilter("[StudentProfileId] IS NULL");
+            entity.HasIndex(x => new { x.StudentId, x.StudentProfileId, x.ScheduleItemId });
             entity.HasIndex(x => x.LastAttemptAt);
+            entity.HasIndex(x => x.StudentProfileId);
         });
 
     }

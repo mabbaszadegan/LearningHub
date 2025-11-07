@@ -25,7 +25,10 @@ public class GetScheduleItemsAccessibleToStudentQueryHandler : IRequestHandler<G
     {
         try
         {
-            var scheduleItems = await _scheduleItemRepository.GetScheduleItemsAccessibleToStudentAsync(request.StudentId, cancellationToken);
+            var scheduleItems = await _scheduleItemRepository.GetScheduleItemsAccessibleToStudentAsync(
+                request.StudentId,
+                request.StudentProfileId,
+                cancellationToken);
             
             var scheduleItemDtos = new List<ScheduleItemDto>();
             
@@ -60,7 +63,8 @@ public class GetScheduleItemsAccessibleToStudentQueryHandler : IRequestHandler<G
                     ContentJson = item.ContentJson,
                     GroupIds = item.GroupAssignments.Select(ga => ga.StudentGroupId).ToList(),
                     SubChapterIds = item.SubChapterAssignments.Select(sca => sca.SubChapterId).ToList(),
-                    StudentIds = item.StudentAssignments.Select(sa => sa.StudentId).ToList()
+                    StudentIds = item.StudentAssignments.Select(sa => sa.StudentId).ToList(),
+                    StudentProfileIds = item.StudentAssignments.Select(sa => sa.StudentProfileId).ToList()
                 };
 
                 scheduleItemDtos.Add(dto);

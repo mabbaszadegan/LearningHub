@@ -7,4 +7,4 @@ namespace EduTrack.Application.Features.CourseEnrollment.Queries;
 /// <summary>
 /// Query to get schedule items for a specific course and student
 /// </summary>
-public record GetCourseScheduleItemsQuery(int CourseId, string StudentId) : IRequest<Result<List<ScheduleItemDto>>>;
+public record GetCourseScheduleItemsQuery(int CourseId, string StudentId, int? StudentProfileId = null) : IRequest<Result<List<ScheduleItemDto>>>;

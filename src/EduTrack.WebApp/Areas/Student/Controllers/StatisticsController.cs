@@ -8,6 +8,7 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using EduTrack.WebApp.Services;
 
 namespace EduTrack.WebApp.Areas.Student.Controllers;
 
@@ -18,15 +19,18 @@ public class StatisticsController : Controller
     private readonly ILogger<StatisticsController> _logger;
     private readonly UserManager<User> _userManager;
     private readonly IMediator _mediator;
+    private readonly IStudentProfileContext _studentProfileContext;
 
     public StatisticsController(
         ILogger<StatisticsController> logger,
         UserManager<User> userManager,
-        IMediator mediator)
+        IMediator mediator,
+        IStudentProfileContext studentProfileContext)
     {
         _logger = logger;
         _userManager = userManager;
         _mediator = mediator;
+        _studentProfileContext = studentProfileContext;
     }
 
     public async Task<IActionResult> Index()
@@ -37,6 +41,8 @@ public class StatisticsController : Controller
             return RedirectToAction("Login", "Account", new { area = "Public" });
         }
 
+        var activeProfileId = await _studentProfileContext.GetActiveProfileIdAsync();
+
         // Get progress statistics
         var progressResult = await _mediator.Send(new GetProgressByStudentQuery(currentUser.Id, 1, 100));
         var progressData = progressResult.Items?.ToList() ?? new List<ProgressDto>();
@@ -45,7 +51,8 @@ public class StatisticsController : Controller
         var studentStatsResult = await _mediator.Send(new GetStudentStatsQuery(currentUser.Id));
         
         // Get enrolled courses
-        var enrolledCoursesResult = await _mediator.Send(new GetStudentCourseEnrollmentsQuery(currentUser.Id));
+        var activeProfileName = await _studentProfileContext.GetActiveProfileNameAsync();
+        var enrolledCoursesResult = await _mediator.Send(new GetStudentCourseEnrollmentsQuery(currentUser.Id, activeProfileId));
         var enrolledCourses = enrolledCoursesResult.IsSuccess && enrolledCoursesResult.Value != null 
             ? enrolledCoursesResult.Value 
             : new List<Application.Features.CourseEnrollment.DTOs.StudentCourseEnrollmentSummaryDto>();
@@ -61,6 +68,8 @@ public class StatisticsController : Controller
         {
             StudentName = currentUser.FullName,
             StudentFirstName = currentUser.FirstName,
+            ActiveStudentProfileId = activeProfileId,
+            ActiveStudentProfileName = activeProfileName,
             ProgressData = progressData,
             StudentStatistics = studentStatsResult.IsSuccess ? studentStatsResult.Value : null,
             EnrolledCourses = enrolledCourses,

@@ -10,14 +10,16 @@ namespace EduTrack.Application.Features.CourseEnrollment.Commands;
 /// </summary>
 public record EnrollInCourseCommand(
     int CourseId,
-    string StudentId) : IRequest<Result<CourseEnrollmentDto>>;
+    string StudentId,
+    int? StudentProfileId = null) : IRequest<Result<CourseEnrollmentDto>>;
 
 /// <summary>
 /// Command to unenroll a student from a course
 /// </summary>
 public record UnenrollFromCourseCommand(
     int CourseId,
-    string StudentId) : IRequest<Result<bool>>;
+    string StudentId,
+    int? StudentProfileId = null) : IRequest<Result<bool>>;
 
 /// <summary>
 /// Command to grant course access to a student

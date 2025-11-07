@@ -36,7 +36,8 @@ public class GetBlockStatisticsQueryHandler : IRequestHandler<GetBlockStatistics
                     request.StudentId,
                     request.ScheduleItemId.Value,
                     request.BlockId,
-                    cancellationToken);
+                    studentProfileId: request.StudentProfileId,
+                    cancellationToken: cancellationToken);
 
                 statistics = stat != null ? new[] { stat } : Enumerable.Empty<Domain.Entities.ScheduleItemBlockStatistics>();
             }
@@ -46,12 +47,16 @@ public class GetBlockStatisticsQueryHandler : IRequestHandler<GetBlockStatistics
                 statistics = await _statisticsRepository.GetByStudentAndScheduleItemAsync(
                     request.StudentId,
                     request.ScheduleItemId.Value,
-                    cancellationToken);
+                    studentProfileId: request.StudentProfileId,
+                    cancellationToken: cancellationToken);
             }
             else
             {
                 // Get all blocks for student
-                statistics = await _statisticsRepository.GetByStudentAsync(request.StudentId, cancellationToken);
+                statistics = await _statisticsRepository.GetByStudentAsync(
+                    request.StudentId,
+                    studentProfileId: request.StudentProfileId,
+                    cancellationToken: cancellationToken);
             }
 
             // Get schedule items for titles

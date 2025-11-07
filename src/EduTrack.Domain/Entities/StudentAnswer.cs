@@ -8,6 +8,7 @@ public class StudentAnswer
     public int Id { get; private set; }
     public int InteractiveQuestionId { get; private set; }
     public string StudentId { get; private set; } = string.Empty;
+    public int? StudentProfileId { get; private set; }
     public string? AnswerText { get; private set; }
     public int? SelectedChoiceId { get; private set; }
     public bool? BooleanAnswer { get; private set; }
@@ -21,12 +22,13 @@ public class StudentAnswer
     public InteractiveQuestion InteractiveQuestion { get; private set; } = null!;
     public User Student { get; private set; } = null!;
     public QuestionChoice? SelectedChoice { get; private set; }
+    public StudentProfile? StudentProfile { get; private set; }
 
     // Private constructor for EF Core
     private StudentAnswer() { }
 
-    public static StudentAnswer Create(int interactiveQuestionId, string studentId, 
-        string? answerText = null, int? selectedChoiceId = null, bool? booleanAnswer = null)
+    public static StudentAnswer Create(int interactiveQuestionId, string studentId,
+        string? answerText = null, int? selectedChoiceId = null, bool? booleanAnswer = null, int? studentProfileId = null)
     {
         if (interactiveQuestionId <= 0)
             throw new ArgumentException("InteractiveQuestion ID must be greater than 0", nameof(interactiveQuestionId));
@@ -34,10 +36,14 @@ public class StudentAnswer
         if (string.IsNullOrWhiteSpace(studentId))
             throw new ArgumentException("Student ID cannot be null or empty", nameof(studentId));
 
+        if (studentProfileId.HasValue && studentProfileId.Value <= 0)
+            throw new ArgumentException("Student profile ID must be greater than 0", nameof(studentProfileId));
+
         return new StudentAnswer
         {
             InteractiveQuestionId = interactiveQuestionId,
             StudentId = studentId,
+            StudentProfileId = studentProfileId,
             AnswerText = answerText,
             SelectedChoiceId = selectedChoiceId,
             BooleanAnswer = booleanAnswer,
@@ -78,6 +84,14 @@ public class StudentAnswer
     public bool IsGraded()
     {
         return GradedAt.HasValue;
+    }
+
+    public void AssignStudentProfile(int? studentProfileId)
+    {
+        if (studentProfileId.HasValue && studentProfileId.Value <= 0)
+            throw new ArgumentException("Student profile ID must be greater than 0", nameof(studentProfileId));
+
+        StudentProfileId = studentProfileId;
     }
 }
 

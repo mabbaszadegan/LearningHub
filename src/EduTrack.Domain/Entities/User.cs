@@ -18,6 +18,7 @@ public class User : IdentityUser
     private readonly List<ActivityLog> _activityLogs = new();
     private readonly List<TeachingPlan> _teachingPlans = new();
     private readonly List<Submission> _submissions = new();
+    private readonly List<StudentProfile> _studentProfiles = new();
 
     public string FirstName { get; private set; } = string.Empty;
     public string LastName { get; private set; } = string.Empty;
@@ -36,6 +37,7 @@ public class User : IdentityUser
     public IReadOnlyCollection<ActivityLog> ActivityLogs => _activityLogs.AsReadOnly();
     public IReadOnlyCollection<TeachingPlan> TeachingPlans => _teachingPlans.AsReadOnly();
     public IReadOnlyCollection<Submission> Submissions => _submissions.AsReadOnly();
+    public IReadOnlyCollection<StudentProfile> StudentProfiles => _studentProfiles.AsReadOnly();
 
     public string FullName => $"{FirstName} {LastName}".Trim();
 
@@ -168,15 +170,18 @@ public class User : IdentityUser
     }
 
     // Course Enrollment Methods
-    public void EnrollInCourse(Course course)
+    public void EnrollInCourse(Course course, int? studentProfileId = null)
     {
         if (course == null)
             throw new ArgumentNullException(nameof(course));
 
-        if (_courseEnrollments.Any(e => e.CourseId == course.Id))
+        if (studentProfileId.HasValue && studentProfileId.Value <= 0)
+            throw new ArgumentException("Student profile ID must be greater than 0", nameof(studentProfileId));
+
+        if (_courseEnrollments.Any(e => e.CourseId == course.Id && e.StudentProfileId == studentProfileId))
             throw new InvalidOperationException("User is already enrolled in this course");
 
-        var enrollment = CourseEnrollment.Create(Id, course.Id);
+        var enrollment = CourseEnrollment.Create(Id, course.Id, LearningMode.SelfStudy, studentProfileId);
         _courseEnrollments.Add(enrollment);
     }
 
@@ -267,5 +272,31 @@ public class User : IdentityUser
             throw new InvalidOperationException("Submission already exists for this user");
 
         _submissions.Add(submission);
+    }
+
+    public void AddStudentProfile(StudentProfile profile)
+    {
+        if (profile == null)
+            throw new ArgumentNullException(nameof(profile));
+
+        if (profile.UserId != Id)
+            throw new InvalidOperationException("Student profile does not belong to this user");
+
+        if (_studentProfiles.Any(p => p.Id == profile.Id))
+            throw new InvalidOperationException("Student profile already associated with this user");
+
+        _studentProfiles.Add(profile);
+    }
+
+    public void RemoveStudentProfile(StudentProfile profile)
+    {
+        if (profile == null)
+            throw new ArgumentNullException(nameof(profile));
+
+        var profileToRemove = _studentProfiles.FirstOrDefault(p => p.Id == profile.Id);
+        if (profileToRemove != null)
+        {
+            _studentProfiles.Remove(profileToRemove);
+        }
     }
 }

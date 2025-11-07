@@ -56,7 +56,11 @@ public class SubmitWorkCommandHandler : IRequestHandler<SubmitWorkCommand, Resul
         }
 
         // Check if submission already exists
-        var existingSubmission = await _submissionRepository.GetSubmissionByStudentAndItemAsync(studentId, request.ScheduleItemId, cancellationToken);
+        var existingSubmission = await _submissionRepository.GetSubmissionByStudentAndItemAsync(
+            studentId,
+            request.ScheduleItemId,
+            request.StudentProfileId,
+            cancellationToken);
         
         Submission submission;
         if (existingSubmission != null)
@@ -73,7 +77,12 @@ public class SubmitWorkCommandHandler : IRequestHandler<SubmitWorkCommand, Resul
         else
         {
             // Create new submission
-            submission = Submission.Create(request.ScheduleItemId, studentId, request.PayloadJson, request.AttachmentsJson);
+            submission = Submission.Create(
+                request.ScheduleItemId,
+                studentId,
+                request.PayloadJson,
+                request.AttachmentsJson,
+                request.StudentProfileId);
             submission.Start();
             submission.Submit();
             await _submissionRepository.AddAsync(submission, cancellationToken);
@@ -88,6 +97,7 @@ public class SubmitWorkCommandHandler : IRequestHandler<SubmitWorkCommand, Resul
             ScheduleItemTitle = scheduleItem.Title,
             StudentId = submission.StudentId,
             StudentName = _currentUserService.UserName ?? "Unknown",
+            StudentProfileId = submission.StudentProfileId,
             SubmittedAt = submission.SubmittedAt,
             Status = submission.Status,
             Grade = submission.Grade,

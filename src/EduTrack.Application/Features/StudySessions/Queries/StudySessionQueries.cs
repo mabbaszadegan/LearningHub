@@ -24,11 +24,13 @@ public class GetActiveStudySessionQuery : IRequest<Result<StudySessionDto>>
 {
     public string StudentId { get; set; } = string.Empty;
     public int ScheduleItemId { get; set; }
+    public int? StudentProfileId { get; set; }
 
-    public GetActiveStudySessionQuery(string studentId, int scheduleItemId)
+    public GetActiveStudySessionQuery(string studentId, int scheduleItemId, int? studentProfileId = null)
     {
         StudentId = studentId;
         ScheduleItemId = scheduleItemId;
+        StudentProfileId = studentProfileId;
     }
 }
 
@@ -39,11 +41,13 @@ public class GetStudySessionsByStudentAndScheduleItemQuery : IRequest<Result<IEn
 {
     public string StudentId { get; set; } = string.Empty;
     public int ScheduleItemId { get; set; }
+    public int? StudentProfileId { get; set; }
 
-    public GetStudySessionsByStudentAndScheduleItemQuery(string studentId, int scheduleItemId)
+    public GetStudySessionsByStudentAndScheduleItemQuery(string studentId, int scheduleItemId, int? studentProfileId = null)
     {
         StudentId = studentId;
         ScheduleItemId = scheduleItemId;
+        StudentProfileId = studentProfileId;
     }
 }
 
@@ -54,11 +58,13 @@ public class GetStudySessionStatisticsQuery : IRequest<Result<StudySessionStatis
 {
     public string StudentId { get; set; } = string.Empty;
     public int ScheduleItemId { get; set; }
+    public int? StudentProfileId { get; set; }
 
-    public GetStudySessionStatisticsQuery(string studentId, int scheduleItemId)
+    public GetStudySessionStatisticsQuery(string studentId, int scheduleItemId, int? studentProfileId = null)
     {
         StudentId = studentId;
         ScheduleItemId = scheduleItemId;
+        StudentProfileId = studentProfileId;
     }
 }
 
@@ -69,11 +75,13 @@ public class GetLastStudySessionsQuery : IRequest<Result<List<StudySessionHistor
 {
     public string StudentId { get; set; } = string.Empty;
     public int Count { get; set; } = 5;
+    public int? StudentProfileId { get; set; }
 
-    public GetLastStudySessionsQuery(string studentId, int count = 5)
+    public GetLastStudySessionsQuery(string studentId, int count = 5, int? studentProfileId = null)
     {
         StudentId = studentId;
         Count = count;
+        StudentProfileId = studentProfileId;
     }
 }
 
@@ -83,10 +91,12 @@ public class GetLastStudySessionsQuery : IRequest<Result<List<StudySessionHistor
 public class GetAllStudySessionsQuery : IRequest<Result<List<StudySessionHistoryDto>>>
 {
     public string StudentId { get; set; } = string.Empty;
+    public int? StudentProfileId { get; set; }
 
-    public GetAllStudySessionsQuery(string studentId)
+    public GetAllStudySessionsQuery(string studentId, int? studentProfileId = null)
     {
         StudentId = studentId;
+        StudentProfileId = studentProfileId;
     }
 }
 
@@ -97,10 +107,12 @@ public class GetLastStudyCoursesQuery : IRequest<Result<List<CourseStudyHistoryD
 {
     public string StudentId { get; set; } = string.Empty;
     public int Count { get; set; } = 5;
+    public int? StudentProfileId { get; set; }
 
-    public GetLastStudyCoursesQuery(string studentId, int count = 5)
+    public GetLastStudyCoursesQuery(string studentId, int count = 5, int? studentProfileId = null)
     {
         StudentId = studentId;
         Count = count;
+        StudentProfileId = studentProfileId;
     }
 }

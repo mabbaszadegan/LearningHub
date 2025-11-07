@@ -16,13 +16,14 @@ public class GetWrittenContentAnswersQueryHandler : IRequestHandler<GetWrittenCo
 
     public async Task<List<WrittenContentAnswer>> Handle(GetWrittenContentAnswersQuery request, CancellationToken cancellationToken)
     {
-        var answers = await _answerRepository.GetAnswersByScheduleItemAsync(request.ScheduleItemId, cancellationToken);
+        var answers = await _answerRepository.GetAnswersByScheduleItemAsync(request.ScheduleItemId, cancellationToken: cancellationToken);
 
         return answers.Select(answer => new WrittenContentAnswer
         {
             Id = answer.Id,
             ScheduleItemId = answer.InteractiveQuestionId, // Using InteractiveQuestionId as ScheduleItemId
             StudentId = answer.StudentId,
+            StudentProfileId = answer.StudentProfileId,
             SubmittedAt = answer.AnsweredAt,
             GradedAt = answer.GradedAt,
             TotalScore = answer.PointsEarned,

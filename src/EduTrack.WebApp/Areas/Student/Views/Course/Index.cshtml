@@ -3,6 +3,9 @@
 @model List<EduTrack.Application.Features.CourseEnrollment.DTOs.StudentCourseEnrollmentSummaryDto>
 @{
     ViewData["Title"] = "دوره‌های من";
+    var activeProfileId = ViewBag.ActiveProfileId as int?;
+    var activeProfileName = ViewBag.ActiveProfileName as string;
+    var hasActiveProfile = activeProfileId.HasValue;
 }
 
 @functions {
@@ -39,6 +42,22 @@
 }
 
 <div class="content-container">
+    @if (!hasActiveProfile)
+    {
+        <div class="alert alert-warning mb-3">
+            <i class="fas fa-user-graduate me-2"></i>
+            برای مشاهده و مدیریت دوره‌ها ابتدا یک پروفایل یادگیرنده فعال انتخاب کنید.
+            <a href="@Url.Action("Index", "Profile", new { area = "Student" })#student-profiles" class="alert-link">مدیریت پروفایل‌ها</a>
+        </div>
+    }
+    else if (!string.IsNullOrEmpty(activeProfileName))
+    {
+        <div class="alert alert-info mb-3">
+            <i class="fas fa-user-circle me-2"></i>
+            نمایش اطلاعات برای پروفایل: <strong>@activeProfileName</strong>
+        </div>
+    }
+
     <!-- Course List Container for Desktop -->
     <div class="course-list-container">
         @if (Model.Any())

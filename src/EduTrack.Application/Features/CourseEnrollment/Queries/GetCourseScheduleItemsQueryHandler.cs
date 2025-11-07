@@ -28,8 +28,19 @@ public class GetCourseScheduleItemsQueryHandler : IRequestHandler<GetCourseSched
         try
         {
             // Check if student is enrolled in the course
-            var enrollment = await _enrollmentRepository.GetAll()
-                .FirstOrDefaultAsync(e => e.CourseId == request.CourseId && e.StudentId == request.StudentId && e.IsActive, cancellationToken);
+            var enrollmentQuery = _enrollmentRepository.GetAll()
+                .Where(e => e.CourseId == request.CourseId && e.StudentId == request.StudentId && e.IsActive);
+
+            if (request.StudentProfileId.HasValue)
+            {
+                enrollmentQuery = enrollmentQuery.Where(e => e.StudentProfileId == request.StudentProfileId);
+            }
+            else
+            {
+                enrollmentQuery = enrollmentQuery.Where(e => e.StudentProfileId == null);
+            }
+
+            var enrollment = await enrollmentQuery.FirstOrDefaultAsync(cancellationToken);
 
             if (enrollment == null)
             {

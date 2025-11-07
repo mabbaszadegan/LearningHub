@@ -77,7 +77,8 @@ public record DeleteScheduleItemCommand(int Id) : IRequest<Result<bool>>;
 public record SubmitWorkCommand(
     int ScheduleItemId,
     string PayloadJson,
-    string? AttachmentsJson = null) : IRequest<Result<SubmissionDto>>;
+    string? AttachmentsJson = null,
+    int? StudentProfileId = null) : IRequest<Result<SubmissionDto>>;
 
 public record UpdateSubmissionStatusCommand(
     int Id,
@@ -89,6 +90,10 @@ public record GradeSubmissionCommand(
     string? FeedbackText = null) : IRequest<Result<SubmissionDto>>;
 
 // Learning Mode Commands
-public record UpdateLearningModeCommand(
-    int CourseId,
-    LearningMode LearningMode) : IRequest<Result<bool>>;
+public record UpdateLearningModeCommand : IRequest<Result<bool>>
+{
+    public int CourseId { get; init; }
+    public string StudentId { get; init; } = string.Empty;
+    public int? StudentProfileId { get; init; }
+    public LearningMode LearningMode { get; init; }
+}

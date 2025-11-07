@@ -34,6 +34,7 @@ public class EnrollInCourseCommandHandler : IRequestHandler<EnrollInCourseComman
     private readonly IRepository<Domain.Entities.CourseEnrollment> _enrollmentRepository;
     private readonly IRepository<Course> _courseRepository;
     private readonly IRepository<Domain.Entities.CourseAccess> _accessRepository;
+    private readonly IStudentProfileRepository _studentProfileRepository;
     private readonly IUserService _userService;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IClock _clock;
@@ -43,6 +44,7 @@ public class EnrollInCourseCommandHandler : IRequestHandler<EnrollInCourseComman
         IRepository<Domain.Entities.CourseEnrollment> enrollmentRepository,
         IRepository<Course> courseRepository,
         IRepository<Domain.Entities.CourseAccess> accessRepository,
+        IStudentProfileRepository studentProfileRepository,
         IUserService userService,
         IUnitOfWork unitOfWork,
         IClock clock,
@@ -51,6 +53,7 @@ public class EnrollInCourseCommandHandler : IRequestHandler<EnrollInCourseComman
         _enrollmentRepository = enrollmentRepository;
         _courseRepository = courseRepository;
         _accessRepository = accessRepository;
+        _studentProfileRepository = studentProfileRepository;
         _userService = userService;
         _unitOfWork = unitOfWork;
         _clock = clock;
@@ -84,9 +87,30 @@ public class EnrollInCourseCommandHandler : IRequestHandler<EnrollInCourseComman
             return Result<CourseEnrollmentDto>.Failure("User does not have student role");
         }
 
-        // Check if student is already enrolled
-        var existingEnrollment = await _enrollmentRepository.GetAll()
-            .FirstOrDefaultAsync(e => e.CourseId == request.CourseId && e.StudentId == request.StudentId, cancellationToken);
+        StudentProfile? studentProfile = null;
+        if (request.StudentProfileId.HasValue)
+        {
+            studentProfile = await _studentProfileRepository.GetByIdForUserAsync(request.StudentProfileId.Value, request.StudentId, cancellationToken);
+            if (studentProfile == null)
+            {
+                return Result<CourseEnrollmentDto>.Failure("پروفایل دانش‌آموز معتبر نیست");
+            }
+        }
+
+        // Check if student is already enrolled for this profile context
+        var enrollmentQuery = _enrollmentRepository.GetAll()
+            .Where(e => e.CourseId == request.CourseId && e.StudentId == request.StudentId);
+
+        if (request.StudentProfileId.HasValue)
+        {
+            enrollmentQuery = enrollmentQuery.Where(e => e.StudentProfileId == request.StudentProfileId);
+        }
+        else
+        {
+            enrollmentQuery = enrollmentQuery.Where(e => e.StudentProfileId == null);
+        }
+
+        var existingEnrollment = await enrollmentQuery.FirstOrDefaultAsync(cancellationToken);
 
         if (existingEnrollment != null)
         {
@@ -99,13 +123,14 @@ public class EnrollInCourseCommandHandler : IRequestHandler<EnrollInCourseComman
                 // Reactivate existing enrollment
                 existingEnrollment.Activate();
                 existingEnrollment.UpdateLastAccessed();
+                existingEnrollment.AssignStudentProfile(request.StudentProfileId);
                 await _enrollmentRepository.UpdateAsync(existingEnrollment, cancellationToken);
             }
         }
         else
         {
             // Create new enrollment
-            var enrollment = Domain.Entities.CourseEnrollment.Create(request.StudentId, request.CourseId);
+            var enrollment = Domain.Entities.CourseEnrollment.Create(request.StudentId, request.CourseId, LearningMode.SelfStudy, request.StudentProfileId);
             await _enrollmentRepository.AddAsync(enrollment, cancellationToken);
 
             // Grant default course access (Full access)
@@ -122,6 +147,8 @@ public class EnrollInCourseCommandHandler : IRequestHandler<EnrollInCourseComman
         {
             Id = existingEnrollment.Id,
             StudentId = existingEnrollment.StudentId,
+            StudentProfileId = existingEnrollment.StudentProfileId,
+            StudentProfileName = studentProfile?.DisplayName ?? existingEnrollment.StudentProfile?.DisplayName,
             CourseId = existingEnrollment.CourseId,
             StudentName = student.FullName,
             CourseTitle = course.Title,

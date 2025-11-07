@@ -11,6 +11,7 @@ public record SubmitBlockAnswerCommand(
     int ScheduleItemId,
     string BlockId,
     string StudentId,
-    Dictionary<string, object> SubmittedAnswer
+    Dictionary<string, object> SubmittedAnswer,
+    int? StudentProfileId = null
 ) : IRequest<Result<BlockAnswerResultDto>>;
 

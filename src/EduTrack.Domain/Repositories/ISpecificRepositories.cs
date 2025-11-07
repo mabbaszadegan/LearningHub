@@ -135,7 +135,7 @@ public interface IScheduleItemRepository : IRepository<ScheduleItem>
     Task RemoveSubChapterAssignmentsAsync(IEnumerable<ScheduleItemSubChapterAssignment> assignments, CancellationToken cancellationToken = default);
     
     // Student Access methods
-    Task<IEnumerable<ScheduleItem>> GetScheduleItemsAccessibleToStudentAsync(string studentId, CancellationToken cancellationToken = default);
+    Task<IEnumerable<ScheduleItem>> GetScheduleItemsAccessibleToStudentAsync(string studentId, int? studentProfileId = null, CancellationToken cancellationToken = default);
 }
 
 /// <summary>
@@ -143,10 +143,10 @@ public interface IScheduleItemRepository : IRepository<ScheduleItem>
 /// </summary>
 public interface ISubmissionRepository : IRepository<Submission>
 {
-    Task<IEnumerable<Submission>> GetSubmissionsByStudentAsync(string studentId, CancellationToken cancellationToken = default);
+    Task<IEnumerable<Submission>> GetSubmissionsByStudentAsync(string studentId, int? studentProfileId = null, CancellationToken cancellationToken = default);
     Task<IEnumerable<Submission>> GetSubmissionsByScheduleItemAsync(int scheduleItemId, CancellationToken cancellationToken = default);
     Task<IEnumerable<Submission>> GetSubmissionsByStatusAsync(SubmissionStatus status, CancellationToken cancellationToken = default);
-    Task<Submission?> GetSubmissionByStudentAndItemAsync(string studentId, int scheduleItemId, CancellationToken cancellationToken = default);
+    Task<Submission?> GetSubmissionByStudentAndItemAsync(string studentId, int scheduleItemId, int? studentProfileId = null, CancellationToken cancellationToken = default);
     Task<IEnumerable<Submission>> GetSubmissionsNeedingReviewAsync(CancellationToken cancellationToken = default);
     Task<IEnumerable<Submission>> GetSubmissionsByTeacherAsync(string teacherId, CancellationToken cancellationToken = default);
 }
@@ -166,9 +166,9 @@ public interface IFileRepository : IRepository<Domain.Entities.File>
 /// </summary>
 public interface IWrittenContentAnswerRepository : IRepository<StudentAnswer>
 {
-    Task<StudentAnswer?> GetAnswerByStudentAndScheduleItemAsync(string studentId, int scheduleItemId, CancellationToken cancellationToken = default);
-    Task<IEnumerable<StudentAnswer>> GetAnswersByScheduleItemAsync(int scheduleItemId, CancellationToken cancellationToken = default);
-    Task<IEnumerable<StudentAnswer>> GetAnswersByStudentAsync(string studentId, CancellationToken cancellationToken = default);
+    Task<StudentAnswer?> GetAnswerByStudentAndScheduleItemAsync(string studentId, int scheduleItemId, int? studentProfileId = null, CancellationToken cancellationToken = default);
+    Task<IEnumerable<StudentAnswer>> GetAnswersByScheduleItemAsync(int scheduleItemId, int? studentProfileId = null, CancellationToken cancellationToken = default);
+    Task<IEnumerable<StudentAnswer>> GetAnswersByStudentAsync(string studentId, int? studentProfileId = null, CancellationToken cancellationToken = default);
     Task<IEnumerable<StudentAnswer>> GetAnswersNeedingGradingAsync(CancellationToken cancellationToken = default);
     Task<IEnumerable<StudentAnswer>> GetAnswersByTeacherAsync(string teacherId, CancellationToken cancellationToken = default);
 }
@@ -180,21 +180,25 @@ public interface IScheduleItemBlockAttemptRepository : IRepository<ScheduleItemB
 {
     Task<IEnumerable<ScheduleItemBlockAttempt>> GetByStudentAndScheduleItemAsync(
         string studentId, 
-        int scheduleItemId, 
+        int scheduleItemId,
+        int? studentProfileId = null,
         CancellationToken cancellationToken = default);
     
     Task<IEnumerable<ScheduleItemBlockAttempt>> GetByStudentAndBlockAsync(
         string studentId, 
         int scheduleItemId, 
-        string blockId, 
+        string blockId,
+        int? studentProfileId = null,
         CancellationToken cancellationToken = default);
     
     Task<IEnumerable<ScheduleItemBlockAttempt>> GetByStudentAsync(
-        string studentId, 
+        string studentId,
+        int? studentProfileId = null,
         CancellationToken cancellationToken = default);
     
     Task<IEnumerable<ScheduleItemBlockAttempt>> GetRecentAttemptsByStudentAsync(
-        string studentId, 
+        string studentId,
+        int? studentProfileId = null,
         int count = 10, 
         CancellationToken cancellationToken = default);
     
@@ -202,6 +206,7 @@ public interface IScheduleItemBlockAttemptRepository : IRepository<ScheduleItemB
         string studentId, 
         int scheduleItemId, 
         string blockId, 
+        int? studentProfileId = null,
         CancellationToken cancellationToken = default);
 }
 
@@ -213,28 +218,34 @@ public interface IScheduleItemBlockStatisticsRepository : IRepository<ScheduleIt
     Task<ScheduleItemBlockStatistics?> GetByStudentAndBlockAsync(
         string studentId, 
         int scheduleItemId, 
-        string blockId, 
+        string blockId,
+        int? studentProfileId = null,
         CancellationToken cancellationToken = default);
     
     Task<IEnumerable<ScheduleItemBlockStatistics>> GetByStudentAsync(
-        string studentId, 
+        string studentId,
+        int? studentProfileId = null,
         CancellationToken cancellationToken = default);
     
     Task<IEnumerable<ScheduleItemBlockStatistics>> GetByStudentAndScheduleItemAsync(
         string studentId, 
-        int scheduleItemId, 
+        int scheduleItemId,
+        int? studentProfileId = null,
         CancellationToken cancellationToken = default);
     
     Task<IEnumerable<ScheduleItemBlockStatistics>> GetBlocksWithMostErrorsAsync(
-        string studentId, 
+        string studentId,
+        int? studentProfileId = null,
         int count = 10, 
         CancellationToken cancellationToken = default);
     
     Task<IEnumerable<ScheduleItemBlockStatistics>> GetBlocksNeverCorrectAsync(
-        string studentId, 
+        string studentId,
+        int? studentProfileId = null,
         CancellationToken cancellationToken = default);
     
     Task<IEnumerable<ScheduleItemBlockStatistics>> GetBlocksWithRecentMistakesAsync(
-        string studentId, 
+        string studentId,
+        int? studentProfileId = null,
         CancellationToken cancellationToken = default);
 }
