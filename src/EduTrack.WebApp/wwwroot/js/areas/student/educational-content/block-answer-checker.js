@@ -28,8 +28,24 @@
     function handleCheckAnswer(button) {
         const scheduleItemId = button.getAttribute('data-schedule-item-id');
         const scheduleItemType = button.getAttribute('data-schedule-item-type');
-        const blockId = button.getAttribute('data-block-id');
+        let blockId = button.getAttribute('data-block-id') || '';
         const blockOrder = button.getAttribute('data-block-order');
+
+        if (!blockId || blockId.trim() === '') {
+            const contextCard = button.closest('[data-block-id]');
+            if (contextCard && contextCard.getAttribute('data-block-id')) {
+                blockId = contextCard.getAttribute('data-block-id');
+            }
+        }
+
+        if ((!blockId || blockId.trim() === '') && scheduleItemType) {
+            const inferredContext = getBlockContext(button, scheduleItemType);
+            if (inferredContext === 'multipleChoice') {
+                blockId = 'main';
+            } else if (inferredContext === 'ordering') {
+                blockId = 'main';
+            }
+        }
 
         if (!scheduleItemId || !blockId) {
             console.error('Missing required data attributes');
@@ -47,18 +63,33 @@
             button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>در حال بررسی...</span>';
         }
 
-        // Get submitted answer based on schedule item type
-        const submittedAnswer = getSubmittedAnswer(scheduleItemType, blockId);
+        // Determine block context (ordering, multiple choice, etc.)
+        const blockContext = getBlockContext(button, scheduleItemType);
+
+        if (!blockContext) {
+            console.error('Unsupported or unknown block context for check answer button.', { scheduleItemType, blockId });
+            showError(button, 'نوع این بلاک پشتیبانی نمی‌شود.');
+            button.disabled = false;
+            button.innerHTML = originalContent;
+            return;
+        }
+
+        // Get submitted answer based on block context
+        const submittedAnswer = getSubmittedAnswer(button, blockContext, blockId);
 
         if (!submittedAnswer) {
-            showError(button, 'لطفاً ابتدا پاسخ را وارد کنید. حداقل یک آیتم باید در جایگاه قرار گیرد.');
+            const emptyMessage = blockContext === 'multipleChoice'
+                ? 'لطفاً ابتدا یک گزینه را انتخاب کنید.'
+                : 'لطفاً ابتدا پاسخ را وارد کنید. حداقل یک آیتم باید در جایگاه قرار گیرد.';
+
+            showError(button, emptyMessage);
             button.disabled = false;
             button.innerHTML = originalContent;
             return;
         }
 
         // Validate that submitted answer has content
-        if (scheduleItemType === 'Ordering' || scheduleItemType === '8') {
+        if (blockContext === 'ordering') {
             if (!submittedAnswer.order || submittedAnswer.order.length === 0) {
                 showError(button, 'لطفاً ابتدا پاسخ را وارد کنید. حداقل یک آیتم باید در جایگاه قرار گیرد.');
                 button.disabled = false;
@@ -67,7 +98,7 @@
             }
         }
         
-        if (scheduleItemType === 'MultipleChoice' || scheduleItemType === '4') {
+        if (blockContext === 'multipleChoice') {
             if (!submittedAnswer.selectedOptions || submittedAnswer.selectedOptions.length === 0) {
                 showError(button, 'لطفاً ابتدا پاسخ را انتخاب کنید.');
                 button.disabled = false;
@@ -113,15 +144,15 @@
         });
     }
 
-    function getSubmittedAnswer(scheduleItemType, blockId) {
+    function getSubmittedAnswer(button, blockContext, blockId) {
         // Ordering block
-        if (scheduleItemType === 'Ordering' || scheduleItemType === '8') {
-            return getOrderingAnswer(blockId);
+        if (blockContext === 'ordering') {
+            return getOrderingAnswer(blockId, button);
         }
         
         // MultipleChoice block
-        if (scheduleItemType === 'MultipleChoice' || scheduleItemType === '4') {
-            return getMultipleChoiceAnswer(blockId);
+        if (blockContext === 'multipleChoice') {
+            return getMultipleChoiceAnswer(blockId, button);
         }
 
         // Add other types as needed
@@ -129,11 +160,21 @@
         return null;
     }
 
-    function getOrderingAnswer(blockId) {
+    function getBlockContext(button, scheduleItemType) {
+        if (isOrderingBlock(button, scheduleItemType)) {
+            return 'ordering';
+        }
+
+        if (isMultipleChoiceBlock(button, scheduleItemType)) {
+            return 'multipleChoice';
+        }
+
+        return null;
+    }
+
+    function getOrderingAnswer(blockId, triggerButton) {
         // Find the sorting block for this blockId
-        // First, try to find button with this blockId and get its parent card
-        const button = document.querySelector(`.btn-check-answer-minimal[data-block-id="${blockId}"]`);
-        let blockCard = button ? button.closest('.ordering-block-card') : null;
+        let blockCard = triggerButton ? triggerButton.closest('.ordering-block-card') : null;
         
         if (!blockCard) {
             // Try to find by block order
@@ -180,10 +221,9 @@
         };
     }
 
-    function getMultipleChoiceAnswer(blockId) {
+    function getMultipleChoiceAnswer(blockId, triggerButton) {
         // Find the multiple choice block card
-        const button = document.querySelector(`.btn-check-answer-minimal[data-block-id="${blockId}"]`);
-        let blockCard = button ? button.closest('.mcq-block-card') : null;
+        let blockCard = triggerButton ? triggerButton.closest('.mcq-block-card') : null;
         
         if (!blockCard) {
             // Try to find by block order or first block
@@ -236,6 +276,56 @@
         return {
             selectedOptions: selectedOptions
         };
+    }
+
+    function isOrderingBlock(button, scheduleItemType) {
+        if (scheduleItemType === 'Ordering' || scheduleItemType === '8') {
+            return true;
+        }
+
+        if (button && button.closest('.ordering-block-card')) {
+            return true;
+        }
+
+        const blockWrapper = button ? button.closest('[data-block-type]') : null;
+        if (blockWrapper) {
+            const typeString = (blockWrapper.getAttribute('data-block-type') || '').toLowerCase();
+            if (typeString === 'ordering') {
+                return true;
+            }
+        }
+
+        const legacyWrapper = button ? button.closest('.content-block-ordering, .ordering-block') : null;
+        if (legacyWrapper) {
+            return true;
+        }
+
+        return false;
+    }
+
+    function isMultipleChoiceBlock(button, scheduleItemType) {
+        if (scheduleItemType === 'MultipleChoice' || scheduleItemType === '4') {
+            return true;
+        }
+
+        if (button && button.closest('.mcq-block-card')) {
+            return true;
+        }
+
+        const blockWrapper = button ? button.closest('[data-block-type]') : null;
+        if (blockWrapper) {
+            const typeString = (blockWrapper.getAttribute('data-block-type') || '').toLowerCase();
+            if (typeString === 'multiplechoice' || typeString === 'questionmultiplechoice') {
+                return true;
+            }
+        }
+
+        const legacyWrapper = button ? button.closest('.content-block-multiplechoice, .multiple-choice-block') : null;
+        if (legacyWrapper) {
+            return true;
+        }
+
+        return false;
     }
 
     function showResult(button, result, blockId) {

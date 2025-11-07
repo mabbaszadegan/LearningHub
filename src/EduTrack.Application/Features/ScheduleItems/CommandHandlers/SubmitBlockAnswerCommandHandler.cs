@@ -53,10 +53,20 @@ public class SubmitBlockAnswerCommandHandler : IRequestHandler<SubmitBlockAnswer
             try
             {
                 var blockType = GetBlockTypeFromContent(scheduleItem.ContentJson, request.BlockId);
-                if (!string.IsNullOrEmpty(blockType) && string.Equals(blockType, "ordering", StringComparison.OrdinalIgnoreCase))
+                if (!string.IsNullOrEmpty(blockType))
                 {
-                    // Try to get OrderingBlockValidator (it supports Ordering type, but can work with any type)
-                    validator = _validatorFactory.GetValidator(Domain.Enums.ScheduleItemType.Ordering);
+                    var normalizedBlockType = blockType.Trim().Replace("-", string.Empty).Replace("_", string.Empty).ToLowerInvariant();
+                    
+                    if (normalizedBlockType.Contains("ordering"))
+                    {
+                        // Try to get OrderingBlockValidator (it supports Ordering type, but can work with any type)
+                        validator = _validatorFactory.GetValidator(Domain.Enums.ScheduleItemType.Ordering);
+                    }
+                    else if (normalizedBlockType.Contains("multiplechoice"))
+                    {
+                        // Use MultipleChoice validator for any schedule item that contains MCQ blocks
+                        validator = _validatorFactory.GetValidator(Domain.Enums.ScheduleItemType.MultipleChoice);
+                    }
                 }
             }
             catch
@@ -357,14 +367,26 @@ public class SubmitBlockAnswerCommandHandler : IRequestHandler<SubmitBlockAnswer
             {
                 foreach (var blockToken in blocksArray)
                 {
-                    var blockObj = blockToken as JObject;
-                    if (blockObj == null) continue;
+                    if (blockToken is not JObject blockObj) continue;
 
                     var currentBlockId = blockObj["id"]?.ToString();
                     if (string.IsNullOrEmpty(currentBlockId) || !string.Equals(currentBlockId, blockId, StringComparison.OrdinalIgnoreCase))
                         continue;
 
-                    return blockObj["type"]?.ToString();
+                    var typeValue = blockObj["type"]?.ToString() ?? string.Empty;
+                    if (!string.IsNullOrEmpty(typeValue))
+                    {
+                        var normalizedType = typeValue.Replace("-", string.Empty).Replace("_", string.Empty).ToLowerInvariant();
+                        if (normalizedType.Contains("ordering"))
+                        {
+                            return "ordering";
+                        }
+
+                        if (normalizedType.Contains("multiplechoice"))
+                        {
+                            return "multipleChoice";
+                        }
+                    }
                 }
             }
 
@@ -373,14 +395,32 @@ public class SubmitBlockAnswerCommandHandler : IRequestHandler<SubmitBlockAnswer
             {
                 foreach (var blockToken in orderingBlocksArray)
                 {
-                    var blockObj = blockToken as JObject;
-                    if (blockObj == null) continue;
+                    if (blockToken is not JObject blockObj) continue;
 
                     var currentBlockId = blockObj["id"]?.ToString();
                     if (string.IsNullOrEmpty(currentBlockId) || !string.Equals(currentBlockId, blockId, StringComparison.OrdinalIgnoreCase))
                         continue;
 
                     return "ordering"; // orderingBlocks always contain ordering blocks
+                }
+            }
+
+            // Check in "multipleChoiceBlocks" array (Reminder, Writing, Audio, etc.)
+            var multipleChoiceBlocksToken = contentObj["multipleChoiceBlocks"] 
+                ?? contentObj["multiplechoiceBlocks"] 
+                ?? contentObj["MultipleChoiceBlocks"];
+
+            if (multipleChoiceBlocksToken is JArray multipleChoiceBlocksArray)
+            {
+                foreach (var blockToken in multipleChoiceBlocksArray)
+                {
+                    if (blockToken is not JObject blockObj) continue;
+
+                    var currentBlockId = blockObj["id"]?.ToString();
+                    if (string.IsNullOrEmpty(currentBlockId) || !string.Equals(currentBlockId, blockId, StringComparison.OrdinalIgnoreCase))
+                        continue;
+
+                    return "multipleChoice";
                 }
             }
         }

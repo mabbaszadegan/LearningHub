@@ -61,7 +61,11 @@
                     @if (!string.IsNullOrWhiteSpace(orderingBlock.Instruction))
                     {
                         <div class="ordering-block-header">
-                            <div class="ordering-block-number">@(blockIndex + 1)</div>
+                            <div class="ordering-block-number" aria-label="بلاک مرتب‌سازی شماره @(blockIndex + 1)">
+                                <i class="fas fa-arrow-up-wide-short" aria-hidden="true"></i>
+                                <span class="block-number-text">@((blockIndex + 1).ToString())</span>
+                                <span class="sr-only">مرتب‌سازی</span>
+                            </div>
                             <div class="ordering-instruction-minimal">
                                 <p>@orderingBlock.Instruction</p>
                             </div>
@@ -70,7 +74,11 @@
                     else
                     {
                         <div class="ordering-block-header">
-                            <div class="ordering-block-number">@(blockIndex + 1)</div>
+                            <div class="ordering-block-number" aria-label="بلاک مرتب‌سازی شماره @(blockIndex + 1)">
+                                <i class="fas fa-arrow-up-wide-short" aria-hidden="true"></i>
+                                <span class="block-number-text">@((blockIndex + 1).ToString())</span>
+                                <span class="sr-only">مرتب‌سازی</span>
+                            </div>
                         </div>
                     }
                     <div class="ordering-block-content">
@@ -163,7 +171,11 @@
                 @if (!string.IsNullOrWhiteSpace(content.Instruction))
                 {
                     <div class="ordering-block-header">
-                        <div class="ordering-block-number">1</div>
+                        <div class="ordering-block-number" aria-label="بلاک مرتب‌سازی شماره 1">
+                            <i class="fas fa-arrow-up-wide-short" aria-hidden="true"></i>
+                            <span class="block-number-text">1</span>
+                            <span class="sr-only">مرتب‌سازی</span>
+                        </div>
                         <div class="ordering-instruction-minimal">
                             <p>@content.Instruction</p>
                         </div>
@@ -172,7 +184,11 @@
                 else
                 {
                     <div class="ordering-block-header">
-                        <div class="ordering-block-number">1</div>
+                        <div class="ordering-block-number" aria-label="بلاک مرتب‌سازی شماره 1">
+                            <i class="fas fa-arrow-up-wide-short" aria-hidden="true"></i>
+                            <span class="block-number-text">1</span>
+                            <span class="sr-only">مرتب‌سازی</span>
+                        </div>
                     </div>
                 }
                 <div class="ordering-block-content">
