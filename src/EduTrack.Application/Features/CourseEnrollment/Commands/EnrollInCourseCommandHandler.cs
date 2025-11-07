@@ -133,9 +133,22 @@ public class EnrollInCourseCommandHandler : IRequestHandler<EnrollInCourseComman
             var enrollment = Domain.Entities.CourseEnrollment.Create(request.StudentId, request.CourseId, LearningMode.SelfStudy, request.StudentProfileId);
             await _enrollmentRepository.AddAsync(enrollment, cancellationToken);
 
-            // Grant default course access (Full access)
-            var access = Domain.Entities.CourseAccess.Create(request.StudentId, request.CourseId, CourseAccessLevel.Full);
-            await _accessRepository.AddAsync(access, cancellationToken);
+            // Grant default course access (Full access) or reactivate existing access record
+            var existingAccess = await _accessRepository
+                .GetAll()
+                .FirstOrDefaultAsync(a => a.CourseId == request.CourseId && a.StudentId == request.StudentId, cancellationToken);
+
+            if (existingAccess != null)
+            {
+                existingAccess.Activate();
+                existingAccess.UpdateAccessLevel(CourseAccessLevel.Full);
+                await _accessRepository.UpdateAsync(existingAccess, cancellationToken);
+            }
+            else
+            {
+                var access = Domain.Entities.CourseAccess.Create(request.StudentId, request.CourseId, CourseAccessLevel.Full);
+                await _accessRepository.AddAsync(access, cancellationToken);
+            }
 
             existingEnrollment = enrollment;
         }
