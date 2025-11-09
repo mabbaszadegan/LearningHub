@@ -618,4 +618,37 @@ public class ScheduleItemController : BaseTeacherController
             return Content("<div class='alert alert-danger'>خطا در بارگذاری گزینه‌های بلاک</div>");
         }
     }
+
+    [HttpGet]
+    public IActionResult GetMcqQuestionTemplate(int questionIndex = 0)
+    {
+        try
+        {
+            ViewData["QuestionId"] = Guid.NewGuid().ToString("N");
+            ViewData["QuestionIndex"] = questionIndex;
+            return PartialView("_McqQuestionItem");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error loading MCQ question template");
+            return StatusCode(StatusCodes.Status500InternalServerError, "خطا در بارگذاری قالب سوال");
+        }
+    }
+
+    [HttpGet]
+    public IActionResult GetMcqOptionTemplate(string? questionId = null, int optionIndex = 0, bool isSingle = true)
+    {
+        try
+        {
+            ViewData["QuestionId"] = string.IsNullOrWhiteSpace(questionId) ? Guid.NewGuid().ToString("N") : questionId;
+            ViewData["OptionIndex"] = optionIndex;
+            ViewData["IsSingle"] = isSingle;
+            return PartialView("_McqOptionItem");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error loading MCQ option template for question {QuestionId}", questionId);
+            return StatusCode(StatusCodes.Status500InternalServerError, "خطا در بارگذاری قالب گزینه");
+        }
+    }
 }
