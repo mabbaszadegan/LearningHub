@@ -126,7 +126,7 @@ public class HomeController : Controller
 
         try
         {
-            var courses = await GetLastStudyCourses(currentUser.Id, cancellationToken);
+            var courses = await GetLastStudyCourses(currentUser.Id, activeProfileId, cancellationToken);
             return PartialView("_RecentCourses", courses);
         }
         catch (Exception ex)
@@ -173,8 +173,24 @@ public class HomeController : Controller
             return Unauthorized();
         }
 
-        var statistics = await GetStudyStatistics(currentUser.Id, cancellationToken);
-        return Ok(new { success = true, data = statistics });
+        var activeProfileId = await _studentProfileContext.GetActiveProfileIdAsync(cancellationToken);
+        if (!activeProfileId.HasValue)
+        {
+            return Ok(new ProfileAwareResponse<StudyStatisticsDto>
+            {
+                Success = false,
+                RequiresProfile = true,
+                Error = "برای مشاهده آمار مطالعه، ابتدا یک پروفایل یادگیرنده فعال انتخاب کنید.",
+                Data = new StudyStatisticsDto()
+            });
+        }
+
+        var statistics = await GetStudyStatistics(currentUser.Id, activeProfileId, cancellationToken);
+        return Ok(new ProfileAwareResponse<StudyStatisticsDto>
+        {
+            Success = true,
+            Data = statistics
+        });
     }
 
     [HttpGet("last-study-sessions")]
@@ -186,8 +202,24 @@ public class HomeController : Controller
             return Unauthorized();
         }
 
-        var sessions = await GetLastStudySessions(currentUser.Id, cancellationToken);
-        return Ok(new { success = true, data = sessions });
+        var activeProfileId = await _studentProfileContext.GetActiveProfileIdAsync(cancellationToken);
+        if (!activeProfileId.HasValue)
+        {
+            return Ok(new ProfileAwareResponse<List<StudySessionHistoryDto>>
+            {
+                Success = false,
+                RequiresProfile = true,
+                Error = "برای مشاهده تاریخچه مطالعه، ابتدا یک پروفایل یادگیرنده فعال انتخاب کنید.",
+                Data = new List<StudySessionHistoryDto>()
+            });
+        }
+
+        var sessions = await GetLastStudySessions(currentUser.Id, activeProfileId, cancellationToken);
+        return Ok(new ProfileAwareResponse<List<StudySessionHistoryDto>>
+        {
+            Success = true,
+            Data = sessions
+        });
     }
 
     [HttpGet("accessible-schedule-items")]
@@ -199,8 +231,24 @@ public class HomeController : Controller
             return Unauthorized();
         }
 
-        var scheduleItems = await GetAccessibleScheduleItems(currentUser.Id, cancellationToken);
-        return Ok(new { success = true, data = scheduleItems });
+        var activeProfileId = await _studentProfileContext.GetActiveProfileIdAsync(cancellationToken);
+        if (!activeProfileId.HasValue)
+        {
+            return Ok(new ProfileAwareResponse<List<ScheduleItemDto>>
+            {
+                Success = false,
+                RequiresProfile = true,
+                Error = "برای مشاهده آیتم‌های قابل دسترس، ابتدا یک پروفایل یادگیرنده فعال انتخاب کنید.",
+                Data = new List<ScheduleItemDto>()
+            });
+        }
+
+        var scheduleItems = await GetAccessibleScheduleItems(currentUser.Id, activeProfileId, cancellationToken);
+        return Ok(new ProfileAwareResponse<List<ScheduleItemDto>>
+        {
+            Success = true,
+            Data = scheduleItems
+        });
     }
 
     public async Task<IActionResult> MyProgress()
@@ -246,11 +294,11 @@ public class HomeController : Controller
         return Task.FromResult(new List<object>());
     }
 
-    private async Task<List<StudySessionHistoryDto>> GetLastStudySessions(string studentId, CancellationToken cancellationToken = default)
+    private async Task<List<StudySessionHistoryDto>> GetLastStudySessions(string studentId, int? studentProfileId, CancellationToken cancellationToken = default)
     {
         try
         {
-            var result = await _mediator.Send(new GetLastStudySessionsQuery(studentId, 5), cancellationToken);
+            var result = await _mediator.Send(new GetLastStudySessionsQuery(studentId, 5, studentProfileId), cancellationToken);
             return result.IsSuccess && result.Value != null ? result.Value : new List<StudySessionHistoryDto>();
         }
         catch (Exception ex)
@@ -260,11 +308,11 @@ public class HomeController : Controller
         }
     }
 
-    private async Task<List<CourseStudyHistoryDto>> GetLastStudyCourses(string studentId, CancellationToken cancellationToken = default)
+    private async Task<List<CourseStudyHistoryDto>> GetLastStudyCourses(string studentId, int? studentProfileId, CancellationToken cancellationToken = default)
     {
         try
         {
-            var result = await _mediator.Send(new GetLastStudyCoursesQuery(studentId, 5), cancellationToken);
+            var result = await _mediator.Send(new GetLastStudyCoursesQuery(studentId, 5, studentProfileId), cancellationToken);
             return result.IsSuccess && result.Value != null ? result.Value : new List<CourseStudyHistoryDto>();
         }
         catch (Exception ex)
@@ -274,7 +322,7 @@ public class HomeController : Controller
         }
     }
 
-    private async Task<StudyStatisticsDto> GetStudyStatistics(string studentId, CancellationToken cancellationToken = default)
+    private async Task<StudyStatisticsDto> GetStudyStatistics(string studentId, int? studentProfileId, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -286,14 +334,14 @@ public class HomeController : Controller
             var monthAgo = now.AddDays(-30);
 
             // Get all study sessions for the student
-            var allSessionsResult = await _mediator.Send(new GetAllStudySessionsQuery(studentId), cancellationToken);
+            var allSessionsResult = await _mediator.Send(new GetAllStudySessionsQuery(studentId, studentProfileId), cancellationToken);
             if (!allSessionsResult.IsSuccess || allSessionsResult.Value == null)
             {
                 _logger.LogWarning("Failed to get study sessions for student: {StudentId}, Error: {Error}", 
                     studentId, allSessionsResult.Error);
                 
                 // Fallback to old method
-                var fallbackResult = await _mediator.Send(new GetLastStudySessionsQuery(studentId, 1000), cancellationToken);
+                var fallbackResult = await _mediator.Send(new GetLastStudySessionsQuery(studentId, 1000, studentProfileId), cancellationToken);
                 if (!fallbackResult.IsSuccess || fallbackResult.Value == null)
                 {
                     _logger.LogWarning("Fallback also failed for student: {StudentId}", studentId);
@@ -369,11 +417,11 @@ public class HomeController : Controller
         return calendar.GetWeekOfYear(date.DateTime, System.Globalization.CalendarWeekRule.FirstDay, DayOfWeek.Saturday);
     }
 
-    private async Task<List<ScheduleItemDto>> GetAccessibleScheduleItems(string studentId, CancellationToken cancellationToken = default)
+    private async Task<List<ScheduleItemDto>> GetAccessibleScheduleItems(string studentId, int? studentProfileId, CancellationToken cancellationToken = default)
     {
         try
         {
-            var result = await _mediator.Send(new GetScheduleItemsAccessibleToStudentQuery(studentId), cancellationToken);
+            var result = await _mediator.Send(new GetScheduleItemsAccessibleToStudentQuery(studentId, studentProfileId), cancellationToken);
             return result.IsSuccess && result.Value != null ? result.Value : new List<ScheduleItemDto>();
         }
         catch (Exception ex)

@@ -489,16 +489,26 @@
             return response.json();
         })
         .then(function(data) {
-            // Handle both wrapped Result format and direct array format
-            let statsList = null;
-            if (data && data.success && data.value) {
-                statsList = data.value;
-            } else if (Array.isArray(data)) {
-                statsList = data;
+            if (!data) {
+                return;
             }
-            
-            if (statsList && statsList.length > 0) {
-                const stats = statsList[0];
+
+            // Handle new profile-aware response wrapper
+            if (typeof data === 'object' && !Array.isArray(data)) {
+                if (data.requiresProfile) {
+                    // Profile not selected; skip updating history silently
+                    return;
+                }
+
+                if (data.success && Array.isArray(data.data)) {
+                    data = data.data;
+                } else if (data.success && data.value && Array.isArray(data.value)) {
+                    data = data.value;
+                }
+            }
+
+            if (Array.isArray(data) && data.length > 0) {
+                const stats = data[0];
                 updateAnswerHistory(blockId, stats.correctAttempts || 0, stats.incorrectAttempts || 0);
             }
         })

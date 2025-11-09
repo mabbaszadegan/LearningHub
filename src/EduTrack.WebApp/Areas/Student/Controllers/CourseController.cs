@@ -253,7 +253,7 @@ public class CourseController : Controller
         foreach (var item in scheduleItems)
         {
             if (item == null) continue;
-            var statsResult = await _mediator.Send(new GetStudySessionStatisticsQuery(currentUser.Id, item.Id));
+            var statsResult = await _mediator.Send(new GetStudySessionStatisticsQuery(currentUser.Id, item.Id, activeProfileId));
             var stats = statsResult.IsSuccess && statsResult.Value != null ? statsResult.Value : new StudySessionStatisticsDto();
             
             scheduleItemsWithStats.Add(new ScheduleItemWithStats

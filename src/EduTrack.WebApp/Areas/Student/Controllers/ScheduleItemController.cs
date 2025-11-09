@@ -17,7 +17,10 @@ using EduTrack.Domain.Entities;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
+using System.Collections.Generic;
 using System.Linq;
+using EduTrack.WebApp.Models;
+using EduTrack.WebApp.Services;
 
 namespace EduTrack.WebApp.Areas.Student.Controllers;
 
@@ -40,15 +43,18 @@ public class ScheduleItemController : Controller
     private readonly ILogger<ScheduleItemController> _logger;
     private readonly UserManager<User> _userManager;
     private readonly IMediator _mediator;
+    private readonly IStudentProfileContext _studentProfileContext;
 
     public ScheduleItemController(
         ILogger<ScheduleItemController> logger,
         UserManager<User> userManager,
-        IMediator mediator)
+        IMediator mediator,
+        IStudentProfileContext studentProfileContext)
     {
         _logger = logger;
         _userManager = userManager;
         _mediator = mediator;
+        _studentProfileContext = studentProfileContext;
     }
 
     /// <summary>
@@ -61,6 +67,13 @@ public class ScheduleItemController : Controller
         if (currentUser == null)
         {
             return RedirectToAction("Login", "Account", new { area = "Public" });
+        }
+
+        var activeProfileId = await _studentProfileContext.GetActiveProfileIdAsync();
+        if (!activeProfileId.HasValue)
+        {
+            TempData["Error"] = "برای مطالعه، ابتدا یک پروفایل یادگیرنده فعال انتخاب کنید.";
+            return RedirectToAction("Index", "Profile");
         }
 
         // Get schedule item details
@@ -84,12 +97,12 @@ public class ScheduleItemController : Controller
         var teachingPlan = teachingPlanResult.Value;
 
         // Get study statistics
-        var statisticsResult = await _mediator.Send(new GetStudySessionStatisticsQuery(currentUser.Id, id));
+        var statisticsResult = await _mediator.Send(new GetStudySessionStatisticsQuery(currentUser.Id, id, activeProfileId));
         var statistics = statisticsResult.IsSuccess ? statisticsResult.Value : new StudySessionStatisticsDto();
         ViewBag.Statistics = statistics;
 
         // Check if there's an active study session
-        var activeSessionResult = await _mediator.Send(new GetActiveStudySessionQuery(currentUser.Id, id));
+        var activeSessionResult = await _mediator.Send(new GetActiveStudySessionQuery(currentUser.Id, id, activeProfileId));
         var activeSession = activeSessionResult.IsSuccess ? activeSessionResult.Value : null;
 
         // Parse content JSON based on type
@@ -126,9 +139,16 @@ public class ScheduleItemController : Controller
 
             _logger.LogInformation("User found: {UserId}", currentUser.Id);
 
+            var activeProfileId = await _studentProfileContext.GetActiveProfileIdAsync();
+            if (!activeProfileId.HasValue)
+            {
+                _logger.LogWarning("Active student profile not found for user {UserId}", currentUser.Id);
+                return Json(new { success = false, error = "برای شروع مطالعه ابتدا یک پروفایل یادگیرنده فعال انتخاب کنید." });
+            }
+
             // For schedule items, we'll use the schedule item ID as educational content ID
             // In a real implementation, you'd need to map schedule items to educational content
-            var result = await _mediator.Send(new StartStudySessionCommand(currentUser.Id, scheduleItemId));
+            var result = await _mediator.Send(new StartStudySessionCommand(currentUser.Id, scheduleItemId, activeProfileId));
             if (!result.IsSuccess)
             {
                 _logger.LogError("StartStudySessionCommand failed: {Error}", result.Error);
@@ -157,8 +177,14 @@ public class ScheduleItemController : Controller
             return Json(new { success = false, error = "کاربر یافت نشد" });
         }
 
+        var activeProfileId = await _studentProfileContext.GetActiveProfileIdAsync();
+        if (!activeProfileId.HasValue)
+        {
+            return Json(new { success = false, error = "ابتدا یک پروفایل یادگیرنده فعال انتخاب کنید." });
+        }
+
         // For schedule items, we'll use the schedule item ID as educational content ID
-        var result = await _mediator.Send(new GetStudySessionStatisticsQuery(currentUser.Id, scheduleItemId));
+        var result = await _mediator.Send(new GetStudySessionStatisticsQuery(currentUser.Id, scheduleItemId, activeProfileId));
         if (!result.IsSuccess)
         {
             return Json(new { success = false, error = result.Error });
@@ -202,11 +228,19 @@ public class ScheduleItemController : Controller
             _logger?.LogInformation("Creating study session for user {UserId}, schedule item {ScheduleItemId}", 
                 currentUser.Id, request.ScheduleItemId);
 
+            var activeProfileId = await _studentProfileContext.GetActiveProfileIdAsync();
+            if (!activeProfileId.HasValue)
+            {
+                _logger?.LogWarning("Active student profile not found for user {UserId}", currentUser.Id);
+                return Json(new { success = false, error = "برای ثبت جلسه مطالعه ابتدا یک پروفایل یادگیرنده فعال انتخاب کنید." });
+            }
+
             var result = await _mediator.Send(new CreateAndCompleteStudySessionCommand(
                 currentUser.Id,
                 request.ScheduleItemId,
                 request.StartedAt,
-                request.EndedAt
+                request.EndedAt,
+                activeProfileId
             ));
 
             if (!result.IsSuccess)
@@ -218,7 +252,7 @@ public class ScheduleItemController : Controller
             _logger?.LogInformation("Study session created successfully with ID: {SessionId}", result.Value!.Id);
             
             // Get updated total study time
-            var updatedStatistics = await _mediator.Send(new GetStudySessionStatisticsQuery(currentUser.Id, request.ScheduleItemId));
+            var updatedStatistics = await _mediator.Send(new GetStudySessionStatisticsQuery(currentUser.Id, request.ScheduleItemId, activeProfileId));
             var totalStudyTimeSeconds = updatedStatistics.IsSuccess ? updatedStatistics.Value?.TotalStudyTimeSeconds ?? 0 : 0;
             
             return Json(new { success = true, sessionId = result.Value!.Id, totalStudyTimeSeconds = totalStudyTimeSeconds });
@@ -1210,11 +1244,18 @@ public class ScheduleItemController : Controller
             return Unauthorized();
         }
 
+        var activeProfileId = await _studentProfileContext.GetActiveProfileIdAsync();
+        if (!activeProfileId.HasValue)
+        {
+            return BadRequest(new { error = "برای ثبت پاسخ، ابتدا یک پروفایل یادگیرنده فعال انتخاب کنید." });
+        }
+
         var command = new SubmitBlockAnswerCommand(
             request.ScheduleItemId,
             request.BlockId,
             currentUser.Id,
-            request.SubmittedAnswer);
+            request.SubmittedAnswer,
+            activeProfileId);
 
         var result = await _mediator.Send(command);
 
@@ -1238,7 +1279,19 @@ public class ScheduleItemController : Controller
             return Unauthorized();
         }
 
-        var query = new GetBlockStatisticsQuery(currentUser.Id, scheduleItemId, blockId);
+        var activeProfileId = await _studentProfileContext.GetActiveProfileIdAsync();
+        if (!activeProfileId.HasValue)
+        {
+            return Ok(new ProfileAwareResponse<List<BlockStatisticsDto>>
+            {
+                Success = false,
+                RequiresProfile = true,
+                Error = "برای مشاهده تاریخچه پاسخ‌ها، ابتدا یک پروفایل یادگیرنده فعال انتخاب کنید.",
+                Data = new List<BlockStatisticsDto>()
+            });
+        }
+
+        var query = new GetBlockStatisticsQuery(currentUser.Id, scheduleItemId, blockId, activeProfileId);
         var result = await _mediator.Send(query);
 
         if (!result.IsSuccess)
@@ -1246,7 +1299,11 @@ public class ScheduleItemController : Controller
             return BadRequest(new { error = result.Error });
         }
 
-        return Ok(result.Value);
+        return Ok(new ProfileAwareResponse<List<BlockStatisticsDto>>
+        {
+            Success = true,
+            Data = result.Value ?? new List<BlockStatisticsDto>()
+        });
     }
 
     /// <summary>
@@ -1264,11 +1321,20 @@ public class ScheduleItemController : Controller
             return RedirectToAction("Login", "Account", new { area = "Public" });
         }
 
+        var activeProfileId = await _studentProfileContext.GetActiveProfileIdAsync();
+        if (!activeProfileId.HasValue)
+        {
+            TempData["Error"] = "برای مشاهده گزارش مرور، ابتدا یک پروفایل یادگیرنده فعال انتخاب کنید.";
+            return RedirectToAction("Index", "Profile");
+        }
+
         var query = new GetStudentReviewItemsQuery(
             currentUser.Id,
             onlyWithErrors,
             onlyNeverCorrect,
-            onlyRecentMistakes);
+            onlyRecentMistakes,
+            null,
+            activeProfileId);
 
         var result = await _mediator.Send(query);
 
