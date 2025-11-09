@@ -1,23 +1,69 @@
 @model EduTrack.WebApp.Areas.Student.Models.StudentProfileSelectorViewModel
+@{
+    var profiles = Model.Profiles ?? Array.Empty<EduTrack.Application.Features.StudentProfiles.StudentProfileDto>();
+    var hasProfiles = profiles.Any();
+    var createProfileUrl = Url.Action("CreateStudentProfile", "Profile", new { area = "Student" }) ?? "#";
+    var setActiveProfileUrl = Url.Action("SetActiveProfile", "Profile", new { area = "Student" }) ?? "#";
+    var activeProfileTitle = string.IsNullOrWhiteSpace(Model.ActiveProfileName) ? "پروفایل فعال را انتخاب کنید" : Model.ActiveProfileName;
+}
 
-<div class="student-profile-selector" data-component="student-profile-selector">
-    @if (Model.Profiles == null || !Model.Profiles.Any())
+<div class="student-profile-selector"
+     data-component="student-profile-selector"
+     data-has-profiles="@hasProfiles.ToString().ToLowerInvariant()">
+    @if (!hasProfiles)
     {
-        <div class="student-profile-selector__empty">
-            <i class="fas fa-user-plus"></i>
-            <div class="student-profile-selector__empty-text">
-                <strong>هنوز پروفایلی ایجاد نکرده‌اید</strong>
-                <span>برای ثبت‌نام در دوره‌ها ابتدا یک پروفایل یادگیرنده بسازید.</span>
+        <div class="student-profile-onboarding" data-state="empty">
+            <div class="student-profile-onboarding__icon">
+                <i class="fas fa-user-plus" aria-hidden="true"></i>
             </div>
-            <a class="btn btn-sm btn-primary" href="@Url.Action("Index", "Profile", new { area = "Student" })#student-profiles">ایجاد پروفایل جدید</a>
+            <div class="student-profile-onboarding__content">
+                <h3>اولین پروفایل یادگیرنده را بسازید</h3>
+                <p>برای دسترسی به دوره‌ها، یک نام ساده برای پروفایل خود وارد کنید.</p>
+                <form id="studentProfileOnboardingForm"
+                      class="student-profile-onboarding__form"
+                      method="post"
+                      action="@createProfileUrl"
+                      data-action="student-profile-create-form">
+                    @Html.AntiForgeryToken()
+                    <div class="student-profile-onboarding__field">
+                        <label for="studentProfileOnboardingName">نام پروفایل</label>
+                        <input type="text"
+                               id="studentProfileOnboardingName"
+                               name="displayName"
+                               required
+                               maxlength="100"
+                               autocomplete="off"
+                               placeholder="مثلاً پروفایل اصلی">
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        شروع یادگیری
+                    </button>
+                </form>
+            </div>
         </div>
     }
     else
     {
-        <form id="studentProfileSelectorForm" class="student-profile-selector__content" method="post" action="@Url.Action("SetActiveProfile", "Profile", new { area = "Student" })">
+        <div class="student-profile-selector__header">
+            <div class="student-profile-selector__header-info">
+                <span class="student-profile-selector__subtitle">پروفایل فعال</span>
+                <strong class="student-profile-selector__title">@activeProfileTitle</strong>
+            </div>
+            <button type="button"
+                    class="btn btn-outline-primary btn-sm"
+                    data-action="open-create-profile">
+                <i class="fas fa-user-plus" aria-hidden="true"></i>
+                پروفایل جدید
+            </button>
+        </div>
+
+        <form id="studentProfileSelectorForm"
+              class="student-profile-selector__content"
+              method="post"
+              action="@setActiveProfileUrl">
             @Html.AntiForgeryToken()
             <label class="student-profile-selector__label" for="studentProfileSelectorSelect">
-                پروفایل فعال
+                انتخاب پروفایل
             </label>
             <div class="student-profile-selector__controls">
                 <select id="studentProfileSelectorSelect"
@@ -25,16 +71,61 @@
                         class="form-select"
                         data-selected-profile="@(Model.ActiveProfileId?.ToString() ?? string.Empty)">
                     <option value="">— بدون پروفایل —</option>
-                    @foreach (var profile in Model.Profiles)
+                    @foreach (var profile in profiles)
                     {
-                    <option value="@profile.Id" selected="@(profile.Id == Model.ActiveProfileId ? "selected" : null)">@profile.DisplayName</option>
+                        if (profile is null)
+                        {
+                            continue;
+                        }
+                        <option value="@profile.Id" selected="@(profile.Id == Model.ActiveProfileId ? "selected" : null)">@profile.DisplayName</option>
                     }
                 </select>
-                <a class="btn btn-link" href="@Url.Action("Index", "Profile", new { area = "Student" })#student-profiles">
+                <a class="btn btn-link"
+                   href="@Url.Action("Index", "Profile", new { area = "Student" })#student-profiles">
                     مدیریت پروفایل‌ها
                 </a>
             </div>
         </form>
     }
+</div>
+
+<div class="student-profile-create-overlay"
+     data-overlay="student-profile-create"
+     aria-hidden="true"
+     hidden>
+    <div class="student-profile-create-card" role="dialog" aria-modal="true" aria-labelledby="studentProfileCreateTitle">
+        <button type="button"
+                class="student-profile-create-card__close"
+                data-action="close-overlay"
+                aria-label="بستن">
+            <i class="fas fa-times" aria-hidden="true"></i>
+        </button>
+        <div class="student-profile-create-card__icon">
+            <i class="fas fa-user-plus" aria-hidden="true"></i>
+        </div>
+        <h4 id="studentProfileCreateTitle">افزودن پروفایل جدید</h4>
+        <p>برای ساخت پروفایل جدید فقط کافیست یک نام انتخاب کنید.</p>
+        <form id="studentProfileCreateForm"
+              class="student-profile-create-card__form"
+              method="post"
+              action="@createProfileUrl"
+              data-action="student-profile-create-form">
+            @Html.AntiForgeryToken()
+            <div class="student-profile-create-card__field">
+                <label for="studentProfileCreateName">نام پروفایل</label>
+                <input type="text"
+                       id="studentProfileCreateName"
+                       name="displayName"
+                       required
+                       maxlength="100"
+                       autocomplete="off"
+                       placeholder="مثلاً زبان انگلیسی">
+            </div>
+            <div class="student-profile-create-card__actions">
+                <button type="button" class="btn btn-light" data-action="close-overlay">انصراف</button>
+                <button type="submit" class="btn btn-primary">ثبت پروفایل</button>
+            </div>
+        </form>
+    </div>
 </div>
 

@@ -1,3 +1,18 @@
+@using EduTrack.Application.Features.StudentProfiles
+@using EduTrack.WebApp.Services
+@inject IStudentProfileContext StudentProfileContext
+@{
+    var profileDtos = await StudentProfileContext.GetProfilesForCurrentUserAsync(false) ?? Array.Empty<StudentProfileDto>();
+    var activeProfileId = await StudentProfileContext.GetActiveProfileIdAsync();
+    var activeProfileName = await StudentProfileContext.GetActiveProfileNameAsync() ?? string.Empty;
+    var userDisplayName = User?.Identity?.Name ?? "کاربر";
+    var headerProfileName = !string.IsNullOrWhiteSpace(activeProfileName)
+        ? activeProfileName
+        : (!string.IsNullOrWhiteSpace(userDisplayName) ? userDisplayName : "پروفایل من");
+    headerProfileName = headerProfileName.Trim();
+    var headerInitial = !string.IsNullOrEmpty(headerProfileName) ? headerProfileName[0] : 'U';
+    var hasProfiles = profileDtos.Count > 0;
+}
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
@@ -94,32 +109,55 @@
                 </button>
 
                 <!-- User Profile -->
-                <div class="desktop-user-profile">
-                    <div class="desktop-user-avatar">
-                        @(User.Identity?.Name?.Split(' ').FirstOrDefault()?.FirstOrDefault() ?? 'U')
-                    </div>
-                    <div class="desktop-user-dropdown">
-                        <div class="desktop-user-info">
-                            <div class="desktop-user-name">@(User.Identity?.Name ?? "کاربر")</div>
-                            <div class="desktop-user-role">دانش‌آموز</div>
+                <div class="desktop-user-profile" data-component="header-profile" data-has-profiles="@hasProfiles.ToString().ToLowerInvariant()">
+                    <button class="desktop-user-profile__button" type="button" data-action="toggle-profile-dropdown" aria-haspopup="true" aria-expanded="false">
+                        <div class="desktop-user-avatar">@headerInitial</div>
+                        <div class="desktop-user-details">
+                            <span class="desktop-user-name">@headerProfileName</span>
+                            <span class="desktop-user-role">پروفایل فعال</span>
                         </div>
-                        <a href="/Profile" class="desktop-user-menu-item">
-                            <i class="fas fa-user"></i>
-                            پروفایل من
-                        </a>
-                        <a href="/Settings" class="desktop-user-menu-item">
-                            <i class="fas fa-cog"></i>
-                            تنظیمات
-                        </a>
-                        <div class="desktop-user-menu-divider"></div>
-                        <a href="#" class="desktop-user-menu-item" data-action="help">
-                            <i class="fas fa-question-circle"></i>
-                            راهنما
-                        </a>
-                        <a href="#" class="desktop-user-menu-item" data-action="logout">
-                            <i class="fas fa-sign-out-alt"></i>
-                            خروج
-                        </a>
+                        <i class="fas fa-chevron-down desktop-user-caret" aria-hidden="true"></i>
+                    </button>
+                    <div class="desktop-user-dropdown" data-element="profile-dropdown" hidden>
+                        <div class="desktop-user-dropdown__profiles">
+                            @if (hasProfiles)
+                            {
+                                foreach (var profile in profileDtos)
+                                {
+                                    if (profile is null)
+                                    {
+                                        continue;
+                                    }
+                                    var isActive = profile.Id == activeProfileId;
+                                    <button type="button"
+                                            class="desktop-user-profile-option @(isActive ? "active" : null)"
+                                            data-action="header-profile-set"
+                                            data-profile-id="@profile.Id">
+                                        <span class="desktop-user-profile-option__name">@profile.DisplayName</span>
+                                        @if (isActive)
+                                        {
+                                            <i class="fas fa-check" aria-hidden="true"></i>
+                                        }
+                                    </button>
+                                }
+                            }
+                            else
+                            {
+                                <div class="desktop-user-profile-empty">
+                                    <i class="fas fa-user-plus" aria-hidden="true"></i>
+                                    <p>برای شروع، یک پروفایل بسازید.</p>
+                                </div>
+                            }
+                        </div>
+                        <div class="desktop-user-dropdown__actions">
+                            <button type="button" class="btn btn-primary btn-sm w-100" data-action="header-open-create">
+                                <i class="fas fa-user-plus" aria-hidden="true"></i>
+                                پروفایل جدید
+                            </button>
+                            <a href="/Student/Profile" class="btn btn-link btn-sm w-100">
+                                مدیریت کامل پروفایل‌ها
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -129,10 +167,11 @@
     <!-- Fixed Header -->
     <header class="fixed-header">
         <div class="header-content">
-            <div class="header-left">
-                <a href="/Student/Profile" class="header-btn" title="پروفایل">
+            <div class="header-left" data-component="mobile-header-profile">
+                <button class="header-btn active-profile-name" type="button" data-action="header-open-menu" title="پروفایل فعال">
                     <i class="fas fa-user-circle"></i>
-                </a>
+                    <span>@headerProfileName</span>
+                </button>
                 
                 <a href="/Student/Settings" class="header-btn" title="تنظیمات">
                     <i class="fas fa-cog"></i>
@@ -147,10 +186,81 @@
         </div>
     </header>
 
+    <div class="header-profile-overlay" data-overlay="header-profile" hidden aria-hidden="true">
+        <div class="header-profile-card" role="dialog" aria-modal="true" aria-labelledby="headerProfileOverlayTitle">
+            <button type="button" class="header-profile-card__close" data-action="header-close-overlay" aria-label="بستن">
+                <i class="fas fa-times" aria-hidden="true"></i>
+            </button>
+            <div class="header-profile-card__icon">
+                <i class="fas fa-user-circle" aria-hidden="true"></i>
+            </div>
+            <h4 id="headerProfileOverlayTitle">پروفایل‌های یادگیرنده</h4>
+            <p class="header-profile-card__subtitle">پروفایل فعال خود را انتخاب کنید یا یک پروفایل جدید بسازید.</p>
+
+            <div class="header-profile-card__list" data-element="header-profile-list">
+                @if (hasProfiles)
+                {
+                    foreach (var profile in profileDtos)
+                    {
+                        if (profile is null)
+                        {
+                            continue;
+                        }
+                        var isActive = profile.Id == activeProfileId;
+                        <button type="button"
+                                class="header-profile-card__item @(isActive ? "active" : null)"
+                                data-action="header-profile-set"
+                                data-profile-id="@profile.Id">
+                            <span>@profile.DisplayName</span>
+                            @if (isActive)
+                            {
+                                <i class="fas fa-check" aria-hidden="true"></i>
+                            }
+                        </button>
+                    }
+                }
+                else
+                {
+                    <div class="header-profile-card__empty">
+                        <i class="fas fa-user-plus" aria-hidden="true"></i>
+                        <p>هنوز پروفایلی ایجاد نشده است.</p>
+                    </div>
+                }
+            </div>
+
+            <form id="headerProfileCreateForm"
+                  class="header-profile-card__form"
+                  method="post"
+                  action="@Url.Action("CreateStudentProfile", "Profile", new { area = "Student" })">
+                @Html.AntiForgeryToken()
+                <label for="headerProfileCreateName">نام پروفایل جدید</label>
+                <div class="header-profile-card__form-row">
+                    <input type="text"
+                           id="headerProfileCreateName"
+                           name="displayName"
+                           placeholder="مثلاً زبان انگلیسی"
+                           autocomplete="off"
+                           maxlength="100"
+                           required />
+                    <button type="submit" class="btn btn-primary">
+                        ثبت
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <form id="headerProfileSetForm"
+          method="post"
+          action="@Url.Action("SetActiveProfile", "Profile", new { area = "Student" })"
+          hidden>
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="profileId" value="" />
+    </form>
+
     <!-- Main Content Area -->
     <main class="main-content">
         <partial name="_Toast" />
-        @await Component.InvokeAsync("StudentProfileSelector")
         @RenderBody()
     </main>
 
