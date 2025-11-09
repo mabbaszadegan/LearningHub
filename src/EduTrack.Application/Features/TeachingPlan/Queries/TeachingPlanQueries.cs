@@ -60,9 +60,6 @@ public record GetStudentAgendaQuery(string StudentId, int? CourseId = null, int?
 // Group Progress Queries
 public record GetGroupProgressQuery(int TeachingPlanId, int? GroupId = null) : IRequest<Result<List<GroupProgressDto>>>;
 
-// Course Queries
-public record GetCourseStudentsQuery(int CourseId) : IRequest<Result<List<UserDto>>>;
-
 // Lesson Queries
 public record GetLessonsByCourseIdQuery(int CourseId) : IRequest<Result<List<LessonDto>>>;
 

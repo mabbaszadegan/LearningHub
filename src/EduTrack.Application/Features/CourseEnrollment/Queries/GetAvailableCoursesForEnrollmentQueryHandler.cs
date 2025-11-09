@@ -178,6 +178,7 @@ public class GetCourseEnrollmentQueryHandler : IRequestHandler<GetCourseEnrollme
                 StudentProfileName = enrollment.StudentProfile?.DisplayName,
                 CourseId = enrollment.CourseId,
                 StudentName = $"{enrollment.Student?.FirstName} {enrollment.Student?.LastName}".Trim(),
+                StudentEmail = enrollment.Student?.Email ?? string.Empty,
                 CourseTitle = enrollment.Course?.Title ?? "",
                 EnrolledAt = enrollment.EnrolledAt,
                 CompletedAt = enrollment.CompletedAt,

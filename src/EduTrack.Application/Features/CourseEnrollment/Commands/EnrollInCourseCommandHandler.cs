@@ -164,6 +164,7 @@ public class EnrollInCourseCommandHandler : IRequestHandler<EnrollInCourseComman
             StudentProfileName = studentProfile?.DisplayName ?? existingEnrollment.StudentProfile?.DisplayName,
             CourseId = existingEnrollment.CourseId,
             StudentName = student.FullName,
+            StudentEmail = student.Email ?? string.Empty,
             CourseTitle = course.Title,
             EnrolledAt = existingEnrollment.EnrolledAt,
             CompletedAt = existingEnrollment.CompletedAt,

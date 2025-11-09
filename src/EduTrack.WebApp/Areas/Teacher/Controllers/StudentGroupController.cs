@@ -148,16 +148,18 @@ public class StudentGroupController : BaseTeacherController
             return Forbid("You don't have permission to manage this group");
         }
 
-        // Get available students (enrolled but not in any group of this teaching plan)
-        var availableStudentsQuery = await _mediator.Send(new GetAvailableStudentsForTeachingPlanQuery(teachingPlan.Value.Id));
-        var availableStudents = availableStudentsQuery.IsSuccess ? availableStudentsQuery.Value : new List<UserDto>();
-
         ViewBag.GroupId = groupId;
         ViewBag.GroupName = group.Value.Name;
         ViewBag.TeachingPlanTitle = teachingPlan.Value.Title;
         ViewBag.CourseTitle = teachingPlan.Value.CourseTitle;
         ViewBag.CourseId = teachingPlan.Value.CourseId;
-        ViewBag.AvailableStudents = availableStudents;
+        ViewBag.StudentIdsInCurrentGroup = group.Value.Members.Select(m => m.StudentId).Distinct().ToList();
+        ViewBag.StudentIdsInOtherGroups = teachingPlan.Value.Groups
+            .Where(g => g.Id != groupId)
+            .SelectMany(g => g.Members)
+            .Select(m => m.StudentId)
+            .Distinct()
+            .ToList();
         
         // Setup page title section
         await SetPageTitleSectionAsync(PageType.StudentGroupManageMembers, groupId);

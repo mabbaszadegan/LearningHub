@@ -1,3 +1,4 @@
+using System;
 using EduTrack.Application.Common.Interfaces;
 using EduTrack.Application.Features.Courses.Commands;
 using EduTrack.Application.Features.Courses.Queries;
@@ -9,6 +10,7 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using CourseEnrollmentQueries = EduTrack.Application.Features.CourseEnrollment.Queries;
 
 namespace EduTrack.WebApp.Areas.Teacher.Controllers;
 
@@ -237,6 +239,42 @@ public class CoursesController : BaseTeacherController
             _logger.LogError(ex, "Error moving course");
             return Json(new { success = false, error = "خطا در جابجایی" });
         }
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetCourseStudents(int courseId, bool includeCompleted = true, bool includeInactive = false, int pageNumber = 1, int pageSize = 50)
+    {
+        var currentUser = await _userManager.GetUserAsync(User);
+        if (currentUser == null)
+        {
+            return Json(new { success = false, error = "کاربر یافت نشد" });
+        }
+
+        var courseResult = await _mediator.Send(new GetCourseByIdQuery(courseId));
+        if (!courseResult.IsSuccess || courseResult.Value == null)
+        {
+            return Json(new { success = false, error = "دوره یافت نشد" });
+        }
+
+        if (!string.Equals(courseResult.Value.CreatedBy, currentUser.Id, StringComparison.Ordinal))
+        {
+            return Json(new { success = false, error = "شما به این دوره دسترسی ندارید" });
+        }
+
+        var studentsResult = await _mediator.Send(new CourseEnrollmentQueries.GetCourseStudentsQuery(courseId, includeCompleted, includeInactive, pageNumber, pageSize));
+        if (!studentsResult.IsSuccess || studentsResult.Value == null)
+        {
+            return Json(new { success = false, error = studentsResult.Error ?? "خطا در دریافت دانش‌آموزان" });
+        }
+
+        return Json(new
+        {
+            success = true,
+            data = studentsResult.Value.Items,
+            pageNumber = studentsResult.Value.PageNumber,
+            totalPages = studentsResult.Value.TotalPages,
+            totalCount = studentsResult.Value.TotalCount
+        });
     }
 
     [HttpGet]

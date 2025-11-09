@@ -1,5 +1,5 @@
 @using EduTrack.Application.Common.Models.TeachingPlans
-@using EduTrack.Application.Common.Models.Users
+@using System.Text.Json
 @model StudentGroupDto
 @{
     ViewData["Title"] = "مدیریت اعضای گروه";
@@ -7,7 +7,9 @@
     var groupName = ViewBag.GroupName as string;
     var teachingPlanTitle = ViewBag.TeachingPlanTitle as string;
     var courseTitle = ViewBag.CourseTitle as string;
-    var availableStudents = ViewBag.AvailableStudents as List<UserDto> ?? new List<UserDto>();
+    var courseId = ViewBag.CourseId as int? ?? 0;
+    var studentIdsInOtherGroupsJson = JsonSerializer.Serialize(ViewBag.StudentIdsInOtherGroups ?? new List<string>());
+    var studentIdsInCurrentGroupJson = JsonSerializer.Serialize(ViewBag.StudentIdsInCurrentGroup ?? new List<string>());
 }
 
 <!-- Members Management Container -->
@@ -74,7 +76,7 @@
                             دانش‌آموزان موجود
                         </h3>
                         <div class="available-stats">
-                            <span class="available-count">@availableStudents.Count دانش‌آموز</span>
+                            <span class="available-count">0 دانش‌آموز</span>
                         </div>
                     </div>
                     <div class="card-subheader-minimal">
@@ -108,46 +110,17 @@
                         </div>
                     </div>
 
-                    <div class="available-students-list" id="availableStudentsList">
-                        @if (availableStudents.Any())
-                        {
-                            @foreach (var student in availableStudents)
-                            {
-                                <div class="student-item-minimal" data-student-id="@student.Id">
-                                    <div class="student-checkbox">
-                                        <input type="checkbox" class="student-select" value="@student.Id" onchange="updateBulkActions()">
-                                    </div>
-                                    <div class="student-avatar-minimal">
-                                        <i class="fas fa-user"></i>
-                                    </div>
-                                    <div class="student-info-minimal">
-                                        <h4 class="student-name-minimal">@student.FullName</h4>
-                                        <p class="student-email-minimal">@student.Email</p>
-                                        <div class="student-meta-minimal">
-                                            <span class="enrollment-status-minimal">
-                                                <i class="fas fa-graduation-cap"></i>
-                                                ثبت‌نام شده در دوره
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <div class="student-actions-minimal">
-                                        <button class="btn-action-inline add" onclick="addMember('@student.Id', '@student.FullName')" title="اضافه به گروه">
-                                            <i class="fas fa-plus"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                            }
-                        }
-                        else
-                        {
-                            <div class="empty-state-minimal">
-                                <div class="empty-icon">
-                                    <i class="fas fa-graduation-cap"></i>
-                                </div>
-                                <h4>دانش‌آموزی یافت نشد</h4>
-                                <p>ابتدا دانش‌آموزان را به دوره اضافه کنید</p>
+                    <div class="available-students-list" id="availableStudentsList"
+                         data-course-id="@courseId"
+                         data-other-students='@Html.Raw(studentIdsInOtherGroupsJson)'
+                         data-current-students='@Html.Raw(studentIdsInCurrentGroupJson)'>
+                        <div class="empty-state-minimal" id="availableStudentsLoading">
+                            <div class="empty-icon">
+                                <i class="fas fa-spinner fa-spin"></i>
                             </div>
-                        }
+                            <h4>در حال بارگذاری دانش‌آموزان...</h4>
+                            <p>لطفاً چند لحظه صبر کنید</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -561,6 +534,146 @@
                 }
             });
         });
+
+        document.addEventListener('DOMContentLoaded', function () {
+            loadAvailableStudents();
+        });
+
+        async function loadAvailableStudents() {
+            const container = document.getElementById('availableStudentsList');
+            if (!container) {
+                return;
+            }
+
+            const courseId = container.dataset.courseId;
+            if (!courseId || parseInt(courseId, 10) <= 0) {
+                renderAvailableStudentsError(container, 'دوره معتبر نیست.');
+                return;
+            }
+
+            let otherStudents = [];
+            let currentGroupStudents = [];
+
+            try {
+                otherStudents = JSON.parse(container.dataset.otherStudents || '[]');
+                currentGroupStudents = JSON.parse(container.dataset.currentStudents || '[]');
+            } catch {
+                otherStudents = [];
+                currentGroupStudents = [];
+            }
+
+            try {
+                const response = await fetch(`/Teacher/Courses/GetCourseStudents?courseId=${courseId}&includeCompleted=false&includeInactive=false&pageSize=500`);
+                const result = await response.json();
+
+                if (!response.ok || !result.success || !Array.isArray(result.data)) {
+                    renderAvailableStudentsError(container, result.error ?? 'خطا در بارگذاری دانش‌آموزان.');
+                    return;
+                }
+
+                const excludedIds = new Set([...otherStudents, ...currentGroupStudents]);
+                const students = result.data.filter(student => !excludedIds.has(student.studentId));
+
+                renderAvailableStudentsList(container, students);
+            }
+            catch (error) {
+                console.error('Error loading course students', error);
+                renderAvailableStudentsError(container, 'خطا در ارتباط با سرور.');
+            }
+        }
+
+        function renderAvailableStudentsError(container, message) {
+            container.innerHTML = `
+                <div class="empty-state-minimal">
+                    <div class="empty-icon">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <h4>${message}</h4>
+                    <p>بعداً دوباره تلاش کنید.</p>
+                </div>`;
+            updateAvailableCount(0);
+        }
+
+        function renderAvailableStudentsList(container, students) {
+            if (!Array.isArray(students) || students.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state-minimal">
+                        <div class="empty-icon">
+                            <i class="fas fa-graduation-cap"></i>
+                        </div>
+                        <h4>دانش‌آموزی یافت نشد</h4>
+                        <p>ابتدا دانش‌آموزان را به دوره اضافه کنید</p>
+                    </div>`;
+                updateAvailableCount(0);
+                return;
+            }
+
+            const listItems = students.map(student => {
+                const displayName = (student.studentProfileName && student.studentProfileName.trim().length > 0)
+                    ? student.studentProfileName
+                    : student.studentName;
+                const email = student.studentEmail || '';
+                const profileBadge = student.studentProfileName && student.studentProfileName.trim().length > 0
+                    ? `<span class="enrollment-status-minimal">
+                            <i class="fas fa-user-tag"></i>
+                            پروفایل فعال
+                        </span>`
+                    : '';
+
+                return `
+                    <div class="student-item-minimal" data-student-id="${student.studentId}">
+                        <div class="student-checkbox">
+                            <input type="checkbox" class="student-select" value="${student.studentId}">
+                        </div>
+                        <div class="student-avatar-minimal">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="student-info-minimal">
+                            <h4 class="student-name-minimal">${displayName}</h4>
+                            <p class="student-email-minimal">${email}</p>
+                            <div class="student-meta-minimal">
+                                <span class="enrollment-status-minimal">
+                                    <i class="fas fa-graduation-cap"></i>
+                                    ثبت‌نام شده در دوره
+                                </span>
+                                ${profileBadge}
+                            </div>
+                        </div>
+                        <div class="student-actions-minimal">
+                            <button class="btn-action-inline add" data-student-id="${student.studentId}" data-student-name="${displayName}" title="اضافه به گروه">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>`;
+            }).join('');
+
+            container.innerHTML = listItems;
+            attachAvailableStudentsHandlers(container);
+            updateAvailableCount(students.length);
+            clearSelection();
+        }
+
+        function attachAvailableStudentsHandlers(container) {
+            container.querySelectorAll('.student-select').forEach(checkbox => {
+                checkbox.addEventListener('change', updateBulkActions);
+            });
+
+            container.querySelectorAll('.btn-action-inline.add').forEach(button => {
+                button.addEventListener('click', function (event) {
+                    event.preventDefault();
+                    const studentId = button.dataset.studentId;
+                    const studentName = button.dataset.studentName;
+                    addMember(studentId, studentName);
+                });
+            });
+        }
+
+        function updateAvailableCount(count) {
+            const countElement = document.querySelector('.available-count');
+            if (countElement) {
+                countElement.textContent = `${count} دانش‌آموز`;
+            }
+        }
 
         // Add member function
         function addMember(studentId, studentName) {

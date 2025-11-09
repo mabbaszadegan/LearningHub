@@ -13,6 +13,7 @@ public class CourseEnrollmentDto
     public string? StudentProfileName { get; set; }
     public int CourseId { get; set; }
     public string StudentName { get; set; } = string.Empty;
+    public string StudentEmail { get; set; } = string.Empty;
     public string CourseTitle { get; set; } = string.Empty;
     public DateTimeOffset EnrolledAt { get; set; }
     public DateTimeOffset? CompletedAt { get; set; }
