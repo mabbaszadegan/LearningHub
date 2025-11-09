@@ -4,6 +4,7 @@ using EduTrack.Application.Features.TeachingPlan.Commands;
 using EduTrack.Domain.Entities;
 using EduTrack.Domain.Repositories;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace EduTrack.Application.Features.TeachingPlan.CommandHandlers;
 
@@ -11,17 +12,23 @@ public class AddGroupMembersCommandHandler : IRequestHandler<AddGroupMembersComm
 {
     private readonly IStudentGroupRepository _studentGroupRepository;
     private readonly IRepository<GroupMember> _groupMemberRepository;
+    private readonly IStudentProfileRepository _studentProfileRepository;
+    private readonly IRepository<Domain.Entities.CourseEnrollment> _courseEnrollmentRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICurrentUserService _currentUserService;
 
     public AddGroupMembersCommandHandler(
         IStudentGroupRepository studentGroupRepository,
         IRepository<GroupMember> groupMemberRepository,
+        IStudentProfileRepository studentProfileRepository,
+        IRepository<Domain.Entities.CourseEnrollment> courseEnrollmentRepository,
         IUnitOfWork unitOfWork,
         ICurrentUserService currentUserService)
     {
         _studentGroupRepository = studentGroupRepository;
         _groupMemberRepository = groupMemberRepository;
+        _studentProfileRepository = studentProfileRepository;
+        _courseEnrollmentRepository = courseEnrollmentRepository;
         _unitOfWork = unitOfWork;
         _currentUserService = currentUserService;
     }
@@ -44,35 +51,55 @@ public class AddGroupMembersCommandHandler : IRequestHandler<AddGroupMembersComm
         var studentsInOtherGroups = group.TeachingPlan.Groups
             .Where(g => g.Id != request.GroupId)
             .SelectMany(g => g.Members)
-            .Select(m => m.StudentId)
+            .Select(m => m.StudentProfileId)
             .ToHashSet();
 
         var addedCount = 0;
         var errors = new List<string>();
 
-        // Handle both single student ID and comma-separated IDs
-        var studentIds = request.StudentIds;
-        if (studentIds.Count == 1 && studentIds[0].Contains(','))
+        foreach (var studentProfileId in request.StudentProfileIds?.Distinct() ?? Enumerable.Empty<int>())
         {
-            studentIds = studentIds[0].Split(',').Select(s => s.Trim()).ToList();
-        }
-
-        foreach (var studentId in studentIds)
-        {
-            // Check if student is already in this group
-            if (group.HasStudent(studentId))
+            if (studentProfileId <= 0)
             {
                 continue; // Skip if already in this group
             }
 
+            // Check if student is already in this group
+            if (group.HasStudentProfile(studentProfileId))
+            {
+                continue;
+            }
+
             // Check if student is already in another group of this teaching plan
-            if (studentsInOtherGroups.Contains(studentId))
+            if (studentsInOtherGroups.Contains(studentProfileId))
             {
                 errors.Add($"Student is already assigned to another group in this teaching plan");
                 continue;
             }
 
-            var member = GroupMember.Create(request.GroupId, studentId);
+            var profile = await _studentProfileRepository.GetByIdAsync(studentProfileId, cancellationToken);
+            if (profile == null)
+            {
+                errors.Add("Student profile not found");
+                continue;
+            }
+
+            // Ensure profile is enrolled in course
+            var isEnrolledInCourse = await _courseEnrollmentRepository
+                .GetAll()
+                .AnyAsync(
+                    e => e.CourseId == group.TeachingPlan.CourseId &&
+                         e.StudentProfileId == studentProfileId &&
+                         e.IsActive,
+                    cancellationToken);
+
+            if (!isEnrolledInCourse)
+            {
+                errors.Add("Student profile is not enrolled in this course");
+                continue;
+            }
+
+            var member = GroupMember.Create(request.GroupId, studentProfileId);
             await _groupMemberRepository.AddAsync(member, cancellationToken);
             addedCount++;
         }

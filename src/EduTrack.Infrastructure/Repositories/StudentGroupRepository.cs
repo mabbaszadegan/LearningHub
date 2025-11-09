@@ -19,7 +19,8 @@ public class StudentGroupRepository : Repository<StudentGroup>, IStudentGroupRep
         return await _dbSet
             .Where(sg => sg.TeachingPlanId == teachingPlanId)
             .Include(sg => sg.Members)
-            .ThenInclude(m => m.Student)
+                .ThenInclude(m => m.StudentProfile)
+                .ThenInclude(sp => sp.User)
             .OrderBy(sg => sg.Name)
             .ToListAsync(cancellationToken);
     }
@@ -28,16 +29,17 @@ public class StudentGroupRepository : Repository<StudentGroup>, IStudentGroupRep
     {
         return await _dbSet
             .Include(sg => sg.Members)
-            .ThenInclude(m => m.Student)
+                .ThenInclude(m => m.StudentProfile)
+                .ThenInclude(sp => sp.User)
             .Include(sg => sg.TeachingPlan)
             .FirstOrDefaultAsync(sg => sg.Id == groupId, cancellationToken);
     }
 
-    public async Task<bool> IsStudentInGroupAsync(int groupId, string studentId, CancellationToken cancellationToken = default)
+    public async Task<bool> IsStudentProfileInGroupAsync(int groupId, int studentProfileId, CancellationToken cancellationToken = default)
     {
         return await _dbSet
             .Where(sg => sg.Id == groupId)
             .SelectMany(sg => sg.Members)
-            .AnyAsync(m => m.StudentId == studentId, cancellationToken);
+            .AnyAsync(m => m.StudentProfileId == studentProfileId, cancellationToken);
     }
 }

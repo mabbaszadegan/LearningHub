@@ -72,8 +72,8 @@ public class StudentGroup
 
     public int GetTotalMembers() => _members.Count;
 
-    public bool HasStudent(string studentId)
+    public bool HasStudentProfile(int studentProfileId)
     {
-        return _members.Any(m => m.StudentId == studentId);
+        return _members.Any(m => m.StudentProfileId == studentProfileId);
     }
 }

@@ -33,13 +33,29 @@ public class GetStudentGroupWithMembersQueryHandler : IRequestHandler<GetStudent
                 TeachingPlanId = group.TeachingPlanId,
                 Name = group.Name,
                 MemberCount = group.GetTotalMembers(),
-                Members = group.Members.Select(m => new GroupMemberDto
+                Members = group.Members.Select(m =>
                 {
-                    Id = m.Id,
-                    StudentGroupId = m.StudentGroupId,
-                    StudentId = m.StudentId,
-                    StudentName = m.Student?.FirstName + " " + m.Student?.LastName ?? "Unknown Student",
-                    StudentEmail = m.Student?.Email ?? ""
+                    var profile = m.StudentProfile;
+                    var user = profile?.User;
+                    var displayName = profile?.DisplayName;
+                    if (string.IsNullOrWhiteSpace(displayName))
+                    {
+                        displayName = $"{user?.FirstName} {user?.LastName}".Trim();
+                    }
+                    if (string.IsNullOrWhiteSpace(displayName))
+                    {
+                        displayName = user?.UserName ?? "Unknown Student";
+                    }
+
+                    return new GroupMemberDto
+                    {
+                        Id = m.Id,
+                        StudentGroupId = m.StudentGroupId,
+                        StudentProfileId = m.StudentProfileId,
+                        StudentId = profile?.UserId ?? string.Empty,
+                        StudentName = displayName,
+                        StudentEmail = user?.Email ?? string.Empty
+                    };
                 }).ToList()
             };
 

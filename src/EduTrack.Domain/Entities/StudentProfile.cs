@@ -15,6 +15,7 @@ public class StudentProfile
     private readonly List<StudySession> _studySessions = new();
     private readonly List<StudentAnswer> _studentAnswers = new();
     private readonly List<CourseEnrollment> _courseEnrollments = new();
+    private readonly List<GroupMember> _groupMemberships = new();
 
     public int Id { get; private set; }
     public string UserId { get; private set; } = string.Empty;
@@ -36,6 +37,7 @@ public class StudentProfile
     public IReadOnlyCollection<StudySession> StudySessions => _studySessions.AsReadOnly();
     public IReadOnlyCollection<StudentAnswer> StudentAnswers => _studentAnswers.AsReadOnly();
     public IReadOnlyCollection<CourseEnrollment> CourseEnrollments => _courseEnrollments.AsReadOnly();
+    public IReadOnlyCollection<GroupMember> GroupMemberships => _groupMemberships.AsReadOnly();
 
     // Private constructor for EF Core
     private StudentProfile() { }

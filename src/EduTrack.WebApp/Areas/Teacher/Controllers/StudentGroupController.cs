@@ -153,11 +153,11 @@ public class StudentGroupController : BaseTeacherController
         ViewBag.TeachingPlanTitle = teachingPlan.Value.Title;
         ViewBag.CourseTitle = teachingPlan.Value.CourseTitle;
         ViewBag.CourseId = teachingPlan.Value.CourseId;
-        ViewBag.StudentIdsInCurrentGroup = group.Value.Members.Select(m => m.StudentId).Distinct().ToList();
-        ViewBag.StudentIdsInOtherGroups = teachingPlan.Value.Groups
+        ViewBag.StudentProfileIdsInCurrentGroup = group.Value.Members.Select(m => m.StudentProfileId).Distinct().ToList();
+        ViewBag.StudentProfileIdsInOtherGroups = teachingPlan.Value.Groups
             .Where(g => g.Id != groupId)
             .SelectMany(g => g.Members)
-            .Select(m => m.StudentId)
+            .Select(m => m.StudentProfileId)
             .Distinct()
             .ToList();
         
@@ -424,10 +424,10 @@ public class StudentGroupController : BaseTeacherController
 
             var students = groupWithMembers.Value?.Members?.Select(member => new
             {
-                id = member.StudentId, // This is already a string
+                studentProfileId = member.StudentProfileId,
+                studentId = member.StudentId,
                 firstName = member.StudentName.Split(' ').FirstOrDefault() ?? "",
                 lastName = member.StudentName.Split(' ').Skip(1).FirstOrDefault() ?? "",
-                studentId = member.StudentId,
                 groupId = groupId,
                 groupName = groupWithMembers.Value?.Name ?? ""
             }).Cast<object>().ToList() ?? new List<object>();

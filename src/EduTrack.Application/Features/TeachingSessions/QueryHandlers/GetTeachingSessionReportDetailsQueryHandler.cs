@@ -54,12 +54,24 @@ public class GetTeachingSessionReportDetailsQueryHandler : IRequestHandler<GetTe
         var attendanceDtos = allStudents.Select(member => 
         {
             var existingAttendance = sessionReport.Attendance.FirstOrDefault(a => a.StudentId == member.StudentId);
+            var profile = member.StudentProfile;
+            var user = profile?.User;
+            var displayName = profile?.DisplayName;
+            if (string.IsNullOrWhiteSpace(displayName))
+            {
+                displayName = $"{user?.FirstName} {user?.LastName}".Trim();
+            }
+            if (string.IsNullOrWhiteSpace(displayName))
+            {
+                displayName = user?.UserName ?? "Unknown Student";
+            }
+
             return new TeachingSessionAttendanceDto
             {
                 Id = existingAttendance?.Id ?? 0,
                 TeachingSessionReportId = sessionReport.Id,
                 StudentId = member.StudentId,
-                StudentName = (member.Student?.FirstName + " " + member.Student?.LastName)?.Trim() ?? "Unknown Student",
+                StudentName = displayName,
                 Status = existingAttendance?.Status ?? AttendanceStatus.Absent,
                 ParticipationScore = existingAttendance?.ParticipationScore,
                 Comment = existingAttendance?.Comment

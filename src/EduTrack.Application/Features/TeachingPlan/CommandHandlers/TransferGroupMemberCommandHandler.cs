@@ -48,14 +48,14 @@ public class TransferGroupMemberCommandHandler : IRequestHandler<TransferGroupMe
             }
 
             // Find the member in the source group
-            var member = fromGroup.Members.FirstOrDefault(m => m.StudentId == request.StudentId);
+            var member = fromGroup.Members.FirstOrDefault(m => m.StudentProfileId == request.StudentProfileId);
             if (member == null)
             {
                 return Result<bool>.Failure("Student not found in source group");
             }
 
             // Check if student is already in the target group
-            if (toGroup.Members.Any(m => m.StudentId == request.StudentId))
+            if (toGroup.Members.Any(m => m.StudentProfileId == request.StudentProfileId))
             {
                 return Result<bool>.Failure("Student is already in the target group");
             }
@@ -64,7 +64,7 @@ public class TransferGroupMemberCommandHandler : IRequestHandler<TransferGroupMe
             await _groupMemberRepository.DeleteAsync(member, cancellationToken);
 
             // Create a new member in the target group
-            var newMember = GroupMember.Create(request.ToGroupId, request.StudentId);
+            var newMember = GroupMember.Create(request.ToGroupId, request.StudentProfileId);
             await _groupMemberRepository.AddAsync(newMember, cancellationToken);
 
             // Save all changes

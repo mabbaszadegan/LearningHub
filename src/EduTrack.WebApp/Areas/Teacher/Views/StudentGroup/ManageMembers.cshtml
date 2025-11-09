@@ -8,8 +8,8 @@
     var teachingPlanTitle = ViewBag.TeachingPlanTitle as string;
     var courseTitle = ViewBag.CourseTitle as string;
     var courseId = ViewBag.CourseId as int? ?? 0;
-    var studentIdsInOtherGroupsJson = JsonSerializer.Serialize(ViewBag.StudentIdsInOtherGroups ?? new List<string>());
-    var studentIdsInCurrentGroupJson = JsonSerializer.Serialize(ViewBag.StudentIdsInCurrentGroup ?? new List<string>());
+    var studentProfileIdsInOtherGroupsJson = JsonSerializer.Serialize(ViewBag.StudentProfileIdsInOtherGroups ?? new List<int>());
+    var studentProfileIdsInCurrentGroupJson = JsonSerializer.Serialize(ViewBag.StudentProfileIdsInCurrentGroup ?? new List<int>());
 }
 
 <!-- Members Management Container -->
@@ -35,7 +35,7 @@
                         {
                             @foreach (var member in Model.Members)
                             {
-                                <div class="member-item-minimal" data-member-id="@member.StudentId">
+                                <div class="member-item-minimal" data-member-profile-id="@member.StudentProfileId">
                                     <div class="member-avatar-minimal">
                                         <i class="fas fa-user"></i>
                                     </div>
@@ -44,7 +44,7 @@
                                         <p class="member-email-minimal">@member.StudentEmail</p>
                                     </div>
                                     <div class="member-actions-minimal">
-                                        <button class="btn-action-inline remove" onclick="removeMember('@member.StudentId', '@member.StudentName')" title="حذف از گروه">
+                                        <button class="btn-action-inline remove" onclick="removeMember(@member.StudentProfileId, '@member.StudentName')" title="حذف از گروه">
                                             <i class="fas fa-times"></i>
                                         </button>
                                     </div>
@@ -112,8 +112,8 @@
 
                     <div class="available-students-list" id="availableStudentsList"
                          data-course-id="@courseId"
-                         data-other-students='@Html.Raw(studentIdsInOtherGroupsJson)'
-                         data-current-students='@Html.Raw(studentIdsInCurrentGroupJson)'>
+                         data-other-profiles='@Html.Raw(studentProfileIdsInOtherGroupsJson)'
+                         data-current-profiles='@Html.Raw(studentProfileIdsInCurrentGroupJson)'>
                         <div class="empty-state-minimal" id="availableStudentsLoading">
                             <div class="empty-icon">
                                 <i class="fas fa-spinner fa-spin"></i>
@@ -132,14 +132,14 @@
 <form id="addMembersForm" method="post" asp-action="AddMembers" style="display: none;">
     @Html.AntiForgeryToken()
     <input type="hidden" name="GroupId" value="@groupId" />
-    <input type="hidden" name="StudentIds" id="studentIdsInput" />
+    <div id="studentProfileInputs"></div>
 </form>
 
 <!-- Remove Member Form (Hidden) -->
 <form id="removeMemberForm" method="post" asp-action="RemoveMember" style="display: none;">
     @Html.AntiForgeryToken()
     <input type="hidden" name="GroupId" value="@groupId" />
-    <input type="hidden" name="StudentId" id="studentIdInput" />
+    <input type="hidden" name="StudentProfileId" id="studentProfileIdInput" />
 </form>
 
 @section Styles {
@@ -519,21 +519,24 @@
 @section Scripts {
     <script>
         // Search functionality
-        document.getElementById('studentSearch').addEventListener('input', function(e) {
-            const searchTerm = e.target.value.toLowerCase();
-            const studentCards = document.querySelectorAll('.student-item-minimal');
-            
-            studentCards.forEach(card => {
-                const name = card.querySelector('.student-name-minimal').textContent.toLowerCase();
-                const email = card.querySelector('.student-email-minimal').textContent.toLowerCase();
+        const studentSearchInput = document.getElementById('studentSearch');
+        if (studentSearchInput) {
+            studentSearchInput.addEventListener('input', function(e) {
+                const searchTerm = e.target.value.toLowerCase();
+                const studentCards = document.querySelectorAll('.student-item-minimal');
                 
-                if (name.includes(searchTerm) || email.includes(searchTerm)) {
-                    card.style.display = 'flex';
-                } else {
-                    card.style.display = 'none';
-                }
+                studentCards.forEach(card => {
+                    const name = card.querySelector('.student-name-minimal')?.textContent.toLowerCase() ?? '';
+                    const email = card.querySelector('.student-email-minimal')?.textContent.toLowerCase() ?? '';
+                    
+                    if (name.includes(searchTerm) || email.includes(searchTerm)) {
+                        card.style.display = 'flex';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
             });
-        });
+        }
 
         document.addEventListener('DOMContentLoaded', function () {
             loadAvailableStudents();
@@ -551,16 +554,19 @@
                 return;
             }
 
-            let otherStudents = [];
-            let currentGroupStudents = [];
+            let otherProfiles = [];
+            let currentGroupProfiles = [];
 
             try {
-                otherStudents = JSON.parse(container.dataset.otherStudents || '[]');
-                currentGroupStudents = JSON.parse(container.dataset.currentStudents || '[]');
+                otherProfiles = JSON.parse(container.dataset.otherProfiles || '[]');
+                currentGroupProfiles = JSON.parse(container.dataset.currentProfiles || '[]');
             } catch {
-                otherStudents = [];
-                currentGroupStudents = [];
+                otherProfiles = [];
+                currentGroupProfiles = [];
             }
+
+            otherProfiles = (Array.isArray(otherProfiles) ? otherProfiles : []).map(id => parseInt(id, 10)).filter(Number.isFinite);
+            currentGroupProfiles = (Array.isArray(currentGroupProfiles) ? currentGroupProfiles : []).map(id => parseInt(id, 10)).filter(Number.isFinite);
 
             try {
                 const response = await fetch(`/Teacher/Courses/GetCourseStudents?courseId=${courseId}&includeCompleted=false&includeInactive=false&pageSize=500`);
@@ -571,8 +577,11 @@
                     return;
                 }
 
-                const excludedIds = new Set([...otherStudents, ...currentGroupStudents]);
-                const students = result.data.filter(student => !excludedIds.has(student.studentId));
+                const excludedProfileIds = new Set([...otherProfiles, ...currentGroupProfiles]);
+                const students = result.data.filter(student => {
+                    const profileId = parseInt(student.studentProfileId ?? 0, 10);
+                    return Number.isInteger(profileId) && profileId > 0 && !excludedProfileIds.has(profileId);
+                });
 
                 renderAvailableStudentsList(container, students);
             }
@@ -609,11 +618,12 @@
             }
 
             const listItems = students.map(student => {
-                const displayName = (student.studentProfileName && student.studentProfileName.trim().length > 0)
-                    ? student.studentProfileName
-                    : student.studentName;
+                const profileId = parseInt(student.studentProfileId ?? 0, 10);
                 const email = student.studentEmail || '';
-                const profileBadge = student.studentProfileName && student.studentProfileName.trim().length > 0
+                const profileName = (student.studentProfileName || '').trim();
+                const fallbackName = (student.studentName || '').trim();
+                const displayName = profileName.length > 0 ? profileName : (fallbackName.length > 0 ? fallbackName : 'نامشخص');
+                const profileBadge = profileName.length > 0
                     ? `<span class="enrollment-status-minimal">
                             <i class="fas fa-user-tag"></i>
                             پروفایل فعال
@@ -621,9 +631,9 @@
                     : '';
 
                 return `
-                    <div class="student-item-minimal" data-student-id="${student.studentId}">
+                    <div class="student-item-minimal" data-student-profile-id="${profileId}">
                         <div class="student-checkbox">
-                            <input type="checkbox" class="student-select" value="${student.studentId}">
+                            <input type="checkbox" class="student-select" value="${profileId}">
                         </div>
                         <div class="student-avatar-minimal">
                             <i class="fas fa-user"></i>
@@ -640,7 +650,7 @@
                             </div>
                         </div>
                         <div class="student-actions-minimal">
-                            <button class="btn-action-inline add" data-student-id="${student.studentId}" data-student-name="${displayName}" title="اضافه به گروه">
+                            <button class="btn-action-inline add" data-student-profile-id="${profileId}" data-student-name="${displayName}" title="اضافه به گروه">
                                 <i class="fas fa-plus"></i>
                             </button>
                         </div>
@@ -661,11 +671,30 @@
             container.querySelectorAll('.btn-action-inline.add').forEach(button => {
                 button.addEventListener('click', function (event) {
                     event.preventDefault();
-                    const studentId = button.dataset.studentId;
+                    const studentProfileId = parseInt(button.dataset.studentProfileId ?? '0', 10);
                     const studentName = button.dataset.studentName;
-                    addMember(studentId, studentName);
+                    addMember(studentProfileId, studentName);
                 });
             });
+        }
+        
+        function populateStudentProfileInputs(profileIds) {
+            const container = document.getElementById('studentProfileInputs');
+            if (!container) {
+                return;
+            }
+
+            container.innerHTML = '';
+            profileIds
+                .filter(id => Number.isInteger(id) && id > 0)
+                .forEach(id => {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'StudentProfileIds';
+                    input.value = id;
+                    input.classList.add('student-profile-id-field');
+                    container.appendChild(input);
+                });
         }
 
         function updateAvailableCount(count) {
@@ -675,73 +704,81 @@
             }
         }
 
-        // Add member function
-        function addMember(studentId, studentName) {
+        function addMember(studentProfileId, studentName) {
+            if (!Number.isInteger(studentProfileId) || studentProfileId <= 0) {
+                return;
+            }
+
             if (confirm(`آیا می‌خواهید "${studentName}" را به گروه اضافه کنید؟`)) {
-                document.getElementById('studentIdsInput').value = studentId;
+                populateStudentProfileInputs([studentProfileId]);
                 document.getElementById('addMembersForm').submit();
             }
         }
 
-        // Remove member function
-        function removeMember(studentId, studentName) {
+        function removeMember(studentProfileId, studentName) {
+            if (!Number.isInteger(studentProfileId) || studentProfileId <= 0) {
+                return;
+            }
+
             if (confirm(`آیا می‌خواهید "${studentName}" را از گروه حذف کنید؟`)) {
-                document.getElementById('studentIdInput').value = studentId;
+                document.getElementById('studentProfileIdInput').value = studentProfileId;
                 document.getElementById('removeMemberForm').submit();
             }
         }
 
-        // Bulk selection functions
         function updateBulkActions() {
             const selectedCheckboxes = document.querySelectorAll('.student-select:checked');
             const bulkActions = document.getElementById('bulkActions');
             const selectedCount = document.getElementById('selectedCount');
-            
+
             if (selectedCheckboxes.length > 0) {
                 bulkActions.style.display = 'flex';
                 selectedCount.textContent = selectedCheckboxes.length;
             } else {
                 bulkActions.style.display = 'none';
+                selectedCount.textContent = '0';
             }
         }
 
         function addSelectedMembers() {
-            const selectedCheckboxes = document.querySelectorAll('.student-select:checked');
-            const studentIds = Array.from(selectedCheckboxes).map(cb => cb.value);
-            
-            if (studentIds.length === 0) {
+            const studentProfileIds = Array.from(document.querySelectorAll('.student-select:checked'))
+                .map(cb => parseInt(cb.value ?? '0', 10))
+                .filter(id => Number.isInteger(id) && id > 0);
+
+            if (studentProfileIds.length === 0) {
                 alert('لطفاً حداقل یک دانش‌آموز را انتخاب کنید');
                 return;
             }
 
-            if (confirm(`آیا می‌خواهید ${studentIds.length} دانش‌آموز را به گروه اضافه کنید؟`)) {
-                document.getElementById('studentIdsInput').value = studentIds.join(',');
+            if (confirm(`آیا می‌خواهید ${studentProfileIds.length} دانش‌آموز را به گروه اضافه کنید؟`)) {
+                populateStudentProfileInputs(studentProfileIds);
                 document.getElementById('addMembersForm').submit();
             }
         }
 
         function clearSelection() {
-            const checkboxes = document.querySelectorAll('.student-select');
-            checkboxes.forEach(cb => cb.checked = false);
-            document.getElementById('selectAll').checked = false;
+            document.querySelectorAll('.student-select').forEach(cb => cb.checked = false);
+            const selectAllCheckbox = document.getElementById('selectAll');
+            if (selectAllCheckbox) {
+                selectAllCheckbox.checked = false;
+            }
             updateBulkActions();
         }
 
         function toggleSelectAll() {
             const selectAllCheckbox = document.getElementById('selectAll');
             const studentCheckboxes = document.querySelectorAll('.student-select');
-            
+
             studentCheckboxes.forEach(cb => {
-                cb.checked = selectAllCheckbox.checked;
+                cb.checked = !!selectAllCheckbox?.checked;
             });
-            
+
             updateBulkActions();
         }
 
         // Auto-hide alerts after 5 seconds
         setTimeout(function() {
-            var alerts = document.querySelectorAll('.alert');
-            alerts.forEach(function(alert) {
+            document.querySelectorAll('.alert').forEach(function(alert) {
                 var bsAlert = new bootstrap.Alert(alert);
                 bsAlert.close();
             });

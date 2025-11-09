@@ -35,7 +35,7 @@ public class TeachingPlanRepository : Repository<TeachingPlan>, ITeachingPlanRep
         return await _dbSet
             .Include(tp => tp.Groups)
             .ThenInclude(g => g.Members)
-            .ThenInclude(m => m.Student)
+            .ThenInclude(m => m.StudentProfile)
             .FirstOrDefaultAsync(tp => tp.Id == teachingPlanId, cancellationToken);
     }
 
@@ -56,7 +56,7 @@ public class TeachingPlanRepository : Repository<TeachingPlan>, ITeachingPlanRep
             .Include(tp => tp.Teacher)
             .Include(tp => tp.Groups)
             .ThenInclude(g => g.Members)
-            .ThenInclude(m => m.Student)
+            .ThenInclude(m => m.StudentProfile)
             .Include(tp => tp.ScheduleItems)
             .ThenInclude(si => si.Group)
             .Include(tp => tp.ScheduleItems)

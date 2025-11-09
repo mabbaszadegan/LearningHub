@@ -48,9 +48,10 @@ public class GetSubChapterCoverageDataQueryHandler : IRequestHandler<GetSubChapt
             }
 
             // Get groups for this teaching plan
-            var groups = await _groupRepository.GetAll()
-                .Include(g => g.Members)
-                .ThenInclude(m => m.Student)
+        var groups = await _groupRepository.GetAll()
+            .Include(g => g.Members)
+                .ThenInclude(m => m.StudentProfile)
+                .ThenInclude(sp => sp.User)
                 .Where(g => g.TeachingPlanId == session.TeachingPlanId)
                 .OrderBy(g => g.Name)
                 .ToListAsync(cancellationToken);
@@ -78,13 +79,29 @@ public class GetSubChapterCoverageDataQueryHandler : IRequestHandler<GetSubChapt
                     Id = g.Id,
                     Name = g.Name,
                     MemberCount = g.Members.Count,
-                    Members = g.Members.Select(m => new GroupMemberDto
+                    Members = g.Members.Select(m =>
                     {
-                        Id = m.Id,
-                        StudentGroupId = m.StudentGroupId,
-                        StudentId = m.StudentId,
-                        StudentName = m.Student.FullName,
-                        StudentEmail = m.Student.Email ?? string.Empty
+                        var profile = m.StudentProfile;
+                        var user = profile?.User;
+                        var displayName = profile?.DisplayName;
+                        if (string.IsNullOrWhiteSpace(displayName))
+                        {
+                            displayName = $"{user?.FirstName} {user?.LastName}".Trim();
+                        }
+                        if (string.IsNullOrWhiteSpace(displayName))
+                        {
+                            displayName = user?.UserName ?? string.Empty;
+                        }
+
+                        return new GroupMemberDto
+                        {
+                            Id = m.Id,
+                            StudentGroupId = m.StudentGroupId,
+                            StudentProfileId = m.StudentProfileId,
+                            StudentId = profile?.UserId ?? string.Empty,
+                            StudentName = displayName,
+                            StudentEmail = user?.Email ?? string.Empty
+                        };
                     }).ToList()
                 }).ToList(),
                 Chapters = new List<EduTrack.Application.Common.Models.Courses.ChapterDto>(),

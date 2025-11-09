@@ -37,7 +37,7 @@ public class RemoveGroupMemberCommandHandler : IRequestHandler<RemoveGroupMember
             // Note: This should be validated at the controller level with current user context
             // For now, we'll trust that the controller has already validated permissions
 
-            var member = group.Members.FirstOrDefault(m => m.StudentId == request.StudentId);
+            var member = group.Members.FirstOrDefault(m => m.StudentProfileId == request.StudentProfileId);
             if (member == null)
             {
                 return Result<bool>.Failure("Student is not a member of this group");

@@ -94,8 +94,9 @@
                             <div class="members-list-preview" data-group-id="@group.Id">
                                 @foreach (var member in group.Members.Take(4))
                                 {
-                                    <div class="member-item-preview draggable-student" 
-                                         data-student-id="@member.StudentId" 
+                    <div class="member-item-preview draggable-student" 
+                                         data-student-profile-id="@member.StudentProfileId"
+                                         data-student-id="@member.StudentId"
                                          data-student-name="@member.StudentName"
                                          data-group-id="@group.Id"
                                          draggable="true">
@@ -107,7 +108,7 @@
                                         </div>
                                         <div class="member-actions-preview">
                                             <button class="btn-remove-member-preview" 
-                                                    onclick="removeMember('@member.StudentId', '@member.StudentName', @group.Id)"
+                                                    onclick="removeMember(@member.StudentProfileId, '@member.StudentName', @group.Id)"
                                                     title="حذف از گروه">
                                                 <i class="fas fa-times"></i>
                                             </button>
@@ -671,7 +672,8 @@ else
             // Drag start
             $('.draggable-student').on('dragstart', function(e) {
                 draggedStudent = {
-                    id: $(this).data('student-id'),
+                    profileId: parseInt($(this).data('student-profile-id'), 10),
+                    userId: $(this).data('student-id'),
                     name: $(this).data('student-name'),
                     groupId: $(this).data('group-id')
                 };
@@ -679,7 +681,7 @@ else
                 $(this).addClass('dragging');
                 
                 // Set drag data
-                e.originalEvent.dataTransfer.setData('text/plain', draggedStudent.id);
+                e.originalEvent.dataTransfer.setData('text/plain', draggedStudent.profileId);
                 e.originalEvent.dataTransfer.effectAllowed = 'move';
             });
 
@@ -715,7 +717,7 @@ else
                 const targetGroupId = $(this).data('group-id');
                 
                 if (draggedStudent && targetGroupId !== draggedFromGroup) {
-                    transferStudent(draggedStudent.id, draggedStudent.name, draggedFromGroup, targetGroupId);
+                    transferStudent(draggedStudent.profileId, draggedStudent.name, draggedFromGroup, targetGroupId);
                 }
             });
         });
@@ -753,14 +755,14 @@ else
         }
 
         // Remove student from group
-        function removeMember(studentId, studentName, groupId) {
+        function removeMember(studentProfileId, studentName, groupId) {
             if (confirm(`آیا می‌خواهید "${studentName}" را از گروه حذف کنید؟`)) {
                 $.ajax({
                     url: '@Url.Action("RemoveMemberAjax", "StudentGroup")',
                     type: 'POST',
                     data: {
                         GroupId: groupId,
-                        StudentId: studentId,
+                        StudentProfileId: studentProfileId,
                         __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
                     },
                     success: function(response) {
@@ -780,7 +782,7 @@ else
         }
 
         // Transfer student between groups
-        function transferStudent(studentId, studentName, fromGroupId, toGroupId) {
+        function transferStudent(studentProfileId, studentName, fromGroupId, toGroupId) {
             if (confirm(`آیا می‌خواهید "${studentName}" را به گروه جدید منتقل کنید؟`)) {
                 $.ajax({
                     url: '@Url.Action("TransferMember", "StudentGroup")',
@@ -788,7 +790,7 @@ else
                     data: {
                         FromGroupId: fromGroupId,
                         ToGroupId: toGroupId,
-                        StudentId: studentId,
+                        StudentProfileId: studentProfileId,
                         __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
                     },
                     success: function(response) {

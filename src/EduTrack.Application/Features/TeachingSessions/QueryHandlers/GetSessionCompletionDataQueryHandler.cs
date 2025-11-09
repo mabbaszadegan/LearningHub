@@ -86,21 +86,39 @@ public class GetSessionCompletionDataQueryHandler : IRequestHandler<GetSessionCo
                 Id = g.Id,
                 Name = g.Name,
                 MemberCount = g.GetTotalMembers(),
-                Members = g.Members?.Select(m => new GroupMemberDto
+                Members = g.Members?.Select(m =>
                 {
-                    Id = m.Id,
-                    StudentGroupId = m.StudentGroupId,
-                    StudentId = m.StudentId,
-                    StudentName = (m.Student?.FirstName + " " + m.Student?.LastName)?.Trim() ?? "Unknown Student",
-                    StudentEmail = m.Student?.Email ?? "",
-                    // Add existing attendance data
-                    ExistingAttendance = attendanceDict.ContainsKey(m.StudentId) ? new StudentAttendanceDto
+                    var profile = m.StudentProfile;
+                    var user = profile?.User;
+                    var displayName = profile?.DisplayName;
+                    if (string.IsNullOrWhiteSpace(displayName))
                     {
-                        StudentId = m.StudentId,
-                        Status = attendanceDict[m.StudentId].Status,
-                        ParticipationScore = attendanceDict[m.StudentId].ParticipationScore,
-                        Comment = attendanceDict[m.StudentId].Comment
-                    } : null
+                        displayName = $"{user?.FirstName} {user?.LastName}".Trim();
+                    }
+                    if (string.IsNullOrWhiteSpace(displayName))
+                    {
+                        displayName = user?.UserName ?? "Unknown Student";
+                    }
+
+                    var studentId = profile?.UserId ?? string.Empty;
+
+                    return new GroupMemberDto
+                    {
+                        Id = m.Id,
+                        StudentGroupId = m.StudentGroupId,
+                        StudentProfileId = m.StudentProfileId,
+                        StudentId = studentId,
+                        StudentName = displayName,
+                        StudentEmail = user?.Email ?? string.Empty,
+                        // Add existing attendance data
+                        ExistingAttendance = attendanceDict.ContainsKey(studentId) ? new StudentAttendanceDto
+                        {
+                            StudentId = studentId,
+                            Status = attendanceDict[studentId].Status,
+                            ParticipationScore = attendanceDict[studentId].ParticipationScore,
+                            Comment = attendanceDict[studentId].Comment
+                        } : null
+                    };
                 }).ToList() ?? new List<GroupMemberDto>(),
                 // Add existing feedback data
                 ExistingFeedback = executionDict.ContainsKey(g.Id) ? new GroupFeedbackDto

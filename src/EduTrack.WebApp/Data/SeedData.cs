@@ -141,6 +141,28 @@ public static class SeedData
         context.Courses.Add(course);
         await context.SaveChangesAsync();
 
+        // Create student profiles for each student
+        var studentProfiles = new List<StudentProfile>();
+        foreach (var student in students)
+        {
+            var displayName = $"{student.FirstName} {student.LastName}".Trim();
+            if (string.IsNullOrWhiteSpace(displayName))
+            {
+                displayName = student.UserName ?? $"Student-{student.Id}";
+            }
+
+            var profile = StudentProfile.Create(student.Id, displayName);
+            studentProfiles.Add(profile);
+        }
+        context.StudentProfiles.AddRange(studentProfiles);
+        await context.SaveChangesAsync();
+
+        // Enroll each student profile in the course
+        var courseEnrollments = studentProfiles.Select(profile =>
+            CourseEnrollment.Create(profile.UserId, course.Id, LearningMode.SelfStudy, profile.Id));
+        context.CourseEnrollments.AddRange(courseEnrollments);
+        await context.SaveChangesAsync();
+
         // Module removed - using Chapters/SubChapters instead
         // Create lessons (ModuleId is nullable legacy field)
         var lesson1 = Lesson.Create(
@@ -259,10 +281,10 @@ public static class SeedData
         await context.SaveChangesAsync();
 
         // Create TeachingPlan demo data
-        await CreateTeachingPlanDemoDataAsync(context, teacher, course, students);
+        await CreateTeachingPlanDemoDataAsync(context, teacher, course, students, studentProfiles);
     }
 
-    private static async Task CreateTeachingPlanDemoDataAsync(AppDbContext context, User teacher, Course course, List<User> students)
+    private static async Task CreateTeachingPlanDemoDataAsync(AppDbContext context, User teacher, Course course, List<User> students, List<StudentProfile> studentProfiles)
     {
         // Create TeachingPlan
         var teachingPlan = TeachingPlan.Create(
@@ -285,10 +307,10 @@ public static class SeedData
 
         // Add students to groups (5 students per group)
         var groupMembers = new List<GroupMember>();
-        for (int i = 0; i < students.Count && i < 15; i++)
+        for (int i = 0; i < studentProfiles.Count && i < 15; i++)
         {
             var group = i < 5 ? groupA : i < 10 ? groupB : groupC;
-            groupMembers.Add(GroupMember.Create(group.Id, students[i].Id));
+            groupMembers.Add(GroupMember.Create(group.Id, studentProfiles[i].Id));
         }
         context.GroupMembers.AddRange(groupMembers);
         await context.SaveChangesAsync();

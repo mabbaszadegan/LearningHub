@@ -33,16 +33,16 @@ public record DeleteStudentGroupCommand(int Id) : IRequest<Result<bool>>;
 
 public record AddGroupMembersCommand(
     int GroupId,
-    List<string> StudentIds) : IRequest<Result<bool>>;
+    List<int> StudentProfileIds) : IRequest<Result<bool>>;
 
 public record RemoveGroupMemberCommand(
     int GroupId,
-    string StudentId) : IRequest<Result<bool>>;
+    int StudentProfileId) : IRequest<Result<bool>>;
 
 public record TransferGroupMemberCommand(
     int FromGroupId,
     int ToGroupId,
-    string StudentId) : IRequest<Result<bool>>;
+    int StudentProfileId) : IRequest<Result<bool>>;
 
 // ScheduleItem Commands
 public record CreateScheduleItemCommand(

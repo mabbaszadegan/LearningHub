@@ -620,18 +620,18 @@ public class AppDbContext : IdentityDbContext<User>
         // Configure GroupMember entity
         builder.Entity<GroupMember>(entity =>
         {
-            entity.Property(e => e.StudentId).HasMaxLength(450).IsRequired();
+            entity.Property(e => e.StudentProfileId).IsRequired();
             entity.HasOne(e => e.StudentGroup)
                 .WithMany(e => e.Members)
                 .HasForeignKey(e => e.StudentGroupId)
                 .OnDelete(DeleteBehavior.NoAction);
-            entity.HasOne(e => e.Student)
-                .WithMany()
-                .HasForeignKey(e => e.StudentId)
+            entity.HasOne(e => e.StudentProfile)
+                .WithMany(e => e.GroupMemberships)
+                .HasForeignKey(e => e.StudentProfileId)
                 .OnDelete(DeleteBehavior.NoAction);
             entity.HasIndex(e => e.StudentGroupId);
-            entity.HasIndex(e => e.StudentId);
-            entity.HasIndex(e => new { e.StudentGroupId, e.StudentId }).IsUnique();
+            entity.HasIndex(e => e.StudentProfileId);
+            entity.HasIndex(e => new { e.StudentGroupId, e.StudentProfileId }).IsUnique();
         });
 
         // Configure ScheduleItem entity

@@ -1,33 +1,36 @@
 namespace EduTrack.Domain.Entities;
 
 /// <summary>
-/// GroupMember entity - represents a student's membership in a group
+/// GroupMember entity - represents a student profile's membership in a group
 /// </summary>
 public class GroupMember
 {
     public int Id { get; private set; }
     public int StudentGroupId { get; private set; }
-    public string StudentId { get; private set; } = string.Empty;
+    public int StudentProfileId { get; private set; }
 
     // Navigation properties
     public StudentGroup StudentGroup { get; private set; } = null!;
-    public User Student { get; private set; } = null!;
+    public StudentProfile StudentProfile { get; private set; } = null!;
+
+    // Convenience accessor
+    public string StudentId => StudentProfile?.UserId ?? string.Empty;
 
     // Private constructor for EF Core
     private GroupMember() { }
 
-    public static GroupMember Create(int studentGroupId, string studentId)
+    public static GroupMember Create(int studentGroupId, int studentProfileId)
     {
         if (studentGroupId <= 0)
             throw new ArgumentException("Student Group ID must be greater than 0", nameof(studentGroupId));
-        
-        if (string.IsNullOrWhiteSpace(studentId))
-            throw new ArgumentException("Student ID cannot be null or empty", nameof(studentId));
+
+        if (studentProfileId <= 0)
+            throw new ArgumentException("Student profile ID must be greater than 0", nameof(studentProfileId));
 
         return new GroupMember
         {
             StudentGroupId = studentGroupId,
-            StudentId = studentId
+            StudentProfileId = studentProfileId
         };
     }
 }

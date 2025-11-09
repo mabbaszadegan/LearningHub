@@ -105,7 +105,7 @@ public interface IStudentGroupRepository : IRepository<StudentGroup>
 {
     Task<IEnumerable<StudentGroup>> GetGroupsByTeachingPlanAsync(int teachingPlanId, CancellationToken cancellationToken = default);
     Task<StudentGroup?> GetGroupWithMembersAsync(int groupId, CancellationToken cancellationToken = default);
-    Task<bool> IsStudentInGroupAsync(int groupId, string studentId, CancellationToken cancellationToken = default);
+    Task<bool> IsStudentProfileInGroupAsync(int groupId, int studentProfileId, CancellationToken cancellationToken = default);
 }
 
 /// <summary>
