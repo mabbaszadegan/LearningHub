@@ -24,108 +24,26 @@
         </div>
     }
 
-    <!-- Recently Viewed Courses Section -->
-    @if (Model.LastStudyCourses.Any())
-    {
-        <div class="recently-viewed-section">
-            <div class="recently-viewed-header">
-                <h6>
-                    <i class="fas fa-clock"></i>
-                    دوره‌های اخیرا مشاهده شده
-                </h6>
+    <div class="dashboard-section"
+         data-dashboard-endpoint="@Url.Action("RecentCoursesSection", "Home", new { area = "Student" })"
+         data-dashboard-type="recent-courses">
+        <div class="dashboard-section-loading">
+            <div class="spinner-border spinner-border-sm text-primary" role="status">
+                <span class="visually-hidden">در حال بارگذاری...</span>
             </div>
-            <div class="recently-viewed-list">
-                @foreach (var course in Model.LastStudyCourses.Take(10))
-                {
-                    <a href="@Url.Action("Study", "Course", new { id = course.CourseId })" class="recently-viewed-item">
-                        <div class="recently-viewed-thumbnail">
-                            @if (!string.IsNullOrEmpty(course.CourseThumbnail))
-                            {
-                                <img src="@course.CourseThumbnail" alt="@course.CourseTitle" />
-                            }
-                            else
-                            {
-                                <div class="placeholder">
-                                    <i class="fas fa-graduation-cap"></i>
-                                </div>
-                            }
-                        </div>
-                        <div class="recently-viewed-title">@course.CourseTitle</div>
-                        <div class="recently-viewed-time">@course.RelativeTime</div>
-                    </a>
-                }
-            </div>
+            <span>در حال بارگذاری دوره‌های اخیر...</span>
         </div>
-    }
+    </div>
 
-    <!-- Enrolled Courses Section -->
-    <div class="enrolled-courses-main">
-        <div class="enrolled-courses-header">
-            <h6>
-                <i class="fas fa-book-open"></i>
-                دوره‌های ثبت‌نام شده
-            </h6>
-            @if (Model.EnrolledCourses.Any())
-            {
-                <span class="enrolled-courses-count">@Model.EnrolledCourses.Count دوره</span>
-            }
+    <div class="dashboard-section"
+         data-dashboard-endpoint="@Url.Action("EnrolledCoursesSection", "Home", new { area = "Student" })"
+         data-dashboard-type="enrolled-courses">
+        <div class="dashboard-section-loading">
+            <div class="spinner-border spinner-border-sm text-primary" role="status">
+                <span class="visually-hidden">در حال بارگذاری...</span>
+            </div>
+            <span>در حال بارگذاری دوره‌های ثبت‌نام شده...</span>
         </div>
-
-        @if (Model.EnrolledCourses.Any())
-        {
-            <div class="enrolled-courses-list">
-                @foreach (var course in Model.EnrolledCourses)
-                {
-                    <a href="@Url.Action("Study", "Course", new { id = course.CourseId })" class="enrolled-course-row">
-                        <div class="enrolled-course-thumbnail">
-                            @if (!string.IsNullOrEmpty(course.CourseThumbnail))
-                            {
-                                <img src="@course.CourseThumbnail" alt="@course.CourseTitle" />
-                            }
-                            else
-                            {
-                                <div class="placeholder">
-                                    <i class="fas fa-graduation-cap"></i>
-                                </div>
-                            }
-                        </div>
-                        <div class="enrolled-course-content">
-                            <h6 class="enrolled-course-title">@course.CourseTitle</h6>
-                            <div class="enrolled-course-progress-wrapper">
-                                <div class="enrolled-course-progress-bar">
-                                    <div class="enrolled-course-progress-fill" style="width: @course.ProgressPercentage%"></div>
-                                </div>
-                                <span class="enrolled-course-progress-percentage">@course.ProgressPercentage%</span>
-                            </div>
-                            @if (course.TotalLessons > 0)
-                            {
-                                <div class="enrolled-course-meta">
-                                    <div class="enrolled-course-meta-item">
-                                        <i class="fas fa-check-circle"></i>
-                                        <span>@course.CompletedLessons از @course.TotalLessons درس</span>
-                                    </div>
-                                </div>
-                            }
-                        </div>
-                        <div class="enrolled-course-action">
-                            <i class="fas fa-chevron-left"></i>
-                        </div>
-                    </a>
-                }
-            </div>
-        }
-        else
-        {
-            <div class="empty-state-minimal">
-                <i class="fas fa-graduation-cap"></i>
-                <h6>هنوز دوره‌ای ثبت‌نام نکرده‌اید</h6>
-                <p>می‌توانید از کاتالوگ دوره‌ها، دوره‌های مورد علاقه خود را انتخاب کنید</p>
-                <a href="@Url.Action("Index", "Catalog", new { area = "Public" })" class="btn btn-primary btn-sm">
-                    <i class="fas fa-book-open me-2"></i>
-                    مشاهده کاتالوگ دوره‌ها
-                </a>
-            </div>
-        }
     </div>
 </div>
 

@@ -1,17 +1,22 @@
-using EduTrack.Application.Features.Classroom.Queries;
-using EduTrack.Application.Features.Progress.Queries;
-using EduTrack.Application.Features.Exams.Queries;
-using EduTrack.Application.Features.StudySessions.Queries;
-using EduTrack.Application.Features.ScheduleItems.Queries;
-using EduTrack.Application.Features.CourseEnrollment.Queries;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
 using EduTrack.Application.Common.Models;
+using EduTrack.Application.Common.Models.Exams;
+using EduTrack.Application.Common.Models.StudySessions;
+using EduTrack.Application.Features.CourseEnrollment.DTOs;
+using EduTrack.Application.Features.CourseEnrollment.Queries;
+using EduTrack.Application.Features.Progress.Queries;
+using EduTrack.Application.Features.ScheduleItems.Queries;
+using EduTrack.Application.Features.StudySessions.Queries;
 using EduTrack.Domain.Entities;
 using EduTrack.WebApp.Models;
+using EduTrack.WebApp.Services;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using EduTrack.WebApp.Services;
+using ScheduleItemDto = EduTrack.Application.Common.Models.ScheduleItems.ScheduleItemDto;
 
 namespace EduTrack.WebApp.Areas.Student.Controllers;
 
@@ -46,35 +51,156 @@ public class HomeController : Controller
 
         var activeProfileId = await _studentProfileContext.GetActiveProfileIdAsync();
         var activeProfileName = await _studentProfileContext.GetActiveProfileNameAsync();
-
-        // Get enrolled courses
-        var enrolledCoursesResult = await _mediator.Send(new GetStudentCourseEnrollmentsQuery(currentUser.Id, activeProfileId));
-        var enrolledCourses = enrolledCoursesResult.IsSuccess && enrolledCoursesResult.Value != null 
-            ? enrolledCoursesResult.Value 
-            : new List<Application.Features.CourseEnrollment.DTOs.StudentCourseEnrollmentSummaryDto>();
-
-        // Get student dashboard data
+        
         var dashboardData = new StudentDashboardViewModel
         {
             StudentName = currentUser.FullName,
             StudentFirstName = currentUser.FirstName,
-            TotalClasses = 0,//await GetStudentClassesCount(currentUser.Id),
-            CompletedLessons = 0,//await GetCompletedLessonsCount(currentUser.Id),
-            TotalExams = 0,// await GetStudentExamsCount(currentUser.Id),
-            AverageScore = await GetStudentAverageScore(currentUser.Id),
-            //RecentClasses = await GetStudentRecentClasses(currentUser.Id),
-            //UpcomingExams = await GetStudentUpcomingExams(currentUser.Id),
-            ProgressStats = await GetStudentProgressStats(currentUser.Id),
-            LastStudySessions = await GetLastStudySessions(currentUser.Id),
-            LastStudyCourses = await GetLastStudyCourses(currentUser.Id),
-            StudyStatistics = await GetStudyStatistics(currentUser.Id),
-            AccessibleScheduleItems = await GetAccessibleScheduleItems(currentUser.Id),
-            EnrolledCourses = enrolledCourses,
+            TotalClasses = 0,
+            CompletedLessons = 0,
+            TotalExams = 0,
+            AverageScore = 0,
+            ProgressStats = new { },
             ActiveStudentProfileId = activeProfileId,
             ActiveStudentProfileName = activeProfileName
         };
 
         return View(dashboardData);
+    }
+
+    [HttpGet("enrolled-courses-section")]
+    public async Task<IActionResult> EnrolledCoursesSection(CancellationToken cancellationToken)
+    {
+        var currentUser = await _userManager.GetUserAsync(User);
+        if (currentUser == null)
+        {
+            return Unauthorized();
+        }
+
+        var activeProfileId = await _studentProfileContext.GetActiveProfileIdAsync(cancellationToken);
+        if (!activeProfileId.HasValue)
+        {
+            ViewBag.SectionState = "profile-required";
+            ViewBag.SectionMessage = "برای مشاهده دوره‌های ثبت‌نام شده، ابتدا یک پروفایل فعال انتخاب کنید.";
+            return PartialView("_EnrolledCourses", Array.Empty<StudentCourseEnrollmentSummaryDto>());
+        }
+
+        try
+        {
+            var enrolledCoursesResult = await _mediator.Send(new GetStudentCourseEnrollmentsQuery(currentUser.Id, activeProfileId), cancellationToken);
+
+            if (!enrolledCoursesResult.IsSuccess || enrolledCoursesResult.Value == null)
+            {
+                ViewBag.SectionState = "error";
+                ViewBag.SectionMessage = enrolledCoursesResult.Error ?? "خطا در بارگذاری دوره‌های ثبت‌نام شده.";
+                return PartialView("_EnrolledCourses", Array.Empty<StudentCourseEnrollmentSummaryDto>());
+            }
+
+            return PartialView("_EnrolledCourses", enrolledCoursesResult.Value);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to load enrolled courses for student {StudentId}", currentUser.Id);
+            ViewBag.SectionState = "error";
+            ViewBag.SectionMessage = "در بارگذاری دوره‌های ثبت‌نام شده خطایی رخ داد.";
+            return PartialView("_EnrolledCourses", Array.Empty<StudentCourseEnrollmentSummaryDto>());
+        }
+    }
+
+    [HttpGet("recent-courses-section")]
+    public async Task<IActionResult> RecentCoursesSection(CancellationToken cancellationToken)
+    {
+        var currentUser = await _userManager.GetUserAsync(User);
+        if (currentUser == null)
+        {
+            return Unauthorized();
+        }
+
+        var activeProfileId = await _studentProfileContext.GetActiveProfileIdAsync(cancellationToken);
+        if (!activeProfileId.HasValue)
+        {
+            ViewBag.SectionState = "profile-required";
+            ViewBag.SectionMessage = "برای مشاهده دوره‌های اخیر، ابتدا یک پروفایل فعال انتخاب کنید.";
+            return PartialView("_RecentCourses", Array.Empty<CourseStudyHistoryDto>());
+        }
+
+        try
+        {
+            var courses = await GetLastStudyCourses(currentUser.Id, cancellationToken);
+            return PartialView("_RecentCourses", courses);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to load recent courses for student {StudentId}", currentUser.Id);
+            ViewBag.SectionState = "error";
+            ViewBag.SectionMessage = "در بارگذاری دوره‌های اخیر خطایی رخ داد.";
+            return PartialView("_RecentCourses", Array.Empty<CourseStudyHistoryDto>());
+        }
+    }
+
+    [HttpGet("progress-summary")]
+    public async Task<IActionResult> GetProgressSummary(CancellationToken cancellationToken)
+    {
+        var currentUser = await _userManager.GetUserAsync(User);
+        if (currentUser == null)
+        {
+            return Unauthorized();
+        }
+
+        var progressResult = await _mediator.Send(new GetProgressByStudentQuery(currentUser.Id, 1, 100), cancellationToken);
+        var progressItems = progressResult?.Items?.ToList() ?? new List<ProgressDto>();
+        var completedLessons = progressItems.Count(p => p.Status == Domain.Enums.ProgressStatus.Done);
+        var stats = BuildProgressStats(progressItems);
+
+        return Ok(new
+        {
+            success = true,
+            data = new
+            {
+                stats,
+                completedLessons,
+                totalItems = progressItems.Count
+            }
+        });
+    }
+
+    [HttpGet("study-statistics")]
+    public async Task<IActionResult> GetStudyStatisticsData(CancellationToken cancellationToken)
+    {
+        var currentUser = await _userManager.GetUserAsync(User);
+        if (currentUser == null)
+        {
+            return Unauthorized();
+        }
+
+        var statistics = await GetStudyStatistics(currentUser.Id, cancellationToken);
+        return Ok(new { success = true, data = statistics });
+    }
+
+    [HttpGet("last-study-sessions")]
+    public async Task<IActionResult> GetLastStudySessionsData(CancellationToken cancellationToken)
+    {
+        var currentUser = await _userManager.GetUserAsync(User);
+        if (currentUser == null)
+        {
+            return Unauthorized();
+        }
+
+        var sessions = await GetLastStudySessions(currentUser.Id, cancellationToken);
+        return Ok(new { success = true, data = sessions });
+    }
+
+    [HttpGet("accessible-schedule-items")]
+    public async Task<IActionResult> GetAccessibleScheduleItemsData(CancellationToken cancellationToken)
+    {
+        var currentUser = await _userManager.GetUserAsync(User);
+        if (currentUser == null)
+        {
+            return Unauthorized();
+        }
+
+        var scheduleItems = await GetAccessibleScheduleItems(currentUser.Id, cancellationToken);
+        return Ok(new { success = true, data = scheduleItems });
     }
 
     public async Task<IActionResult> MyProgress()
@@ -91,38 +217,21 @@ public class HomeController : Controller
         return View(progressData);
     }
 
-    private async Task<int> GetStudentClassesCount(string studentId)
+    private static object BuildProgressStats(IReadOnlyCollection<ProgressDto> progressItems)
     {
-        try
-        {
-            var enrollments = await _mediator.Send(new GetEnrollmentsByStudentQuery(studentId, 1, 100));
-            return enrollments.Items.Count(e => e.IsActive);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting student classes count");
-            return 0;
-        }
-    }
+        var total = progressItems.Count;
+        var completed = progressItems.Count(p => p.Status == Domain.Enums.ProgressStatus.Done);
+        var inProgress = progressItems.Count(p => p.Status == Domain.Enums.ProgressStatus.InProgress);
+        var notStarted = progressItems.Count(p => p.Status == Domain.Enums.ProgressStatus.NotStarted);
 
-    private async Task<int> GetCompletedLessonsCount(string studentId)
-    {
-        try
+        return new
         {
-            var progress = await _mediator.Send(new GetProgressByStudentQuery(studentId, 1, 100));
-            return progress.Items.Count(p => p.Status == Domain.Enums.ProgressStatus.Done);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting completed lessons count");
-            return 0;
-        }
-    }
-
-    private Task<int> GetStudentExamsCount(string studentId)
-    {
-        // TODO: Implement when exam queries are available
-        return Task.FromResult(0);
+            Total = total,
+            Completed = completed,
+            InProgress = inProgress,
+            NotStarted = notStarted,
+            CompletionPercentage = total > 0 ? (completed * 100.0 / total) : 0
+        };
     }
 
     private Task<double> GetStudentAverageScore(string studentId)
@@ -131,81 +240,41 @@ public class HomeController : Controller
         return Task.FromResult(0.0);
     }
 
-    private async Task<List<object>> GetStudentRecentClasses(string studentId)
-    {
-        try
-        {
-            var enrollments = await _mediator.Send(new GetEnrollmentsByStudentQuery(studentId, 1, 5));
-            return enrollments.Items.Take(5).Cast<object>().ToList();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting student recent classes");
-            return new List<object>();
-        }
-    }
-
     private Task<List<object>> GetStudentUpcomingExams(string studentId)
     {
         // TODO: Implement when exam queries are available
         return Task.FromResult(new List<object>());
     }
 
-    private async Task<object> GetStudentProgressStats(string studentId)
+    private async Task<List<StudySessionHistoryDto>> GetLastStudySessions(string studentId, CancellationToken cancellationToken = default)
     {
         try
         {
-            var progress = await _mediator.Send(new GetProgressByStudentQuery(studentId, 1, 100));
-            var total = progress.Items.Count;
-            var completed = progress.Items.Count(p => p.Status == Domain.Enums.ProgressStatus.Done);
-            var inProgress = progress.Items.Count(p => p.Status == Domain.Enums.ProgressStatus.InProgress);
-            var notStarted = progress.Items.Count(p => p.Status == Domain.Enums.ProgressStatus.NotStarted);
-
-            return new
-            {
-                Total = total,
-                Completed = completed,
-                InProgress = inProgress,
-                NotStarted = notStarted,
-                CompletionPercentage = total > 0 ? (completed * 100.0 / total) : 0
-            };
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting student progress stats");
-            return new { Total = 0, Completed = 0, InProgress = 0, NotStarted = 0, CompletionPercentage = 0.0 };
-        }
-    }
-
-    private async Task<List<EduTrack.Application.Common.Models.StudySessions.StudySessionHistoryDto>> GetLastStudySessions(string studentId)
-    {
-        try
-        {
-            var result = await _mediator.Send(new GetLastStudySessionsQuery(studentId, 5));
-            return result.IsSuccess && result.Value != null ? result.Value : new List<EduTrack.Application.Common.Models.StudySessions.StudySessionHistoryDto>();
+            var result = await _mediator.Send(new GetLastStudySessionsQuery(studentId, 5), cancellationToken);
+            return result.IsSuccess && result.Value != null ? result.Value : new List<StudySessionHistoryDto>();
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting last study sessions");
-            return new List<EduTrack.Application.Common.Models.StudySessions.StudySessionHistoryDto>();
+            return new List<StudySessionHistoryDto>();
         }
     }
 
-    private async Task<List<EduTrack.Application.Common.Models.StudySessions.CourseStudyHistoryDto>> GetLastStudyCourses(string studentId)
+    private async Task<List<CourseStudyHistoryDto>> GetLastStudyCourses(string studentId, CancellationToken cancellationToken = default)
     {
         try
         {
-            var result = await _mediator.Send(new GetLastStudyCoursesQuery(studentId, 5));
-            return result.IsSuccess && result.Value != null ? result.Value : new List<EduTrack.Application.Common.Models.StudySessions.CourseStudyHistoryDto>();
+            var result = await _mediator.Send(new GetLastStudyCoursesQuery(studentId, 5), cancellationToken);
+            return result.IsSuccess && result.Value != null ? result.Value : new List<CourseStudyHistoryDto>();
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting last study courses");
-            return new List<EduTrack.Application.Common.Models.StudySessions.CourseStudyHistoryDto>();
+            return new List<CourseStudyHistoryDto>();
         }
     }
 
-    private async Task<StudyStatisticsDto> GetStudyStatistics(string studentId)
+    private async Task<StudyStatisticsDto> GetStudyStatistics(string studentId, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -217,14 +286,14 @@ public class HomeController : Controller
             var monthAgo = now.AddDays(-30);
 
             // Get all study sessions for the student
-            var allSessionsResult = await _mediator.Send(new GetAllStudySessionsQuery(studentId));
+            var allSessionsResult = await _mediator.Send(new GetAllStudySessionsQuery(studentId), cancellationToken);
             if (!allSessionsResult.IsSuccess || allSessionsResult.Value == null)
             {
                 _logger.LogWarning("Failed to get study sessions for student: {StudentId}, Error: {Error}", 
                     studentId, allSessionsResult.Error);
                 
                 // Fallback to old method
-                var fallbackResult = await _mediator.Send(new GetLastStudySessionsQuery(studentId, 1000));
+                var fallbackResult = await _mediator.Send(new GetLastStudySessionsQuery(studentId, 1000), cancellationToken);
                 if (!fallbackResult.IsSuccess || fallbackResult.Value == null)
                 {
                     _logger.LogWarning("Fallback also failed for student: {StudentId}", studentId);
@@ -300,17 +369,17 @@ public class HomeController : Controller
         return calendar.GetWeekOfYear(date.DateTime, System.Globalization.CalendarWeekRule.FirstDay, DayOfWeek.Saturday);
     }
 
-    private async Task<List<EduTrack.Application.Common.Models.ScheduleItems.ScheduleItemDto>> GetAccessibleScheduleItems(string studentId)
+    private async Task<List<ScheduleItemDto>> GetAccessibleScheduleItems(string studentId, CancellationToken cancellationToken = default)
     {
         try
         {
-            var result = await _mediator.Send(new GetScheduleItemsAccessibleToStudentQuery(studentId));
-            return result.IsSuccess && result.Value != null ? result.Value : new List<EduTrack.Application.Common.Models.ScheduleItems.ScheduleItemDto>();
+            var result = await _mediator.Send(new GetScheduleItemsAccessibleToStudentQuery(studentId), cancellationToken);
+            return result.IsSuccess && result.Value != null ? result.Value : new List<ScheduleItemDto>();
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting accessible schedule items for student: {StudentId}", studentId);
-            return new List<EduTrack.Application.Common.Models.ScheduleItems.ScheduleItemDto>();
+            return new List<ScheduleItemDto>();
         }
     }
 }

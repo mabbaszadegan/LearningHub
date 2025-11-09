@@ -1,0 +1,65 @@
+@using System.Linq
+@using EduTrack.Application.Common.Models.StudySessions
+@model IReadOnlyList<CourseStudyHistoryDto>
+@{
+    var sectionState = ViewBag.SectionState as string;
+    var sectionMessage = ViewBag.SectionMessage as string;
+    var courses = Model ?? Array.Empty<CourseStudyHistoryDto>();
+    var hasData = courses.Count > 0;
+}
+
+<div class="recently-viewed-section">
+    <div class="recently-viewed-header">
+        <h6>
+            <i class="fas fa-clock"></i>
+            دوره‌های اخیرا مشاهده شده
+        </h6>
+    </div>
+
+    @if (sectionState == "profile-required")
+    {
+        <div class="dashboard-section-message dashboard-section-warning">
+            <i class="fas fa-user-clock"></i>
+            <span>@sectionMessage</span>
+        </div>
+    }
+    else if (sectionState == "error")
+    {
+        <div class="dashboard-section-message dashboard-section-error">
+            <i class="fas fa-exclamation-circle"></i>
+            <span>@sectionMessage</span>
+        </div>
+    }
+    else if (!hasData)
+    {
+        <div class="dashboard-section-message dashboard-section-empty">
+            <i class="fas fa-history"></i>
+            <span>هنوز فعالیت اخیر ثبت نشده است.</span>
+        </div>
+    }
+    else
+    {
+        <div class="recently-viewed-list" data-component="recent-courses-list">
+            @foreach (var course in courses.Take(10))
+            {
+                <a href="@Url.Action("Study", "Course", new { id = course.CourseId })" class="recently-viewed-item">
+                    <div class="recently-viewed-thumbnail">
+                        @if (!string.IsNullOrEmpty(course.CourseThumbnail))
+                        {
+                            <img src="@course.CourseThumbnail" alt="@course.CourseTitle" />
+                        }
+                        else
+                        {
+                            <div class="placeholder">
+                                <i class="fas fa-graduation-cap"></i>
+                            </div>
+                        }
+                    </div>
+                    <div class="recently-viewed-title">@course.CourseTitle</div>
+                    <div class="recently-viewed-time">@course.RelativeTime</div>
+                </a>
+            }
+        </div>
+    }
+</div>
+

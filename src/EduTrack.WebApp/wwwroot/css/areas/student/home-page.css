@@ -1,5 +1,56 @@
 /* Home Page - Minimal & Modern Design */
 
+/* Dashboard Section Containers */
+.dashboard-section {
+    margin-bottom: 2rem;
+}
+
+.dashboard-section-loading,
+.dashboard-section-message {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 1.25rem;
+    border-radius: 0.75rem;
+    border: 1px solid #e5e7eb;
+    background: #f9fafb;
+    color: #4b5563;
+    font-size: 0.875rem;
+}
+
+.dashboard-section-loading .spinner-border {
+    width: 1rem;
+    height: 1rem;
+}
+
+.dashboard-section-message i {
+    color: inherit;
+}
+
+.dashboard-section-warning {
+    border-color: #fcd34d;
+    background: #fffbeb;
+    color: #92400e;
+}
+
+.dashboard-section-error {
+    border-color: #fca5a5;
+    background: #fef2f2;
+    color: #b91c1c;
+}
+
+.dashboard-section-empty {
+    border-style: dashed;
+    color: #6b7280;
+    background: #f9fafb;
+}
+
+.dashboard-section-error button,
+.dashboard-section-error .btn-link {
+    font-size: 0.85rem;
+    padding: 0;
+}
+
 /* Recently Viewed Courses Section */
 .recently-viewed-section {
     margin-bottom: 2rem;
