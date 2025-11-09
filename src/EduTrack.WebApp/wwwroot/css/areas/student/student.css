@@ -28,30 +28,45 @@
     text-align: center;
 }
 
+.header-profile-card__header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+.header-profile-card__titles {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: right;
+    gap: 2px;
+}
+
 .header-profile-card__icon {
-    width: 64px;
-    height: 64px;
-    margin: 0 auto;
+    width: 58px;
+    height: 58px;
     border-radius: 18px;
     background: linear-gradient(135deg, rgba(59, 130, 246, 0.18), rgba(99, 102, 241, 0.18));
     display: flex;
     align-items: center;
     justify-content: center;
     color: #2563eb;
-    font-size: 1.75rem;
+    font-size: 1.6rem;
 }
 
-.header-profile-card h4 {
+.header-profile-card__titles h4 {
     margin: 0;
-    font-size: 1.2rem;
+    font-size: 1.15rem;
     color: #0f172a;
     font-weight: 700;
 }
 
 .header-profile-card__subtitle {
-    margin: -6px 0 8px;
+    margin: 4px 0 0;
     color: #64748b;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
 }
 
 .header-profile-card__list {
@@ -115,6 +130,7 @@
     flex-direction: column;
     gap: 10px;
     text-align: right;
+    padding-top: 4px;
 }
 
 .header-profile-card__form label {
@@ -142,6 +158,41 @@
     border-color: #2563eb;
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
     outline: none;
+}
+
+.header-profile-card__add {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 11px 16px;
+    border-radius: 14px;
+    border: 1px solid rgba(59, 130, 246, 0.35);
+    background: rgba(59, 130, 246, 0.12);
+    color: #1d4ed8;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.header-profile-card__add:hover {
+    background: rgba(59, 130, 246, 0.2);
+    border-color: rgba(59, 130, 246, 0.45);
+    color: #1e40af;
+}
+
+.header-profile-card__cancel {
+    background: transparent;
+    border: none;
+    color: #64748b;
+    font-size: 0.85rem;
+    align-self: flex-start;
+    padding: 0;
+    transition: color 0.2s ease;
+}
+
+.header-profile-card__cancel:hover {
+    color: #1d4ed8;
 }
 
 .header-profile-card__close {

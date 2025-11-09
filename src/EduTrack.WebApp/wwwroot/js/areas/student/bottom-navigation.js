@@ -111,6 +111,11 @@ class BottomNavigation {
 
         const currentPath = window.location.pathname.toLowerCase();
         const targetPath = route.toLowerCase();
+
+        if (page === 'home') {
+            window.location.href = route;
+            return;
+        }
         
         // Only navigate if we're not already on the target page
         if (currentPath === targetPath || currentPath.includes(targetPath.replace('/student/', '').replace('/student', ''))) {

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using EduTrack.Application.Features.StudentProfiles;
@@ -34,16 +35,50 @@ public class StudentProfileContext : IStudentProfileContext
         _logger = logger;
     }
 
-    public Task<int?> GetActiveProfileIdAsync(CancellationToken cancellationToken = default)
+    public async Task<int?> GetActiveProfileIdAsync(CancellationToken cancellationToken = default)
     {
         var session = _httpContextAccessor.HttpContext?.Session;
-        return Task.FromResult<int?>(session?.GetInt32(ProfileIdSessionKey));
+        var currentProfileId = session?.GetInt32(ProfileIdSessionKey);
+        if (currentProfileId.HasValue)
+        {
+            return currentProfileId;
+        }
+
+        var profiles = await GetProfilesForCurrentUserAsync(false, cancellationToken);
+        var firstProfile = profiles?.FirstOrDefault(p => p != null);
+        if (firstProfile == null)
+        {
+            return null;
+        }
+
+        await SetActiveProfileAsync(firstProfile.Id, cancellationToken);
+        return firstProfile.Id;
     }
 
-    public Task<string?> GetActiveProfileNameAsync(CancellationToken cancellationToken = default)
+    public async Task<string?> GetActiveProfileNameAsync(CancellationToken cancellationToken = default)
     {
         var session = _httpContextAccessor.HttpContext?.Session;
-        return Task.FromResult(session?.GetString(ProfileNameSessionKey));
+        var currentName = session?.GetString(ProfileNameSessionKey);
+        if (!string.IsNullOrWhiteSpace(currentName))
+        {
+            return currentName;
+        }
+
+        var activeProfileId = await GetActiveProfileIdAsync(cancellationToken);
+        if (!activeProfileId.HasValue)
+        {
+            return null;
+        }
+
+        var profiles = await GetProfilesForCurrentUserAsync(false, cancellationToken);
+        var activeProfile = profiles?.FirstOrDefault(p => p != null && p.Id == activeProfileId);
+        if (activeProfile == null)
+        {
+            return null;
+        }
+
+        session?.SetString(ProfileNameSessionKey, activeProfile.DisplayName);
+        return activeProfile.DisplayName;
     }
 
     public async Task SetActiveProfileAsync(int? profileId, CancellationToken cancellationToken = default)

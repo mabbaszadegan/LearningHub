@@ -255,6 +255,7 @@
     /* User Profile Dropdown */
     .desktop-user-profile {
         position: relative;
+        order: -1;
     }
 
     .desktop-user-profile__button {
@@ -337,7 +338,7 @@
         display: none;
     }
 
-    .desktop-user-dropdown__profiles {
+    .desktop-user-dropdown__list {
         display: flex;
         flex-direction: column;
         gap: 6px;
@@ -346,7 +347,7 @@
         overflow-y: auto;
     }
 
-    .desktop-user-profile-option {
+    .desktop-user-dropdown__item {
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -361,20 +362,25 @@
         transition: all 0.2s ease;
     }
 
-    .desktop-user-profile-option:hover {
+    .desktop-user-dropdown__item:hover {
         background: rgba(59, 130, 246, 0.12);
         border-color: rgba(59, 130, 246, 0.25);
         color: #2563eb;
     }
 
-    .desktop-user-profile-option.active {
+    .desktop-user-dropdown__item.active {
         background: rgba(59, 130, 246, 0.15);
         border-color: rgba(59, 130, 246, 0.35);
         color: #1d4ed8;
     }
 
-    .desktop-user-profile-option i {
+    .desktop-user-dropdown__item i {
         font-size: 0.9rem;
+    }
+
+    .desktop-user-dropdown__item-name {
+        flex: 1;
+        text-align: right;
     }
 
     .desktop-user-profile-empty {
@@ -393,17 +399,116 @@
         color: #2563eb;
     }
 
-    .desktop-user-dropdown__actions {
+    .desktop-user-dropdown__create {
+        width: 100%;
         display: flex;
         flex-direction: column;
-        gap: 8px;
+        gap: 10px;
     }
 
-    .desktop-user-dropdown__actions .btn {
+    .desktop-user-dropdown__add {
+        width: 100%;
         display: flex;
         align-items: center;
         justify-content: center;
         gap: 8px;
+        padding: 10px 12px;
+        border-radius: 12px;
+        border: 1px solid rgba(59, 130, 246, 0.3);
+        background: rgba(59, 130, 246, 0.12);
+        color: #1d4ed8;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .desktop-user-dropdown__add:hover {
+        background: rgba(59, 130, 246, 0.2);
+        border-color: rgba(59, 130, 246, 0.45);
+        color: #1e40af;
+    }
+
+    .desktop-user-dropdown__form {
+        width: 100%;
+        padding: 12px;
+        border-radius: 12px;
+        border: 1px solid rgba(148, 163, 184, 0.35);
+        background: #f8fafc;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        animation: slideDown 0.25s ease;
+    }
+
+    .desktop-user-dropdown__form-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .desktop-user-dropdown__form-row input {
+        flex: 1;
+        padding: 10px 12px;
+        border-radius: 10px;
+        border: 1px solid rgba(100, 116, 139, 0.4);
+        background: #ffffff;
+        font-size: 0.9rem;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .desktop-user-dropdown__form-row input:focus {
+        outline: none;
+        border-color: rgba(59, 130, 246, 0.65);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18);
+    }
+
+    .desktop-user-dropdown__form-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        border: none;
+        border-radius: 50%;
+        background: transparent;
+        color: #2563eb;
+        font-size: 1rem;
+        line-height: 0;
+        font-family: inherit;
+        padding: 0;
+        font-weight: 400;
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        cursor: pointer;
+        transition: transform 0.2s ease, color 0.2s ease;
+    }
+
+    .desktop-user-dropdown__form-text {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 32px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        background: rgba(59, 130, 246, 0.12);
+        color: inherit;
+        font-size: 0.85rem;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+        transition: background 0.2s ease, transform 0.2s ease;
+    }
+
+    .desktop-user-dropdown__form-icon:hover,
+    .desktop-user-dropdown__form-icon:focus-visible {
+        transform: translateY(-1px);
+        color: #1d4ed8;
+    }
+
+    .desktop-user-dropdown__form-icon:hover .desktop-user-dropdown__form-text,
+    .desktop-user-dropdown__form-icon:focus-visible .desktop-user-dropdown__form-text {
+        background: rgba(59, 130, 246, 0.2);
+        transform: translateX(1px);
     }
 
 

@@ -120,14 +120,6 @@
             </span>
         </div>
         <div class="card-body">
-            @if (activeProfileId.HasValue && !string.IsNullOrEmpty(activeProfileName))
-            {
-                <div class="alert alert-info mb-3">
-                    <i class="fas fa-user-check me-2"></i>
-                    پروفایل فعال فعلی: <strong>@activeProfileName</strong>
-                </div>
-            }
-
             <div class="student-profiles-list"
                  data-active-profile-id="@(activeProfileId?.ToString() ?? string.Empty)"
                  data-update-url="@Url.Action("UpdateStudentProfile")"

@@ -92,34 +92,17 @@
 
             <!-- Header Actions -->
             <div class="desktop-header-actions">
-                <!-- Notifications -->
-                <button class="desktop-header-btn" data-action="notifications" title="اعلانات">
-                    <i class="fas fa-bell"></i>
-                    <span class="desktop-notification-badge">3</span>
-                </button>
-
-                <!-- Messages -->
-                <button class="desktop-header-btn" data-action="messages" title="پیام‌ها">
-                    <i class="fas fa-envelope"></i>
-                </button>
-
-                <!-- Help -->
-                <button class="desktop-header-btn" data-action="help" title="راهنما">
-                    <i class="fas fa-question-circle"></i>
-                </button>
-
                 <!-- User Profile -->
                 <div class="desktop-user-profile" data-component="header-profile" data-has-profiles="@hasProfiles.ToString().ToLowerInvariant()">
                     <button class="desktop-user-profile__button" type="button" data-action="toggle-profile-dropdown" aria-haspopup="true" aria-expanded="false">
                         <div class="desktop-user-avatar">@headerInitial</div>
                         <div class="desktop-user-details">
                             <span class="desktop-user-name">@headerProfileName</span>
-                            <span class="desktop-user-role">پروفایل فعال</span>
                         </div>
                         <i class="fas fa-chevron-down desktop-user-caret" aria-hidden="true"></i>
                     </button>
                     <div class="desktop-user-dropdown" data-element="profile-dropdown" hidden>
-                        <div class="desktop-user-dropdown__profiles">
+                        <div class="desktop-user-dropdown__list" role="list">
                             @if (hasProfiles)
                             {
                                 foreach (var profile in profileDtos)
@@ -130,10 +113,11 @@
                                     }
                                     var isActive = profile.Id == activeProfileId;
                                     <button type="button"
-                                            class="desktop-user-profile-option @(isActive ? "active" : null)"
+                                            class="desktop-user-dropdown__item @(isActive ? "active" : null)"
                                             data-action="header-profile-set"
-                                            data-profile-id="@profile.Id">
-                                        <span class="desktop-user-profile-option__name">@profile.DisplayName</span>
+                                            data-profile-id="@profile.Id"
+                                            role="listitem">
+                                        <span class="desktop-user-dropdown__item-name">@profile.DisplayName</span>
                                         @if (isActive)
                                         {
                                             <i class="fas fa-check" aria-hidden="true"></i>
@@ -149,17 +133,57 @@
                                 </div>
                             }
                         </div>
-                        <div class="desktop-user-dropdown__actions">
-                            <button type="button" class="btn btn-primary btn-sm w-100" data-action="header-open-create">
+                        <div class="desktop-user-dropdown__create" data-element="desktop-inline-create">
+                            <button type="button"
+                                    class="desktop-user-dropdown__add"
+                                    data-action="header-inline-create-toggle"
+                                    aria-expanded="false"
+                                    aria-controls="desktopProfileInlineCreateForm">
                                 <i class="fas fa-user-plus" aria-hidden="true"></i>
-                                پروفایل جدید
+                                افزودن پروفایل جدید
                             </button>
-                            <a href="/Student/Profile" class="btn btn-link btn-sm w-100">
-                                مدیریت کامل پروفایل‌ها
-                            </a>
+                            <div id="desktopProfileInlineCreateForm"
+                                 class="desktop-user-dropdown__form"
+                                 data-element="header-inline-create-form"
+                                 data-submit-url="@Url.Action("CreateStudentProfile", "Profile", new { area = "Student" })"
+                                 hidden>
+                                @Html.AntiForgeryToken()
+                                <label class="visually-hidden" for="desktopProfileInlineCreateName">نام پروفایل جدید</label>
+                                <div class="desktop-user-dropdown__form-row">
+                                    <input type="text"
+                                           id="desktopProfileInlineCreateName"
+                                           name="displayName"
+                                           placeholder="نام جدید پروفایل"
+                                           autocomplete="off"
+                                           maxlength="100"
+                                           required />
+                                    <button type="button"
+                                            class="desktop-user-dropdown__form-icon"
+                                            data-action="header-inline-create-submit"
+                                            aria-label="ثبت پروفایل">
+                                        <span class="desktop-user-dropdown__form-text">ثبت</span>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
+
+                <!-- Notifications -->
+                <button class="desktop-header-btn" data-action="notifications" title="اعلانات">
+                    <i class="fas fa-bell"></i>
+                    <span class="desktop-notification-badge">3</span>
+                </button>
+
+                <!-- Messages -->
+                <button class="desktop-header-btn" data-action="messages" title="پیام‌ها">
+                    <i class="fas fa-envelope"></i>
+                </button>
+
+                <!-- Help -->
+                <button class="desktop-header-btn" data-action="help" title="راهنما">
+                    <i class="fas fa-question-circle"></i>
+                </button>
             </div>
         </div>
     </header>
@@ -167,22 +191,96 @@
     <!-- Fixed Header -->
     <header class="fixed-header">
         <div class="header-content">
-            <div class="header-left" data-component="mobile-header-profile">
-                <button class="header-btn active-profile-name" type="button" data-action="header-open-menu" title="پروفایل فعال">
-                    <i class="fas fa-user-circle"></i>
-                    <span>@headerProfileName</span>
+            <div class="mobile-user-profile"
+                 data-component="mobile-header-profile"
+                 data-has-profiles="@hasProfiles.ToString().ToLowerInvariant()">
+                <button class="mobile-user-profile__button"
+                        type="button"
+                        data-action="header-open-menu"
+                        aria-haspopup="true"
+                        aria-expanded="false">
+                    <div class="mobile-user-avatar">@headerInitial</div>
+                    <div class="mobile-user-details">
+                        <span class="mobile-user-name">@headerProfileName</span>
+                    </div>
+                    <i class="fas fa-chevron-down mobile-user-caret" aria-hidden="true"></i>
                 </button>
-                
-                <a href="/Student/Settings" class="header-btn" title="تنظیمات">
-                    <i class="fas fa-cog"></i>
-                </a>
-                
+                <div class="mobile-user-dropdown" data-element="mobile-profile-dropdown" hidden>
+                    <div class="mobile-user-dropdown__list" role="list">
+                        @if (hasProfiles)
+                        {
+                            foreach (var profile in profileDtos)
+                            {
+                                if (profile is null)
+                                {
+                                    continue;
+                                }
+                                var isActive = profile.Id == activeProfileId;
+                                <button type="button"
+                                        class="mobile-user-dropdown__item @(isActive ? "active" : null)"
+                                        data-action="header-profile-set"
+                                        data-profile-id="@profile.Id"
+                                        role="listitem">
+                                    <span class="mobile-user-dropdown__item-name">@profile.DisplayName</span>
+                                    @if (isActive)
+                                    {
+                                        <i class="fas fa-check" aria-hidden="true"></i>
+                                    }
+                                </button>
+                            }
+                        }
+                        else
+                        {
+                            <div class="mobile-user-dropdown__empty">
+                                <i class="fas fa-user-plus" aria-hidden="true"></i>
+                                <p>برای شروع، یک پروفایل بسازید.</p>
+                            </div>
+                        }
+                    </div>
+                    <div class="mobile-user-dropdown__create" data-element="mobile-inline-create">
+                        <button type="button"
+                                class="mobile-user-dropdown__add"
+                                data-action="header-inline-create-toggle"
+                                aria-expanded="false"
+                                aria-controls="mobileProfileInlineCreateForm">
+                            <i class="fas fa-user-plus" aria-hidden="true"></i>
+                            افزودن پروفایل جدید
+                        </button>
+                        <div id="mobileProfileInlineCreateForm"
+                             class="mobile-user-dropdown__form"
+                             data-element="header-inline-create-form"
+                             data-submit-url="@Url.Action("CreateStudentProfile", "Profile", new { area = "Student" })"
+                             hidden>
+                            @Html.AntiForgeryToken()
+                            <label class="visually-hidden" for="mobileProfileInlineCreateName">نام پروفایل جدید</label>
+                            <div class="mobile-user-dropdown__form-row">
+                                <input type="text"
+                                       id="mobileProfileInlineCreateName"
+                                       name="displayName"
+                                       placeholder="نام جدید پروفایل"
+                                       autocomplete="off"
+                                       maxlength="100"
+                                       required />
+                                <button type="button"
+                                        class="mobile-user-dropdown__form-icon"
+                                        data-action="header-inline-create-submit"
+                                        aria-label="ثبت پروفایل">
+                                    <span class="mobile-user-dropdown__form-text">ثبت</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="mobile-header-actions">
                 <button class="header-btn notifications-btn" title="اعلانات">
                     <i class="fas fa-bell"></i>
                     <span class="notification-badge">3</span>
                 </button>
+                <a href="/Student/Settings" class="header-btn" title="تنظیمات">
+                    <i class="fas fa-cog"></i>
+                </a>
             </div>
-            
         </div>
     </header>
 
@@ -191,11 +289,15 @@
             <button type="button" class="header-profile-card__close" data-action="header-close-overlay" aria-label="بستن">
                 <i class="fas fa-times" aria-hidden="true"></i>
             </button>
-            <div class="header-profile-card__icon">
-                <i class="fas fa-user-circle" aria-hidden="true"></i>
+            <div class="header-profile-card__header">
+                <div class="header-profile-card__icon">
+                    <i class="fas fa-user-circle" aria-hidden="true"></i>
+                </div>
+                <div class="header-profile-card__titles">
+                    <h4 id="headerProfileOverlayTitle">پروفایل‌های یادگیرنده</h4>
+                    <p class="header-profile-card__subtitle">یک پروفایل را انتخاب کنید یا به فهرست اضافه کنید.</p>
+                </div>
             </div>
-            <h4 id="headerProfileOverlayTitle">پروفایل‌های یادگیرنده</h4>
-            <p class="header-profile-card__subtitle">پروفایل فعال خود را انتخاب کنید یا یک پروفایل جدید بسازید.</p>
 
             <div class="header-profile-card__list" data-element="header-profile-list">
                 @if (hasProfiles)
@@ -228,10 +330,20 @@
                 }
             </div>
 
+            <button type="button"
+                    class="header-profile-card__add"
+                    data-action="header-open-create"
+                    data-open-mode="create">
+                <i class="fas fa-user-plus" aria-hidden="true"></i>
+                افزودن پروفایل جدید
+            </button>
+
             <form id="headerProfileCreateForm"
                   class="header-profile-card__form"
                   method="post"
-                  action="@Url.Action("CreateStudentProfile", "Profile", new { area = "Student" })">
+                  action="@Url.Action("CreateStudentProfile", "Profile", new { area = "Student" })"
+                  data-element="header-profile-create"
+                  hidden>
                 @Html.AntiForgeryToken()
                 <label for="headerProfileCreateName">نام پروفایل جدید</label>
                 <div class="header-profile-card__form-row">
@@ -246,6 +358,11 @@
                         ثبت
                     </button>
                 </div>
+                <button type="button"
+                        class="header-profile-card__cancel"
+                        data-action="header-cancel-create">
+                    انصراف
+                </button>
             </form>
         </div>
     </div>
