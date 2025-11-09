@@ -1,17 +1,20 @@
 using EduTrack.Application.Common.Interfaces;
+using EduTrack.Application.Common.Models.ScheduleItems;
 using EduTrack.Application.Features.ScheduleItems.Commands;
 using EduTrack.Application.Features.ScheduleItems.Queries;
 using EduTrack.Application.Features.TeachingPlan.Queries;
-using EduTrack.Application.Common.Models.ScheduleItems;
 using EduTrack.Domain.Entities;
 using EduTrack.Domain.Enums;
 using EduTrack.Domain.Extensions;
-using EduTrack.WebApp.Extensions;
 using EduTrack.WebApp.Areas.Teacher.Views.Shared;
+using EduTrack.WebApp.Extensions;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using System.IO;
+using System.Text.Json;
 
 namespace EduTrack.WebApp.Areas.Teacher.Controllers;
 
@@ -213,7 +216,7 @@ public class ScheduleItemController : BaseTeacherController
                 request.MaxScore,
                 request.GroupIds,
                 request.SubChapterIds,
-                request.StudentIds
+                request.StudentProfileIds
             );
 
             var result = await _mediator.Send(command);
@@ -422,6 +425,43 @@ public class ScheduleItemController : BaseTeacherController
     {
         try
         {
+            if (request == null)
+            {
+                _logger.LogWarning("SaveStep called with null request body. Attempting manual JSON deserialization.");
+
+                try
+                {
+                    Request.EnableBuffering();
+                    Request.Body.Position = 0;
+
+                    using (var reader = new StreamReader(Request.Body, leaveOpen: true))
+                    {
+                        var rawBody = await reader.ReadToEndAsync();
+                        _logger.LogWarning("SaveStep raw request body when initial bind failed: {RawBody}", string.IsNullOrWhiteSpace(rawBody) ? "<empty>" : rawBody);
+                        Request.Body.Position = 0;
+                    }
+
+                    SaveScheduleItemStepRequest? fallbackRequest = await Request.ReadFromJsonAsync<SaveScheduleItemStepRequest>(new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    });
+                    if (fallbackRequest != null)
+                    {
+                        request = fallbackRequest;
+                    }
+                    Request.Body.Position = 0;
+                }
+                catch (Exception deserializeEx)
+                {
+                    _logger.LogError(deserializeEx, "Manual deserialization of SaveScheduleItemStepRequest failed.");
+                }
+
+                if (request == null)
+                {
+                    return Json(new { success = false, message = "درخواست نامعتبر است." });
+                }
+            }
+
             _logger.LogInformation("SaveStep called with request: {@Request}", request);
             Console.WriteLine($"SaveStep called - Step: {request.Step}, TeachingPlanId: {request.TeachingPlanId}");
 
@@ -435,7 +475,7 @@ public class ScheduleItemController : BaseTeacherController
             // Parse comma-separated IDs if they come as strings
             List<int>? groupIds = request.GroupIds;
             List<int>? subChapterIds = request.SubChapterIds;
-            List<string>? studentIds = request.StudentIds;
+            List<int>? studentProfileIds = request.StudentProfileIds;
 
             var command = new SaveScheduleItemStepCommand(
                 request.Id,
@@ -456,7 +496,7 @@ public class ScheduleItemController : BaseTeacherController
                 request.DueTime,
                 groupIds,
                 subChapterIds,
-                studentIds
+                studentProfileIds
             );
 
             var result = await _mediator.Send(command);

@@ -228,6 +228,16 @@ window.EduTrack.API = window.EduTrack.API || {};
          * @returns {Promise<Object>} API response
          */
         async saveStep(data) {
+            debugger;
+            if (!data || typeof data !== 'object') {
+                console.error('ScheduleItemAPI.saveStep called with invalid payload:', data);
+                throw new Error('داده مرحله ارسال نشده است');
+            }
+            if (Object.keys(data).length === 0) {
+                console.error('ScheduleItemAPI.saveStep called with empty payload object');
+                throw new Error('داده مرحله خالی است');
+            }
+
             const url = `${baseUrl}/SaveStep`;
             return await fetchAPI(url, {
                 method: 'POST',

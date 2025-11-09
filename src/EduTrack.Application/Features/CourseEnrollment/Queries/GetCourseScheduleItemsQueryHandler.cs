@@ -1,5 +1,9 @@
 using EduTrack.Application.Common.Models;
-using EduTrack.Application.Common.Models.TeachingPlans;
+using ScheduleItemGroupAssignmentDto = EduTrack.Application.Common.Models.ScheduleItems.ScheduleItemGroupAssignmentDto;
+using ScheduleItemStudentAssignmentDto = EduTrack.Application.Common.Models.ScheduleItems.ScheduleItemStudentAssignmentDto;
+using ScheduleItemSubChapterAssignmentDto = EduTrack.Application.Common.Models.ScheduleItems.ScheduleItemSubChapterAssignmentDto;
+using TeachingPlanScheduleItemDto = EduTrack.Application.Common.Models.TeachingPlans.ScheduleItemDto;
+using TeachingPlanScheduleItemStatus = EduTrack.Application.Common.Models.TeachingPlans.ScheduleItemStatus;
 using EduTrack.Domain.Entities;
 using EduTrack.Domain.Repositories;
 using MediatR;
@@ -10,7 +14,7 @@ namespace EduTrack.Application.Features.CourseEnrollment.Queries;
 /// <summary>
 /// Handler for GetCourseScheduleItemsQuery
 /// </summary>
-public class GetCourseScheduleItemsQueryHandler : IRequestHandler<GetCourseScheduleItemsQuery, Result<List<ScheduleItemDto>>>
+public class GetCourseScheduleItemsQueryHandler : IRequestHandler<GetCourseScheduleItemsQuery, Result<List<TeachingPlanScheduleItemDto>>>
 {
     private readonly IRepository<ScheduleItem> _scheduleItemRepository;
     private readonly IRepository<Domain.Entities.CourseEnrollment> _enrollmentRepository;
@@ -23,7 +27,7 @@ public class GetCourseScheduleItemsQueryHandler : IRequestHandler<GetCourseSched
         _enrollmentRepository = enrollmentRepository;
     }
 
-    public async Task<Result<List<ScheduleItemDto>>> Handle(GetCourseScheduleItemsQuery request, CancellationToken cancellationToken)
+    public async Task<Result<List<TeachingPlanScheduleItemDto>>> Handle(GetCourseScheduleItemsQuery request, CancellationToken cancellationToken)
     {
         try
         {
@@ -44,7 +48,7 @@ public class GetCourseScheduleItemsQueryHandler : IRequestHandler<GetCourseSched
 
             if (enrollment == null)
             {
-                return Result<List<ScheduleItemDto>>.Failure("Student is not enrolled in this course");
+                return Result<List<TeachingPlanScheduleItemDto>>.Failure("Student is not enrolled in this course");
             }
 
             // Get schedule items for the course
@@ -56,14 +60,14 @@ public class GetCourseScheduleItemsQueryHandler : IRequestHandler<GetCourseSched
                     .ThenInclude(sca => sca.SubChapter)
                         .ThenInclude(sc => sc.Chapter)
                 .Include(si => si.StudentAssignments)
-                    .ThenInclude(sa => sa.Student)
+                    .ThenInclude(sa => sa.StudentProfile)
                 .Include(si => si.Lesson)
                 .Where(si => si.TeachingPlan.CourseId == request.CourseId)
                 .OrderBy(si => si.StartDate)
                 .ToListAsync(cancellationToken);
 
             // Convert to DTOs
-            var scheduleItemDtos = scheduleItems.Select(si => new ScheduleItemDto
+            var scheduleItemDtos = scheduleItems.Select(si => new TeachingPlanScheduleItemDto
             {
                 Id = si.Id,
                 TeachingPlanId = si.TeachingPlanId,
@@ -107,25 +111,27 @@ public class GetCourseScheduleItemsQueryHandler : IRequestHandler<GetCourseSched
                 {
                     Id = sa.Id,
                     ScheduleItemId = sa.ScheduleItemId,
-                    StudentId = sa.StudentId,
-                    StudentName = $"{sa.Student?.FirstName} {sa.Student?.LastName}".Trim()
+                    StudentProfileId = sa.StudentProfileId,
+                    StudentUserId = sa.StudentProfile?.UserId ?? string.Empty,
+                    StudentDisplayName = sa.StudentProfile?.DisplayName ?? string.Empty
                 }).ToList(),
+                StudentProfileIds = si.StudentAssignments.Select(sa => sa.StudentProfileId).ToList(),
                 IsAssignedToAllGroups = si.IsAssignedToAllGroups(),
                 CurrentStep = si.CurrentStep,
-                Status = si.IsCompleted ? ScheduleItemStatus.Completed : 
-                        si.IsUpcoming() ? ScheduleItemStatus.Published :
-                        si.IsActive() ? ScheduleItemStatus.Active : ScheduleItemStatus.Expired,
+                Status = si.IsCompleted ? TeachingPlanScheduleItemStatus.Completed : 
+                        si.IsUpcoming() ? TeachingPlanScheduleItemStatus.Published :
+                        si.IsActive() ? TeachingPlanScheduleItemStatus.Active : TeachingPlanScheduleItemStatus.Expired,
                 StatusText = si.IsCompleted ? "تکمیل شده" : 
                            si.IsUpcoming() ? "آینده" :
                            si.IsActive() ? "فعال" : "منقضی شده",
                 TypeName = GetScheduleItemTypeName(si.Type)
             }).ToList();
 
-            return Result<List<ScheduleItemDto>>.Success(scheduleItemDtos);
+            return Result<List<TeachingPlanScheduleItemDto>>.Success(scheduleItemDtos);
         }
         catch (Exception ex)
         {
-            return Result<List<ScheduleItemDto>>.Failure($"خطا در بارگذاری آیتم‌های برنامه: {ex.Message}");
+            return Result<List<TeachingPlanScheduleItemDto>>.Failure($"خطا در بارگذاری آیتم‌های برنامه: {ex.Message}");
         }
     }
 

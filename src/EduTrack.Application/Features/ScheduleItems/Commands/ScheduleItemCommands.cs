@@ -19,7 +19,7 @@ namespace EduTrack.Application.Features.ScheduleItems.Commands;
         decimal? MaxScore,
         List<int>? GroupIds = null, // New multi-group assignment
         List<int>? SubChapterIds = null, // New subchapter assignment
-        List<string>? StudentIds = null // New student assignment
+        List<int>? StudentProfileIds = null // New student assignment
     ) : IRequest<Result<int>>;
 
 public record UpdateScheduleItemCommand(
@@ -60,7 +60,7 @@ public record SaveScheduleItemStepCommand(
     string? DueTime,
     List<int>? GroupIds = null, // New multi-group assignment
     List<int>? SubChapterIds = null, // New subchapter assignment
-    List<string>? StudentIds = null // New student assignment
+    List<int>? StudentProfileIds = null // New student assignment
 ) : IRequest<Result<int>>;
 
 public record CompleteScheduleItemCommand(int Id) : IRequest<Result>;

@@ -60,7 +60,16 @@ public class GetScheduleItemByIdQueryHandler : IRequestHandler<GetScheduleItemBy
                 ContentJson = scheduleItem.ContentJson,
                 GroupIds = scheduleItem.GroupAssignments.Select(ga => ga.StudentGroupId).ToList(),
                 SubChapterIds = scheduleItem.SubChapterAssignments.Select(sca => sca.SubChapterId).ToList(),
-                StudentIds = scheduleItem.StudentAssignments.Select(sa => sa.StudentId).ToList()
+                StudentAssignments = scheduleItem.StudentAssignments.Select(sa => new ScheduleItemStudentAssignmentDto
+                {
+                    Id = sa.Id,
+                    ScheduleItemId = sa.ScheduleItemId,
+                    StudentProfileId = sa.StudentProfileId,
+                    StudentUserId = sa.StudentProfile?.UserId ?? string.Empty,
+                    StudentDisplayName = sa.StudentProfile?.DisplayName ?? string.Empty,
+                    CreatedAt = sa.CreatedAt
+                }).ToList(),
+                StudentProfileIds = scheduleItem.StudentAssignments.Select(sa => sa.StudentProfileId).ToList()
             };
 
             return Result<ScheduleItemDto>.Success(dto);

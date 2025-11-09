@@ -110,7 +110,7 @@ public class ScheduleItemRepository : Repository<ScheduleItem>, IScheduleItemRep
             .Include(si => si.SubChapterAssignments)
                 .ThenInclude(sca => sca.SubChapter)
             .Include(si => si.StudentAssignments)
-                .ThenInclude(sa => sa.Student)
+                .ThenInclude(sa => sa.StudentProfile)
             .Include(si => si.TeachingPlan)
             .Include(si => si.Group)
             .Include(si => si.Lesson)
@@ -178,10 +178,10 @@ public class ScheduleItemRepository : Repository<ScheduleItem>, IScheduleItemRep
         var accessibleItems = await _dbSet
             .Include(si => si.GroupAssignments)
                 .ThenInclude(ga => ga.StudentGroup)
+                    .ThenInclude(g => g.Members)
+                        .ThenInclude(m => m.StudentProfile)
             .Include(si => si.SubChapterAssignments)
                 .ThenInclude(sca => sca.SubChapter)
-            .Include(si => si.StudentAssignments)
-                .ThenInclude(sa => sa.Student)
             .Include(si => si.StudentAssignments)
                 .ThenInclude(sa => sa.StudentProfile)
             .Include(si => si.TeachingPlan)
@@ -190,17 +190,18 @@ public class ScheduleItemRepository : Repository<ScheduleItem>, IScheduleItemRep
             .Where(si => 
                 // Rule 1: Direct assignment to student
                 si.StudentAssignments.Any(sa =>
-                    sa.StudentId == studentId &&
-                    (
-                        (studentProfileId.HasValue && sa.StudentProfileId == studentProfileId.Value) ||
-                        (!studentProfileId.HasValue && sa.StudentProfileId == null)
-                    )) ||
+                    (studentProfileId.HasValue && sa.StudentProfileId == studentProfileId.Value) ||
+                    (!studentProfileId.HasValue && sa.StudentProfile.UserId == studentId)) ||
                 
                 // Rule 2: Assignment to student's group AND no individual students in that group are assigned
                 si.GroupAssignments.Any(ga => 
-                    ga.StudentGroup.Members.Any(m => m.StudentId == studentId) &&
+                    ga.StudentGroup.Members.Any(m =>
+                        (studentProfileId.HasValue && m.StudentProfileId == studentProfileId.Value) ||
+                        (!studentProfileId.HasValue && m.StudentProfile.UserId == studentId)) &&
                     !si.StudentAssignments.Any(sa => 
-                        ga.StudentGroup.Members.Any(m => m.StudentId == sa.StudentId)
+                        ga.StudentGroup.Members.Any(m =>
+                            (studentProfileId.HasValue && m.StudentProfileId == sa.StudentProfileId) ||
+                            (!studentProfileId.HasValue && m.StudentProfile.UserId == sa.StudentProfile.UserId))
                     )
                 ) ||
                 

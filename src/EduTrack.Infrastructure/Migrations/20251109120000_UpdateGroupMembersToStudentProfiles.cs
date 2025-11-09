@@ -93,6 +93,71 @@ public partial class UpdateGroupMembersToStudentProfiles : Migration
             principalColumn: "Id",
             onDelete: ReferentialAction.NoAction);
 
+        migrationBuilder.DropForeignKey(
+            name: "FK_ScheduleItemStudentAssignment_AspNetUsers_StudentId",
+            table: "ScheduleItemStudentAssignment");
+
+        migrationBuilder.DropIndex(
+            name: "IX_ScheduleItemStudentAssignment_StudentId",
+            table: "ScheduleItemStudentAssignment");
+
+        migrationBuilder.DropIndex(
+            name: "IX_ScheduleItemStudentAssignment_ScheduleItemId_StudentId",
+            table: "ScheduleItemStudentAssignment");
+
+        migrationBuilder.DropIndex(
+            name: "IX_ScheduleItemStudentAssignment_ScheduleItemId_StudentId_StudentProfileId",
+            table: "ScheduleItemStudentAssignment");
+
+        migrationBuilder.Sql("""
+            INSERT INTO StudentProfiles (UserId, DisplayName, AvatarUrl, DateOfBirth, GradeLevel, Notes, IsArchived, CreatedAt, UpdatedAt)
+            SELECT DISTINCT
+                u.Id,
+                LTRIM(RTRIM(CONCAT(
+                    COALESCE(NULLIF(u.FirstName, ''), ''),
+                    CASE WHEN NULLIF(u.FirstName, '') IS NULL OR NULLIF(u.LastName, '') IS NULL THEN '' ELSE ' ' END,
+                    COALESCE(NULLIF(u.LastName, ''), u.UserName, 'Student')
+                ))),
+                NULL,
+                NULL,
+                NULL,
+                NULL,
+                0,
+                SYSUTCDATETIME(),
+                SYSUTCDATETIME()
+            FROM AspNetUsers u
+            INNER JOIN ScheduleItemStudentAssignment sia ON sia.StudentId = u.Id
+            LEFT JOIN StudentProfiles sp ON sp.UserId = u.Id
+            WHERE sp.Id IS NULL;
+            """);
+
+        migrationBuilder.Sql("""
+            UPDATE sia
+            SET StudentProfileId = sp.Id
+            FROM ScheduleItemStudentAssignment sia
+            INNER JOIN StudentProfiles sp ON sp.UserId = sia.StudentId
+            WHERE sia.StudentProfileId IS NULL;
+            """);
+
+        migrationBuilder.AlterColumn<int>(
+            name: "StudentProfileId",
+            table: "ScheduleItemStudentAssignment",
+            type: "int",
+            nullable: false,
+            oldClrType: typeof(int),
+            oldType: "int",
+            oldNullable: true);
+
+        migrationBuilder.CreateIndex(
+            name: "IX_ScheduleItemStudentAssignment_ScheduleItemId_StudentProfileId",
+            table: "ScheduleItemStudentAssignment",
+            columns: new[] { "ScheduleItemId", "StudentProfileId" },
+            unique: true);
+
+        migrationBuilder.DropColumn(
+            name: "StudentId",
+            table: "ScheduleItemStudentAssignment");
+
         migrationBuilder.DropColumn(
             name: "StudentId",
             table: "GroupMembers");

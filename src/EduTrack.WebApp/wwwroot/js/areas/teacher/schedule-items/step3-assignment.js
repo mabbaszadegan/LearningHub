@@ -495,11 +495,23 @@ class Step3AssignmentManager {
                 
                 if (students && students.length > 0) {
                     // Add group info to each student
-                    const studentsWithGroup = students.map(student => ({
-                        ...student,
-                        groupId: group.id,
-                        groupName: group.name
-                    }));
+                    const studentsWithGroup = students.map(student => {
+                        const profileId = student.studentProfileId ?? student.id ?? student.profileId;
+                        const userId = student.studentId ?? student.userId;
+
+                        if (!profileId) {
+                            console.warn('Student record missing profile id', student);
+                        }
+
+                        return {
+                            ...student,
+                            id: profileId,
+                            studentProfileId: profileId,
+                            studentId: userId,
+                            groupId: group.id,
+                            groupName: group.name
+                        };
+                    });
                     this.allStudents.push(...studentsWithGroup);
                 } else {
                 }
@@ -674,7 +686,7 @@ class Step3AssignmentManager {
         // Update hidden inputs for form submission
         const groupIdsInput = document.getElementById('selectedGroupIds');
         const subChapterIdsInput = document.getElementById('selectedSubChapterIds');
-        const studentIdsInput = document.getElementById('selectedStudentIds');
+        const studentProfileIdsInput = document.getElementById('selectedStudentProfileIds');
 
         if (groupIdsInput) {
             groupIdsInput.value = this.selectedGroups.map(g => g.id).join(',');
@@ -684,8 +696,8 @@ class Step3AssignmentManager {
             subChapterIdsInput.value = this.selectedSubChapters.map(sc => sc.id).join(',');
         }
 
-        if (studentIdsInput) {
-            studentIdsInput.value = this.selectedStudents.map(s => s.id).join(',');
+        if (studentProfileIdsInput) {
+            studentProfileIdsInput.value = this.selectedStudents.map(s => s.id).join(',');
         }
     }
 
@@ -729,7 +741,7 @@ class Step3AssignmentManager {
         // Always include arrays, even if empty, to ensure proper handling
         stepData.GroupIds = selectedGroups.length > 0 ? selectedGroups.map(g => g.id) : [];
         stepData.SubChapterIds = selectedSubChapters.length > 0 ? selectedSubChapters.map(sc => sc.id) : [];
-        stepData.StudentIds = selectedStudents.length > 0 ? selectedStudents.map(s => s.id) : [];
+        stepData.StudentProfileIds = selectedStudents.length > 0 ? selectedStudents.map(s => s.id) : [];
 
         return stepData;
     }
@@ -749,8 +761,8 @@ class Step3AssignmentManager {
                     const subChapters = existingData.subChapterIds.map(id => ({ id: id, title: '' })); // Title will be loaded later
                     this.setSelectedSubChapters(subChapters);
                 }
-                if (existingData.studentIds && existingData.studentIds.length > 0) {
-                    const students = existingData.studentIds.map(id => ({ id: id, firstName: '', lastName: '' })); // Details will be loaded later
+                if (existingData.studentProfileIds && existingData.studentProfileIds.length > 0) {
+                    const students = existingData.studentProfileIds.map(id => ({ id: id, firstName: '', lastName: '' })); // Details will be loaded later
                     this.setSelectedStudents(students);
                 }
                 

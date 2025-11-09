@@ -73,14 +73,14 @@ public class CreateScheduleItemCommandHandler : IRequestHandler<CreateScheduleIt
             }
 
             // Add student assignments if specified
-            if (request.StudentIds != null && request.StudentIds.Any())
+            if (request.StudentProfileIds != null && request.StudentProfileIds.Any())
             {
                 // Remove duplicates to prevent unique constraint violations
-                var uniqueStudentIds = request.StudentIds.Distinct().ToList();
+                var uniqueStudentProfileIds = request.StudentProfileIds.Distinct().ToList();
                 
-                foreach (var studentId in uniqueStudentIds)
+                foreach (var studentProfileId in uniqueStudentProfileIds)
                 {
-                    var studentAssignment = ScheduleItemStudentAssignment.Create(scheduleItem.Id, studentId);
+                    var studentAssignment = ScheduleItemStudentAssignment.Create(scheduleItem.Id, studentProfileId);
                     scheduleItem.AddStudentAssignment(studentAssignment);
                 }
             }

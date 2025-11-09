@@ -146,6 +146,7 @@ public class GetStudentCourseEnrollmentsQueryHandler : IRequestHandler<GetStuden
         var scheduleItems = await _scheduleItemRepository.GetAll()
             .Include(si => si.TeachingPlan)
             .Include(si => si.StudentAssignments)
+                .ThenInclude(sa => sa.StudentProfile)
             .Where(si => si.TeachingPlan.CourseId == courseId)
             .ToListAsync(cancellationToken);
 
@@ -153,10 +154,9 @@ public class GetStudentCourseEnrollmentsQueryHandler : IRequestHandler<GetStuden
         scheduleItems = scheduleItems
             .Where(si =>
                 !si.StudentAssignments.Any() ||
-                si.StudentAssignments.Any(sa => sa.StudentId == studentId &&
-                    (studentProfileId.HasValue
-                        ? sa.StudentProfileId == studentProfileId
-                        : sa.StudentProfileId == null)))
+                si.StudentAssignments.Any(sa =>
+                    (studentProfileId.HasValue && sa.StudentProfileId == studentProfileId.Value) ||
+                    (!studentProfileId.HasValue && sa.StudentProfile.UserId == studentId)))
             .ToList();
 
         // Group by type and calculate statistics

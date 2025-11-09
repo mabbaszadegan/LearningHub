@@ -1134,7 +1134,7 @@ class ModernScheduleItemFormManager {
         if (this.step3Manager) {
             const selectedStudents = this.step3Manager.getSelectedStudents();
             if (selectedStudents.length > 0) {
-                data.StudentIds = selectedStudents.map(s => s.id);
+                data.StudentProfileIds = selectedStudents.map(s => s.id);
             }
         }
 
@@ -1375,7 +1375,11 @@ class ModernScheduleItemFormManager {
             if (this.currentStep === 3) {
                 if (!requestData.GroupIds) requestData.GroupIds = [];
                 if (!requestData.SubChapterIds) requestData.SubChapterIds = [];
-                if (!requestData.StudentIds) requestData.StudentIds = [];
+                if (!requestData.StudentProfileIds) requestData.StudentProfileIds = [];
+            }
+
+            if (window.console && typeof window.console.debug === 'function') {
+                console.debug('ScheduleItemForm.saveCurrentStep payload:', JSON.parse(JSON.stringify(requestData)));
             }
 
             // Ensure ContentJson is a string, not an object

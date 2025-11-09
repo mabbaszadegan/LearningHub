@@ -1,6 +1,7 @@
 using EduTrack.Application.Common.Interfaces;
 using EduTrack.Application.Common.Models;
 using EduTrack.Application.Common.Models.TeachingPlans;
+using ScheduleItemStudentAssignmentDto = EduTrack.Application.Common.Models.ScheduleItems.ScheduleItemStudentAssignmentDto;
 using EduTrack.Application.Features.TeachingPlan.Queries;
 using EduTrack.Domain.Repositories;
 using MediatR;
@@ -133,7 +134,15 @@ public class GetStudentAgendaQueryHandler : IRequestHandler<GetStudentAgendaQuer
             IsUpcoming = item.IsUpcoming(),
             IsActive = item.IsActive(),
             TimeUntilDue = item.GetTimeUntilDue(),
-            StudentIds = item.StudentAssignments.Select(sa => sa.StudentId).ToList(),
+            StudentAssignments = item.StudentAssignments.Select(sa => new ScheduleItemStudentAssignmentDto
+            {
+                Id = sa.Id,
+                ScheduleItemId = sa.ScheduleItemId,
+                StudentProfileId = sa.StudentProfileId,
+                StudentUserId = sa.StudentProfile?.UserId ?? string.Empty,
+                StudentDisplayName = sa.StudentProfile?.DisplayName ?? string.Empty,
+                CreatedAt = sa.CreatedAt
+            }).ToList(),
             StudentProfileIds = item.StudentAssignments.Select(sa => sa.StudentProfileId).ToList()
         };
     }

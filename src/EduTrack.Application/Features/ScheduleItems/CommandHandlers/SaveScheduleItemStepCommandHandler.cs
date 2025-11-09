@@ -122,14 +122,14 @@ public class SaveScheduleItemStepCommandHandler : IRequestHandler<SaveScheduleIt
                 }
 
                 // Add new student assignments if provided
-                if (request.StudentIds != null && request.StudentIds.Any())
+                if (request.StudentProfileIds != null && request.StudentProfileIds.Any())
                 {
                     // Remove duplicates to prevent unique constraint violations
-                    var uniqueStudentIds = request.StudentIds.Distinct().ToList();
+                    var uniqueStudentProfileIds = request.StudentProfileIds.Distinct().ToList();
                     
-                    foreach (var studentId in uniqueStudentIds)
+                    foreach (var studentProfileId in uniqueStudentProfileIds)
                     {
-                        var studentAssignment = ScheduleItemStudentAssignment.Create(scheduleItem.Id, studentId);
+                        var studentAssignment = ScheduleItemStudentAssignment.Create(scheduleItem.Id, studentProfileId);
                         scheduleItem.StudentAssignments.Add(studentAssignment);
                     }
                 }
@@ -220,12 +220,12 @@ public class SaveScheduleItemStepCommandHandler : IRequestHandler<SaveScheduleIt
                                 }
                             }
 
-                            if (request.StudentIds != null && request.StudentIds.Any())
+                            if (request.StudentProfileIds != null && request.StudentProfileIds.Any())
                             {
-                                var uniqueStudentIds = request.StudentIds.Distinct().ToList();
-                                foreach (var studentId in uniqueStudentIds)
+                                var uniqueStudentProfileIds = request.StudentProfileIds.Distinct().ToList();
+                                foreach (var studentProfileId in uniqueStudentProfileIds)
                                 {
-                                    var studentAssignment = ScheduleItemStudentAssignment.Create(reloadedItem.Id, studentId);
+                                    var studentAssignment = ScheduleItemStudentAssignment.Create(reloadedItem.Id, studentProfileId);
                                     reloadedItem.StudentAssignments.Add(studentAssignment);
                                 }
                             }
@@ -279,7 +279,7 @@ public class SaveScheduleItemStepCommandHandler : IRequestHandler<SaveScheduleIt
                 scheduleItem.UpdateAssignment(request.GroupId, null);
                 
                 // Update student assignments if provided
-                if (request.StudentIds != null)
+                if (request.StudentProfileIds != null)
                 {
                     // Always clear and update student assignments
                     // First, remove existing assignments from database
@@ -293,17 +293,17 @@ public class SaveScheduleItemStepCommandHandler : IRequestHandler<SaveScheduleIt
                     scheduleItem.StudentAssignments.Clear();
 
                     // Add new student assignments if provided
-                    if (request.StudentIds.Any())
+                    if (request.StudentProfileIds.Any())
                     {
                         // Remove duplicates to prevent unique constraint violations
-                        var uniqueStudentIds = request.StudentIds.Distinct().ToList();
+                        var uniqueStudentProfileIds = request.StudentProfileIds.Distinct().ToList();
                         
-                        foreach (var studentId in uniqueStudentIds)
+                        foreach (var studentProfileId in uniqueStudentProfileIds)
                         {
                             // Double-check that this assignment doesn't already exist
-                            if (!scheduleItem.StudentAssignments.Any(sa => sa.StudentId == studentId))
+                            if (!scheduleItem.StudentAssignments.Any(sa => sa.StudentProfileId == studentProfileId))
                             {
-                                var studentAssignment = ScheduleItemStudentAssignment.Create(scheduleItem.Id, studentId);
+                                var studentAssignment = ScheduleItemStudentAssignment.Create(scheduleItem.Id, studentProfileId);
                                 scheduleItem.StudentAssignments.Add(studentAssignment);
                             }
                         }

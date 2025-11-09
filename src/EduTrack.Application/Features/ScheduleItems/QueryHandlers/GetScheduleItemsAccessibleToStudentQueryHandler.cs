@@ -63,7 +63,15 @@ public class GetScheduleItemsAccessibleToStudentQueryHandler : IRequestHandler<G
                     ContentJson = item.ContentJson,
                     GroupIds = item.GroupAssignments.Select(ga => ga.StudentGroupId).ToList(),
                     SubChapterIds = item.SubChapterAssignments.Select(sca => sca.SubChapterId).ToList(),
-                    StudentIds = item.StudentAssignments.Select(sa => sa.StudentId).ToList(),
+                    StudentAssignments = item.StudentAssignments.Select(sa => new ScheduleItemStudentAssignmentDto
+                    {
+                        Id = sa.Id,
+                        ScheduleItemId = sa.ScheduleItemId,
+                        StudentProfileId = sa.StudentProfileId,
+                        StudentUserId = sa.StudentProfile?.UserId ?? string.Empty,
+                        StudentDisplayName = sa.StudentProfile?.DisplayName ?? string.Empty,
+                        CreatedAt = sa.CreatedAt
+                    }).ToList(),
                     StudentProfileIds = item.StudentAssignments.Select(sa => sa.StudentProfileId).ToList()
                 };
 

@@ -711,20 +711,12 @@ public class AppDbContext : IdentityDbContext<User>
                 .WithMany(e => e.StudentAssignments)
                 .HasForeignKey(e => e.ScheduleItemId)
                 .OnDelete(DeleteBehavior.Cascade);
-            entity.HasOne(e => e.Student)
-                .WithMany()
-                .HasForeignKey(e => e.StudentId)
-                .OnDelete(DeleteBehavior.Cascade);
             entity.HasOne(e => e.StudentProfile)
                 .WithMany(p => p.ScheduleItemAssignments)
                 .HasForeignKey(e => e.StudentProfileId)
                 .OnDelete(DeleteBehavior.NoAction);
-            entity.HasIndex(e => new { e.ScheduleItemId, e.StudentId, e.StudentProfileId }).IsUnique();
-            entity.HasIndex(e => new { e.ScheduleItemId, e.StudentId })
-                .IsUnique()
-                .HasFilter("[StudentProfileId] IS NULL");
+            entity.HasIndex(e => new { e.ScheduleItemId, e.StudentProfileId }).IsUnique();
             entity.HasIndex(e => e.ScheduleItemId);
-            entity.HasIndex(e => e.StudentId);
             entity.HasIndex(e => e.StudentProfileId);
         });
 
