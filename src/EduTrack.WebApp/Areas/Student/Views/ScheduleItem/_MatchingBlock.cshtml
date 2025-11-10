@@ -23,16 +23,15 @@
 
 <div class="matching-block-card" data-block-id="@Model.Id" data-block-order="@Model.Order">
     <div class="matching-block-header">
-        <div class="matching-block-number" aria-label="بلاک تطبیق شماره @(blockIndex + 1)">
-            <i class="fas fa-link" aria-hidden="true"></i>
-            <span class="block-number-text">@((blockIndex + 1).ToString())</span>
-            <span class="sr-only">تطبیق</span>
+        <div class="matching-block-meta">
+            <span class="matching-block-badge" aria-label="بلاک تطبیق شماره @(blockIndex + 1)">
+                @((blockIndex + 1).ToString())
+            </span>
+            <span class="matching-block-label">تطبیق</span>
         </div>
         @if (!string.IsNullOrWhiteSpace(Model.Instruction))
         {
-            <div class="matching-block-instruction">
-                <p>@Model.Instruction</p>
-            </div>
+            <p class="matching-block-instruction">@Model.Instruction</p>
         }
     </div>
 
@@ -42,22 +41,27 @@
                 @if (items.Count == 0)
                 {
                     <div class="matching-empty-state">
-                        <i class="fas fa-info-circle"></i>
                         <span>آیتمی برای تطبیق موجود نیست.</span>
                     </div>
                 }
                 else
                 {
-                    var rowIndex = 0;
-                    foreach (var pair in items)
-                    {
-                        var selectId = $"matching-select-{Model.Id}-{rowIndex}";
-                        <div class="matching-item-row" data-left-id="@pair.Id">
-                            <div class="matching-item-content">
-                                @RenderSideContent(pair.Left)
-                            </div>
-                            <div class="matching-item-select">
-                                <label for="@selectId">تطبیق مناسب را انتخاب کنید</label>
+                    <div class="matching-items-list">
+                        @for (var rowIndex = 0; rowIndex < items.Count; rowIndex++)
+                        {
+                            var pair = items[rowIndex];
+                            var selectId = $"matching-select-{Model.Id}-{rowIndex}";
+                            <div class="matching-item" data-left-id="@pair.Id">
+                                <button type="button"
+                                        class="matching-item-button"
+                                        data-left-id="@pair.Id"
+                                        data-select-id="@selectId">
+                                    <span class="matching-item-index">@((rowIndex + 1).ToString())</span>
+                                    <div class="matching-item-media">
+                                        @RenderSideContent(pair.Left)
+                                    </div>
+                                    <span class="matching-item-current" data-empty-label="انتخاب نشده">انتخاب نشده</span>
+                                </button>
                                 <select id="@selectId"
                                         class="matching-select-input"
                                         data-left-id="@pair.Id"
@@ -69,34 +73,34 @@
                                     }
                                 </select>
                             </div>
-                        </div>
-                        rowIndex++;
-                    }
+                        }
+                    </div>
                 }
             </div>
             <div class="matching-right-column" aria-label="گزینه‌های ستون راست">
-                <div class="matching-right-title">
-                    <i class="fas fa-list-ul" aria-hidden="true"></i>
-                    <span>گزینه‌های انتخابی</span>
-                </div>
+                <h3 class="matching-right-title">گزینه‌ها</h3>
                 @if (optionEntries.Count == 0)
                 {
                     <div class="matching-empty-state">
-                        <i class="fas fa-info-circle"></i>
                         <span>هنوز گزینه‌ای تنظیم نشده است.</span>
                     </div>
                 }
                 else
                 {
-                    foreach (var option in optionEntries)
-                    {
-                        <div class="matching-option-preview" data-option-id="@option.Item.Id">
-                            <div class="matching-option-letter">@option.Letter</div>
-                            <div class="matching-option-content">
-                                @RenderSideContent(option.Item.Right)
-                            </div>
-                        </div>
-                    }
+                    <div class="matching-option-list">
+                        @foreach (var option in optionEntries)
+                        {
+                            <button type="button"
+                                    class="matching-option-button"
+                                    data-option-id="@option.Item.Id"
+                                    data-option-letter="@option.Letter">
+                                <span class="matching-option-letter">@option.Letter</span>
+                                <div class="matching-option-body">
+                                    @RenderSideContent(option.Item.Right)
+                                </div>
+                            </button>
+                        }
+                    </div>
                 }
             </div>
         </div>
@@ -111,7 +115,8 @@
                     data-block-id="@Model.Id"
                     data-block-order="@Model.Order"
                     title="بررسی پاسخ">
-                <i class="fas fa-check"></i>
+                <i class="fas fa-check" aria-hidden="true"></i>
+                <span class="sr-only">بررسی پاسخ</span>
             </button>
             <div class="block-answer-history" data-block-id="@Model.Id">
                 <span class="history-correct" data-count="0">0</span>
@@ -211,7 +216,14 @@
 
         var alt = WebUtility.HtmlEncode(GetMediaAlt(side));
         var url = WebUtility.HtmlEncode(side.FileUrl);
-        return new HtmlString($"<img src=\"{url}\" alt=\"{alt}\" class=\"matching-media-image\" loading=\"lazy\" />");
+        var html = string.Concat(
+            "<button type=\"button\" class=\"matching-media-button\" data-image-url=\"", url,
+            "\" data-image-alt=\"", alt,
+            "\" aria-label=\"مشاهده تصویر\">",
+            "<img src=\"", url, "\" alt=\"", alt, "\" class=\"matching-media-image\" loading=\"lazy\" />",
+            "<span class=\"matching-media-zoom\" aria-hidden=\"true\"></span>",
+            "</button>");
+        return new HtmlString(html);
     }
 
     private IHtmlContent RenderAudio(MatchingBlockSide side)
@@ -223,10 +235,16 @@
 
         var url = WebUtility.HtmlEncode(side.FileUrl);
         var mime = WebUtility.HtmlEncode(side.MimeType ?? "audio/mpeg");
-        return new HtmlString($@"<audio controls class=""matching-media-audio"">
-    <source src=""{url}"" type=""{mime}"">
-    مرورگر شما از پخش صوت پشتیبانی نمی‌کند.
-</audio>");
+        var html = string.Concat(
+            "<button type=\"button\" class=\"matching-audio-button\" data-audio-src=\"", url,
+            "\" data-audio-type=\"", mime,
+            "\" aria-label=\"پخش فایل صوتی\" aria-pressed=\"false\">",
+            "<span class=\"matching-audio-icon\" aria-hidden=\"true\"></span>",
+            "<audio src=\"", url, "\" preload=\"none\" class=\"matching-audio-element\">",
+            "<source src=\"", url, "\" type=\"", mime, "\">",
+            "</audio>",
+            "</button>");
+        return new HtmlString(html);
     }
 
     private IHtmlContent RenderVideo(MatchingBlockSide side)
@@ -238,10 +256,12 @@
 
         var url = WebUtility.HtmlEncode(side.FileUrl);
         var mime = WebUtility.HtmlEncode(side.MimeType ?? "video/mp4");
-        return new HtmlString($@"<video controls class=""matching-media-video"">
-    <source src=""{url}"" type=""{mime}"">
-    مرورگر شما از پخش ویدیو پشتیبانی نمی‌کند.
-</video>");
+        var html = string.Concat(
+            "<video controls class=\"matching-media-video\" preload=\"metadata\">",
+            "<source src=\"", url, "\" type=\"", mime, "\">",
+            "مرورگر شما از پخش ویدیو پشتیبانی نمی‌کند.",
+            "</video>");
+        return new HtmlString(html);
     }
 }
 

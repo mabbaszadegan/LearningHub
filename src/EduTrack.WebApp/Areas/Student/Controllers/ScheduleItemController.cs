@@ -8,6 +8,8 @@ using EduTrack.Application.Common.Models.TeachingPlans;
 using EduTrack.Application.Common.Models.ScheduleItems;
 using MultipleChoiceContent = EduTrack.Application.Common.Models.ScheduleItems.MultipleChoiceContent;
 using MultipleChoiceBlock = EduTrack.Application.Common.Models.ScheduleItems.MultipleChoiceBlock;
+using QuizContentModel = EduTrack.Application.Common.Models.ScheduleItems.QuizContent;
+using QuizQuestionModel = EduTrack.Application.Common.Models.ScheduleItems.QuizQuestion;
 using EduTrack.Domain.Enums;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -18,6 +20,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using EduTrack.WebApp.Models;
 using EduTrack.WebApp.Services;
@@ -317,7 +320,7 @@ public class ScheduleItemController : Controller
             ScheduleItemType.Match => ParseMatchFromBlocks(blocksArray, jsonSettings),
             ScheduleItemType.ErrorFinding => ParseErrorFindingFromBlocks(blocksArray, jsonSettings),
             ScheduleItemType.CodeExercise => ParseCodeExerciseFromBlocks(blocksArray, jsonSettings),
-            ScheduleItemType.Quiz => ParseQuizFromBlocks(blocksArray, jsonSettings),
+            ScheduleItemType.Quiz => ParseQuizFromBlocks(jsonObject, blocksArray, jsonSettings),
             ScheduleItemType.Ordering => ParseOrderingFromBlocks(blocksArray, jsonSettings),
             _ => null
         };
@@ -1401,9 +1404,478 @@ public class ScheduleItemController : Controller
         return JsonConvert.DeserializeObject<CodeExerciseContent>("{}", settings) ?? new CodeExerciseContent();
     }
 
-    private QuizContent ParseQuizFromBlocks(JArray blocksArray, JsonSerializerSettings settings)
+    private QuizContentModel ParseQuizFromBlocks(JObject rootObject, JArray blocksArray, JsonSerializerSettings settings)
     {
-        return JsonConvert.DeserializeObject<QuizContent>("{}", settings) ?? new QuizContent();
+        var quiz = new QuizContentModel();
+        var questions = new List<QuizQuestionModel>();
+        var usedIndexes = new HashSet<int>();
+        var nextIndex = 1;
+        var serializer = JsonSerializer.Create(settings);
+
+        ApplyMetadata(rootObject);
+        ApplyMetadata(rootObject["settings"] as JObject);
+        ApplyMetadata(rootObject["quizSettings"] as JObject);
+
+        var orderedBlocks = blocksArray
+            .OfType<JObject>()
+            .OrderBy(block => ReadInt(block["order"]) ?? int.MaxValue)
+            .ThenBy(block => block["id"]?.ToString());
+
+        foreach (var blockObj in orderedBlocks)
+        {
+            var normalizedType = NormalizeType(blockObj["type"]?.ToString());
+            var order = ReadInt(blockObj["order"]);
+            var data = blockObj["data"] as JObject ?? blockObj;
+
+            if (IsMetadataBlock(normalizedType))
+            {
+                ApplyMetadata(data);
+                continue;
+            }
+
+            if (normalizedType.Contains("multiplechoice"))
+            {
+                ExtractMultipleChoiceQuestions(blockObj, data, order);
+                continue;
+            }
+
+            if (normalizedType.Contains("matching"))
+            {
+                ExtractMatchingQuestion(blockObj, order);
+                continue;
+            }
+
+            if (normalizedType.Contains("ordering"))
+            {
+                ExtractOrderingQuestion(blockObj, order);
+                continue;
+            }
+
+            if (normalizedType.Contains("gapfill"))
+            {
+                ExtractGapFillQuestion(blockObj, data, order);
+                continue;
+            }
+
+            if (normalizedType.Contains("errorfinding"))
+            {
+                ExtractErrorFindingQuestion(blockObj, data, order);
+                continue;
+            }
+        }
+
+        if (!questions.Any() && rootObject["questions"] is JArray legacyQuestions)
+        {
+            ExtractLegacyQuestions(legacyQuestions);
+        }
+
+        quiz.Questions = questions
+            .OrderBy(q => q.Index)
+            .ThenBy(q => (int)q.QuestionType)
+            .ToList();
+
+        return quiz;
+
+        void ApplyMetadata(JObject? source)
+        {
+            if (source == null)
+            {
+                return;
+            }
+
+            var title = GetFirstString(source, "title", "quizTitle", "name");
+            if (!string.IsNullOrWhiteSpace(title))
+            {
+                quiz.Title = title;
+            }
+
+            var description = GetFirstString(source, "description", "quizDescription", "details", "summary");
+            if (!string.IsNullOrWhiteSpace(description))
+            {
+                quiz.Description = description;
+            }
+
+            var timeLimit = ReadInt(source["timeLimitMinutes"]) ?? ReadInt(source["timeLimit"]) ?? ReadInt(source["timeLimitMin"]);
+            if (timeLimit.HasValue)
+            {
+                quiz.TimeLimitMinutes = Math.Max(0, timeLimit.Value);
+            }
+
+            var randomize = ReadBool(source["randomizeQuestions"] ?? source["shuffleQuestions"] ?? source["randomize"]);
+            if (randomize.HasValue)
+            {
+                quiz.RandomizeQuestions = randomize.Value;
+            }
+
+            var showResults = ReadBool(source["showResultsImmediately"] ?? source["showResults"] ?? source["showResultsInstantly"]);
+            if (showResults.HasValue)
+            {
+                quiz.ShowResultsImmediately = showResults.Value;
+            }
+        }
+
+        void ExtractMultipleChoiceQuestions(JObject block, JObject data, int? order)
+        {
+            if (data["questions"] is not JArray questionArray || questionArray.Count == 0)
+            {
+                return;
+            }
+
+            var blockId = block["id"]?.ToString();
+            var blockType = block["type"]?.ToString();
+            var isRequired = ReadBool(data["isRequired"]) ?? true;
+            var blockPoints = ReadDecimal(data["points"]);
+
+            foreach (var questionToken in questionArray.OfType<JObject>())
+            {
+                var questionText = GetFirstString(questionToken, "stem", "question", "title") ?? string.Empty;
+                var questionPointsCandidate = ReadDecimal(questionToken["points"]) ?? blockPoints;
+                var candidateIndex = ReadInt(questionToken["index"] ?? questionToken["order"] ?? questionToken["displayIndex"]);
+                var finalIndex = ResolveIndex(candidateIndex, order);
+
+                var payload = (JObject)questionToken.DeepClone();
+                payload["blockId"] = blockId;
+                payload["blockType"] = blockType;
+                payload["blockOrder"] = order;
+                payload["isRequired"] ??= isRequired;
+
+                if (!payload.ContainsKey("points") && questionPointsCandidate.HasValue)
+                {
+                    payload["points"] = JToken.FromObject(questionPointsCandidate.Value);
+                }
+
+                questions.Add(new QuizQuestionModel
+                {
+                    Index = finalIndex,
+                    QuestionText = questionText,
+                    QuestionType = ScheduleItemType.MultipleChoice,
+                    ContentJson = payload.ToString(Formatting.None),
+                    Points = questionPointsCandidate ?? 1
+                });
+            }
+        }
+
+        void ExtractMatchingQuestion(JObject block, int? order)
+        {
+            var matchingBlock = ParseMatchingBlock(block, order ?? 0, settings);
+            if (matchingBlock == null)
+            {
+                return;
+            }
+
+            var payload = new JObject
+            {
+                ["blockId"] = block["id"]?.ToString(),
+                ["blockType"] = block["type"]?.ToString(),
+                ["blockOrder"] = order,
+                ["data"] = JObject.FromObject(matchingBlock, serializer)
+            };
+
+            var questionText = !string.IsNullOrWhiteSpace(matchingBlock.Instruction)
+                ? matchingBlock.Instruction!
+                : "سوال تطبیق";
+
+            questions.Add(new QuizQuestionModel
+            {
+                Index = ResolveIndex(null, order),
+                QuestionText = questionText,
+                QuestionType = ScheduleItemType.Match,
+                ContentJson = payload.ToString(Formatting.None),
+                Points = matchingBlock.Points > 0 ? matchingBlock.Points : Math.Max(1, matchingBlock.Items.Count)
+            });
+        }
+
+        void ExtractOrderingQuestion(JObject block, int? order)
+        {
+            var orderingBlock = ParseOrderingBlock(block, order ?? 0, settings);
+            if (orderingBlock == null)
+            {
+                return;
+            }
+
+            var payload = new JObject
+            {
+                ["blockId"] = block["id"]?.ToString(),
+                ["blockType"] = block["type"]?.ToString(),
+                ["blockOrder"] = order,
+                ["data"] = JObject.FromObject(orderingBlock, serializer)
+            };
+
+            var questionText = !string.IsNullOrWhiteSpace(orderingBlock.Instruction)
+                ? orderingBlock.Instruction
+                : "سوال مرتب‌سازی";
+
+            questions.Add(new QuizQuestionModel
+            {
+                Index = ResolveIndex(null, order),
+                QuestionText = questionText,
+                QuestionType = ScheduleItemType.Ordering,
+                ContentJson = payload.ToString(Formatting.None),
+                Points = orderingBlock.Points > 0 ? orderingBlock.Points : Math.Max(1, orderingBlock.Items.Count)
+            });
+        }
+
+        void ExtractGapFillQuestion(JObject block, JObject data, int? order)
+        {
+            var itemsToken = data["gaps"] ?? data["items"];
+            if (itemsToken == null || itemsToken.Type != JTokenType.Array)
+            {
+                return;
+            }
+
+            var payload = (JObject)data.DeepClone();
+            payload["blockId"] = block["id"]?.ToString();
+            payload["blockType"] = block["type"]?.ToString();
+            payload["blockOrder"] = order;
+
+            var questionText = GetFirstString(data, "instruction", "text", "prompt") ?? "سوال جای خالی";
+            var questionPoints = ReadDecimal(data["points"]) ?? 1;
+
+            questions.Add(new QuizQuestionModel
+            {
+                Index = ResolveIndex(ReadInt(data["index"]), order),
+                QuestionText = questionText,
+                QuestionType = ScheduleItemType.GapFill,
+                ContentJson = payload.ToString(Formatting.None),
+                Points = questionPoints
+            });
+        }
+
+        void ExtractErrorFindingQuestion(JObject block, JObject data, int? order)
+        {
+            var payload = (JObject)data.DeepClone();
+            payload["blockId"] = block["id"]?.ToString();
+            payload["blockType"] = block["type"]?.ToString();
+            payload["blockOrder"] = order;
+
+            var questionText = GetFirstString(data, "instruction", "text", "prompt") ?? "سوال پیدا کردن خطا";
+            var questionPoints = ReadDecimal(data["points"]) ?? 1;
+
+            questions.Add(new QuizQuestionModel
+            {
+                Index = ResolveIndex(ReadInt(data["index"]), order),
+                QuestionText = questionText,
+                QuestionType = ScheduleItemType.ErrorFinding,
+                ContentJson = payload.ToString(Formatting.None),
+                Points = questionPoints
+            });
+        }
+
+        void ExtractLegacyQuestions(JArray legacyQuestions)
+        {
+            foreach (var questionToken in legacyQuestions.OfType<JObject>())
+            {
+                var questionText = GetFirstString(questionToken, "questionText", "question", "stem") ?? string.Empty;
+                var questionPoints = ReadDecimal(questionToken["points"]) ?? 1;
+                var candidateIndex = ReadInt(questionToken["index"]);
+                var orderCandidate = ReadInt(questionToken["order"]);
+                var questionType = ParseQuestionType(questionToken["questionType"]?.ToString());
+                var contentJson = questionToken["contentJson"]?.ToString() ?? questionToken.ToString(Formatting.None);
+
+                questions.Add(new QuizQuestionModel
+                {
+                    Index = ResolveIndex(candidateIndex, orderCandidate),
+                    QuestionText = questionText,
+                    QuestionType = questionType,
+                    ContentJson = contentJson,
+                    Points = questionPoints
+                });
+            }
+        }
+
+        int ResolveIndex(int? candidateIndex, int? orderCandidate)
+        {
+            if (candidateIndex.HasValue && candidateIndex.Value > 0 && usedIndexes.Add(candidateIndex.Value))
+            {
+                nextIndex = Math.Max(nextIndex, candidateIndex.Value + 1);
+                return candidateIndex.Value;
+            }
+
+            if (orderCandidate.HasValue && orderCandidate.Value > 0 && usedIndexes.Add(orderCandidate.Value))
+            {
+                nextIndex = Math.Max(nextIndex, orderCandidate.Value + 1);
+                return orderCandidate.Value;
+            }
+
+            while (!usedIndexes.Add(nextIndex))
+            {
+                nextIndex++;
+            }
+
+            return nextIndex++;
+        }
+
+        static string NormalizeType(string? type)
+        {
+            if (string.IsNullOrWhiteSpace(type))
+            {
+                return string.Empty;
+            }
+
+            var chars = type.Where(char.IsLetterOrDigit)
+                .Select(char.ToLowerInvariant)
+                .ToArray();
+
+            return new string(chars);
+        }
+
+        static bool IsMetadataBlock(string normalizedType)
+        {
+            if (string.IsNullOrWhiteSpace(normalizedType))
+            {
+                return false;
+            }
+
+            if (!normalizedType.Contains("quiz", StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            return normalizedType.Contains("setting", StringComparison.Ordinal) ||
+                   normalizedType.Contains("meta", StringComparison.Ordinal) ||
+                   normalizedType.Contains("config", StringComparison.Ordinal) ||
+                   normalizedType.Contains("info", StringComparison.Ordinal);
+        }
+
+        static string? GetFirstString(JObject source, params string[] propertyNames)
+        {
+            foreach (var name in propertyNames)
+            {
+                if (source.TryGetValue(name, StringComparison.OrdinalIgnoreCase, out var token))
+                {
+                    var text = token?.ToString();
+                    if (!string.IsNullOrWhiteSpace(text))
+                    {
+                        return text;
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        static int? ReadInt(JToken? token)
+        {
+            if (token == null || token.Type == JTokenType.Null)
+            {
+                return null;
+            }
+
+            return token.Type switch
+            {
+                JTokenType.Integer => token.Value<int>(),
+                JTokenType.Float => (int)Math.Round(token.Value<double>()),
+                JTokenType.String => int.TryParse(token.ToString(), NumberStyles.Integer, CultureInfo.InvariantCulture, out var value)
+                    ? value
+                    : (int?)null,
+                JTokenType.Object => ReadInt(((JObject)token)["value"] ?? ((JObject)token)["minutes"] ?? ((JObject)token)["index"]),
+                _ => null
+            };
+        }
+
+        static decimal? ReadDecimal(JToken? token)
+        {
+            if (token == null || token.Type == JTokenType.Null)
+            {
+                return null;
+            }
+
+            return token.Type switch
+            {
+                JTokenType.Integer => token.Value<decimal>(),
+                JTokenType.Float => Convert.ToDecimal(token.Value<double>(), CultureInfo.InvariantCulture),
+                JTokenType.String => decimal.TryParse(token.ToString(), NumberStyles.Any, CultureInfo.InvariantCulture, out var value)
+                    ? value
+                    : (decimal?)null,
+                JTokenType.Object => ReadDecimal(((JObject)token)["value"] ?? ((JObject)token)["points"]),
+                _ => null
+            };
+        }
+
+        static bool? ReadBool(JToken? token)
+        {
+            if (token == null || token.Type == JTokenType.Null)
+            {
+                return null;
+            }
+
+            if (token.Type == JTokenType.Boolean)
+            {
+                return token.Value<bool>();
+            }
+
+            if (token.Type == JTokenType.Integer)
+            {
+                return token.Value<int>() != 0;
+            }
+
+            if (token.Type == JTokenType.String)
+            {
+                var raw = token.ToString();
+                if (bool.TryParse(raw, out var boolValue))
+                {
+                    return boolValue;
+                }
+
+                if (int.TryParse(raw, NumberStyles.Integer, CultureInfo.InvariantCulture, out var intValue))
+                {
+                    return intValue != 0;
+                }
+            }
+
+            if (token is JObject obj)
+            {
+                return ReadBool(obj["value"] ?? obj["enabled"] ?? obj["isEnabled"]);
+            }
+
+            return null;
+        }
+
+        ScheduleItemType ParseQuestionType(string? value)
+        {
+            if (!string.IsNullOrWhiteSpace(value) && Enum.TryParse<ScheduleItemType>(value, true, out var parsed))
+            {
+                return parsed;
+            }
+
+            var normalized = NormalizeType(value);
+            if (normalized.Contains("match", StringComparison.Ordinal))
+            {
+                return ScheduleItemType.Match;
+            }
+
+            if (normalized.Contains("order", StringComparison.Ordinal))
+            {
+                return ScheduleItemType.Ordering;
+            }
+
+            if (normalized.Contains("gap", StringComparison.Ordinal) || normalized.Contains("fill", StringComparison.Ordinal))
+            {
+                return ScheduleItemType.GapFill;
+            }
+
+            if (normalized.Contains("error", StringComparison.Ordinal))
+            {
+                return ScheduleItemType.ErrorFinding;
+            }
+
+            if (normalized.Contains("code", StringComparison.Ordinal))
+            {
+                return ScheduleItemType.CodeExercise;
+            }
+
+            if (normalized.Contains("audio", StringComparison.Ordinal))
+            {
+                return ScheduleItemType.Audio;
+            }
+
+            if (normalized.Contains("write", StringComparison.Ordinal))
+            {
+                return ScheduleItemType.Writing;
+            }
+
+            return ScheduleItemType.MultipleChoice;
+        }
     }
 
     private OrderingContent ParseOrderingFromBlocks(JArray blocksArray, JsonSerializerSettings settings)
