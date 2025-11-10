@@ -9,6 +9,7 @@ using MediatR;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Text.Json;
+using System.Linq;
 
 namespace EduTrack.Application.Features.ScheduleItems.CommandHandlers;
 
@@ -259,21 +260,74 @@ public class SubmitBlockAnswerCommandHandler : IRequestHandler<SubmitBlockAnswer
                 {
                     if (jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
                     {
-                        // Try to convert to List<string> first (for order arrays)
-                        try
+                        var elements = jsonElement.EnumerateArray().ToList();
+
+                        if (elements.Count == 0)
                         {
-                            var stringList = jsonElement.EnumerateArray()
-                                .Select(x => x.GetString() ?? x.ToString())
-                                .ToList();
-                            normalized[kvp.Key] = stringList;
+                            normalized[kvp.Key] = new List<object>();
+                            continue;
                         }
-                        catch
+
+                        if (elements.All(e => e.ValueKind == System.Text.Json.JsonValueKind.String || e.ValueKind == System.Text.Json.JsonValueKind.Null))
                         {
-                            // Fallback to List<object>
-                            normalized[kvp.Key] = jsonElement.EnumerateArray()
-                                .Select(x => x.GetRawText())
+                            normalized[kvp.Key] = elements
+                                .Select(e => e.ValueKind == System.Text.Json.JsonValueKind.Null ? string.Empty : (e.GetString() ?? string.Empty))
                                 .ToList();
+                            continue;
                         }
+
+                        if (elements.All(e => e.ValueKind == System.Text.Json.JsonValueKind.Number))
+                        {
+                            var intValues = new List<int>();
+                            var decimalValues = new List<decimal>();
+                            var allInt = true;
+
+                            foreach (var element in elements)
+                            {
+                                if (element.TryGetInt32(out var intValue))
+                                {
+                                    intValues.Add(intValue);
+                                }
+                                else if (element.TryGetDecimal(out var decimalValue))
+                                {
+                                    allInt = false;
+                                    decimalValues.Add(decimalValue);
+                                }
+                                else
+                                {
+                                    allInt = false;
+                                }
+                            }
+
+                            if (allInt)
+                            {
+                                normalized[kvp.Key] = intValues;
+                            }
+                            else if (decimalValues.Count > 0 && decimalValues.Count == elements.Count)
+                            {
+                                normalized[kvp.Key] = decimalValues;
+                            }
+                            else
+                            {
+                                normalized[kvp.Key] = elements
+                                    .Select(e => System.Text.Json.JsonSerializer.Deserialize<object>(e.GetRawText()) ?? new object())
+                                    .ToList();
+                            }
+
+                            continue;
+                        }
+
+                        if (elements.All(e => e.ValueKind == System.Text.Json.JsonValueKind.True || e.ValueKind == System.Text.Json.JsonValueKind.False))
+                        {
+                            normalized[kvp.Key] = elements
+                                .Select(e => e.GetBoolean())
+                                .ToList();
+                            continue;
+                        }
+
+                        normalized[kvp.Key] = elements
+                            .Select(e => System.Text.Json.JsonSerializer.Deserialize<object>(e.GetRawText()) ?? new object())
+                            .ToList();
                     }
                     else if (jsonElement.ValueKind == System.Text.Json.JsonValueKind.String)
                     {
@@ -373,21 +427,75 @@ public class SubmitBlockAnswerCommandHandler : IRequestHandler<SubmitBlockAnswer
                     if (blockToken is not JObject blockObj) continue;
 
                     var currentBlockId = blockObj["id"]?.ToString();
-                    if (string.IsNullOrEmpty(currentBlockId) || !string.Equals(currentBlockId, blockId, StringComparison.OrdinalIgnoreCase))
-                        continue;
-
                     var typeValue = blockObj["type"]?.ToString() ?? string.Empty;
+                    var dataToken = blockObj["data"] as JObject ?? blockObj;
+
                     if (!string.IsNullOrEmpty(typeValue))
                     {
                         var normalizedType = typeValue.Replace("-", string.Empty).Replace("_", string.Empty).ToLowerInvariant();
-                        if (normalizedType.Contains("ordering"))
+
+                        if (!string.IsNullOrEmpty(currentBlockId) &&
+                            string.Equals(currentBlockId, blockId, StringComparison.OrdinalIgnoreCase))
                         {
-                            return "ordering";
+                            if (normalizedType.Contains("ordering"))
+                            {
+                                return "ordering";
+                            }
+
+                            if (normalizedType.Contains("multiplechoice"))
+                            {
+                                return "multipleChoice";
+                            }
                         }
 
                         if (normalizedType.Contains("multiplechoice"))
                         {
+                            if (dataToken["questions"] is JArray questionArray)
+                            {
+                                foreach (var questionToken in questionArray)
+                                {
+                                    if (questionToken is not JObject questionObj) continue;
+
+                                    var questionId = questionObj["id"]?.ToString();
+                                    if (!string.IsNullOrEmpty(questionId) &&
+                                        string.Equals(questionId, blockId, StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        return "multipleChoice";
+                                    }
+                                }
+                            }
+                        }
+
+                        if (normalizedType.Contains("ordering"))
+                        {
+                            if (dataToken["items"] is JArray itemsArray)
+                            {
+                                foreach (var itemToken in itemsArray)
+                                {
+                                    if (itemToken is not JObject itemObj) continue;
+
+                                    var itemId = itemObj["id"]?.ToString();
+                                    if (!string.IsNullOrEmpty(itemId) &&
+                                        string.Equals(itemId, blockId, StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        return "ordering";
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    else if (!string.IsNullOrEmpty(currentBlockId) &&
+                        string.Equals(currentBlockId, blockId, StringComparison.OrdinalIgnoreCase))
+                    {
+                        // If block has no explicit type, try to infer from data
+                        if (dataToken["questions"] is JArray)
+                        {
                             return "multipleChoice";
+                        }
+
+                        if (dataToken["items"] is JArray)
+                        {
+                            return "ordering";
                         }
                     }
                 }

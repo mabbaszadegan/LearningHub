@@ -165,14 +165,51 @@ public class MultipleChoiceBlockValidator : IBlockAnswerValidator
                     if (blockToken is not JObject blockObj) continue;
 
                     var currentBlockId = blockObj["id"]?.ToString();
-                    if (!IsMatchingBlockId(currentBlockId, blockId))
-                        continue;
-
                     var typeValue = blockObj["type"]?.ToString() ?? string.Empty;
-                    if (!IsMultipleChoiceType(typeValue))
-                        continue;
-
                     var dataToken = blockObj["data"] as JObject ?? blockObj;
+
+                    var isMatchingContainer = IsMatchingBlockId(currentBlockId, blockId);
+                    var isMultipleChoiceLike = IsMultipleChoiceType(typeValue) || dataToken["questions"] is JArray;
+                    if (!isMultipleChoiceLike)
+                    {
+                        continue;
+                    }
+
+                    // New content builder stores questions inside a single block
+                    if (dataToken["questions"] is JArray questionsArray && questionsArray.Count > 0)
+                    {
+                        var questionBlocks = ConvertQuestionsToBlocks(
+                            blockId,
+                            blockObj,
+                            dataToken,
+                            questionsArray);
+
+                        var matchedBlock = questionBlocks
+                            .FirstOrDefault(q => IsMatchingBlockId(q.Id, blockId));
+
+                        if (matchedBlock != null)
+                        {
+                            return ConvertBlockToContext(matchedBlock);
+                        }
+
+                        // Fallback: if blockId refers to container, use the first question
+                        if (isMatchingContainer)
+                        {
+                            var fallback = questionBlocks.FirstOrDefault();
+                            if (fallback != null)
+                            {
+                                return ConvertBlockToContext(fallback);
+                            }
+                        }
+
+                        continue;
+                    }
+
+                    if (!isMatchingContainer)
+                    {
+                        continue;
+                    }
+
                     var block = dataToken.ToObject<MultipleChoiceBlock>() ?? new MultipleChoiceBlock();
 
                     if (!string.IsNullOrWhiteSpace(currentBlockId))
@@ -369,6 +406,183 @@ public class MultipleChoiceBlockValidator : IBlockAnswerValidator
         };
     }
 
+    private List<MultipleChoiceBlock> ConvertQuestionsToBlocks(
+        string requestedBlockId,
+        JObject blockObj,
+        JObject dataToken,
+        JArray questionsArray)
+    {
+        var blocks = new List<MultipleChoiceBlock>();
+
+        var blockOrder = blockObj["order"]?.Value<int>() ?? dataToken["order"]?.Value<int>() ?? 0;
+        var defaultAnswerType = dataToken["answerType"]?.ToString() ?? "single";
+        var defaultRandomize = dataToken["randomizeOptions"]?.Value<bool>() ?? false;
+        var defaultPoints = ParseDecimal(dataToken["points"]) ?? ParseDecimal(blockObj["points"]);
+        var defaultIsRequired = dataToken["isRequired"]?.Value<bool>() ?? true;
+
+        foreach (var questionToken in questionsArray)
+        {
+            if (questionToken is not JObject questionObj)
+            {
+                continue;
+            }
+
+            var questionId = questionObj["id"]?.ToString();
+            if (string.IsNullOrWhiteSpace(questionId))
+            {
+                questionId = Guid.NewGuid().ToString();
+            }
+
+            var answerType = questionObj["answerType"]?.ToString() ?? defaultAnswerType;
+            var randomize = questionObj["randomizeOptions"]?.Value<bool>() ?? defaultRandomize;
+            var points = ParseDecimal(questionObj["points"]) ?? defaultPoints ?? DetermineDefaultPoints(
+                answerType,
+                new List<int>(),
+                new List<MultipleChoiceOption>());
+            var isRequired = questionObj["isRequired"]?.Value<bool>() ?? defaultIsRequired;
+
+            var question = questionObj["stem"]?.ToString()
+                ?? questionObj["question"]?.ToString()
+                ?? string.Empty;
+
+            var block = new MultipleChoiceBlock
+            {
+                Id = questionId,
+                Order = blockOrder,
+                Question = question,
+                AnswerType = answerType,
+                RandomizeOptions = randomize,
+                Points = points,
+                IsRequired = isRequired
+            };
+
+            if (questionObj["stemData"] is JObject stemData)
+            {
+                var mediaType = stemData["mediaType"]?.ToString();
+                block.StemMediaType = mediaType;
+
+                if (mediaType == "image")
+                {
+                    block.StemImageUrl = stemData["imageUrl"]?.ToString();
+                    block.StemImageFileId = stemData["imageFileId"]?.ToString();
+                    block.StemImageFileName = stemData["imageFileName"]?.ToString();
+                }
+                else if (mediaType == "audio")
+                {
+                    block.StemAudioUrl = stemData["audioUrl"]?.ToString();
+                    block.StemAudioFileId = stemData["audioFileId"]?.ToString();
+                    block.StemAudioFileName = stemData["audioFileName"]?.ToString();
+                    block.StemAudioIsRecorded = stemData["isRecorded"]?.Value<bool>() ?? false;
+                }
+                else if (mediaType == "video")
+                {
+                    block.StemVideoUrl = stemData["videoUrl"]?.ToString();
+                    block.StemVideoFileId = stemData["videoFileId"]?.ToString();
+                    block.StemVideoFileName = stemData["videoFileName"]?.ToString();
+                }
+            }
+
+            if (questionObj["options"] is JArray optionsArray)
+            {
+                var options = new List<MultipleChoiceOption>();
+                var correctAnswers = new List<int>();
+                foreach (var optionToken in optionsArray)
+                {
+                    if (optionToken is not JObject optionObj)
+                    {
+                        continue;
+                    }
+
+                    var optionIndex = optionObj["index"]?.Value<int>()
+                        ?? options.Count;
+                    var optionType = optionObj["optionType"]?.ToString() ?? "text";
+                    var isCorrect = optionObj["isCorrect"]?.Value<bool>() ?? false;
+
+                    var option = new MultipleChoiceOption
+                    {
+                        Index = optionIndex,
+                        OptionType = optionType,
+                        IsCorrect = isCorrect
+                    };
+
+                    if (optionType == "text")
+                    {
+                        option.Text = optionObj["text"]?.ToString() ?? string.Empty;
+                    }
+                    else if (optionType == "image")
+                    {
+                        option.Text = optionObj["text"]?.ToString() ?? string.Empty;
+                        option.ImageUrl = optionObj["imageUrl"]?.ToString();
+                        option.ImageFileId = optionObj["imageFileId"]?.ToString();
+                        option.ImageFileName = optionObj["imageFileName"]?.ToString();
+                    }
+                    else if (optionType == "audio")
+                    {
+                        option.Text = optionObj["text"]?.ToString() ?? string.Empty;
+                        option.AudioUrl = optionObj["audioUrl"]?.ToString();
+                        option.AudioFileId = optionObj["audioFileId"]?.ToString();
+                        option.AudioFileName = optionObj["audioFileName"]?.ToString();
+                        option.IsRecorded = optionObj["isRecorded"]?.Value<bool>() ?? false;
+                        option.AudioDuration = optionObj["audioDuration"]?.Value<int?>();
+                    }
+
+                    options.Add(option);
+
+                    if (isCorrect)
+                    {
+                        correctAnswers.Add(optionIndex);
+                    }
+                }
+
+                block.Options = options;
+                if (correctAnswers.Count > 0)
+                {
+                    block.CorrectAnswers = correctAnswers;
+                }
+            }
+
+            if (block.CorrectAnswers == null || block.CorrectAnswers.Count == 0)
+            {
+                var correctAnswersToken = questionObj["correctAnswers"];
+                if (correctAnswersToken is JArray correctArray)
+                {
+                    block.CorrectAnswers = correctArray
+                        .Select(token => token?.Value<int>() ?? 0)
+                        .Where(i => i >= 0)
+                        .Distinct()
+                        .ToList();
+                }
+            }
+
+            if ((questionObj["points"] == null && defaultPoints == null) && block.CorrectAnswers != null)
+            {
+                block.Points = DetermineDefaultPoints(
+                    block.AnswerType,
+                    block.CorrectAnswers,
+                    block.Options);
+            }
+
+            blocks.Add(block);
+        }
+
+        return blocks;
+    }
+
+    private decimal? ParseDecimal(JToken? token)
+    {
+        if (token == null)
+        {
+            return null;
+        }
+
+        return token.Type switch
+        {
+            JTokenType.Integer or JTokenType.Float => token.Value<decimal>(),
+            JTokenType.String when decimal.TryParse(token.ToString(), out var value) => value,
+            _ => null
+        };
+    }
+
     private List<int> ExtractSelectedOptions(object selectedOptionsValue)
     {
         if (selectedOptionsValue == null)
@@ -382,6 +596,11 @@ public class MultipleChoiceBlockValidator : IBlockAnswerValidator
                 return ints.Distinct().ToList();
             case IEnumerable<long> longs:
                 return longs.Select(l => Convert.ToInt32(l)).Distinct().ToList();
+            case IEnumerable<string> stringValues:
+                return stringValues
+                    .SelectMany(ParseSelectedOptionsFromEnumerableString)
+                    .Distinct()
+                    .ToList();
             case IEnumerable<object> objects when selectedOptionsValue is not JArray:
                 return objects.Select(Convert.ToInt32).Distinct().ToList();
             case JArray jArray:
@@ -438,6 +657,28 @@ public class MultipleChoiceBlockValidator : IBlockAnswerValidator
         }
 
         throw new ArgumentException("Invalid format for selectedOptions", nameof(selectedOptionsValue));
+    }
+
+    private IEnumerable<int> ParseSelectedOptionsFromEnumerableString(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return Enumerable.Empty<int>();
+        }
+
+        // Handle serialized JSON array values inside the enumerable (e.g. "[1,2]")
+        if (value.TrimStart().StartsWith("[") && value.TrimEnd().EndsWith("]"))
+        {
+            return ParseSelectedOptionsFromString(value.Trim());
+        }
+
+        var trimmed = value.Trim();
+        if (!int.TryParse(trimmed, out var parsed))
+        {
+            throw new ArgumentException("Invalid value in selectedOptions array.", nameof(value));
+        }
+
+        return new[] { parsed };
     }
 
     private List<int> ParseSelectedOptionsFromString(string value)
