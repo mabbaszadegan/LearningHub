@@ -25,6 +25,8 @@ public class CreateCourseCommandHandlerTests
             "Test Course",
             "Test Description",
             "test-thumbnail.jpg",
+            null,
+            EduTrack.Domain.Enums.DisciplineType.Other,
             1);
 
         var handler = new CreateCourseCommandHandler(
@@ -58,6 +60,8 @@ public class CreateCourseCommandHandlerTests
             "", // Invalid empty title
             "Test Description",
             "test-thumbnail.jpg",
+            null,
+            EduTrack.Domain.Enums.DisciplineType.Other,
             1);
 
         var handler = new CreateCourseCommandHandler(

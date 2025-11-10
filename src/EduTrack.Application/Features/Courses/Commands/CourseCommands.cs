@@ -9,13 +9,17 @@ public record CreateCourseCommand(
     string Title,
     string? Description,
     string? Thumbnail,
-    int Order) : IRequest<Result<CourseDto>>;
+    int? ThumbnailFileId,
+    DisciplineType DisciplineType = DisciplineType.Other,
+    int Order = 0) : IRequest<Result<CourseDto>>;
 
 public record UpdateCourseCommand(
     int Id,
     string Title,
     string? Description,
     string? Thumbnail,
+    int? ThumbnailFileId,
+    DisciplineType DisciplineType,
     bool IsActive,
     int Order) : IRequest<Result<CourseDto>>;
 

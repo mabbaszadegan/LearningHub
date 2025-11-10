@@ -21,6 +21,13 @@ public class CreateCourseCommandValidator : AbstractValidator<CreateCourseComman
 
         RuleFor(x => x.Order)
             .GreaterThanOrEqualTo(0).WithMessage("Order must be non-negative");
+
+        RuleFor(x => x.DisciplineType)
+            .IsInEnum().WithMessage("Discipline type is invalid");
+
+        RuleFor(x => x.ThumbnailFileId)
+            .GreaterThan(0).When(x => x.ThumbnailFileId.HasValue)
+            .WithMessage("Thumbnail file id must be positive");
     }
 }
 
@@ -48,9 +55,11 @@ public class CreateCourseCommandHandler : IRequestHandler<CreateCourseCommand, R
         var course = Course.Create(
             request.Title,
             request.Description,
-            request.Thumbnail,
+            ResolveThumbnailUrl(request.Thumbnail, request.ThumbnailFileId),
             request.Order,
-            _currentUserService.UserId ?? "system");
+            _currentUserService.UserId ?? "system",
+            request.DisciplineType,
+            request.ThumbnailFileId);
 
         await _courseRepository.AddAsync(course, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
@@ -61,16 +70,33 @@ public class CreateCourseCommandHandler : IRequestHandler<CreateCourseCommand, R
             Title = course.Title,
             Description = course.Description,
             Thumbnail = course.Thumbnail,
+            ThumbnailFileId = course.ThumbnailFileId,
             IsActive = course.IsActive,
             Order = course.Order,
             CreatedAt = course.CreatedAt,
             UpdatedAt = course.UpdatedAt,
             CreatedBy = course.CreatedBy,
+            DisciplineType = course.DisciplineType,
                 // ModuleCount and LessonCount removed - Modules removed
                 // ModuleCount = 0,
                 // LessonCount = 0
         };
 
         return Result<CourseDto>.Success(courseDto);
+    }
+
+    private static string? ResolveThumbnailUrl(string? thumbnail, int? thumbnailFileId)
+    {
+        if (!string.IsNullOrWhiteSpace(thumbnail))
+        {
+            return thumbnail;
+        }
+
+        if (thumbnailFileId.HasValue)
+        {
+            return $"/FileUpload/GetFile/{thumbnailFileId.Value}";
+        }
+
+        return null;
     }
 }

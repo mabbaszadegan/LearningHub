@@ -104,6 +104,8 @@ public class CoursesController : BaseTeacherController
                 result.Value.Title,
                 result.Value.Description,
                 result.Value.Thumbnail,
+                result.Value.ThumbnailFileId,
+                result.Value.DisciplineType,
                 result.Value.IsActive,
                 result.Value.Order
             );
@@ -216,6 +218,8 @@ public class CoursesController : BaseTeacherController
                 currentCourse.Title,
                 currentCourse.Description,
                 currentCourse.Thumbnail,
+                currentCourse.ThumbnailFileId,
+                currentCourse.DisciplineType,
                 currentCourse.IsActive,
                 otherCourse.Order
             );
@@ -225,6 +229,8 @@ public class CoursesController : BaseTeacherController
                 otherCourse.Title,
                 otherCourse.Description,
                 otherCourse.Thumbnail,
+                otherCourse.ThumbnailFileId,
+                otherCourse.DisciplineType,
                 otherCourse.IsActive,
                 tempOrder
             );

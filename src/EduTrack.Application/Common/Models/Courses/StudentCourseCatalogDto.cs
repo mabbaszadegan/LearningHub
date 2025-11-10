@@ -11,6 +11,7 @@ public class StudentCourseCatalogDto
     public string Title { get; set; } = string.Empty;
     public string? Description { get; set; }
     public string? Thumbnail { get; set; }
+    public int? ThumbnailFileId { get; set; }
     public bool IsActive { get; set; }
     public int Order { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
