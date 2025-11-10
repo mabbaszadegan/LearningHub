@@ -1,63 +1,103 @@
 @model object
 @using EduTrack.Application.Common.Models.ScheduleItems
+@using EduTrack.Domain.Enums
 @{
     var content = Model as MatchingContent;
+    var scheduleItemId = ViewBag.ScheduleItemId as int? ?? 0;
 }
 
-<div class="match-content-container">
-    @if (content != null && content.LeftItems.Any() && content.RightItems.Any())
+<div class="matching-content-container">
+    @if (content != null)
     {
-        <div class="match-instructions">
-            <p>آیتم‌های ستون چپ را با آیتم‌های ستون راست تطبیق دهید.</p>
-        </div>
-        
-        <div class="match-game-area">
-            <div class="match-columns">
-                <div class="match-column match-left">
-                    <h5>ستون چپ</h5>
-                    <div class="match-items">
-                        @foreach (var item in content.LeftItems.OrderBy(i => i.Index))
-                        {
-                            <div class="match-item match-item-left" data-index="@item.Index" draggable="true">
-                                @item.Text
-                            </div>
-                        }
-                    </div>
+        var blocks = content.Blocks;
+        if (blocks != null && blocks.Any())
+        {
+            var blockIndex = 0;
+            foreach (var block in blocks.OrderBy(b => b.Order))
+            {
+                ViewBag.BlockIndex = blockIndex;
+                ViewBag.ScheduleItemType = ScheduleItemType.Match;
+                ViewBag.ScheduleItemId = scheduleItemId;
+                @await Html.PartialAsync("_MatchingBlock", block)
+                blockIndex++;
+            }
+        }
+        else if ((content.LeftItems?.Any() ?? false) && (content.RightItems?.Any() ?? false))
+        {
+            var fallbackItems = new List<MatchingBlockItem>();
+            var connections = content.Connections?.Any() == true
+                ? content.Connections
+                : content.LeftItems
+                    .OrderBy(li => li.Index)
+                    .Select(li => new MatchingConnection
+                    {
+                        LeftIndex = li.Index,
+                        RightIndex = li.Index
+                    })
+                    .ToList();
+
+            foreach (var connection in connections)
+            {
+                var left = content.LeftItems.FirstOrDefault(li => li.Index == connection.LeftIndex);
+                var right = content.RightItems.FirstOrDefault(ri => ri.Index == connection.RightIndex);
+                if (left == null || right == null)
+                {
+                    continue;
+                }
+
+                fallbackItems.Add(new MatchingBlockItem
+                {
+                    Id = $"legacy-{connection.LeftIndex}",
+                    Left = new MatchingBlockSide
+                    {
+                        Type = "text",
+                        Text = left.Text
+                    },
+                    Right = new MatchingBlockSide
+                    {
+                        Type = "text",
+                        Text = right.Text
+                    }
+                });
+            }
+
+            if (fallbackItems.Any())
+            {
+                var fallbackBlock = new MatchingBlock
+                {
+                    Id = "legacy",
+                    Order = 0,
+                    Points = Math.Max(1, fallbackItems.Count),
+                    IsRequired = true,
+                    Items = fallbackItems
+                };
+
+                ViewBag.BlockIndex = 0;
+                ViewBag.ScheduleItemType = ScheduleItemType.Match;
+                ViewBag.ScheduleItemId = scheduleItemId;
+                @await Html.PartialAsync("_MatchingBlock", fallbackBlock)
+            }
+            else
+            {
+                <div class="content-empty-state">
+                    <i class="fas fa-info-circle"></i>
+                    <p>محتوای تطبیقی یافت نشد.</p>
                 </div>
-                
-                <div class="match-column match-right">
-                    <h5>ستون راست</h5>
-                    <div class="match-items">
-                        @foreach (var item in content.RightItems.OrderBy(i => i.Index))
-                        {
-                            <div class="match-item match-item-right" data-index="@item.Index" draggable="true">
-                                @item.Text
-                            </div>
-                        }
-                    </div>
-                </div>
+            }
+        }
+        else
+        {
+            <div class="content-empty-state">
+                <i class="fas fa-info-circle"></i>
+                <p>محتوای تطبیقی یافت نشد.</p>
             </div>
-            
-            <div class="match-connections" id="match-connections">
-                <!-- Connections will be drawn here -->
-            </div>
-        </div>
-        
-        <div class="match-actions">
-            <button type="button" class="btn btn-primary" id="check-match">
-                <i class="fas fa-check"></i> بررسی پاسخ
-            </button>
-            <button type="button" class="btn btn-success" id="submit-match">
-                <i class="fas fa-paper-plane"></i> ارسال پاسخ
-            </button>
-        </div>
+        }
     }
     else
     {
-        <div class="alert alert-warning">
-            <i class="fas fa-exclamation-triangle"></i>
-            محتوای تطبیقی یافت نشد.
+        <div class="content-empty-state">
+            <i class="fas fa-info-circle"></i>
+            <p>محتوای تطبیقی یافت نشد.</p>
         </div>
     }
 </div>
-

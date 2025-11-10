@@ -382,6 +382,7 @@ public class ScheduleItemController : Controller
         var questionBlocks = new List<ReminderQuestionBlock>();
         var orderingBlocks = new List<OrderingBlock>();
         var multipleChoiceBlocks = new List<MultipleChoiceBlock>();
+        var matchingBlocks = new List<MatchingBlock>();
 
         foreach (var blockToken in blocksArray)
         {
@@ -409,6 +410,15 @@ public class ScheduleItemController : Controller
                     multipleChoiceBlocks.AddRange(parsedBlocks);
                 }
             }
+            // Check if it's a matching block
+            else if (blockType != null && string.Equals(blockType, "matching", StringComparison.OrdinalIgnoreCase))
+            {
+                var matchingBlock = ParseMatchingBlock(block, order, settings);
+                if (matchingBlock != null)
+                {
+                    matchingBlocks.Add(matchingBlock);
+                }
+            }
             // Check if it's a question block (type starts with "question")
             else if (blockType != null && blockType.StartsWith("question"))
             {
@@ -433,6 +443,7 @@ public class ScheduleItemController : Controller
         reminder.QuestionBlocks = questionBlocks.OrderBy(b => b.Order).ToList();
         reminder.OrderingBlocks = orderingBlocks.OrderBy(b => b.Order).ToList();
         reminder.MultipleChoiceBlocks = multipleChoiceBlocks.OrderBy(b => b.Order).ToList();
+        reminder.MatchingBlocks = matchingBlocks.OrderBy(b => b.Order).ToList();
         return reminder;
     }
 
@@ -716,6 +727,233 @@ public class ScheduleItemController : Controller
         {
             return null;
         }
+    }
+
+    private MatchingBlock? ParseMatchingBlock(JObject block, int order, JsonSerializerSettings settings)
+    {
+        try
+        {
+            var data = block["data"] as JObject;
+            if (data == null) return null;
+
+            var matchingBlock = new MatchingBlock
+            {
+                Id = block["id"]?.ToString() ?? Guid.NewGuid().ToString(),
+                Order = order,
+                Instruction = data["instruction"]?.ToString(),
+                IsRequired = data["isRequired"]?.Value<bool>() ?? true
+            };
+
+            var pointsToken = data["points"];
+            if (pointsToken != null)
+            {
+                if (pointsToken.Type == JTokenType.Integer || pointsToken.Type == JTokenType.Float)
+                {
+                    matchingBlock.Points = pointsToken.Value<decimal>();
+                }
+                else if (pointsToken.Type == JTokenType.String && decimal.TryParse(pointsToken.ToString(), out var pts))
+                {
+                    matchingBlock.Points = pts;
+                }
+            }
+
+            var items = ParseMatchingItems(data);
+            if (!items.Any())
+            {
+                return null;
+            }
+
+            matchingBlock.Items = items;
+
+            if (matchingBlock.Points <= 0)
+            {
+                matchingBlock.Points = Math.Max(1, items.Count);
+            }
+
+            return matchingBlock;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private List<MatchingBlockItem> ParseMatchingItems(JObject data)
+    {
+        var items = new List<MatchingBlockItem>();
+
+        if (data["items"] is JArray itemsArray && itemsArray.Count > 0)
+        {
+            foreach (var itemToken in itemsArray)
+            {
+                if (itemToken is not JObject itemObj) continue;
+                var parsedItem = ParseMatchingBlockItem(itemObj);
+                if (parsedItem != null)
+                {
+                    items.Add(parsedItem);
+                }
+            }
+        }
+        else
+        {
+            // Fallback to legacy structure (leftItems/rightItems with connections)
+            var legacyItems = ParseLegacyMatchingItems(data);
+            if (legacyItems.Any())
+            {
+                items.AddRange(legacyItems);
+            }
+        }
+
+        return items;
+    }
+
+    private MatchingBlockItem? ParseMatchingBlockItem(JObject itemObj)
+    {
+        var pairId = itemObj["id"]?.ToString() ?? Guid.NewGuid().ToString();
+        var leftSide = ParseMatchingSide(itemObj, "left");
+        var rightSide = ParseMatchingSide(itemObj, "right");
+
+        if (leftSide == null || rightSide == null)
+        {
+            return null;
+        }
+
+        return new MatchingBlockItem
+        {
+            Id = pairId,
+            Left = leftSide,
+            Right = rightSide
+        };
+    }
+
+    private MatchingBlockSide? ParseMatchingSide(JObject itemObj, string prefix)
+    {
+        var type = itemObj[$"{prefix}Type"]?.ToString() ?? "text";
+        var side = new MatchingBlockSide
+        {
+            Type = type
+        };
+
+        // Text content
+        var textToken = itemObj[$"{prefix}Text"] ?? itemObj[$"{prefix}Value"] ?? itemObj[$"{prefix}Content"];
+        if (textToken != null && textToken.Type != JTokenType.Null)
+        {
+            side.Text = textToken.ToString();
+        }
+
+        // File identifiers can be stored as int or string
+        var fileIdToken = itemObj[$"{prefix}FileId"] ?? itemObj[$"{prefix}FileID"];
+        if (fileIdToken != null && fileIdToken.Type != JTokenType.Null)
+        {
+            side.FileId = fileIdToken.Type switch
+            {
+                JTokenType.Integer => fileIdToken.Value<int>().ToString(),
+                JTokenType.Float => ((int)fileIdToken.Value<float>()).ToString(),
+                _ => fileIdToken.ToString()
+            };
+        }
+
+        var fileNameToken = itemObj[$"{prefix}FileName"];
+        if (fileNameToken != null && fileNameToken.Type != JTokenType.Null)
+        {
+            side.FileName = fileNameToken.ToString();
+        }
+
+        var fileUrlToken = itemObj[$"{prefix}FileUrl"] ?? itemObj[$"{prefix}Url"];
+        if (fileUrlToken != null && fileUrlToken.Type != JTokenType.Null)
+        {
+            side.FileUrl = fileUrlToken.ToString();
+        }
+
+        var mimeToken = itemObj[$"{prefix}MimeType"] ?? itemObj[$"{prefix}Mime"];
+        if (mimeToken != null && mimeToken.Type != JTokenType.Null)
+        {
+            side.MimeType = mimeToken.ToString();
+        }
+
+        var isRecordedToken = itemObj[$"{prefix}IsRecorded"];
+        if (isRecordedToken != null && isRecordedToken.Type != JTokenType.Null)
+        {
+            side.IsRecorded = isRecordedToken.Type == JTokenType.Boolean
+                ? isRecordedToken.Value<bool>()
+                : bool.TryParse(isRecordedToken.ToString(), out var result) && result;
+        }
+
+        var durationToken = itemObj[$"{prefix}Duration"];
+        if (durationToken != null && durationToken.Type != JTokenType.Null)
+        {
+            if (durationToken.Type == JTokenType.Integer)
+            {
+                side.Duration = durationToken.Value<int>();
+            }
+            else if (int.TryParse(durationToken.ToString(), out var duration))
+            {
+                side.Duration = duration;
+            }
+        }
+
+        return side;
+    }
+
+    private IEnumerable<MatchingBlockItem> ParseLegacyMatchingItems(JObject data)
+    {
+        var result = new List<MatchingBlockItem>();
+
+        if (data["leftItems"] is not JArray leftItems ||
+            data["rightItems"] is not JArray rightItems ||
+            data["connections"] is not JArray connections)
+        {
+            return result;
+        }
+
+        var leftLookup = leftItems
+            .OfType<JObject>()
+            .Select(obj => new
+            {
+                Index = obj["Index"]?.Value<int>() ?? obj["index"]?.Value<int>() ?? 0,
+                Text = obj["Text"]?.ToString() ?? obj["text"]?.ToString() ?? string.Empty
+            })
+            .ToDictionary(k => k.Index, v => v.Text);
+
+        var rightLookup = rightItems
+            .OfType<JObject>()
+            .Select(obj => new
+            {
+                Index = obj["Index"]?.Value<int>() ?? obj["index"]?.Value<int>() ?? 0,
+                Text = obj["Text"]?.ToString() ?? obj["text"]?.ToString() ?? string.Empty
+            })
+            .ToDictionary(k => k.Index, v => v.Text);
+
+        foreach (var connectionToken in connections)
+        {
+            if (connectionToken is not JObject connectionObj) continue;
+
+            var leftIndex = connectionObj["LeftIndex"]?.Value<int>() ?? connectionObj["leftIndex"]?.Value<int>() ?? -1;
+            var rightIndex = connectionObj["RightIndex"]?.Value<int>() ?? connectionObj["rightIndex"]?.Value<int>() ?? -1;
+
+            if (!leftLookup.TryGetValue(leftIndex, out var leftText) ||
+                !rightLookup.TryGetValue(rightIndex, out var rightText))
+            {
+                continue;
+            }
+
+            result.Add(new MatchingBlockItem
+            {
+                Id = $"legacy-{leftIndex}",
+                Left = new MatchingBlockSide
+                {
+                    Type = "text",
+                    Text = leftText
+                },
+                Right = new MatchingBlockSide
+                {
+                    Type = "text",
+                    Text = rightText
+                }
+            });
+        }
+
+        return result;
     }
 
     private ReminderQuestionBlock? ParseReminderQuestionBlock(JObject block, int order, JsonSerializerSettings settings)
@@ -1065,7 +1303,92 @@ public class ScheduleItemController : Controller
 
     private MatchingContent ParseMatchFromBlocks(JArray blocksArray, JsonSerializerSettings settings)
     {
-        return JsonConvert.DeserializeObject<MatchingContent>("{}", settings) ?? new MatchingContent();
+        var content = new MatchingContent();
+        var matchingBlocks = new List<MatchingBlock>();
+
+        foreach (var blockToken in blocksArray)
+        {
+            if (blockToken is not JObject blockObj) continue;
+
+            var blockType = blockObj["type"]?.ToString()?.ToLowerInvariant();
+            if (!string.Equals(blockType, "matching", StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            var order = blockObj["order"]?.Value<int>() ?? 0;
+            var matchingBlock = ParseMatchingBlock(blockObj, order, settings);
+            if (matchingBlock != null)
+            {
+                matchingBlocks.Add(matchingBlock);
+            }
+        }
+
+        if (matchingBlocks.Count == 0)
+        {
+            return content;
+        }
+
+        content.Blocks = matchingBlocks.OrderBy(b => b.Order).ToList();
+
+        // Populate legacy collections for backward compatibility
+        var leftItems = new List<MatchingItem>();
+        var rightItems = new List<MatchingItem>();
+        var connections = new List<MatchingConnection>();
+        var index = 0;
+
+        foreach (var block in content.Blocks)
+        {
+            foreach (var item in block.Items)
+            {
+                leftItems.Add(new MatchingItem
+                {
+                    Index = index,
+                    Text = GetSideDisplayText(item.Left)
+                });
+
+                rightItems.Add(new MatchingItem
+                {
+                    Index = index,
+                    Text = GetSideDisplayText(item.Right)
+                });
+
+                connections.Add(new MatchingConnection
+                {
+                    LeftIndex = index,
+                    RightIndex = index
+                });
+
+                index++;
+            }
+        }
+
+        content.LeftItems = leftItems;
+        content.RightItems = rightItems;
+        content.Connections = connections;
+
+        return content;
+    }
+
+    private string GetSideDisplayText(MatchingBlockSide side)
+    {
+        if (side == null)
+        {
+            return string.Empty;
+        }
+
+        if (!string.Equals(side.Type, "text", StringComparison.OrdinalIgnoreCase))
+        {
+            return side.Type?.ToLowerInvariant() switch
+            {
+                "image" => "تصویر",
+                "audio" => "صوت",
+                "video" => "ویدیو",
+                _ => "آیتم"
+            };
+        }
+
+        return side.Text ?? string.Empty;
     }
 
     private ErrorFindingContent ParseErrorFindingFromBlocks(JArray blocksArray, JsonSerializerSettings settings)

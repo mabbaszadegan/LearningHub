@@ -78,9 +78,14 @@
         const submittedAnswer = getSubmittedAnswer(button, blockContext, blockId);
 
         if (!submittedAnswer) {
-            const emptyMessage = blockContext === 'multipleChoice'
-                ? 'لطفاً ابتدا یک گزینه را انتخاب کنید.'
-                : 'لطفاً ابتدا پاسخ را وارد کنید. حداقل یک آیتم باید در جایگاه قرار گیرد.';
+            let emptyMessage = 'لطفاً ابتدا پاسخ خود را تکمیل کنید.';
+            if (blockContext === 'multipleChoice') {
+                emptyMessage = 'لطفاً ابتدا یک گزینه را انتخاب کنید.';
+            } else if (blockContext === 'ordering') {
+                emptyMessage = 'لطفاً ابتدا پاسخ را وارد کنید. حداقل یک آیتم باید در جایگاه قرار گیرد.';
+            } else if (blockContext === 'matching') {
+                emptyMessage = 'لطفاً برای تمام آیتم‌ها تطبیق مناسب را انتخاب کنید.';
+            }
 
             showError(button, emptyMessage);
             button.disabled = false;
@@ -101,6 +106,29 @@
         if (blockContext === 'multipleChoice') {
             if (!submittedAnswer.selectedOptions || submittedAnswer.selectedOptions.length === 0) {
                 showError(button, 'لطفاً ابتدا پاسخ را انتخاب کنید.');
+                button.disabled = false;
+                button.innerHTML = originalContent;
+                return;
+            }
+        }
+
+        if (blockContext === 'matching') {
+            if (!submittedAnswer.matches || submittedAnswer.matches.length === 0) {
+                showError(button, 'لطفاً برای تمام آیتم‌ها تطبیق مناسب را انتخاب کنید.');
+                button.disabled = false;
+                button.innerHTML = originalContent;
+                return;
+            }
+
+            const hasIncomplete = submittedAnswer.matches.some(match =>
+                !match ||
+                !match.leftItemId ||
+                !match.selectedPairId ||
+                !match.selectedPairId.trim()
+            );
+
+            if (hasIncomplete) {
+                showError(button, 'برای هر مورد ستون چپ یک گزینه معتبر انتخاب کنید.');
                 button.disabled = false;
                 button.innerHTML = originalContent;
                 return;
@@ -155,6 +183,11 @@
             return getMultipleChoiceAnswer(blockId, button);
         }
 
+        // Matching block
+        if (blockContext === 'matching') {
+            return getMatchingAnswer(blockId, button);
+        }
+
         // Add other types as needed
         // For now, return null for unsupported types
         return null;
@@ -167,6 +200,10 @@
 
         if (isMultipleChoiceBlock(button, scheduleItemType)) {
             return 'multipleChoice';
+        }
+
+        if (isMatchingBlock(button, scheduleItemType)) {
+            return 'matching';
         }
 
         return null;
@@ -278,6 +315,49 @@
         };
     }
 
+    function getMatchingAnswer(blockId, triggerButton) {
+        let blockCard = triggerButton ? triggerButton.closest('.matching-block-card') : null;
+
+        if (!blockCard) {
+            blockCard = document.querySelector(`.matching-block-card[data-block-id="${blockId}"]`);
+        }
+
+        if (!blockCard) {
+            const cards = document.querySelectorAll('.matching-block-card');
+            if (cards.length > 0) {
+                blockCard = cards[0];
+            }
+        }
+
+        if (!blockCard) {
+            return null;
+        }
+
+        const selects = blockCard.querySelectorAll('.matching-select-input');
+        if (!selects.length) {
+            return null;
+        }
+
+        const matches = Array.from(selects).map((select, index) => {
+            const leftItemId = select.getAttribute('data-left-id') || '';
+            const selectedPairId = select.value || '';
+            return {
+                leftItemId: leftItemId,
+                selectedPairId: selectedPairId.trim(),
+                orderIndex: index
+            };
+        });
+
+        const hasAnySelection = matches.some(match => match.selectedPairId.length > 0);
+        if (!hasAnySelection) {
+            return null;
+        }
+
+        return {
+            matches: matches
+        };
+    }
+
     function isOrderingBlock(button, scheduleItemType) {
         if (scheduleItemType === 'Ordering' || scheduleItemType === '8') {
             return true;
@@ -323,6 +403,26 @@
         const legacyWrapper = button ? button.closest('.content-block-multiplechoice, .multiple-choice-block') : null;
         if (legacyWrapper) {
             return true;
+        }
+
+        return false;
+    }
+
+    function isMatchingBlock(button, scheduleItemType) {
+        if (scheduleItemType === 'Match' || scheduleItemType === '5') {
+            return true;
+        }
+
+        if (button && button.closest('.matching-block-card')) {
+            return true;
+        }
+
+        const blockWrapper = button ? button.closest('[data-block-type]') : null;
+        if (blockWrapper) {
+            const typeString = (blockWrapper.getAttribute('data-block-type') || '').toLowerCase();
+            if (typeString === 'matching') {
+                return true;
+            }
         }
 
         return false;
@@ -399,7 +499,9 @@
 
     function showError(button, message) {
         // Find result container - try both ordering and MCQ block cards
-        const blockCard = button.closest('.ordering-block-card') || button.closest('.mcq-block-card');
+        const blockCard = button.closest('.ordering-block-card') ||
+            button.closest('.mcq-block-card') ||
+            button.closest('.matching-block-card');
         if (!blockCard) {
             // For minimal buttons, just show a simple alert
             alert(message);
