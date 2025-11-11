@@ -1,6 +1,25 @@
 @model EduTrack.Application.Features.Courses.Commands.UpdateCourseCommand
+@using EduTrack.Domain.Enums
+@using Microsoft.AspNetCore.Mvc.Rendering
 @{
     ViewData["Title"] = "ویرایش دوره";
+    var disciplineOptions = new List<SelectListItem>
+    {
+        new("زبان‌ها", ((int)DisciplineType.Language).ToString()),
+        new("ریاضیات", ((int)DisciplineType.Math).ToString()),
+        new("برنامه‌نویسی", ((int)DisciplineType.Programming).ToString()),
+        new("علوم", ((int)DisciplineType.Science).ToString()),
+        new("سایر", ((int)DisciplineType.Other).ToString())
+    };
+
+    foreach (var option in disciplineOptions)
+    {
+        if (int.TryParse(option.Value, out var enumValue) &&
+            Model.DisciplineType == (DisciplineType)enumValue)
+        {
+            option.Selected = true;
+        }
+    }
 }
 
 <div class="row justify-content-center">
@@ -29,6 +48,7 @@
                 <input type="hidden" asp-for="Id" />
                 <input type="hidden" asp-for="Order" />
                 <input type="hidden" asp-for="Thumbnail" />
+                <input type="hidden" asp-for="ThumbnailFileId" />
 
                 <!-- Title -->
                 <div class="form-group-minimal">
@@ -56,6 +76,57 @@
                               rows="4" 
                               placeholder="توضیحات کامل درباره دوره، اهداف آموزشی و محتوای آن..."></textarea>
                     <span asp-validation-for="Description" class="validation-error-minimal"></span>
+                </div>
+
+                <!-- Discipline Type -->
+                <div class="form-group-minimal">
+                    <label asp-for="DisciplineType" class="form-label-minimal">
+                        <i class="fas fa-layer-group"></i>
+                        <span>حوزه آموزشی</span>
+                    </label>
+                    <select asp-for="DisciplineType"
+                            asp-items="disciplineOptions"
+                            class="form-input-minimal">
+                        <option value="">انتخاب حوزه</option>
+                    </select>
+                    <span asp-validation-for="DisciplineType" class="validation-error-minimal"></span>
+                </div>
+
+                <!-- Thumbnail -->
+                <div class="form-group-minimal">
+                    <label class="form-label-minimal">
+                        <i class="fas fa-image"></i>
+                        <span>تصویر دوره</span>
+                    </label>
+                    <div class="course-thumbnail-wrapper" data-thumbnail-wrapper>
+                        @if (!string.IsNullOrWhiteSpace(Model.Thumbnail))
+                        {
+                            <img src="@Model.Thumbnail" alt="تصویر دوره" class="course-thumbnail-preview img-fluid" data-thumbnail-preview />
+                        }
+                        else
+                        {
+                            <div class="course-thumbnail-placeholder" data-thumbnail-placeholder>
+                                <i class="fas fa-image"></i>
+                                <span>تصویری انتخاب نشده است</span>
+                            </div>
+                        }
+                    </div>
+                    <div class="course-thumbnail-actions">
+                        <label class="btn-submit-minimal thumbnail-upload-btn">
+                            <i class="fas fa-upload"></i>
+                            <span>انتخاب تصویر</span>
+                            <input type="file" id="courseThumbnailInput" accept="image/*" hidden />
+                        </label>
+                        <button type="button" class="btn-cancel-minimal thumbnail-remove-btn" data-remove-thumbnail>
+                            <i class="fas fa-times"></i>
+                            <span>حذف تصویر</span>
+                        </button>
+                    </div>
+                    <small class="form-text-helper" data-thumbnail-status>
+                        <i class="fas fa-info-circle"></i>
+                        تصویر با فرمت‌های JPG، PNG یا WEBP و حداکثر حجم ۵ مگابایت پشتیبانی می‌شود.
+                    </small>
+                    <span asp-validation-for="ThumbnailFileId" class="validation-error-minimal"></span>
                 </div>
 
                 <!-- Active Status -->
@@ -511,6 +582,7 @@
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script src="~/js/areas/teacher/courses/course-form.js" asp-append-version="true"></script>
     
     <script>
         $(document).ready(function() {

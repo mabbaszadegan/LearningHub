@@ -62,6 +62,15 @@
                 }
             }
 
+            // Add matching blocks
+            if (content.MatchingBlocks != null && content.MatchingBlocks.Any())
+            {
+                foreach (var matchingBlock in content.MatchingBlocks)
+                {
+                    allBlocks.Add(new { Type = "matching", Block = (object)matchingBlock, Order = matchingBlock.Order });
+                }
+            }
+
             // Sort by Order
             var sortedBlocks = allBlocks.OrderBy(b => b.Order).ToList();
 
@@ -71,6 +80,7 @@
                 @{
                     var orderingBlockIndex = 0;
                     var mcqBlockIndex = 0;
+                    var matchingBlockIndex = 0;
                 }
                 @foreach (var item in sortedBlocks)
                 {
@@ -256,6 +266,27 @@
                             mcqBlockIndex++;
                         }
                     }
+                    else if (blockType == "matching")
+                    {
+                        var matchingBlock = item.Block as MatchingBlock;
+                        if (matchingBlock != null)
+                        {
+                            <div class="content-block content-block-matching"
+                                 data-block-order="@order"
+                                 data-block-id="@matchingBlock.Id"
+                                 data-block-type="matching">
+                                <div class="content-block-inner">
+                                    @{
+                                        ViewBag.BlockIndex = matchingBlockIndex;
+                                        ViewBag.ScheduleItemType = ScheduleItemType.Match;
+                                        ViewBag.ScheduleItemId = scheduleItemId;
+                                    }
+                                    @await Html.PartialAsync("_MatchingBlock", matchingBlock)
+                                </div>
+                            </div>
+                            matchingBlockIndex++;
+                        }
+                    }
                 }
             </div>
         }
@@ -269,7 +300,8 @@
                     Blocks: @(content.Blocks?.Count ?? 0), 
                     QuestionBlocks: @(content.QuestionBlocks?.Count ?? 0),
                     OrderingBlocks: @(content.OrderingBlocks?.Count ?? 0),
-                    MultipleChoiceBlocks: @(content.MultipleChoiceBlocks?.Count ?? 0)
+                    MultipleChoiceBlocks: @(content.MultipleChoiceBlocks?.Count ?? 0),
+                    MatchingBlocks: @(content.MatchingBlocks?.Count ?? 0)
                 </p>
             </div>
         }

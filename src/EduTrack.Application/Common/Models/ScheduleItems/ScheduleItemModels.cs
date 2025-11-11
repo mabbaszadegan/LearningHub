@@ -190,6 +190,7 @@ public class MatchingContent
     public List<MatchingItem> LeftItems { get; set; } = new();
     public List<MatchingItem> RightItems { get; set; } = new();
     public List<MatchingConnection> Connections { get; set; } = new();
+    public List<MatchingBlock> Blocks { get; set; } = new();
 }
 
 public class MatchingItem
@@ -202,6 +203,35 @@ public class MatchingConnection
 {
     public int LeftIndex { get; set; }
     public int RightIndex { get; set; }
+}
+
+public class MatchingBlock
+{
+    public string Id { get; set; } = Guid.NewGuid().ToString();
+    public int Order { get; set; }
+    public string? Instruction { get; set; }
+    public decimal Points { get; set; } = 1;
+    public bool IsRequired { get; set; } = true;
+    public List<MatchingBlockItem> Items { get; set; } = new();
+}
+
+public class MatchingBlockItem
+{
+    public string Id { get; set; } = Guid.NewGuid().ToString();
+    public MatchingBlockSide Left { get; set; } = new();
+    public MatchingBlockSide Right { get; set; } = new();
+}
+
+public class MatchingBlockSide
+{
+    public string Type { get; set; } = "text"; // text | image | audio
+    public string? Text { get; set; }
+    public string? FileId { get; set; }
+    public string? FileName { get; set; }
+    public string? FileUrl { get; set; }
+    public string? MimeType { get; set; }
+    public bool IsRecorded { get; set; }
+    public int? Duration { get; set; }
 }
 
 public class CodeExerciseContent
@@ -328,6 +358,7 @@ public class ReminderContent
     public List<ReminderQuestionBlock> QuestionBlocks { get; set; } = new();
     public List<OrderingBlock> OrderingBlocks { get; set; } = new();
     public List<MultipleChoiceBlock> MultipleChoiceBlocks { get; set; } = new();
+    public List<MatchingBlock> MatchingBlocks { get; set; } = new();
 }
 
 public class ReminderQuestionBlock

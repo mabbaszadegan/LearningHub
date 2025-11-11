@@ -1,0 +1,267 @@
+@model MatchingBlock
+@using EduTrack.Application.Common.Models.ScheduleItems
+@using EduTrack.Domain.Enums
+@using System
+@using Microsoft.AspNetCore.Html
+@using System.Net
+@{
+    var scheduleItemId = ViewBag.ScheduleItemId as int? ?? 0;
+    var blockIndex = ViewBag.BlockIndex as int? ?? 0;
+    var scheduleItemType = ViewBag.ScheduleItemType as ScheduleItemType? ?? ScheduleItemType.Match;
+
+    var items = Model.Items ?? new List<MatchingBlockItem>();
+    var optionEntries = items
+        .OrderBy(_ => Guid.NewGuid())
+        .Select((item, idx) => new
+        {
+            Item = item,
+            Letter = GetOptionLetter(idx),
+            ShortText = GetShortText(item.Right)
+        })
+        .ToList();
+}
+
+<div class="matching-block-card" data-block-id="@Model.Id" data-block-order="@Model.Order">
+    <div class="matching-block-header">
+        <div class="matching-block-meta">
+            <span class="matching-block-badge" aria-label="بلاک تطبیق شماره @(blockIndex + 1)">
+                @((blockIndex + 1).ToString())
+            </span>
+            <span class="matching-block-label">تطبیق</span>
+        </div>
+        @if (!string.IsNullOrWhiteSpace(Model.Instruction))
+        {
+            <p class="matching-block-instruction">@Model.Instruction</p>
+        }
+    </div>
+
+    <div class="matching-block-body">
+        <div class="matching-block-columns">
+            <div class="matching-left-column">
+                @if (items.Count == 0)
+                {
+                    <div class="matching-empty-state">
+                        <span>آیتمی برای تطبیق موجود نیست.</span>
+                    </div>
+                }
+                else
+                {
+                    <div class="matching-items-list">
+                        @for (var rowIndex = 0; rowIndex < items.Count; rowIndex++)
+                        {
+                            var pair = items[rowIndex];
+                            var selectId = $"matching-select-{Model.Id}-{rowIndex}";
+                            <div class="matching-item" data-left-id="@pair.Id">
+                                <button type="button"
+                                        class="matching-item-button"
+                                        data-left-id="@pair.Id"
+                                        data-select-id="@selectId">
+                                    <span class="matching-item-index">@((rowIndex + 1).ToString())</span>
+                                    <div class="matching-item-media">
+                                        @RenderSideContent(pair.Left)
+                                    </div>
+                                    <span class="matching-item-current" data-empty-label="انتخاب نشده">انتخاب نشده</span>
+                                </button>
+                                <select id="@selectId"
+                                        class="matching-select-input"
+                                        data-left-id="@pair.Id"
+                                        @(Model.IsRequired ? "required" : null)>
+                                    <option value="">انتخاب کنید</option>
+                                    @foreach (var option in optionEntries)
+                                    {
+                                        <option value="@option.Item.Id">@option.Letter - @option.ShortText</option>
+                                    }
+                                </select>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+            <div class="matching-right-column" aria-label="گزینه‌های ستون راست">
+                <h3 class="matching-right-title">گزینه‌ها</h3>
+                @if (optionEntries.Count == 0)
+                {
+                    <div class="matching-empty-state">
+                        <span>هنوز گزینه‌ای تنظیم نشده است.</span>
+                    </div>
+                }
+                else
+                {
+                    <div class="matching-option-list">
+                        @foreach (var option in optionEntries)
+                        {
+                            <button type="button"
+                                    class="matching-option-button"
+                                    data-option-id="@option.Item.Id"
+                                    data-option-letter="@option.Letter">
+                                <span class="matching-option-letter">@option.Letter</span>
+                                <div class="matching-option-body">
+                                    @RenderSideContent(option.Item.Right)
+                                </div>
+                            </button>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="matching-block-actions">
+        <div class="block-actions-row">
+            <button type="button"
+                    class="btn-check-answer-minimal"
+                    data-schedule-item-id="@scheduleItemId"
+                    data-schedule-item-type="@scheduleItemType"
+                    data-block-id="@Model.Id"
+                    data-block-order="@Model.Order"
+                    title="بررسی پاسخ">
+                <i class="fas fa-check" aria-hidden="true"></i>
+                <span class="sr-only">بررسی پاسخ</span>
+            </button>
+            <div class="block-answer-history" data-block-id="@Model.Id">
+                <span class="history-correct" data-count="0">0</span>
+                <span class="history-separator">/</span>
+                <span class="history-incorrect" data-count="0">0</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+@functions {
+    private string GetOptionLetter(int index)
+    {
+        const string alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        if (index < alphabet.Length)
+        {
+            return alphabet[index].ToString();
+        }
+
+        var baseLetter = alphabet[index % alphabet.Length];
+        var suffix = (index / alphabet.Length) + 1;
+        return $"{baseLetter}{suffix}";
+    }
+
+    private string GetShortText(MatchingBlockSide? side)
+    {
+        if (side == null)
+        {
+            return "—";
+        }
+
+        if (!string.Equals(side.Type, "text", StringComparison.OrdinalIgnoreCase) || string.IsNullOrWhiteSpace(side.Text))
+        {
+            return side.Type?.ToLowerInvariant() switch
+            {
+                "image" => "تصویر",
+                "audio" => "صوت",
+                "video" => "ویدیو",
+                _ => "آیتم"
+            };
+        }
+
+        var text = side.Text.Trim();
+        return text.Length > 40 ? $"{text[..40]}…" : text;
+    }
+
+    private string GetMediaAlt(MatchingBlockSide? side)
+    {
+        if (side == null)
+        {
+            return "رسانه";
+        }
+
+        if (!string.IsNullOrWhiteSpace(side.FileName))
+        {
+            return side.FileName!;
+        }
+
+        return side.Type?.ToLowerInvariant() switch
+        {
+            "image" => "تصویر",
+            "audio" => "فایل صوتی",
+            "video" => "ویدیو",
+            _ => "آیتم"
+        };
+    }
+
+    private IHtmlContent RenderSideContent(MatchingBlockSide? side)
+    {
+        if (side == null)
+        {
+            return new HtmlString("<span class=\"matching-placeholder\">—</span>");
+        }
+
+        var type = side.Type?.ToLowerInvariant() ?? "text";
+        return type switch
+        {
+            "image" => RenderImage(side),
+            "audio" => RenderAudio(side),
+            "video" => RenderVideo(side),
+            _ => RenderText(side)
+        };
+    }
+
+    private IHtmlContent RenderText(MatchingBlockSide side)
+    {
+        var text = string.IsNullOrWhiteSpace(side.Text) ? "—" : side.Text.Trim();
+        return new HtmlString($"<p class=\"matching-text\">{WebUtility.HtmlEncode(text)}</p>");
+    }
+
+    private IHtmlContent RenderImage(MatchingBlockSide side)
+    {
+        if (string.IsNullOrWhiteSpace(side.FileUrl))
+        {
+            return new HtmlString("<span class=\"matching-placeholder\">تصویر در دسترس نیست.</span>");
+        }
+
+        var alt = WebUtility.HtmlEncode(GetMediaAlt(side));
+        var url = WebUtility.HtmlEncode(side.FileUrl);
+        var html = string.Concat(
+            "<button type=\"button\" class=\"matching-media-button\" data-image-url=\"", url,
+            "\" data-image-alt=\"", alt,
+            "\" aria-label=\"مشاهده تصویر\">",
+            "<img src=\"", url, "\" alt=\"", alt, "\" class=\"matching-media-image\" loading=\"lazy\" />",
+            "<span class=\"matching-media-zoom\" aria-hidden=\"true\"></span>",
+            "</button>");
+        return new HtmlString(html);
+    }
+
+    private IHtmlContent RenderAudio(MatchingBlockSide side)
+    {
+        if (string.IsNullOrWhiteSpace(side.FileUrl))
+        {
+            return new HtmlString("<span class=\"matching-placeholder\">فایل صوتی در دسترس نیست.</span>");
+        }
+
+        var url = WebUtility.HtmlEncode(side.FileUrl);
+        var mime = WebUtility.HtmlEncode(side.MimeType ?? "audio/mpeg");
+        var html = string.Concat(
+            "<button type=\"button\" class=\"matching-audio-button\" data-audio-src=\"", url,
+            "\" data-audio-type=\"", mime,
+            "\" aria-label=\"پخش فایل صوتی\" aria-pressed=\"false\">",
+            "<span class=\"matching-audio-icon\" aria-hidden=\"true\"></span>",
+            "<audio src=\"", url, "\" preload=\"none\" class=\"matching-audio-element\">",
+            "<source src=\"", url, "\" type=\"", mime, "\">",
+            "</audio>",
+            "</button>");
+        return new HtmlString(html);
+    }
+
+    private IHtmlContent RenderVideo(MatchingBlockSide side)
+    {
+        if (string.IsNullOrWhiteSpace(side.FileUrl))
+        {
+            return new HtmlString("<span class=\"matching-placeholder\">ویدیو در دسترس نیست.</span>");
+        }
+
+        var url = WebUtility.HtmlEncode(side.FileUrl);
+        var mime = WebUtility.HtmlEncode(side.MimeType ?? "video/mp4");
+        var html = string.Concat(
+            "<video controls class=\"matching-media-video\" preload=\"metadata\">",
+            "<source src=\"", url, "\" type=\"", mime, "\">",
+            "مرورگر شما از پخش ویدیو پشتیبانی نمی‌کند.",
+            "</video>");
+        return new HtmlString(html);
+    }
+}
+

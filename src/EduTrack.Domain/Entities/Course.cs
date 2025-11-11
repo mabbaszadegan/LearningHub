@@ -17,6 +17,8 @@ public class Course
     public string Title { get; private set; } = string.Empty;
     public string? Description { get; private set; }
     public string? Thumbnail { get; private set; }
+    public int? ThumbnailFileId { get; private set; }
+    public File? ThumbnailFile { get; private set; }
     public bool IsActive { get; private set; } = true;
     public int Order { get; private set; }
     public DateTimeOffset CreatedAt { get; private set; }
@@ -35,7 +37,7 @@ public class Course
     private Course() { }
 
     public static Course Create(string title, string? description, string? thumbnail, 
-        int order, string createdBy, DisciplineType disciplineType = DisciplineType.Other)
+        int order, string createdBy, DisciplineType disciplineType = DisciplineType.Other, int? thumbnailFileId = null)
     {
         if (string.IsNullOrWhiteSpace(title))
             throw new ArgumentException("Title cannot be null or empty", nameof(title));
@@ -51,6 +53,7 @@ public class Course
             Title = title,
             Description = description,
             Thumbnail = thumbnail,
+            ThumbnailFileId = thumbnailFileId,
             Order = order,
             CreatedBy = createdBy,
             DisciplineType = disciplineType,
@@ -75,9 +78,10 @@ public class Course
         UpdatedAt = DateTimeOffset.UtcNow;
     }
 
-    public void UpdateThumbnail(string? thumbnail)
+    public void UpdateThumbnail(string? thumbnail, int? thumbnailFileId)
     {
         Thumbnail = thumbnail;
+        ThumbnailFileId = thumbnailFileId;
         UpdatedAt = DateTimeOffset.UtcNow;
     }
 

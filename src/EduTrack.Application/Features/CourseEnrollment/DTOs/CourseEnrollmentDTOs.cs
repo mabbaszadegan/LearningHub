@@ -57,6 +57,7 @@ public class StudentCourseEnrollmentSummaryDto
     public string CourseTitle { get; set; } = string.Empty;
     public string? CourseDescription { get; set; }
     public string? CourseThumbnail { get; set; }
+    public int? CourseThumbnailFileId { get; set; }
     public DateTimeOffset EnrolledAt { get; set; }
     public int ProgressPercentage { get; set; }
     public bool IsCompleted { get; set; }

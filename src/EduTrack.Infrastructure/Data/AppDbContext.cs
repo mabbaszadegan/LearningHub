@@ -157,9 +157,14 @@ public class AppDbContext : IdentityDbContext<User>
             entity.Property(e => e.Title).HasMaxLength(200).IsRequired();
             entity.Property(e => e.Description).HasMaxLength(1000);
             entity.Property(e => e.Thumbnail).HasMaxLength(500);
+            entity.Property(e => e.ThumbnailFileId).IsRequired(false);
             entity.Property(e => e.CreatedBy).HasMaxLength(450);
             entity.HasIndex(e => e.Order);
             entity.HasIndex(e => e.IsActive);
+            entity.HasOne(e => e.ThumbnailFile)
+                .WithMany()
+                .HasForeignKey(e => e.ThumbnailFileId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
 
 
