@@ -46,6 +46,19 @@
     color: var(--color-text);
 }
 
+.setting-item textarea {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-sm);
+    min-height: 64px;
+    resize: vertical;
+}
+
+.setting-item.setting-item-wide {
+    grid-column: 1 / -1;
+}
+
 .setting-item select,
 .setting-item input[type="text"],
 .setting-item input[type="number"] {

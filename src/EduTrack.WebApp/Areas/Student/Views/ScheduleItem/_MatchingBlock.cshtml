@@ -34,10 +34,9 @@
             <span class="sr-only">بلاک تطبیق</span>
         </div>
         <div class="matching-block-info">
-            <span class="matching-block-label">تطبیق</span>
             @if (!string.IsNullOrWhiteSpace(Model.Instruction))
             {
-                <p class="matching-block-instruction">@Model.Instruction</p>
+                <span class="matching-block-label">@Model.Instruction</span>
             }
         </div>
     </div>

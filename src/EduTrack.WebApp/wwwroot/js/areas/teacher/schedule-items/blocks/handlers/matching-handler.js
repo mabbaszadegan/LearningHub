@@ -68,13 +68,15 @@ class MatchingHandler {
         // Settings change listeners
         const settingsInputs = blockElement.querySelectorAll('[data-setting]');
         settingsInputs.forEach(input => {
-            input.addEventListener('change', () => {
+            const eventType = input.tagName === 'TEXTAREA' || input.type === 'text' ? 'input' : 'change';
+            input.addEventListener(eventType, () => {
                 const key = input.getAttribute('data-setting');
                 let value;
                 if (input.type === 'checkbox') {
                     value = input.checked;
                 } else {
-                    value = input.value;
+                    const rawValue = input.value;
+                    value = typeof rawValue === 'string' ? rawValue.trim() : rawValue;
                 }
                 block.data = block.data || {};
                 block.data[key] = value;
@@ -496,7 +498,8 @@ class MatchingHandler {
             if (input.type === 'checkbox') {
                 settings[key] = input.checked;
             } else {
-                settings[key] = input.value;
+                const rawValue = input.value;
+                settings[key] = typeof rawValue === 'string' ? rawValue.trim() : rawValue;
             }
         });
         return settings;
