@@ -21,8 +21,8 @@
 }
 
 <div class="matching-block-card" data-block-id="@Model.Id" data-block-order="@Model.Order">
-    <div class="matching-block-header">
-        <div class="matching-block-number" aria-label="بلاک تطبیق شماره @(blockIndex + 1)">
+    <div class="matching-block-header mcq-block-header">
+        <div class="matching-block-number mcq-block-number" aria-label="بلاک تطبیق شماره @(blockIndex + 1)">
             <i class="fas fa-link" aria-hidden="true"></i>
             <span class="block-number-text">@((blockIndex + 1).ToString())</span>
             <span class="sr-only">بلاک تطبیق</span>
@@ -105,17 +105,17 @@
                     data-schedule-item-type="@scheduleItemType"
                     data-block-id="@Model.Id"
                     data-block-order="@Model.Order"
+                    aria-label="بررسی پاسخ"
                     title="بررسی پاسخ">
                 <i class="fas fa-check" aria-hidden="true"></i>
-                <span class="sr-only">بررسی پاسخ</span>
             </button>
             <button type="button"
-                    class="btn-restart-matching"
+                    class="btn-check-answer-minimal btn-restart-matching"
                     data-block-id="@Model.Id"
                     data-block-order="@Model.Order"
+                    aria-label="شروع دوباره"
                     title="شروع دوباره">
                 <i class="fas fa-rotate-right" aria-hidden="true"></i>
-                <span class="sr-only">شروع دوباره</span>
             </button>
             <div class="block-answer-history" data-block-id="@Model.Id">
                 <span class="history-correct" data-count="0">0</span>

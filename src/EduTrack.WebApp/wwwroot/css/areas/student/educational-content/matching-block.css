@@ -13,36 +13,6 @@
     transform: translateY(-2px);
 }
 
-.matching-block-header {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.75rem;
-    margin-bottom: 1rem;
-    padding-bottom: 0.875rem;
-    border-bottom: 1px solid #f1f5f9;
-}
-
-.matching-block-number {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 32px;
-    height: 32px;
-    padding: 0 0.7rem;
-    border-radius: 999px;
-    background: linear-gradient(135deg, #22d3ee 0%, #6366f1 100%);
-    color: #ffffff;
-    font-weight: 600;
-    font-size: 0.85rem;
-    box-shadow: 0 2px 6px rgba(79, 70, 229, 0.25);
-    gap: 0.4rem;
-    flex-shrink: 0;
-}
-
-.matching-block-number i {
-    font-size: 0.85rem;
-}
-
 .matching-block-info {
     display: flex;
     flex-direction: column;
@@ -408,72 +378,13 @@
     margin-top: 1.2rem;
 }
 
-.matching-block-card .block-actions-row {
-    display: flex;
-    align-items: center;
-    gap: 0.55rem;
+.btn-restart-matching {
+    color: #0ea5e9;
 }
 
-.matching-block-card .btn-restart-matching {
-    width: 38px;
-    height: 38px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #0ea5e9, #6366f1);
-    color: #ffffff;
-    border: none;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.matching-block-card .btn-restart-matching:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 12px 20px rgba(14, 165, 233, 0.2);
-}
-
-.matching-block-card .btn-restart-matching:focus-visible {
-    outline: 2px solid rgba(14, 165, 233, 0.65);
-    outline-offset: 2px;
-}
-
-.matching-block-card .btn-check-answer-minimal {
-    width: 38px;
-    height: 38px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #0ea5e9, #6366f1);
-    color: #ffffff;
-    border: none;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.matching-block-card .btn-check-answer-minimal:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 12px 20px rgba(14, 165, 233, 0.2);
-}
-
-.matching-block-card .block-answer-history {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    font-size: 0.78rem;
-    color: #475569;
-    background-color: rgba(241, 245, 249, 0.9);
-    padding: 0.3rem 0.55rem;
-    border-radius: 999px;
-}
-
-.matching-block-card .history-correct {
-    color: #16a34a;
-    font-weight: 600;
-}
-
-.matching-block-card .history-incorrect {
-    color: #dc2626;
-    font-weight: 600;
+.btn-restart-matching:hover:not(:disabled),
+.btn-restart-matching:focus-visible {
+    color: #0369a1;
 }
 
 @media (max-width: 640px) {
