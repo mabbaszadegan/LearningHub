@@ -92,10 +92,10 @@
     border-radius: 10px;
     background-color: #ffffff;
     padding: 0.75rem;
-    text-align: right;
     cursor: pointer;
     display: flex;
-    align-items: flex-start;
+    flex-direction: column;
+    align-items: stretch;
     gap: 0.75rem;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
     height: 100%;
@@ -134,8 +134,12 @@
     flex: 1;
     min-width: 0;
     display: flex;
-    align-items: flex-start;
-    gap: 0.5rem;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    text-align: center;
+    width: 100%;
 }
 
 .matching-item-current {
@@ -167,6 +171,8 @@
 
 .matching-item-media .matching-text {
     font-size: 0.9rem;
+    text-align: right;
+    width: 100%;
 }
 
 .matching-select-input {
@@ -184,10 +190,16 @@
 
 .matching-media-image {
     display: block;
-    max-width: 100%;
+    width: 100%;
+    max-height: 210px;
     height: auto;
     border-radius: 10px;
     border: 1px solid rgba(226, 232, 240, 0.9);
+    object-fit: contain;
+    background-color: #f8fafc;
+    padding: 0.25rem;
+    box-sizing: border-box;
+    margin: 0 auto;
 }
 
 .matching-media-video {
@@ -244,9 +256,9 @@
     background-color: #ffffff;
     padding: 0.75rem;
     display: flex;
-    align-items: flex-start;
+    flex-direction: column;
+    align-items: stretch;
     gap: 0.8rem;
-    text-align: right;
     cursor: pointer;
     transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
     height: 100%;
@@ -297,6 +309,17 @@
 .matching-option-body {
     flex: 1;
     min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    text-align: center;
+    width: 100%;
+}
+.matching-option-body .matching-text {
+    text-align: right;
+    width: 100%;
 }
 
 .matching-placeholder {
@@ -398,6 +421,14 @@
 
     .matching-pairs-grid {
         gap: 0.75rem 0.9rem;
+    }
+
+    .matching-pair-cell {
+        padding: 0.75rem;
+    }
+
+    .matching-media-image {
+        max-height: 160px;
     }
 
     .matching-media-image {
