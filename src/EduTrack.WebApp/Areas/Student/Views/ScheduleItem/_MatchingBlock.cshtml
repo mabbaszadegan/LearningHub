@@ -11,7 +11,6 @@
 
     var items = Model.Items ?? new List<MatchingBlockItem>();
     var optionEntries = items
-        .OrderBy(_ => Guid.NewGuid())
         .Select((item, idx) => new
         {
             Item = item,
@@ -36,60 +35,50 @@
     </div>
 
     <div class="matching-block-body">
-        <div class="matching-block-columns">
-            <div class="matching-left-column">
-                @if (items.Count == 0)
-                {
-                    <div class="matching-empty-state">
-                        <span>آیتمی برای تطبیق موجود نیست.</span>
-                    </div>
-                }
-                else
-                {
-                    <div class="matching-items-list">
-                        @for (var rowIndex = 0; rowIndex < items.Count; rowIndex++)
-                        {
-                            var pair = items[rowIndex];
-                            var selectId = $"matching-select-{Model.Id}-{rowIndex}";
-                            <div class="matching-item" data-left-id="@pair.Id">
-                                <button type="button"
-                                        class="matching-item-button"
-                                        data-left-id="@pair.Id"
-                                        data-select-id="@selectId">
-                                    <span class="matching-item-index">@((rowIndex + 1).ToString())</span>
-                                    <div class="matching-item-media">
-                                        @RenderSideContent(pair.Left)
-                                    </div>
-                                    <span class="matching-item-current" data-empty-label="انتخاب نشده">انتخاب نشده</span>
-                                </button>
-                                <select id="@selectId"
-                                        class="matching-select-input"
-                                        data-left-id="@pair.Id"
-                                        @(Model.IsRequired ? "required" : null)>
-                                    <option value="">انتخاب کنید</option>
-                                    @foreach (var option in optionEntries)
-                                    {
-                                        <option value="@option.Item.Id">@option.Letter - @option.ShortText</option>
-                                    }
-                                </select>
-                            </div>
-                        }
-                    </div>
-                }
+        @if (items.Count == 0)
+        {
+            <div class="matching-empty-state">
+                <span>آیتمی برای تطبیق موجود نیست.</span>
             </div>
-            <div class="matching-right-column" aria-label="گزینه‌های ستون راست">
-                <h3 class="matching-right-title">گزینه‌ها</h3>
-                @if (optionEntries.Count == 0)
+        }
+        else if (optionEntries.Count == 0)
+        {
+            <div class="matching-empty-state">
+                <span>هنوز گزینه‌ای تنظیم نشده است.</span>
+            </div>
+        }
+        else
+        {
+            <div class="matching-pairs-grid" data-pairs-count="@items.Count">
+                @for (var rowIndex = 0; rowIndex < items.Count; rowIndex++)
                 {
-                    <div class="matching-empty-state">
-                        <span>هنوز گزینه‌ای تنظیم نشده است.</span>
-                    </div>
-                }
-                else
-                {
-                    <div class="matching-option-list">
-                        @foreach (var option in optionEntries)
-                        {
+                    var pair = items[rowIndex];
+                    var option = optionEntries[rowIndex];
+                    var selectId = $"matching-select-{Model.Id}-{rowIndex}";
+                    <div class="matching-pair-row" data-row-index="@rowIndex">
+                        <div class="matching-pair-cell matching-pair-cell-left" data-left-wrapper="@pair.Id">
+                            <button type="button"
+                                    class="matching-item-button"
+                                    data-left-id="@pair.Id"
+                                    data-select-id="@selectId">
+                                <span class="matching-item-index">@((rowIndex + 1).ToString())</span>
+                                <div class="matching-item-media">
+                                    @RenderSideContent(pair.Left)
+                                </div>
+                                <span class="matching-item-current" data-empty-label="انتخاب نشده">انتخاب نشده</span>
+                            </button>
+                            <select id="@selectId"
+                                    class="matching-select-input"
+                                    data-left-id="@pair.Id"
+                                    @(Model.IsRequired ? "required" : null)>
+                                <option value="">انتخاب کنید</option>
+                                @foreach (var entry in optionEntries)
+                                {
+                                    <option value="@entry.Item.Id">@entry.Letter - @entry.ShortText</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="matching-pair-cell matching-pair-cell-right" data-option-wrapper="@option.Item.Id">
                             <button type="button"
                                     class="matching-option-button"
                                     data-option-id="@option.Item.Id"
@@ -99,11 +88,11 @@
                                     @RenderSideContent(option.Item.Right)
                                 </div>
                             </button>
-                        }
+                        </div>
                     </div>
                 }
             </div>
-        </div>
+        }
     </div>
 
     <div class="matching-block-actions">
@@ -117,6 +106,14 @@
                     title="بررسی پاسخ">
                 <i class="fas fa-check" aria-hidden="true"></i>
                 <span class="sr-only">بررسی پاسخ</span>
+            </button>
+            <button type="button"
+                    class="btn-restart-matching"
+                    data-block-id="@Model.Id"
+                    data-block-order="@Model.Order"
+                    title="شروع دوباره">
+                <i class="fas fa-rotate-right" aria-hidden="true"></i>
+                <span class="sr-only">شروع دوباره</span>
             </button>
             <div class="block-answer-history" data-block-id="@Model.Id">
                 <span class="history-correct" data-count="0">0</span>

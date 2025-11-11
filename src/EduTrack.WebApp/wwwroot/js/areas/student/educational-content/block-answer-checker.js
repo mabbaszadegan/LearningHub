@@ -65,6 +65,7 @@
 
         // Determine block context (ordering, multiple choice, etc.)
         const blockContext = getBlockContext(button, scheduleItemType);
+        const isMatchingBlock = blockContext === 'matching';
 
         if (!blockContext) {
             console.error('Unsupported or unknown block context for check answer button.', { scheduleItemType, blockId });
@@ -90,6 +91,9 @@
             showError(button, emptyMessage);
             button.disabled = false;
             button.innerHTML = originalContent;
+            if (isMatchingBlock) {
+                dispatchMatchingChecked(button, { reason: 'incomplete' });
+            }
             return;
         }
 
@@ -131,6 +135,7 @@
                 showError(button, 'برای هر مورد ستون چپ یک گزینه معتبر انتخاب کنید.');
                 button.disabled = false;
                 button.innerHTML = originalContent;
+                dispatchMatchingChecked(button, { reason: 'incomplete' });
                 return;
             }
         }
@@ -163,12 +168,18 @@
             // Reload history after answer check
             loadAnswerHistoryForBlock(scheduleItemId, blockId);
             button.innerHTML = originalContent;
+            if (isMatchingBlock) {
+                dispatchMatchingChecked(button, { isCorrect: !!result && !!result.isCorrect, reason: 'checked' });
+            }
         })
         .catch(function(error) {
             console.error('Error checking answer:', error);
             showError(button, error.message || 'خطا در بررسی پاسخ');
             button.disabled = false;
             button.innerHTML = originalContent;
+            if (isMatchingBlock) {
+                dispatchMatchingChecked(button, { error: true, reason: 'error' });
+            }
         });
     }
 
@@ -636,6 +647,23 @@
             incorrectSpan.textContent = incorrectCount;
             incorrectSpan.setAttribute('data-count', incorrectCount);
         }
+    }
+
+    function dispatchMatchingChecked(button, detail) {
+        if (!button) {
+            return;
+        }
+
+        const card = button.closest('.matching-block-card');
+        if (!card) {
+            return;
+        }
+
+        const eventDetail = detail || {};
+        card.dispatchEvent(new CustomEvent('matching:block:checked', {
+            bubbles: true,
+            detail: eventDetail
+        }));
     }
 
     // Export for use in other scripts if needed
