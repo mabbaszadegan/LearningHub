@@ -11,11 +11,17 @@
 
     var items = Model.Items ?? new List<MatchingBlockItem>();
     var optionEntries = items
-        .Select((item, idx) => new
+        .Select(item => new
         {
             Item = item,
-            Letter = GetOptionLetter(idx),
             ShortText = GetShortText(item.Right)
+        })
+        .OrderBy(_ => Random.Shared.Next())
+        .Select((entry, idx) => new
+        {
+            entry.Item,
+            Letter = GetOptionLetter(idx),
+            entry.ShortText
         })
         .ToList();
 }
