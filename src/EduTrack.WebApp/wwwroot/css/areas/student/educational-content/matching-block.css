@@ -378,6 +378,12 @@
     margin-top: 1.2rem;
 }
 
+.matching-block-card .block-actions-buttons {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
 .btn-restart-matching {
     color: #0ea5e9;
 }
