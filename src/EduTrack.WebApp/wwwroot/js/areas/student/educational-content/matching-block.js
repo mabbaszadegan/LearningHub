@@ -310,6 +310,14 @@
                 return;
             }
 
+            if (!button.hasAttribute('role')) {
+                button.setAttribute('role', 'button');
+            }
+
+            if (!button.hasAttribute('tabindex')) {
+                button.setAttribute('tabindex', '0');
+            }
+
             audio.preload = 'none';
 
             audio.addEventListener('ended', function () {
@@ -332,6 +340,13 @@
 
                 play(button, audio);
                 activeButton = button;
+            });
+
+            button.addEventListener('keydown', function (event) {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    button.click();
+                }
             });
         });
 

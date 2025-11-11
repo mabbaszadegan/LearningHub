@@ -22,16 +22,18 @@
 
 <div class="matching-block-card" data-block-id="@Model.Id" data-block-order="@Model.Order">
     <div class="matching-block-header">
-        <div class="matching-block-meta">
-            <span class="matching-block-badge" aria-label="بلاک تطبیق شماره @(blockIndex + 1)">
-                @((blockIndex + 1).ToString())
-            </span>
-            <span class="matching-block-label">تطبیق</span>
+        <div class="matching-block-number" aria-label="بلاک تطبیق شماره @(blockIndex + 1)">
+            <i class="fas fa-link" aria-hidden="true"></i>
+            <span class="block-number-text">@((blockIndex + 1).ToString())</span>
+            <span class="sr-only">بلاک تطبیق</span>
         </div>
-        @if (!string.IsNullOrWhiteSpace(Model.Instruction))
-        {
-            <p class="matching-block-instruction">@Model.Instruction</p>
-        }
+        <div class="matching-block-info">
+            <span class="matching-block-label">تطبیق</span>
+            @if (!string.IsNullOrWhiteSpace(Model.Instruction))
+            {
+                <p class="matching-block-instruction">@Model.Instruction</p>
+            }
+        </div>
     </div>
 
     <div class="matching-block-body">
@@ -214,12 +216,12 @@
         var alt = WebUtility.HtmlEncode(GetMediaAlt(side));
         var url = WebUtility.HtmlEncode(side.FileUrl);
         var html = string.Concat(
-            "<button type=\"button\" class=\"matching-media-button\" data-image-url=\"", url,
+            "<div class=\"matching-media-button\" role=\"button\" tabindex=\"0\" data-image-url=\"", url,
             "\" data-image-alt=\"", alt,
             "\" aria-label=\"مشاهده تصویر\">",
             "<img src=\"", url, "\" alt=\"", alt, "\" class=\"matching-media-image\" loading=\"lazy\" />",
             "<span class=\"matching-media-zoom\" aria-hidden=\"true\"></span>",
-            "</button>");
+            "</div>");
         return new HtmlString(html);
     }
 
@@ -233,14 +235,14 @@
         var url = WebUtility.HtmlEncode(side.FileUrl);
         var mime = WebUtility.HtmlEncode(side.MimeType ?? "audio/mpeg");
         var html = string.Concat(
-            "<button type=\"button\" class=\"matching-audio-button\" data-audio-src=\"", url,
+            "<div class=\"matching-audio-button\" role=\"button\" tabindex=\"0\" data-audio-src=\"", url,
             "\" data-audio-type=\"", mime,
             "\" aria-label=\"پخش فایل صوتی\" aria-pressed=\"false\">",
             "<span class=\"matching-audio-icon\" aria-hidden=\"true\"></span>",
             "<audio src=\"", url, "\" preload=\"none\" class=\"matching-audio-element\">",
             "<source src=\"", url, "\" type=\"", mime, "\">",
             "</audio>",
-            "</button>");
+            "</div>");
         return new HtmlString(html);
     }
 
