@@ -70,39 +70,54 @@
 
 .gapfill-blank {
     display: inline-flex;
-    flex-direction: column;
-    align-items: stretch;
-    margin: 0 0.4rem;
+    align-items: baseline;
+    gap: 0.45rem;
+    margin: 0 0.35rem;
     position: relative;
+    vertical-align: baseline;
+    flex-wrap: wrap;
+}
+
+.gapfill-blank[data-has-options="true"] {
+    flex-wrap: wrap;
 }
 
 .gapfill-blank-input {
     display: inline-flex;
     align-items: center;
-    gap: 0.25rem;
-    background: #fff;
-    border: 1px solid #cbd5f5;
-    padding: 0.25rem 0.5rem;
-    border-radius: 12px;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    gap: 0.35rem;
+    padding: 0.2rem 0;
+    min-width: 0;
+    border-bottom: 2px solid #dbe3ff;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
 }
 
-.gapfill-blank-input:focus-within {
-    border-color: #2563eb;
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+.gapfill-blank-input:focus-within,
+.gapfill-blank.is-active .gapfill-blank-input {
+    border-color: #1d4ed8;
 }
 
 .gapfill-input {
     border: none;
     outline: none;
     background: transparent;
-    min-width: 120px;
+    min-width: 0;
+    width: auto;
+    flex: 0 0 auto;
     font-weight: 600;
+    font-size: 1rem;
     color: #1f2937;
+    text-align: center;
+    padding: 0 0.3rem;
+}
+
+.gapfill-input::placeholder {
+    color: #9ca3af;
+    font-weight: 400;
 }
 
 .gapfill-input[readonly] {
-    cursor: default;
+    cursor: pointer;
 }
 
 .gapfill-clear {
@@ -110,66 +125,97 @@
     background: transparent;
     color: #9ca3af;
     cursor: pointer;
-    padding: 0.25rem;
-    border-radius: 50%;
-    transition: color 0.2s ease, background-color 0.2s ease;
+    padding: 0.15rem;
+    border-radius: 999px;
+    transition: color 0.2s ease, background-color 0.2s ease, opacity 0.2s ease;
+    opacity: 0;
+}
+
+.gapfill-blank.has-value .gapfill-clear {
+    opacity: 1;
 }
 
 .gapfill-clear:hover {
-    color: #ef4444;
-    background-color: rgba(239, 68, 68, 0.08);
+    color: #dc2626;
+    background-color: rgba(220, 38, 38, 0.12);
 }
 
 .gapfill-blank.has-value .gapfill-blank-input {
-    border-color: #10b981;
+    border-color: #4f46e5;
 }
 
 .gapfill-blank.is-incomplete .gapfill-blank-input {
     border-color: #f97316;
-    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.15);
+}
+
+.gapfill-blank.is-correct .gapfill-blank-input {
+    border-color: #10b981;
+}
+
+.gapfill-blank.is-incorrect .gapfill-blank-input {
+    border-color: #ef4444;
+}
+
+.gapfill-blank.is-incorrect .gapfill-input {
+    color: #b91c1c;
+    text-decoration: line-through;
+    text-decoration-thickness: 2px;
 }
 
 .gapfill-blank-options {
-    display: flex;
+    display: inline-flex;
     flex-wrap: wrap;
-    gap: 0.4rem;
-    margin-top: 0.5rem;
+    align-items: center;
+    gap: 0.35rem;
+    margin: 0;
+    margin-inline-start: 0.15rem;
 }
 
 .gapfill-option {
-    border: 1px solid #d1d5db;
-    background: #f9fafb;
+    border: 1px dashed #c7d2fe;
+    background: #f5f7ff;
     color: #1f2937;
     border-radius: 9999px;
-    padding: 0.25rem 0.75rem;
+    padding: 0.2rem 0.6rem;
     font-size: 0.85rem;
     cursor: pointer;
-    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, opacity 0.2s ease;
+    white-space: nowrap;
 }
 
 .gapfill-option:hover {
-    background: #2563eb;
-    border-color: #2563eb;
+    background: #1d4ed8;
+    border-color: #1d4ed8;
     color: #ffffff;
 }
 
 .gapfill-option.is-selected {
-    background: #2563eb;
-    border-color: #2563eb;
+    background: #1d4ed8;
+    border-color: #1d4ed8;
     color: #ffffff;
 }
 
+.gapfill-option.is-crossed {
+    text-decoration: line-through;
+    opacity: 0.55;
+}
+
+.gapfill-option.is-assigned {
+    display: none;
+}
+
 .gapfill-global-options {
-    border-top: 1px dashed #e5e7eb;
+    border-top: 1px solid #e5e7eb;
     padding-top: 0.75rem;
+    margin-top: 0.75rem;
 }
 
 .gapfill-global-options-label {
     display: inline-flex;
     align-items: center;
-    gap: 0.4rem;
+    gap: 0.35rem;
     font-weight: 600;
-    color: #2563eb;
+    color: #1d4ed8;
     margin-bottom: 0.5rem;
 }
 
@@ -180,12 +226,12 @@
 }
 
 .gapfill-option-global {
-    background: rgba(37, 99, 235, 0.08);
-    border-color: rgba(37, 99, 235, 0.2);
+    background: #eef2ff;
+    border-color: #c7d2fe;
 }
 
 .gapfill-option-global:hover {
-    background: #2563eb;
+    background: #1d4ed8;
     color: #fff;
 }
 
@@ -208,11 +254,26 @@
     }
 
     .gapfill-blank {
-        margin: 0 0.2rem;
+        margin: 0 0.25rem;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.45rem;
+    }
+
+    .gapfill-blank-options {
+        margin-inline-start: 0;
+    }
+
+    .gapfill-blank-input {
+        width: auto;
+    }
+
+    .gapfill-blank-options {
+        justify-content: center;
     }
 
     .gapfill-input {
-        min-width: 90px;
+        min-width: 4rem;
     }
 }
 

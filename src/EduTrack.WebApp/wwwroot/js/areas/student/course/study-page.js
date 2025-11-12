@@ -11,11 +11,23 @@ class StudyPage {
         this.selectedChapterId = null;
         this.selectedSubChapterId = null;
         this.selectedTypes = [];
+        this.handleViewportResize = this.updateViewportHeightVar.bind(this);
+        this.teardownHandler = this.restoreLayoutAdjustments.bind(this);
+        this.layoutAdjusted = false;
         
         this.init();
     }
 
     init() {
+        this.updateViewportHeightVar();
+        window.addEventListener('resize', this.handleViewportResize);
+        window.addEventListener('orientationchange', this.handleViewportResize);
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', this.handleViewportResize);
+            window.visualViewport.addEventListener('scroll', this.handleViewportResize);
+        }
+        window.addEventListener('beforeunload', this.teardownHandler);
+        window.addEventListener('pagehide', this.teardownHandler);
         this.bindEvents();
         this.initializeFilters();
         this.initializeSorting();
@@ -408,33 +420,54 @@ class StudyPage {
         const body = document.body;
         if (!body.classList.contains('study-page-active')) {
             body.classList.add('study-page-active');
+            this.layoutAdjusted = true;
         }
-        
-        // Also hide directly using JavaScript as fallback
-        const fixedFooter = document.querySelector('.fixed-footer');
-        if (fixedFooter) {
-            fixedFooter.style.display = 'none';
-        }
+    }
 
-        const fixedHeader = document.querySelector('.fixed-header');
-        if (fixedHeader) {
-            fixedHeader.style.display = 'none';
+    updateViewportHeightVar() {
+        const viewport = window.visualViewport;
+        const vh = viewport ? Math.round(viewport.height) : window.innerHeight;
+        if (vh > 0) {
+            document.documentElement.style.setProperty('--study-page-viewport-height', `${vh}px`);
         }
+    }
 
-        const desktopHeader = document.querySelector('.desktop-header');
-        if (desktopHeader) {
-            desktopHeader.style.display = 'none';
+    restoreLayoutAdjustments() {
+        window.removeEventListener('resize', this.handleViewportResize);
+        window.removeEventListener('orientationchange', this.handleViewportResize);
+        if (window.visualViewport) {
+            window.visualViewport.removeEventListener('resize', this.handleViewportResize);
+            window.visualViewport.removeEventListener('scroll', this.handleViewportResize);
         }
+        window.removeEventListener('beforeunload', this.teardownHandler);
+        window.removeEventListener('pagehide', this.teardownHandler);
 
-        // Override main-content styles
+        if (!this.layoutAdjusted) {
+            return;
+        }
+        document.body.classList.remove('study-page-active');
+        this.layoutAdjusted = false;
+        // Remove inline fallback styles if they were set by other components
         const mainContent = document.querySelector('.main-content');
         if (mainContent) {
-            mainContent.style.position = 'static';
-            mainContent.style.top = 'auto';
-            mainContent.style.bottom = 'auto';
-            mainContent.style.height = 'auto';
-            mainContent.style.overflow = 'visible';
-            mainContent.style.padding = '0';
+            mainContent.style.removeProperty('position');
+            mainContent.style.removeProperty('top');
+            mainContent.style.removeProperty('bottom');
+            mainContent.style.removeProperty('height');
+            mainContent.style.removeProperty('overflow');
+            mainContent.style.removeProperty('padding');
+        }
+        const fixedFooter = document.querySelector('.fixed-footer');
+        if (fixedFooter) {
+            fixedFooter.style.removeProperty('display');
+        }
+        const fixedHeader = document.querySelector('.fixed-header');
+        if (fixedHeader) {
+            fixedHeader.style.removeProperty('display');
+        }
+        const desktopHeader = document.querySelector('.desktop-header');
+        if (desktopHeader) {
+            desktopHeader.style.removeProperty('display');
         }
     }
 }

@@ -3,6 +3,17 @@
  * Clean, minimal interface for course study page
  */
 
+/* Viewport helpers */
+:root {
+    --study-page-viewport-height: 100vh;
+}
+
+@supports (height: 100dvh) {
+    :root {
+        --study-page-viewport-height: 100dvh;
+    }
+}
+
 /* Hide bottom navigation and headers on study page */
 .study-page-container ~ * .fixed-footer,
 body.study-page-active .fixed-footer {
@@ -26,7 +37,8 @@ body.study-page-active .main-content {
 
 /* Main Container */
 .study-page-container {
-    height: 100vh;
+    min-height: 100vh;
+    min-height: var(--study-page-viewport-height, 100vh);
     background: #f5f5f5;
     display: flex;
     flex-direction: column;

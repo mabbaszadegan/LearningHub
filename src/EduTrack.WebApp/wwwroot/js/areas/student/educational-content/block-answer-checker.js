@@ -537,6 +537,7 @@
     function showResult(button, result, blockId) {
         // For minimal button, we just update the icon - no need for result container
         const isMinimal = button.classList.contains('btn-check-answer-minimal');
+        applyGapFillFeedback(button, result);
         
         if (!isMinimal) {
             // Find result container for old style buttons
@@ -579,6 +580,84 @@
             // Scroll to result if needed
             resultContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
+    }
+
+    function applyGapFillFeedback(button, result) {
+        if (!button || !result) {
+            return false;
+        }
+
+        const card = button.closest('.gapfill-block-card');
+        if (!card) {
+            return false;
+        }
+
+        const blanks = Array.from(card.querySelectorAll('.gapfill-blank'));
+        if (blanks.length === 0) {
+            return false;
+        }
+
+        blanks.forEach(blank => {
+            blank.classList.remove('is-correct', 'is-incorrect');
+        });
+
+        card.querySelectorAll('.gapfill-option').forEach(option => {
+            option.classList.remove('is-crossed');
+        });
+
+        const detailed = result.detailedFeedback || result.DetailedFeedback;
+        const perBlank = detailed && (detailed.blanks || detailed.Blanks);
+        if (!Array.isArray(perBlank)) {
+            return true;
+        }
+
+        perBlank.forEach(entry => {
+            if (!entry) {
+                return;
+            }
+
+            const blankIdRaw = entry.blankId || entry.BlankId || '';
+            const index = entry.index ?? entry.Index;
+            const selectorId = (blankIdRaw && blankIdRaw.toString().trim().length > 0)
+                ? blankIdRaw.toString().trim()
+                : (Number.isFinite(index) ? `blank${index}` : '');
+
+            const blank = selectorId
+                ? card.querySelector(`.gapfill-blank[data-blank-id="${escapeSelector(selectorId)}"]`)
+                : null;
+
+            if (!blank) {
+                return;
+            }
+
+            const isCorrect = !!(entry.isCorrect ?? entry.IsCorrect);
+            blank.classList.toggle('is-correct', isCorrect);
+            blank.classList.toggle('is-incorrect', !isCorrect);
+
+            if (!isCorrect) {
+                const optionId = entry.submittedOptionId || entry.SubmittedOptionId || '';
+                if (optionId) {
+                    const optionSelector = `.gapfill-option[data-option-id="${escapeSelector(optionId)}"]`;
+                    const optionButton = blank.querySelector(optionSelector) ||
+                        card.querySelector(`.gapfill-global-options ${optionSelector}`);
+                    if (optionButton) {
+                        optionButton.classList.add('is-crossed');
+                    }
+                }
+            }
+        });
+
+        return true;
+    }
+
+    function escapeSelector(value) {
+        if (typeof value !== 'string') {
+            value = `${value ?? ''}`;
+        }
+        if (typeof CSS !== 'undefined' && CSS.escape) {
+            return CSS.escape(value);
+        }
+        return value.replace(/([!"#$%&'()*+,.\/:;<=>?@\[\\\]^`{|}~\s])/g, '\\$1');
     }
     
     function updateButtonIcon(button, isCorrect) {
