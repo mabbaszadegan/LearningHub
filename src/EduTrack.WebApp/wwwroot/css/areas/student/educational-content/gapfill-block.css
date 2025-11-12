@@ -1,0 +1,218 @@
+.gapfill-content-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.gapfill-block-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    padding: 1.25rem;
+    box-shadow: 0 10px 30px -15px rgba(31, 41, 55, 0.2);
+}
+
+.gapfill-block-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.gapfill-block-number {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    color: #2563eb;
+    background: rgba(37, 99, 235, 0.1);
+}
+
+.gapfill-block-number i {
+    margin-left: 0.25rem;
+}
+
+.gapfill-block-info {
+    flex: 1;
+    color: #1f2937;
+    font-weight: 600;
+}
+
+.gapfill-block-body {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.gapfill-block-media {
+    border-radius: 12px;
+    overflow: hidden;
+    background: #f9fafb;
+    padding: 0.75rem;
+    border: 1px solid #e5e7eb;
+}
+
+.gapfill-block-media img,
+.gapfill-block-media video {
+    max-width: 100%;
+    display: block;
+    border-radius: 8px;
+}
+
+.gapfill-block-content {
+    line-height: 1.9;
+    font-size: 1.05rem;
+    color: #374151;
+}
+
+.gapfill-blank {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: stretch;
+    margin: 0 0.4rem;
+    position: relative;
+}
+
+.gapfill-blank-input {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    background: #fff;
+    border: 1px solid #cbd5f5;
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.gapfill-blank-input:focus-within {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.gapfill-input {
+    border: none;
+    outline: none;
+    background: transparent;
+    min-width: 120px;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.gapfill-input[readonly] {
+    cursor: default;
+}
+
+.gapfill-clear {
+    border: none;
+    background: transparent;
+    color: #9ca3af;
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 50%;
+    transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.gapfill-clear:hover {
+    color: #ef4444;
+    background-color: rgba(239, 68, 68, 0.08);
+}
+
+.gapfill-blank.has-value .gapfill-blank-input {
+    border-color: #10b981;
+}
+
+.gapfill-blank.is-incomplete .gapfill-blank-input {
+    border-color: #f97316;
+    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.15);
+}
+
+.gapfill-blank-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-top: 0.5rem;
+}
+
+.gapfill-option {
+    border: 1px solid #d1d5db;
+    background: #f9fafb;
+    color: #1f2937;
+    border-radius: 9999px;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.gapfill-option:hover {
+    background: #2563eb;
+    border-color: #2563eb;
+    color: #ffffff;
+}
+
+.gapfill-option.is-selected {
+    background: #2563eb;
+    border-color: #2563eb;
+    color: #ffffff;
+}
+
+.gapfill-global-options {
+    border-top: 1px dashed #e5e7eb;
+    padding-top: 0.75rem;
+}
+
+.gapfill-global-options-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-weight: 600;
+    color: #2563eb;
+    margin-bottom: 0.5rem;
+}
+
+.gapfill-global-options-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.gapfill-option-global {
+    background: rgba(37, 99, 235, 0.08);
+    border-color: rgba(37, 99, 235, 0.2);
+}
+
+.gapfill-option-global:hover {
+    background: #2563eb;
+    color: #fff;
+}
+
+.gapfill-block-actions {
+    margin-top: 1.25rem;
+}
+
+.gapfill-block-card .block-actions-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.gapfill-block-card .block-result {
+    margin-top: 0.75rem;
+}
+
+@media (max-width: 768px) {
+    .gapfill-block-card {
+        padding: 1rem;
+    }
+
+    .gapfill-blank {
+        margin: 0 0.2rem;
+    }
+
+    .gapfill-input {
+        min-width: 90px;
+    }
+}
+

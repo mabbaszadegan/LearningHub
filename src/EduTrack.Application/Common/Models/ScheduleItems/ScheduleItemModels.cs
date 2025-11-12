@@ -149,7 +149,7 @@ public class MultipleChoiceOption
     public int? AudioDuration { get; set; } // in seconds
 }
 
-public class GapFillContent
+public partial class GapFillContent
 {
     public string Text { get; set; } = string.Empty;
     public List<GapFillGap> Gaps { get; set; } = new();
@@ -358,6 +358,7 @@ public class ReminderContent
     public List<ReminderQuestionBlock> QuestionBlocks { get; set; } = new();
     public List<OrderingBlock> OrderingBlocks { get; set; } = new();
     public List<MultipleChoiceBlock> MultipleChoiceBlocks { get; set; } = new();
+    public List<GapFillBlock> GapFillBlocks { get; set; } = new();
     public List<MatchingBlock> MatchingBlocks { get; set; } = new();
 }
 

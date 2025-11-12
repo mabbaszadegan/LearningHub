@@ -1,0 +1,261 @@
+@using System.Text.Encodings.Web
+@using System.Text.RegularExpressions
+@using EduTrack.Application.Common.Models.ScheduleItems
+@using EduTrack.Domain.Enums
+@using Microsoft.AspNetCore.Html
+@model GapFillBlock
+
+@{
+    var scheduleItemId = ViewBag.ScheduleItemId as int? ?? 0;
+    var scheduleItemType = ViewBag.ScheduleItemType as ScheduleItemType? ?? ScheduleItemType.GapFill;
+    var blockIndex = ViewBag.BlockIndex as int? ?? 0;
+    var scheduleItemTypeString = scheduleItemType.ToString();
+    var blanks = (Model.Blanks ?? new List<GapFillBlank>())
+        .OrderBy(b => b.Index)
+        .ToDictionary(b => b.Index, b => b);
+
+    var contentValue = Model.Content ?? string.Empty;
+    var blankMatches = Regex.Matches(contentValue, @"\[\[blank(\d+)\]\]", RegexOptions.IgnoreCase);
+    var segments = new List<object>();
+
+    if (blankMatches.Count == 0)
+    {
+        segments.Add(new HtmlString(contentValue));
+    }
+    else
+    {
+        var lastIndex = 0;
+        foreach (Match match in blankMatches)
+        {
+            if (match.Index > lastIndex)
+            {
+                var segment = contentValue.Substring(lastIndex, match.Index - lastIndex);
+                segments.Add(new HtmlString(segment));
+            }
+
+            if (int.TryParse(match.Groups[1].Value, out var blankIndex))
+            {
+                if (!blanks.TryGetValue(blankIndex, out var blank))
+                {
+                    blank = new GapFillBlank
+                    {
+                        Index = blankIndex,
+                        AllowManualInput = true,
+                        AllowGlobalOptions = true,
+                        AllowBlankOptions = false
+                    };
+                }
+
+                segments.Add(blank);
+            }
+
+            lastIndex = match.Index + match.Length;
+        }
+
+        if (lastIndex < contentValue.Length)
+        {
+            var trailingSegment = contentValue.Substring(lastIndex);
+            segments.Add(new HtmlString(trailingSegment));
+        }
+    }
+
+    string FormatBoolean(bool value) => value ? "true" : "false";
+    string BuildOptionId(GapFillOption option) => string.IsNullOrWhiteSpace(option.Id) ? $"opt-{Guid.NewGuid()}" : option.Id;
+}
+
+<div class="gapfill-block-card"
+     data-block-id="@Model.Id"
+     data-block-order="@Model.Order"
+     data-answer-type="@Model.AnswerType"
+     data-case-sensitive="@FormatBoolean(Model.CaseSensitive)"
+     data-show-global-options="@FormatBoolean(Model.ShowGlobalOptions)">
+
+    <div class="gapfill-block-header">
+        <div class="gapfill-block-number" aria-label="بلاک جای‌خالی شماره @(blockIndex + 1)">
+            <i class="fas fa-highlighter" aria-hidden="true"></i>
+            <span class="block-number-text">@(blockIndex + 1)</span>
+        </div>
+        @if (!string.IsNullOrWhiteSpace(Model.Instruction))
+        {
+            <div class="gapfill-block-info">@Html.Raw(Model.Instruction)</div>
+        }
+    </div>
+
+    <div class="gapfill-block-body">
+        @if (Model.Media is { MediaType: not null } media)
+        {
+            <div class="gapfill-block-media gapfill-block-media-@media.MediaType">
+                @switch (media.MediaType?.ToLowerInvariant())
+                {
+                    case "image":
+                        if (!string.IsNullOrWhiteSpace(media.FileUrl))
+                        {
+                            var altText = !string.IsNullOrWhiteSpace(media.Caption) ? media.Caption : "تصویر تمرین";
+                            <img src="@media.FileUrl" alt="@altText" loading="lazy" />
+                        }
+                        break;
+                    case "audio":
+                        if (!string.IsNullOrWhiteSpace(media.FileUrl))
+                        {
+                            <audio controls preload="none">
+                                <source src="@media.FileUrl" type="@(!string.IsNullOrWhiteSpace(media.MimeType) ? media.MimeType : "audio/mpeg")" />
+                                مرورگر شما از پخش صدا پشتیبانی نمی‌کند.
+                            </audio>
+                        }
+                        break;
+                    case "video":
+                        if (!string.IsNullOrWhiteSpace(media.FileUrl))
+                        {
+                            <video controls preload="metadata">
+                                <source src="@media.FileUrl" type="@(!string.IsNullOrWhiteSpace(media.MimeType) ? media.MimeType : "video/mp4")" />
+                                مرورگر شما از پخش ویدیو پشتیبانی نمی‌کند.
+                            </video>
+                        }
+                        break;
+                }
+
+                @if (!string.IsNullOrWhiteSpace(media.Caption) && !string.Equals(media.MediaType, "audio", StringComparison.OrdinalIgnoreCase))
+                {
+                    <div class="gapfill-media-caption">@media.Caption</div>
+                }
+            </div>
+        }
+
+        <div class="gapfill-block-content" dir="auto">
+            @foreach (var segment in segments)
+            {
+                if (segment is HtmlString htmlSegment)
+                {
+                    @htmlSegment
+                }
+                else if (segment is GapFillBlank blankSegment)
+                {
+                    var blankId = !string.IsNullOrWhiteSpace(blankSegment.Id)
+                        ? blankSegment.Id
+                        : $"blank{blankSegment.Index}";
+                    var encodedId = HtmlEncoder.Default.Encode(blankId);
+                    var allowManual = blankSegment.AllowManualInput;
+                    var allowGlobal = blankSegment.AllowGlobalOptions;
+                    var allowBlank = blankSegment.AllowBlankOptions && (blankSegment.Options?.Any() ?? false);
+                    var placeholder = allowManual
+                        ? "پاسخ خود را وارد کنید"
+                        : "یک گزینه را انتخاب کنید";
+                    var blankOptions = blankSegment.Options ?? new List<GapFillOption>();
+                    var serializedHint = string.IsNullOrWhiteSpace(blankSegment.Hint) ? string.Empty : blankSegment.Hint;
+
+                    <span class="gapfill-blank"
+                          data-blank-id="@encodedId"
+                          data-blank-index="@blankSegment.Index"
+                          data-allow-manual="@FormatBoolean(allowManual)"
+                          data-allow-global-options="@FormatBoolean(allowGlobal)"
+                          data-allow-blank-options="@FormatBoolean(allowBlank)"
+                          data-hint="@HtmlEncoder.Default.Encode(serializedHint)">
+                        <span class="gapfill-blank-input">
+                            <input type="text"
+                                   class="gapfill-input"
+                                   autocomplete="off"
+                                   placeholder="@placeholder"
+                                   @(allowManual ? null : "readonly") />
+                            <button type="button"
+                                    class="gapfill-clear"
+                                    data-action="clear-blank"
+                                    title="حذف پاسخ">
+                                <span class="sr-only">حذف پاسخ</span>
+                                <i class="fas fa-times" aria-hidden="true"></i>
+                            </button>
+                        </span>
+
+                        @if (allowBlank && blankOptions.Any())
+                        {
+                            <div class="gapfill-blank-options" data-role="blank-options">
+                                @foreach (var option in blankOptions)
+                                {
+                                    if (option == null || string.IsNullOrWhiteSpace(option.Value))
+                                    {
+                                        continue;
+                                    }
+
+                                    var optionId = BuildOptionId(option);
+                                    var optionValue = option.Value.Trim();
+                                    var optionLabel = string.IsNullOrWhiteSpace(option.DisplayText)
+                                        ? optionValue
+                                        : option.DisplayText;
+
+                                    <button type="button"
+                                            class="gapfill-option"
+                                            data-option-id="@optionId"
+                                            data-option-value="@optionValue">
+                                        @optionLabel
+                                    </button>
+                                }
+                            </div>
+                        }
+                    </span>
+                }
+            }
+        </div>
+
+        @if (Model.ShowGlobalOptions && Model.GlobalOptions != null && Model.GlobalOptions.Any())
+        {
+            <div class="gapfill-global-options" data-role="global-options">
+                <span class="gapfill-global-options-label"><i class="fas fa-lightbulb"></i> گزینه‌های پیشنهادی:</span>
+                <div class="gapfill-global-options-list">
+                    @foreach (var option in Model.GlobalOptions)
+                    {
+                        if (option == null || string.IsNullOrWhiteSpace(option.Value))
+                        {
+                            continue;
+                        }
+
+                        var optionId = BuildOptionId(option);
+                        var optionValue = option.Value.Trim();
+                        var optionLabel = string.IsNullOrWhiteSpace(option.DisplayText)
+                            ? optionValue
+                            : option.DisplayText;
+
+                        <button type="button"
+                                class="gapfill-option gapfill-option-global"
+                                data-option-id="@optionId"
+                                data-option-value="@optionValue">
+                            @optionLabel
+                        </button>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="gapfill-block-actions">
+        <div class="block-actions-row">
+            <div class="block-actions-buttons">
+                <button type="button"
+                        class="btn-check-answer-minimal"
+                        data-schedule-item-id="@scheduleItemId"
+                        data-schedule-item-type="@scheduleItemTypeString"
+                        data-block-id="@Model.Id"
+                        data-block-order="@Model.Order"
+                        aria-label="بررسی پاسخ"
+                        title="بررسی پاسخ">
+                    <i class="fas fa-check" aria-hidden="true"></i>
+                </button>
+                <button type="button"
+                        class="btn-check-answer-minimal btn-restart-gapfill"
+                        data-block-id="@Model.Id"
+                        data-block-order="@Model.Order"
+                        aria-label="شروع دوباره"
+                        title="شروع دوباره">
+                    <i class="fas fa-rotate-right" aria-hidden="true"></i>
+                </button>
+            </div>
+            <div class="block-answer-history" data-block-id="@Model.Id">
+                <span class="history-correct" data-count="0">0</span>
+                <span class="history-separator">/</span>
+                <span class="history-incorrect" data-count="0">0</span>
+            </div>
+        </div>
+        <div class="block-result" data-block-id="@Model.Id" style="display: none;">
+            <div class="result-content"></div>
+        </div>
+    </div>
+</div>
+

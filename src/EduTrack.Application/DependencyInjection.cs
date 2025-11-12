@@ -32,6 +32,7 @@ public static class DependencyInjection
         services.AddScoped<IBlockAnswerValidator, OrderingBlockValidator>();
         services.AddScoped<IBlockAnswerValidator, MultipleChoiceBlockValidator>();
         services.AddScoped<IBlockAnswerValidator, MatchingBlockValidator>();
+        services.AddScoped<IBlockAnswerValidator, GapFillBlockValidator>();
         services.AddScoped<BlockAnswerValidatorFactory>();
 
         return services;

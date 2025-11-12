@@ -71,6 +71,15 @@
                 }
             }
 
+            // Add gap fill blocks
+            if (content.GapFillBlocks != null && content.GapFillBlocks.Any())
+            {
+                foreach (var gapFillBlock in content.GapFillBlocks)
+                {
+                    allBlocks.Add(new { Type = "gapfill", Block = (object)gapFillBlock, Order = gapFillBlock.Order });
+                }
+            }
+
             // Sort by Order
             var sortedBlocks = allBlocks.OrderBy(b => b.Order).ToList();
 
@@ -81,6 +90,7 @@
                     var orderingBlockIndex = 0;
                     var mcqBlockIndex = 0;
                     var matchingBlockIndex = 0;
+                    var gapFillBlockIndex = 0;
                 }
                 @foreach (var item in sortedBlocks)
                 {
@@ -287,6 +297,27 @@
                             matchingBlockIndex++;
                         }
                     }
+                    else if (blockType == "gapfill")
+                    {
+                        var gapFillBlock = item.Block as GapFillBlock;
+                        if (gapFillBlock != null)
+                        {
+                            <div class="content-block content-block-gapfill"
+                                 data-block-order="@order"
+                                 data-block-id="@gapFillBlock.Id"
+                                 data-block-type="gapfill">
+                                <div class="content-block-inner">
+                                    @{
+                                        ViewBag.BlockIndex = gapFillBlockIndex;
+                                        ViewBag.ScheduleItemType = ScheduleItemType.GapFill;
+                                        ViewBag.ScheduleItemId = scheduleItemId;
+                                    }
+                                    @await Html.PartialAsync("_GapFillBlock", gapFillBlock)
+                                </div>
+                            </div>
+                            gapFillBlockIndex++;
+                        }
+                    }
                 }
             </div>
         }
@@ -301,6 +332,7 @@
                     QuestionBlocks: @(content.QuestionBlocks?.Count ?? 0),
                     OrderingBlocks: @(content.OrderingBlocks?.Count ?? 0),
                     MultipleChoiceBlocks: @(content.MultipleChoiceBlocks?.Count ?? 0),
+                    GapFillBlocks: @(content.GapFillBlocks?.Count ?? 0),
                     MatchingBlocks: @(content.MatchingBlocks?.Count ?? 0)
                 </p>
             </div>

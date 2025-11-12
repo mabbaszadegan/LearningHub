@@ -1,74 +1,35 @@
 @model object
+@using System.Linq
 @using EduTrack.Application.Common.Models.ScheduleItems
+@using EduTrack.Domain.Enums
 @{
     var content = Model as GapFillContent;
+    var scheduleItemId = ViewBag.ScheduleItemId as int? ?? 0;
 }
 
-<div class="gap-fill-content-container">
-    @if (content != null)
+<div class="gapfill-content-container">
+    @if (content?.Blocks != null && content.Blocks.Any())
     {
-        <div class="gap-fill-text" id="gap-fill-text">
-            @{
-                var text = content.Text;
-                var gaps = content.Gaps.OrderBy(g => g.Index).ToList();
-                
-                int lastIndex = 0;
-                foreach (var gap in gaps)
-                {
-                    // Find gap placeholder in text (assuming format like {0}, {1}, etc.)
-                    var placeholder = $"{{{gap.Index}}}";
-                    var placeholderIndex = text.IndexOf(placeholder, lastIndex);
-                    
-                    if (placeholderIndex >= 0)
-                    {
-                        // Output text before gap
-                        @Html.Raw(text.Substring(lastIndex, placeholderIndex - lastIndex))
-                        
-                        // Output gap input
-                        <input type="text" 
-                               class="gap-input" 
-                               data-gap-index="@gap.Index"
-                               data-correct-answer="@gap.CorrectAnswer"
-                               placeholder="جای خالی"
-                               @(content.ShowOptions && gap.AlternativeAnswers.Any() ? $"list=\"options-{gap.Index}\"" : "") />
-                        
-                        @if (content.ShowOptions && gap.AlternativeAnswers.Any())
-                        {
-                            <datalist id="options-@gap.Index">
-                                @foreach (var alt in gap.AlternativeAnswers)
-                                {
-                                    <option value="@alt" />
-                                }
-                            </datalist>
-                        }
-                        
-                        lastIndex = placeholderIndex + placeholder.Length;
-                    }
-                }
-                
-                // Output remaining text
-                if (lastIndex < text.Length)
-                {
-                    @Html.Raw(text.Substring(lastIndex))
-                }
-            }
-        </div>
-        
-        <div class="gap-fill-actions">
-            <button type="button" class="btn btn-primary" id="check-gap-fill">
-                <i class="fas fa-check"></i> بررسی پاسخ
-            </button>
-            <button type="button" class="btn btn-success" id="submit-gap-fill">
-                <i class="fas fa-paper-plane"></i> ارسال پاسخ
-            </button>
-        </div>
+        var orderedBlocks = content.Blocks
+            .OrderBy(block => block.Order)
+            .ThenBy(block => block.Id)
+            .ToList();
+
+        var blockIndex = 0;
+        foreach (var block in orderedBlocks)
+        {
+            ViewBag.BlockIndex = blockIndex;
+            ViewBag.ScheduleItemType = ScheduleItemType.GapFill;
+            ViewBag.ScheduleItemId = scheduleItemId;
+            @await Html.PartialAsync("_GapFillBlock", block)
+            blockIndex++;
+        }
     }
     else
     {
-        <div class="alert alert-warning">
-            <i class="fas fa-exclamation-triangle"></i>
-            محتوای جای خالی یافت نشد.
+        <div class="content-empty-state">
+            <i class="fas fa-info-circle"></i>
+            <p>محتوای جای‌خالی یافت نشد.</p>
         </div>
     }
 </div>
-

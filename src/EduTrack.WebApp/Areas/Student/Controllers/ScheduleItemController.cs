@@ -6,6 +6,7 @@ using EduTrack.Application.Features.TeachingPlan.Queries;
 using EduTrack.Application.Common.Models.StudySessions;
 using EduTrack.Application.Common.Models.TeachingPlans;
 using EduTrack.Application.Common.Models.ScheduleItems;
+using AppGapFillContent = EduTrack.Application.Common.Models.ScheduleItems.GapFillContent;
 using MultipleChoiceContent = EduTrack.Application.Common.Models.ScheduleItems.MultipleChoiceContent;
 using MultipleChoiceBlock = EduTrack.Application.Common.Models.ScheduleItems.MultipleChoiceBlock;
 using QuizContentModel = EduTrack.Application.Common.Models.ScheduleItems.QuizContent;
@@ -340,7 +341,7 @@ public class ScheduleItemController : Controller
             ScheduleItemType.Reminder => JsonConvert.DeserializeObject<Application.Common.Models.ScheduleItems.ReminderContent>(contentJson, jsonSettings),
             ScheduleItemType.Writing => JsonConvert.DeserializeObject<Application.Common.Models.ScheduleItems.WritingContent>(contentJson, jsonSettings),
             ScheduleItemType.Audio => JsonConvert.DeserializeObject<Application.Common.Models.ScheduleItems.AudioContent>(contentJson, jsonSettings),
-            ScheduleItemType.GapFill => JsonConvert.DeserializeObject<GapFillContent>(contentJson, jsonSettings),
+            ScheduleItemType.GapFill => JsonConvert.DeserializeObject<AppGapFillContent>(contentJson, jsonSettings),
             ScheduleItemType.MultipleChoice => JsonConvert.DeserializeObject<MultipleChoiceContent>(contentJson, jsonSettings),
             ScheduleItemType.Match => JsonConvert.DeserializeObject<MatchingContent>(contentJson, jsonSettings),
             ScheduleItemType.ErrorFinding => JsonConvert.DeserializeObject<ErrorFindingContent>(contentJson, jsonSettings),
@@ -364,7 +365,7 @@ public class ScheduleItemController : Controller
                 ScheduleItemType.Reminder => JsonConvert.DeserializeObject<Application.Common.Models.ScheduleItems.ReminderContent>(contentJson, defaultSettings),
                 ScheduleItemType.Writing => JsonConvert.DeserializeObject<Application.Common.Models.ScheduleItems.WritingContent>(contentJson, defaultSettings),
                 ScheduleItemType.Audio => JsonConvert.DeserializeObject<Application.Common.Models.ScheduleItems.AudioContent>(contentJson, defaultSettings),
-                ScheduleItemType.GapFill => JsonConvert.DeserializeObject<GapFillContent>(contentJson, defaultSettings),
+                ScheduleItemType.GapFill => JsonConvert.DeserializeObject<AppGapFillContent>(contentJson, defaultSettings),
                 ScheduleItemType.MultipleChoice => JsonConvert.DeserializeObject<MultipleChoiceContent>(contentJson, defaultSettings),
                 ScheduleItemType.Match => JsonConvert.DeserializeObject<MatchingContent>(contentJson, defaultSettings),
                 ScheduleItemType.ErrorFinding => JsonConvert.DeserializeObject<ErrorFindingContent>(contentJson, defaultSettings),
@@ -375,6 +376,11 @@ public class ScheduleItemController : Controller
             };
         }
         
+        if (result is AppGapFillContent gapFillContent)
+        {
+            gapFillContent.EnsureBlocksFromLegacy();
+        }
+
         return result;
     }
 
@@ -385,6 +391,7 @@ public class ScheduleItemController : Controller
         var questionBlocks = new List<ReminderQuestionBlock>();
         var orderingBlocks = new List<OrderingBlock>();
         var multipleChoiceBlocks = new List<MultipleChoiceBlock>();
+        var gapFillBlocks = new List<GapFillBlock>();
         var matchingBlocks = new List<MatchingBlock>();
 
         foreach (var blockToken in blocksArray)
@@ -422,6 +429,15 @@ public class ScheduleItemController : Controller
                     matchingBlocks.Add(matchingBlock);
                 }
             }
+            // Check if it's a gap fill block
+            else if (blockType != null && string.Equals(blockType, "gapfill", StringComparison.OrdinalIgnoreCase))
+            {
+                var gapFillBlock = ParseGapFillBlock(block, order, settings);
+                if (gapFillBlock != null)
+                {
+                    gapFillBlocks.Add(gapFillBlock);
+                }
+            }
             // Check if it's a question block (type starts with "question")
             else if (blockType != null && blockType.StartsWith("question"))
             {
@@ -446,6 +462,7 @@ public class ScheduleItemController : Controller
         reminder.QuestionBlocks = questionBlocks.OrderBy(b => b.Order).ToList();
         reminder.OrderingBlocks = orderingBlocks.OrderBy(b => b.Order).ToList();
         reminder.MultipleChoiceBlocks = multipleChoiceBlocks.OrderBy(b => b.Order).ToList();
+        reminder.GapFillBlocks = gapFillBlocks.OrderBy(b => b.Order).ToList();
         reminder.MatchingBlocks = matchingBlocks.OrderBy(b => b.Order).ToList();
         return reminder;
     }
@@ -725,6 +742,40 @@ public class ScheduleItemController : Controller
             }
 
             return orderingBlock;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private GapFillBlock? ParseGapFillBlock(JObject block, int order, JsonSerializerSettings settings)
+    {
+        try
+        {
+            var parsedBlock = GapFillContentParser.ParseBlock(block);
+            if (parsedBlock == null)
+            {
+                return null;
+            }
+
+            if (parsedBlock.Order == 0)
+            {
+                parsedBlock.Order = order;
+            }
+
+            if (string.IsNullOrWhiteSpace(parsedBlock.Id))
+            {
+                parsedBlock.Id = block["id"]?.ToString() ?? Guid.NewGuid().ToString();
+            }
+
+            parsedBlock.Blanks ??= new List<GapFillBlank>();
+            parsedBlock.Blanks = parsedBlock.Blanks
+                .OrderBy(b => b.Index)
+                .ThenBy(b => b.GetIdentifier(), StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            return parsedBlock;
         }
         catch
         {
@@ -1158,9 +1209,11 @@ public class ScheduleItemController : Controller
         return audio;
     }
 
-    private GapFillContent ParseGapFillFromBlocks(JArray blocksArray, JsonSerializerSettings settings)
+    private AppGapFillContent ParseGapFillFromBlocks(JArray blocksArray, JsonSerializerSettings settings)
     {
-        return JsonConvert.DeserializeObject<GapFillContent>("{}", settings) ?? new GapFillContent();
+        var content = GapFillContentParser.FromBlocks(blocksArray);
+        content.EnsureBlocksFromLegacy();
+        return content;
     }
 
     private EduTrack.Application.Common.Models.ScheduleItems.MultipleChoiceContent ParseMultipleChoiceFromBlocks(JArray blocksArray, JsonSerializerSettings settings)

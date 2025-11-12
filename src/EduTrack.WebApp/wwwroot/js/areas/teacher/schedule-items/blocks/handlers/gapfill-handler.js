@@ -13,6 +13,124 @@ class GapFillHandler {
         this.uploadUrl = '/FileUpload/UploadContentFile';
     }
 
+    generateOptionId() {
+        if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+            return window.crypto.randomUUID();
+        }
+
+        return `gf-opt-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+    }
+
+    normalizeOptionArray(options) {
+        if (!Array.isArray(options)) {
+            return [];
+        }
+
+        return options
+            .map(option => {
+                if (!option) {
+                    return null;
+                }
+
+                if (typeof option === 'string') {
+                    const value = option.trim();
+                    if (!value) {
+                        return null;
+                    }
+                    return {
+                        id: this.generateOptionId(),
+                        value: value,
+                        displayText: value
+                    };
+                }
+
+                const value = (option.value || option.Value || option.text || option.Text || option.label || option.Label || '').toString().trim();
+                if (!value) {
+                    return null;
+                }
+
+                return {
+                    id: option.id || option.Id || this.generateOptionId(),
+                    value: value,
+                    displayText: option.displayText || option.DisplayText || option.label || option.Label || value
+                };
+            })
+            .filter(option => option !== null);
+    }
+
+    parseOptionsInput(rawInput, previousOptions = []) {
+        if (!rawInput) {
+            return [];
+        }
+
+        const values = rawInput
+            .split(/\r?\n/)
+            .map(line => line.trim())
+            .filter(line => line.length > 0);
+
+        const previous = this.normalizeOptionArray(previousOptions);
+        const previousLookup = new Map();
+        previous.forEach(option => {
+            if (!option || !option.value) {
+                return;
+            }
+            previousLookup.set(option.value.toLowerCase(), option);
+        });
+
+        const seen = new Set();
+        const options = [];
+
+        values.forEach(value => {
+            const key = value.toLowerCase();
+            if (seen.has(key)) {
+                return;
+            }
+
+            seen.add(key);
+            const existing = previousLookup.get(key);
+
+            if (existing) {
+                options.push({
+                    id: existing.id || this.generateOptionId(),
+                    value: existing.value || value,
+                    displayText: existing.displayText || existing.value || value
+                });
+            } else {
+                options.push({
+                    id: this.generateOptionId(),
+                    value: value,
+                    displayText: value
+                });
+            }
+        });
+
+        return options;
+    }
+
+    serializeOptions(options) {
+        if (!Array.isArray(options)) {
+            return '';
+        }
+
+        const normalized = this.normalizeOptionArray(options);
+        const seen = new Set();
+        const values = [];
+
+        normalized.forEach(option => {
+            if (!option || !option.value) {
+                return;
+            }
+            const key = option.value.toLowerCase();
+            if (seen.has(key)) {
+                return;
+            }
+            seen.add(key);
+            values.push(option.value);
+        });
+
+        return values.join('\n');
+    }
+
     canHandle(blockType) {
         return blockType === 'gapFill';
     }
@@ -206,6 +324,13 @@ class GapFillHandler {
         const caseCheckbox = blockElement.querySelector('[data-role="gf-case"]');
         if (caseCheckbox) {
             caseCheckbox.addEventListener('change', () => {
+                this.triggerContentUpdate(blockElement);
+            });
+        }
+
+        const globalOptionsInput = blockElement.querySelector('[data-role="gf-global-options"]');
+        if (globalOptionsInput) {
+            globalOptionsInput.addEventListener('input', () => {
                 this.triggerContentUpdate(blockElement);
             });
         }
@@ -465,32 +590,149 @@ class GapFillHandler {
     }
 
     populateGapsData(blockElement, blockData) {
-        if (!blockData || !blockData.gaps || !Array.isArray(blockData.gaps)) {
+        if (!blockData) {
             return;
         }
 
-        blockData.gaps.forEach(gap => {
-            const gapItem = blockElement.querySelector(`.gap-item[data-gap-index="${gap.index}"]`);
+        const blanksArray = Array.isArray(blockData.blanks) ? blockData.blanks : [];
+        const gapsArray = Array.isArray(blockData.gaps) ? blockData.gaps : [];
+
+        const blanksByIndex = new Map();
+        blanksArray.forEach(blank => {
+            if (!blank) {
+                return;
+            }
+
+            let index = parseInt(blank.index ?? blank.order ?? blank.number ?? blank.blankIndex, 10);
+            if (!Number.isFinite(index) || index <= 0) {
+                const idDigits = (blank.id || blank.Id || '').toString().match(/\d+/);
+                if (idDigits && idDigits.length > 0) {
+                    index = parseInt(idDigits[0], 10);
+                }
+            }
+
+            if (!Number.isFinite(index) || index <= 0) {
+                return;
+            }
+
+            blanksByIndex.set(index, blank);
+        });
+
+        const gapsByIndex = new Map();
+        gapsArray.forEach(gap => {
+            if (!gap) {
+                return;
+            }
+            const index = parseInt(gap.index ?? gap.order ?? gap.number, 10);
+            if (Number.isFinite(index) && index > 0) {
+                gapsByIndex.set(index, gap);
+            }
+        });
+
+        const showOptionsCheckbox = blockElement.querySelector('[data-role="gf-show-options"]');
+        const showOptionsDefault = showOptionsCheckbox ? showOptionsCheckbox.checked : !!blockData.showOptions;
+
+        blanksByIndex.forEach((blank, index) => {
+            const gapItem = blockElement.querySelector(`.gap-item[data-gap-index="${index}"]`);
             if (gapItem) {
                 const correctInput = gapItem.querySelector('[data-role="gf-correct"]');
                 const altsInput = gapItem.querySelector('[data-role="gf-alts"]');
                 const hintInput = gapItem.querySelector('[data-role="gf-hint"]');
-                
-                if (correctInput && gap.correctAnswer) {
-                    correctInput.value = gap.correctAnswer;
+
+                const legacyGap = gapsByIndex.get(index);
+
+                const correctAnswer = blank.correctAnswer ?? legacyGap?.correctAnswer ?? '';
+                if (correctInput) {
+                    correctInput.value = correctAnswer || '';
                 }
-                if (altsInput && gap.alternativeAnswers && gap.alternativeAnswers.length > 0) {
-                    // Handle both array and string formats
-                    const altsValue = Array.isArray(gap.alternativeAnswers) 
-                        ? gap.alternativeAnswers.join('، ')
-                        : gap.alternativeAnswers;
-                    altsInput.value = altsValue;
+
+                const altAnswers = Array.isArray(blank.alternativeAnswers)
+                    ? blank.alternativeAnswers
+                    : Array.isArray(legacyGap?.alternativeAnswers)
+                        ? legacyGap.alternativeAnswers
+                        : typeof legacyGap?.alternativeAnswers === 'string'
+                            ? legacyGap.alternativeAnswers.split('،')
+                            : [];
+
+                if (altsInput) {
+                    altsInput.value = Array.isArray(altAnswers) && altAnswers.length > 0
+                        ? altAnswers.join('، ')
+                        : '';
                 }
-                if (hintInput && gap.hint) {
-                    hintInput.value = gap.hint;
+
+                if (hintInput) {
+                    const hint = blank.hint ?? legacyGap?.hint ?? '';
+                    hintInput.value = hint || '';
+                }
+
+                const allowManualCheckbox = gapItem.querySelector('[data-role="gf-allow-manual"]');
+                const allowGlobalCheckbox = gapItem.querySelector('[data-role="gf-allow-global"]');
+                const allowBlankCheckbox = gapItem.querySelector('[data-role="gf-allow-blank-options"]');
+                const blankOptionsInput = gapItem.querySelector('[data-role="gf-blank-options"]');
+
+                const allowManual = typeof blank.allowManualInput === 'boolean' ? blank.allowManualInput : true;
+                if (allowManualCheckbox) {
+                    allowManualCheckbox.checked = allowManual;
+                }
+
+                const allowGlobal = typeof blank.allowGlobalOptions === 'boolean'
+                    ? blank.allowGlobalOptions
+                    : showOptionsDefault;
+                if (allowGlobalCheckbox) {
+                    allowGlobalCheckbox.checked = allowGlobal;
+                }
+
+                const normalizedOptions = this.normalizeOptionArray(blank.options || blank.Options || []);
+                const allowBlank = typeof blank.allowBlankOptions === 'boolean'
+                    ? blank.allowBlankOptions
+                    : normalizedOptions.length > 0;
+
+                if (allowBlankCheckbox) {
+                    allowBlankCheckbox.checked = allowBlank;
+                }
+
+                if (blankOptionsInput) {
+                    blankOptionsInput.value = this.serializeOptions(normalizedOptions);
+                }
+
+                if (blank.id || blank.Id) {
+                    gapItem.dataset.gapId = blank.id || blank.Id;
                 }
             }
         });
+
+        gapsByIndex.forEach((gap, index) => {
+            if (blanksByIndex.has(index)) {
+                return;
+            }
+
+            const gapItem = blockElement.querySelector(`.gap-item[data-gap-index="${index}"]`);
+            if (!gapItem) {
+                return;
+            }
+
+            const correctInput = gapItem.querySelector('[data-role="gf-correct"]');
+            const altsInput = gapItem.querySelector('[data-role="gf-alts"]');
+            const hintInput = gapItem.querySelector('[data-role="gf-hint"]');
+            if (correctInput && gap.correctAnswer) {
+                correctInput.value = gap.correctAnswer;
+            }
+            if (altsInput && gap.alternativeAnswers) {
+                const altsValue = Array.isArray(gap.alternativeAnswers)
+                    ? gap.alternativeAnswers.join('، ')
+                    : gap.alternativeAnswers;
+                altsInput.value = altsValue;
+            }
+            if (hintInput && gap.hint) {
+                hintInput.value = gap.hint;
+            }
+        });
+
+        const globalOptionsInput = blockElement.querySelector('[data-role="gf-global-options"]');
+        if (globalOptionsInput) {
+            const globalOptions = this.normalizeOptionArray(blockData.globalOptions || blockData.options || []);
+            globalOptionsInput.value = this.serializeOptions(globalOptions);
+        }
     }
 
     renderGaps(blockElement, block) {
@@ -582,6 +824,22 @@ class GapFillHandler {
             sortedIndices.forEach(index => {
                 const gapItem = this.createGapItem(index);
                 gapsList.appendChild(gapItem);
+
+                const allowManualCheckbox = gapItem.querySelector('[data-role="gf-allow-manual"]');
+                if (allowManualCheckbox) {
+                    allowManualCheckbox.checked = true;
+                }
+
+                const showOptionsCheckbox = blockElement.querySelector('[data-role="gf-show-options"]');
+                const allowGlobalCheckbox = gapItem.querySelector('[data-role="gf-allow-global"]');
+                if (allowGlobalCheckbox) {
+                    allowGlobalCheckbox.checked = showOptionsCheckbox ? showOptionsCheckbox.checked : false;
+                }
+
+                const allowBlankCheckbox = gapItem.querySelector('[data-role="gf-allow-blank-options"]');
+                if (allowBlankCheckbox) {
+                    allowBlankCheckbox.checked = false;
+                }
             });
 
             // Setup event listeners for gap items
@@ -596,6 +854,7 @@ class GapFillHandler {
         const gapItem = document.createElement('div');
         gapItem.className = 'gap-item';
         gapItem.dataset.gapIndex = index;
+        gapItem.dataset.gapId = `blank${index}`;
         
         gapItem.innerHTML = `
             <div class="gap-item-header">
@@ -616,6 +875,28 @@ class GapFillHandler {
                     <label>راهنما (اختیاری)</label>
                     <input type="text" class="gap-hint-input form-control" placeholder="راهنمایی برای دانش‌آموز" data-role="gf-hint" data-index="${index}">
                 </div>
+                <div class="gap-field gap-answer-settings">
+                    <label>نحوه پاسخ‌دهی</label>
+                    <div class="gap-answer-toggles">
+                        <label class="gap-toggle">
+                            <input type="checkbox" data-role="gf-allow-manual" checked>
+                            <span>اجازه‌ی پاسخ تایپی</span>
+                        </label>
+                        <label class="gap-toggle">
+                            <input type="checkbox" data-role="gf-allow-global">
+                            <span>اجازه‌ی استفاده از گزینه‌های عمومی</span>
+                        </label>
+                        <label class="gap-toggle">
+                            <input type="checkbox" data-role="gf-allow-blank-options">
+                            <span>نمایش پیشنهادهای اختصاصی</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="gap-field gap-blank-options" data-role="gf-blank-options-container">
+                    <label>پیشنهادهای اختصاصی برای این جای‌خالی (هر خط یک گزینه)</label>
+                    <textarea class="form-control gap-blank-options-input" data-role="gf-blank-options" rows="3" placeholder="گزینه۱\nگزینه۲"></textarea>
+                    <small class="form-text text-muted">گزینه‌های اختصاصی تنها در صورت فعال بودن «نمایش پیشنهادهای اختصاصی» نمایش داده می‌شوند.</small>
+                </div>
             </div>
         `;
         
@@ -624,11 +905,12 @@ class GapFillHandler {
 
     setupGapItemListeners(blockElement) {
         // Setup input listeners for gap fields (only for inputs that don't have listeners yet)
-        const gapInputs = blockElement.querySelectorAll('[data-role="gf-correct"], [data-role="gf-alts"], [data-role="gf-hint"]');
+        const gapInputs = blockElement.querySelectorAll('[data-role="gf-correct"], [data-role="gf-alts"], [data-role="gf-hint"], [data-role="gf-allow-manual"], [data-role="gf-allow-global"], [data-role="gf-allow-blank-options"], [data-role="gf-blank-options"]');
         gapInputs.forEach(input => {
             if (!input.dataset.listenerSetup) {
                 input.dataset.listenerSetup = 'true';
-                input.addEventListener('input', () => {
+                const eventName = input.tagName === 'INPUT' && input.type === 'checkbox' ? 'change' : 'input';
+                input.addEventListener(eventName, () => {
                     this.triggerContentUpdate(blockElement);
                 });
             }
@@ -1061,12 +1343,38 @@ class GapFillHandler {
         }
 
         const showOptionsCheckbox = blockElement.querySelector('[data-role="gf-show-options"]');
-        if (showOptionsCheckbox) {
-            data.showOptions = showOptionsCheckbox.checked;
-        }
+        const showOptions = showOptionsCheckbox ? showOptionsCheckbox.checked : !!data.showOptions;
+        data.showOptions = showOptions;
+        data.showGlobalOptions = showOptions;
 
-        // Collect gaps from input fields
-        const gaps = [];
+        const globalOptionsInput = blockElement.querySelector('[data-role="gf-global-options"]');
+        const previousGlobalOptions = Array.isArray(data.globalOptions) ? data.globalOptions : [];
+        data.globalOptions = this.parseOptionsInput(globalOptionsInput ? globalOptionsInput.value : '', previousGlobalOptions);
+
+        const previousBlanks = Array.isArray(data.blanks) ? data.blanks : [];
+        const previousBlanksByIndex = new Map();
+        previousBlanks.forEach(blank => {
+            if (!blank) {
+                return;
+            }
+
+            let index = parseInt(blank.index ?? blank.order ?? blank.number ?? blank.blankIndex, 10);
+            if (!Number.isFinite(index) || index <= 0) {
+                const idDigits = (blank.id || blank.Id || '').toString().match(/\d+/);
+                if (idDigits && idDigits.length > 0) {
+                    index = parseInt(idDigits[0], 10);
+                }
+            }
+
+            if (!Number.isFinite(index) || index <= 0) {
+                return;
+            }
+
+            previousBlanksByIndex.set(index, blank);
+        });
+
+        const blanks = [];
+        const gapsLegacy = [];
         const gapItems = blockElement.querySelectorAll('.gap-item');
         
         gapItems.forEach(gapItem => {
@@ -1074,6 +1382,10 @@ class GapFillHandler {
             const correctInput = gapItem.querySelector('[data-role="gf-correct"]');
             const altsInput = gapItem.querySelector('[data-role="gf-alts"]');
             const hintInput = gapItem.querySelector('[data-role="gf-hint"]');
+            const allowManualCheckbox = gapItem.querySelector('[data-role="gf-allow-manual"]');
+            const allowGlobalCheckbox = gapItem.querySelector('[data-role="gf-allow-global"]');
+            const allowBlankCheckbox = gapItem.querySelector('[data-role="gf-allow-blank-options"]');
+            const blankOptionsInput = gapItem.querySelector('[data-role="gf-blank-options"]');
             
             const correctAnswer = correctInput ? correctInput.value.trim() : '';
             const altsText = altsInput ? altsInput.value.trim() : '';
@@ -1081,11 +1393,34 @@ class GapFillHandler {
             
             // Parse alternative answers (comma-separated)
             const alternativeAnswers = altsText
-                ? altsText.split(',').map(a => a.trim()).filter(a => a.length > 0)
+                ? altsText.split(/[،,]/).map(a => a.trim()).filter(a => a.length > 0)
                 : [];
+            const previousBlank = previousBlanksByIndex.get(gapIndex) || {};
+            const previousOptions = previousBlank.options || previousBlank.Options || [];
+            const blankOptions = this.parseOptionsInput(blankOptionsInput ? blankOptionsInput.value : '', previousOptions);
+            const allowManual = allowManualCheckbox ? allowManualCheckbox.checked : true;
+            const allowGlobal = allowGlobalCheckbox ? allowGlobalCheckbox.checked : showOptions;
+            const allowBlank = allowBlankCheckbox ? allowBlankCheckbox.checked : blankOptions.length > 0;
+            const blankId = gapItem.dataset.gapId || previousBlank.id || previousBlank.Id || `blank${gapIndex}`;
             
             if (gapIndex > 0) {
-                gaps.push({
+                blanks.push({
+                    id: blankId,
+                    index: gapIndex,
+                    correctAnswer: correctAnswer,
+                    alternativeAnswers: alternativeAnswers,
+                    hint: hint,
+                    allowManualInput: allowManual,
+                    allowGlobalOptions: allowGlobal,
+                    allowBlankOptions: allowBlank,
+                    options: blankOptions,
+                    correctOptionId: previousBlank.correctOptionId || previousBlank.CorrectOptionId || null,
+                    alternativeOptionIds: Array.isArray(previousBlank.alternativeOptionIds || previousBlank.AlternativeOptionIds)
+                        ? (previousBlank.alternativeOptionIds || previousBlank.AlternativeOptionIds)
+                        : []
+                });
+
+                gapsLegacy.push({
                     index: gapIndex,
                     correctAnswer: correctAnswer,
                     alternativeAnswers: alternativeAnswers,
@@ -1094,9 +1429,11 @@ class GapFillHandler {
             }
         });
         
-        // Sort gaps by index
-        gaps.sort((a, b) => a.index - b.index);
-        data.gaps = gaps;
+        blanks.sort((a, b) => a.index - b.index);
+        gapsLegacy.sort((a, b) => a.index - b.index);
+
+        data.blanks = blanks;
+        data.gaps = gapsLegacy;
 
         return data;
     }

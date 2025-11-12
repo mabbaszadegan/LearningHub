@@ -73,6 +73,10 @@ public class SubmitBlockAnswerCommandHandler : IRequestHandler<SubmitBlockAnswer
                     {
                         validator = _validatorFactory.GetValidator(Domain.Enums.ScheduleItemType.Match);
                     }
+                    else if (normalizedBlockType.Contains("gapfill"))
+                    {
+                        validator = _validatorFactory.GetValidator(Domain.Enums.ScheduleItemType.GapFill);
+                    }
                 }
             }
             catch
@@ -336,6 +340,13 @@ public class SubmitBlockAnswerCommandHandler : IRequestHandler<SubmitBlockAnswer
                 }
             }
 
+            var gapFillBlock = GapFillContentParser.FindBlockById(contentJson, blockId);
+            if (gapFillBlock != null)
+            {
+                var blockContentJson = JsonConvert.SerializeObject(gapFillBlock, Formatting.None);
+                return Task.FromResult<(string?, int?, string?)>((gapFillBlock.Instruction, gapFillBlock.Order, blockContentJson));
+            }
+
             // For other types, return default
             return Task.FromResult<(string?, int?, string?)>((null, null, null));
         }
@@ -550,6 +561,11 @@ public class SubmitBlockAnswerCommandHandler : IRequestHandler<SubmitBlockAnswer
                             {
                                 return "matching";
                             }
+
+                            if (normalizedType.Contains("gapfill"))
+                            {
+                                return "gapFill";
+                            }
                         }
 
                         if (normalizedType.Contains("multiplechoice"))
@@ -605,6 +621,28 @@ public class SubmitBlockAnswerCommandHandler : IRequestHandler<SubmitBlockAnswer
                                 }
                             }
                         }
+
+                        if (normalizedType.Contains("gapfill"))
+                        {
+                            if (dataToken["blanks"] is JArray blanksArray)
+                            {
+                                var blankIds = blanksArray.OfType<JObject>()
+                                    .Select(obj => obj["id"]?.ToString())
+                                    .Where(id => !string.IsNullOrWhiteSpace(id))
+                                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+                                if (!string.IsNullOrEmpty(currentBlockId) &&
+                                    string.Equals(currentBlockId, blockId, StringComparison.OrdinalIgnoreCase))
+                                {
+                                    return "gapFill";
+                                }
+
+                                if (blankIds.Contains(blockId))
+                                {
+                                    return "gapFill";
+                                }
+                            }
+                        }
                     }
                     else if (!string.IsNullOrEmpty(currentBlockId) &&
                         string.Equals(currentBlockId, blockId, StringComparison.OrdinalIgnoreCase))
@@ -624,6 +662,11 @@ public class SubmitBlockAnswerCommandHandler : IRequestHandler<SubmitBlockAnswer
                                     obj["rightType"] != null);
 
                             return looksLikeMatching ? "matching" : "ordering";
+                        }
+
+                        if (dataToken["blanks"] is JArray)
+                        {
+                            return "gapFill";
                         }
                     }
                 }

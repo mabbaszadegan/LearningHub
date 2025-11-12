@@ -86,6 +86,8 @@
                 emptyMessage = 'لطفاً ابتدا پاسخ را وارد کنید. حداقل یک آیتم باید در جایگاه قرار گیرد.';
             } else if (blockContext === 'matching') {
                 emptyMessage = 'لطفاً برای تمام آیتم‌ها تطبیق مناسب را انتخاب کنید.';
+            } else if (blockContext === 'gapFill') {
+                emptyMessage = 'لطفاً تمام جای خالی‌ها را تکمیل کنید.';
             }
 
             showError(button, emptyMessage);
@@ -136,6 +138,15 @@
                 button.disabled = false;
                 button.innerHTML = originalContent;
                 dispatchMatchingChecked(button, { reason: 'incomplete' });
+                return;
+            }
+        }
+
+        if (blockContext === 'gapFill') {
+            if (!submittedAnswer.blanks || !Array.isArray(submittedAnswer.blanks) || submittedAnswer.blanks.length === 0) {
+                showError(button, 'لطفاً تمام جای خالی‌ها را تکمیل کنید.');
+                button.disabled = false;
+                button.innerHTML = originalContent;
                 return;
             }
         }
@@ -199,6 +210,10 @@
             return getMatchingAnswer(blockId, button);
         }
 
+        if (blockContext === 'gapFill') {
+            return getGapFillAnswer(blockId, button);
+        }
+
         // Add other types as needed
         // For now, return null for unsupported types
         return null;
@@ -215,6 +230,10 @@
 
         if (isMatchingBlock(button, scheduleItemType)) {
             return 'matching';
+        }
+
+        if (isGapFillBlock(button, scheduleItemType)) {
+            return 'gapFill';
         }
 
         return null;
@@ -369,6 +388,57 @@
         };
     }
 
+    function getGapFillAnswer(blockId, triggerButton) {
+        let blockCard = triggerButton ? triggerButton.closest('.gapfill-block-card') : null;
+
+        if (!blockCard) {
+            blockCard = document.querySelector(`.gapfill-block-card[data-block-id="${blockId}"]`);
+        }
+
+        if (!blockCard) {
+            return null;
+        }
+
+        const blanks = Array.from(blockCard.querySelectorAll('.gapfill-blank'));
+        if (!blanks.length) {
+            return null;
+        }
+
+        const answers = [];
+        let hasIncomplete = false;
+
+        blanks.forEach(function(blank) {
+            blank.classList.remove('is-incomplete');
+
+            const input = blank.querySelector('.gapfill-input');
+            const value = input ? input.value.trim() : '';
+            const optionId = (blank.dataset.selectedOptionId || '').trim();
+            const blankIndex = parseInt(blank.dataset.blankIndex || '', 10);
+            const blankId = blank.dataset.blankId || (Number.isFinite(blankIndex) ? `blank${blankIndex}` : '');
+            const answered = value.length > 0 || optionId.length > 0;
+
+            if (!answered) {
+                hasIncomplete = true;
+                blank.classList.add('is-incomplete');
+            }
+
+            answers.push({
+                blankId: blankId,
+                index: Number.isFinite(blankIndex) ? blankIndex : undefined,
+                value: value,
+                optionId: optionId
+            });
+        });
+
+        if (hasIncomplete) {
+            return null;
+        }
+
+        return {
+            blanks: answers
+        };
+    }
+
     function isOrderingBlock(button, scheduleItemType) {
         if (scheduleItemType === 'Ordering' || scheduleItemType === '8') {
             return true;
@@ -434,6 +504,31 @@
             if (typeString === 'matching') {
                 return true;
             }
+        }
+
+        return false;
+    }
+
+    function isGapFillBlock(button, scheduleItemType) {
+        if (scheduleItemType === 'GapFill' || scheduleItemType === '3') {
+            return true;
+        }
+
+        if (button && button.closest('.gapfill-block-card')) {
+            return true;
+        }
+
+        const blockWrapper = button ? button.closest('[data-block-type]') : null;
+        if (blockWrapper) {
+            const typeString = (blockWrapper.getAttribute('data-block-type') || '').toLowerCase();
+            if (typeString === 'gapfill') {
+                return true;
+            }
+        }
+
+        const legacyWrapper = button ? button.closest('.gap-fill-content-container, .gap-fill-text') : null;
+        if (legacyWrapper) {
+            return true;
         }
 
         return false;
