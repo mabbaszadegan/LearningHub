@@ -21,6 +21,14 @@ class GapFillHandler {
         return `gf-opt-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
     }
 
+    generateResponseGroupName() {
+        if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+            return `gf-response-${window.crypto.randomUUID()}`;
+        }
+
+        return `gf-response-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    }
+
     normalizeOptionArray(options) {
         if (!Array.isArray(options)) {
             return [];
@@ -307,9 +315,16 @@ class GapFillHandler {
         // Show options checkbox
         const showOptionsCheckbox = blockElement.querySelector('[data-role="gf-show-options"]');
         if (showOptionsCheckbox) {
-            showOptionsCheckbox.addEventListener('change', () => {
+            const handleShowOptionsChange = () => {
+                this.toggleGlobalOptions(blockElement, showOptionsCheckbox.checked);
                 this.triggerContentUpdate(blockElement);
-            });
+            };
+
+            showOptionsCheckbox.addEventListener('change', handleShowOptionsChange);
+            // Apply initial state
+            handleShowOptionsChange();
+        } else {
+            this.toggleGlobalOptions(blockElement, true);
         }
 
         // Answer type select
@@ -334,6 +349,39 @@ class GapFillHandler {
                 this.triggerContentUpdate(blockElement);
             });
         }
+    }
+
+    toggleGlobalOptions(blockElement, isEnabled) {
+        const container = blockElement.querySelector('[data-role="gf-global-options-container"]');
+        if (container) {
+            container.style.display = isEnabled ? '' : 'none';
+            const textarea = container.querySelector('[data-role="gf-global-options"]');
+            if (textarea) {
+                textarea.disabled = !isEnabled;
+            }
+        }
+
+        const gapItems = blockElement.querySelectorAll('.gap-item');
+        gapItems.forEach(gapItem => {
+            ['global', 'custom'].forEach(mode => {
+                const radio = gapItem.querySelector(`[data-role="gf-response-mode"][value="${mode}"]`);
+                if (!radio) {
+                    return;
+                }
+
+                radio.disabled = !isEnabled;
+                if (!isEnabled && radio.checked) {
+                    this.setResponseMode(gapItem, 'manual', blockElement, true);
+                }
+            });
+
+            if (!isEnabled) {
+                this.applyResponseModeState(gapItem, 'manual');
+            } else {
+                const currentMode = this.getSelectedResponseMode(gapItem);
+                this.applyResponseModeState(gapItem, currentMode);
+            }
+        });
     }
 
     triggerContentUpdate(blockElement) {
@@ -574,6 +622,9 @@ class GapFillHandler {
         const showOptionsCheckbox = blockElement.querySelector('[data-role="gf-show-options"]');
         if (showOptionsCheckbox) {
             showOptionsCheckbox.checked = data.showOptions !== false; // Default to true
+            this.toggleGlobalOptions(blockElement, showOptionsCheckbox.checked);
+        } else {
+            this.toggleGlobalOptions(blockElement, data.showOptions !== false);
         }
 
         // Load points
@@ -665,35 +716,15 @@ class GapFillHandler {
                     hintInput.value = hint || '';
                 }
 
-                const allowManualCheckbox = gapItem.querySelector('[data-role="gf-allow-manual"]');
-                const allowGlobalCheckbox = gapItem.querySelector('[data-role="gf-allow-global"]');
-                const allowBlankCheckbox = gapItem.querySelector('[data-role="gf-allow-blank-options"]');
                 const blankOptionsInput = gapItem.querySelector('[data-role="gf-blank-options"]');
 
-                const allowManual = typeof blank.allowManualInput === 'boolean' ? blank.allowManualInput : true;
-                if (allowManualCheckbox) {
-                    allowManualCheckbox.checked = allowManual;
-                }
-
-                const allowGlobal = typeof blank.allowGlobalOptions === 'boolean'
-                    ? blank.allowGlobalOptions
-                    : showOptionsDefault;
-                if (allowGlobalCheckbox) {
-                    allowGlobalCheckbox.checked = allowGlobal;
-                }
-
                 const normalizedOptions = this.normalizeOptionArray(blank.options || blank.Options || []);
-                const allowBlank = typeof blank.allowBlankOptions === 'boolean'
-                    ? blank.allowBlankOptions
-                    : normalizedOptions.length > 0;
-
-                if (allowBlankCheckbox) {
-                    allowBlankCheckbox.checked = allowBlank;
-                }
-
                 if (blankOptionsInput) {
                     blankOptionsInput.value = this.serializeOptions(normalizedOptions);
                 }
+
+                const responseMode = this.resolveResponseMode(blank, showOptionsDefault, normalizedOptions);
+                this.setResponseMode(gapItem, responseMode, blockElement, true);
 
                 if (blank.id || blank.Id) {
                     gapItem.dataset.gapId = blank.id || blank.Id;
@@ -714,6 +745,7 @@ class GapFillHandler {
             const correctInput = gapItem.querySelector('[data-role="gf-correct"]');
             const altsInput = gapItem.querySelector('[data-role="gf-alts"]');
             const hintInput = gapItem.querySelector('[data-role="gf-hint"]');
+            const blankOptionsInput = gapItem.querySelector('[data-role="gf-blank-options"]');
             if (correctInput && gap.correctAnswer) {
                 correctInput.value = gap.correctAnswer;
             }
@@ -726,6 +758,14 @@ class GapFillHandler {
             if (hintInput && gap.hint) {
                 hintInput.value = gap.hint;
             }
+
+            const legacyOptions = gap.options || gap.Options;
+            if (blankOptionsInput && legacyOptions) {
+                const normalizedLegacyOptions = this.normalizeOptionArray(legacyOptions);
+                blankOptionsInput.value = this.serializeOptions(normalizedLegacyOptions);
+            }
+
+            this.setResponseMode(gapItem, 'manual', blockElement, true);
         });
 
         const globalOptionsInput = blockElement.querySelector('[data-role="gf-global-options"]');
@@ -774,76 +814,79 @@ class GapFillHandler {
             const content = editor.getData();
             // Find all blank tokens like [[blank1]], [[blank2]], etc.
             const blankMatches = content.match(/\[\[blank(\d+)\]\]/g);
-            
+
             const gapsList = blockElement.querySelector('[data-role="gf-gaps"]');
             if (!gapsList) {
                 return;
             }
 
-            // Remove empty state if gaps exist
-            const emptyState = gapsList.querySelector('.gaps-empty-state');
-            
+            const showOptionsCheckbox = blockElement.querySelector('[data-role="gf-show-options"]');
+
+            // Handle empty state
             if (!blankMatches || blankMatches.length === 0) {
-                // No gaps, show empty state
-                if (!emptyState) {
-                    gapsList.innerHTML = `
-                        <div class="gaps-empty-state">
-                            <i class="fas fa-info-circle"></i>
-                            <p>برای این بلاک هنوز جای‌خالی تعریف نشده است</p>
-                            <small>از دکمه "درج جای‌خالی" استفاده کنید</small>
-                        </div>
-                    `;
-                } else {
-                    emptyState.style.display = 'block';
-                }
+                gapsList.innerHTML = `
+                    <div class="gaps-empty-state">
+                        <i class="fas fa-info-circle"></i>
+                        <p>هنوز هیچ جای‌خالی‌ای ایجاد نشده است.</p>
+                        <small>از دکمه «جای‌خالی جدید» برای شروع استفاده کنید.</small>
+                    </div>
+                `;
                 return;
             }
 
-            // Hide empty state
-            if (emptyState) {
-                emptyState.style.display = 'none';
-            }
+            const existingItems = new Map();
+            gapsList.querySelectorAll('.gap-item').forEach(item => {
+                const itemIndex = parseInt(item.dataset.gapIndex, 10);
+                if (Number.isFinite(itemIndex)) {
+                    existingItems.set(itemIndex, item);
+                }
+            });
 
-            // Extract unique gap indices
+            // Extract unique gap indices and sort them
             const gapIndices = new Set();
             blankMatches.forEach(match => {
                 const numMatch = match.match(/\d+/);
                 if (numMatch) {
-                    gapIndices.add(parseInt(numMatch[0]));
+                    gapIndices.add(parseInt(numMatch[0], 10));
                 }
             });
 
-            // Sort indices
             const sortedIndices = Array.from(gapIndices).sort((a, b) => a - b);
+            const fragment = document.createDocumentFragment();
 
-            // Remove existing gap items
-            const existingGaps = gapsList.querySelectorAll('.gap-item');
-            existingGaps.forEach(gap => gap.remove());
-
-            // Create gap items for each index
             sortedIndices.forEach(index => {
-                const gapItem = this.createGapItem(index);
-                gapsList.appendChild(gapItem);
+                let gapItem = existingItems.get(index);
 
-                const allowManualCheckbox = gapItem.querySelector('[data-role="gf-allow-manual"]');
-                if (allowManualCheckbox) {
-                    allowManualCheckbox.checked = true;
+                if (gapItem) {
+                    existingItems.delete(index);
+                } else {
+                    gapItem = this.createGapItem(index);
+                    this.setupGapItemListeners(blockElement, gapItem);
                 }
 
-                const showOptionsCheckbox = blockElement.querySelector('[data-role="gf-show-options"]');
-                const allowGlobalCheckbox = gapItem.querySelector('[data-role="gf-allow-global"]');
-                if (allowGlobalCheckbox) {
-                    allowGlobalCheckbox.checked = showOptionsCheckbox ? showOptionsCheckbox.checked : false;
+                gapItem.dataset.gapIndex = index;
+                const numberEl = gapItem.querySelector('.gap-item-number');
+                if (numberEl) {
+                    numberEl.textContent = `جای‌خالی ${index}`;
+                }
+                const tokenEl = gapItem.querySelector('.gap-item-token');
+                if (tokenEl) {
+                    tokenEl.textContent = `[[blank${index}]]`;
                 }
 
-                const allowBlankCheckbox = gapItem.querySelector('[data-role="gf-allow-blank-options"]');
-                if (allowBlankCheckbox) {
-                    allowBlankCheckbox.checked = false;
-                }
+                fragment.appendChild(gapItem);
             });
 
-            // Setup event listeners for gap items
+            // Remove leftover items not referenced anymore
+            existingItems.forEach(item => item.remove());
+
+            gapsList.innerHTML = '';
+            gapsList.appendChild(fragment);
+
+            // Ensure listeners exist for all items (existing listeners are guarded)
             this.setupGapItemListeners(blockElement);
+            const allowOptions = showOptionsCheckbox ? showOptionsCheckbox.checked : true;
+            this.toggleGlobalOptions(blockElement, allowOptions);
 
         } catch (error) {
             console.error('GapFillHandler: Error updating gaps list:', error);
@@ -855,66 +898,186 @@ class GapFillHandler {
         gapItem.className = 'gap-item';
         gapItem.dataset.gapIndex = index;
         gapItem.dataset.gapId = `blank${index}`;
-        
+
+        const responseGroup = this.generateResponseGroupName();
+
         gapItem.innerHTML = `
             <div class="gap-item-header">
                 <span class="gap-item-number">جای‌خالی ${index}</span>
+                <span class="gap-item-token">[[blank${index}]]</span>
             </div>
             <div class="gap-item-body">
                 <div class="gap-field-row">
                     <div class="gap-field">
                         <label>پاسخ صحیح</label>
-                        <input type="text" class="gap-correct-input form-control" placeholder="پاسخ صحیح را وارد کنید" data-role="gf-correct" data-index="${index}">
+                        <input type="text" class="gap-correct-input" placeholder="پاسخ صحیح را وارد کنید" data-role="gf-correct" data-index="${index}">
                     </div>
                     <div class="gap-field">
                         <label>پاسخ‌های جایگزین (با کاما جدا کنید)</label>
-                        <input type="text" class="gap-alts-input form-control" placeholder="پاسخ1، پاسخ2، ..." data-role="gf-alts" data-index="${index}">
+                        <input type="text" class="gap-alts-input" placeholder="پاسخ۱، پاسخ۲، ..." data-role="gf-alts" data-index="${index}">
                     </div>
                 </div>
                 <div class="gap-field">
                     <label>راهنما (اختیاری)</label>
-                    <input type="text" class="gap-hint-input form-control" placeholder="راهنمایی برای دانش‌آموز" data-role="gf-hint" data-index="${index}">
+                    <input type="text" class="gap-hint-input" placeholder="راهنمایی برای دانش‌آموز" data-role="gf-hint" data-index="${index}">
                 </div>
-                <div class="gap-field gap-answer-settings">
-                    <label>نحوه پاسخ‌دهی</label>
-                    <div class="gap-answer-toggles">
-                        <label class="gap-toggle">
-                            <input type="checkbox" data-role="gf-allow-manual" checked>
-                            <span>اجازه‌ی پاسخ تایپی</span>
+                <div class="gap-response-section" data-role="gf-response-section">
+                    <span class="gap-response-title">نحوه پاسخ‌دهی</span>
+                    <div class="gap-response-options">
+                        <label class="gap-radio">
+                            <input type="radio" name="${responseGroup}" value="manual" data-role="gf-response-mode" checked>
+                            <span>پاسخ تایپی (بدون گزینه)</span>
                         </label>
-                        <label class="gap-toggle">
-                            <input type="checkbox" data-role="gf-allow-global">
-                            <span>اجازه‌ی استفاده از گزینه‌های عمومی</span>
+                        <label class="gap-radio">
+                            <input type="radio" name="${responseGroup}" value="global" data-role="gf-response-mode">
+                            <span>انتخاب از گزینه‌های عمومی</span>
                         </label>
-                        <label class="gap-toggle">
-                            <input type="checkbox" data-role="gf-allow-blank-options">
-                            <span>نمایش پیشنهادهای اختصاصی</span>
+                        <label class="gap-radio">
+                            <input type="radio" name="${responseGroup}" value="custom" data-role="gf-response-mode">
+                            <span>انتخاب از پیشنهادهای اختصاصی</span>
                         </label>
                     </div>
                 </div>
-                <div class="gap-field gap-blank-options" data-role="gf-blank-options-container">
+                <div class="gap-blank-options" data-role="gf-blank-options-container" hidden>
                     <label>پیشنهادهای اختصاصی برای این جای‌خالی (هر خط یک گزینه)</label>
-                    <textarea class="form-control gap-blank-options-input" data-role="gf-blank-options" rows="3" placeholder="گزینه۱\nگزینه۲"></textarea>
-                    <small class="form-text text-muted">گزینه‌های اختصاصی تنها در صورت فعال بودن «نمایش پیشنهادهای اختصاصی» نمایش داده می‌شوند.</small>
+                    <textarea class="gap-blank-options-input" data-role="gf-blank-options" rows="3" placeholder="گزینه۱&#10;گزینه۲"></textarea>
+                    <small class="gap-blank-options-hint">این گزینه‌ها فقط در صورت انتخاب «پیشنهادهای اختصاصی» نمایش داده می‌شوند.</small>
                 </div>
             </div>
         `;
-        
+
         return gapItem;
     }
 
-    setupGapItemListeners(blockElement) {
-        // Setup input listeners for gap fields (only for inputs that don't have listeners yet)
-        const gapInputs = blockElement.querySelectorAll('[data-role="gf-correct"], [data-role="gf-alts"], [data-role="gf-hint"], [data-role="gf-allow-manual"], [data-role="gf-allow-global"], [data-role="gf-allow-blank-options"], [data-role="gf-blank-options"]');
-        gapInputs.forEach(input => {
+    setupGapItemListeners(blockElement, specificGapItem = null) {
+        const scope = specificGapItem || blockElement;
+
+        const textInputs = scope.querySelectorAll('[data-role="gf-correct"], [data-role="gf-alts"], [data-role="gf-hint"], [data-role="gf-blank-options"]');
+        textInputs.forEach(input => {
             if (!input.dataset.listenerSetup) {
                 input.dataset.listenerSetup = 'true';
-                const eventName = input.tagName === 'INPUT' && input.type === 'checkbox' ? 'change' : 'input';
-                input.addEventListener(eventName, () => {
+                input.addEventListener('input', () => {
                     this.triggerContentUpdate(blockElement);
                 });
             }
         });
+
+        const responseRadios = scope.querySelectorAll('[data-role="gf-response-mode"]');
+        responseRadios.forEach(radio => {
+            if (!radio.dataset.listenerSetup) {
+                radio.dataset.listenerSetup = 'true';
+                radio.addEventListener('change', () => {
+                    if (!radio.checked) {
+                        return;
+                    }
+
+                    const gapItem = radio.closest('.gap-item');
+                    if (gapItem) {
+                        this.handleResponseModeChange(blockElement, gapItem, radio.value);
+                    }
+                });
+            }
+        });
+
+        const initializeState = (gapItem) => {
+            const mode = this.getSelectedResponseMode(gapItem);
+            this.setResponseMode(gapItem, mode, blockElement, true);
+        };
+
+        if (specificGapItem) {
+            initializeState(specificGapItem);
+        } else {
+            blockElement.querySelectorAll('.gap-item').forEach(item => initializeState(item));
+        }
+    }
+
+    getSelectedResponseMode(gapItem) {
+        if (!gapItem) {
+            return 'manual';
+        }
+
+        const checkedRadio = gapItem.querySelector('[data-role="gf-response-mode"]:checked');
+        if (checkedRadio && !checkedRadio.disabled) {
+            return checkedRadio.value;
+        }
+
+        return gapItem.dataset.responseMode || 'manual';
+    }
+
+    applyResponseModeState(gapItem, mode) {
+        if (!gapItem) {
+            return;
+        }
+
+        gapItem.dataset.responseMode = mode;
+
+        const optionsContainer = gapItem.querySelector('[data-role="gf-blank-options-container"]');
+        if (optionsContainer) {
+            const textarea = optionsContainer.querySelector('[data-role="gf-blank-options"]');
+            if (mode === 'custom') {
+                optionsContainer.hidden = false;
+                if (textarea) {
+                    textarea.disabled = false;
+                }
+            } else {
+                optionsContainer.hidden = true;
+                if (textarea) {
+                    textarea.disabled = true;
+                }
+            }
+        }
+    }
+
+    setResponseMode(gapItem, mode, blockElement, suppressUpdate = false) {
+        if (!gapItem) {
+            return;
+        }
+
+        let resolvedMode = mode;
+        const targetRadio = gapItem.querySelector(`[data-role="gf-response-mode"][value="${mode}"]`);
+        if (!targetRadio || targetRadio.disabled) {
+            resolvedMode = 'manual';
+        }
+
+        const radios = gapItem.querySelectorAll('[data-role="gf-response-mode"]');
+        radios.forEach(radio => {
+            radio.checked = radio.value === resolvedMode;
+        });
+
+        this.applyResponseModeState(gapItem, resolvedMode);
+
+        if (!suppressUpdate) {
+            this.triggerContentUpdate(blockElement);
+        }
+    }
+
+    handleResponseModeChange(blockElement, gapItem, mode) {
+        this.setResponseMode(gapItem, mode, blockElement, false);
+    }
+
+    resolveResponseMode(blank, showOptionsEnabled, normalizedOptions) {
+        const hasOptions = Array.isArray(normalizedOptions) && normalizedOptions.length > 0;
+        const allowManual = typeof blank?.allowManualInput === 'boolean' ? blank.allowManualInput : true;
+        const allowGlobal = typeof blank?.allowGlobalOptions === 'boolean'
+            ? blank.allowGlobalOptions
+            : showOptionsEnabled;
+        const allowCustom = typeof blank?.allowBlankOptions === 'boolean'
+            ? blank.allowBlankOptions
+            : hasOptions;
+
+        if (!showOptionsEnabled) {
+            return allowManual ? 'manual' : 'manual';
+        }
+
+        if (allowCustom && hasOptions) {
+            return 'custom';
+        }
+
+        if (allowGlobal) {
+            return 'global';
+        }
+
+        return allowManual ? 'manual' : 'manual';
     }
 
     async handleImageFileSelect(blockElement, fileInput) {
@@ -1382,9 +1545,6 @@ class GapFillHandler {
             const correctInput = gapItem.querySelector('[data-role="gf-correct"]');
             const altsInput = gapItem.querySelector('[data-role="gf-alts"]');
             const hintInput = gapItem.querySelector('[data-role="gf-hint"]');
-            const allowManualCheckbox = gapItem.querySelector('[data-role="gf-allow-manual"]');
-            const allowGlobalCheckbox = gapItem.querySelector('[data-role="gf-allow-global"]');
-            const allowBlankCheckbox = gapItem.querySelector('[data-role="gf-allow-blank-options"]');
             const blankOptionsInput = gapItem.querySelector('[data-role="gf-blank-options"]');
             
             const correctAnswer = correctInput ? correctInput.value.trim() : '';
@@ -1398,9 +1558,10 @@ class GapFillHandler {
             const previousBlank = previousBlanksByIndex.get(gapIndex) || {};
             const previousOptions = previousBlank.options || previousBlank.Options || [];
             const blankOptions = this.parseOptionsInput(blankOptionsInput ? blankOptionsInput.value : '', previousOptions);
-            const allowManual = allowManualCheckbox ? allowManualCheckbox.checked : true;
-            const allowGlobal = allowGlobalCheckbox ? allowGlobalCheckbox.checked : showOptions;
-            const allowBlank = allowBlankCheckbox ? allowBlankCheckbox.checked : blankOptions.length > 0;
+            const responseMode = this.getSelectedResponseMode(gapItem);
+            const allowManual = responseMode === 'manual';
+            const allowGlobal = responseMode === 'global';
+            const allowBlank = responseMode === 'custom';
             const blankId = gapItem.dataset.gapId || previousBlank.id || previousBlank.Id || `blank${gapIndex}`;
             
             if (gapIndex > 0) {

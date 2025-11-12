@@ -1,10 +1,12 @@
 @{
     var gapIndex = (int)(ViewData["GapIndex"] ?? 1);
+    var responseGroup = $"gap-response-{Guid.NewGuid():N}";
 }
 
 <div class="gap-item" data-gap-index="@gapIndex">
     <div class="gap-item-header">
         <span class="gap-item-number">جای‌خالی @gapIndex</span>
+        <span class="gap-item-token">[[blank@gapIndex]]</span>
     </div>
     <div class="gap-item-body">
         <div class="gap-field-row">
@@ -14,12 +16,34 @@
             </div>
             <div class="gap-field">
                 <label>پاسخ‌های جایگزین (با کاما جدا کنید)</label>
-                <input type="text" class="gap-alts-input" placeholder="پاسخ1، پاسخ2، ..." data-role="gf-alts" data-index="@gapIndex">
+                <input type="text" class="gap-alts-input" placeholder="پاسخ۱، پاسخ۲، ..." data-role="gf-alts" data-index="@gapIndex">
             </div>
         </div>
         <div class="gap-field">
             <label>راهنما (اختیاری)</label>
             <input type="text" class="gap-hint-input" placeholder="راهنمایی برای دانش‌آموز" data-role="gf-hint" data-index="@gapIndex">
+        </div>
+        <div class="gap-response-section" data-role="gf-response-section">
+            <span class="gap-response-title">نحوه پاسخ‌دهی</span>
+            <div class="gap-response-options">
+                <label class="gap-radio">
+                    <input type="radio" name="@responseGroup" value="manual" data-role="gf-response-mode" checked>
+                    <span>پاسخ تایپی (بدون گزینه)</span>
+                </label>
+                <label class="gap-radio">
+                    <input type="radio" name="@responseGroup" value="global" data-role="gf-response-mode">
+                    <span>انتخاب از گزینه‌های عمومی</span>
+                </label>
+                <label class="gap-radio">
+                    <input type="radio" name="@responseGroup" value="custom" data-role="gf-response-mode">
+                    <span>انتخاب از پیشنهادهای اختصاصی</span>
+                </label>
+            </div>
+        </div>
+        <div class="gap-blank-options" data-role="gf-blank-options-container" hidden>
+            <label>پیشنهادهای اختصاصی برای این جای‌خالی (هر خط یک گزینه)</label>
+            <textarea class="gap-blank-options-input" data-role="gf-blank-options" rows="3" placeholder="گزینه۱&#10;گزینه۲"></textarea>
+            <small class="gap-blank-options-hint">این گزینه‌ها فقط در صورت انتخاب «پیشنهادهای اختصاصی» نمایش داده می‌شوند.</small>
         </div>
     </div>
 </div>

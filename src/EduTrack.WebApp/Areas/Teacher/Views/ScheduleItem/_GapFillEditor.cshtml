@@ -1,46 +1,57 @@
 <div class="gapfill-editor-container" data-role="gf-container">
     <div class="gapfill-header">
         <div class="gapfill-title">
-            <i class="fas fa-square"></i>
-            <span>تنظیمات جای‌خالی</span>
+            <span class="gapfill-title-icon"><i class="fas fa-grip-lines"></i></span>
+            <div class="gapfill-title-text">
+                <span class="gapfill-title-label">مدیریت جای‌خالی‌ها</span>
+                <span class="gapfill-title-subtitle">برای ایجاد جای‌خالی، روی دکمه زیر کلیک کنید</span>
+            </div>
         </div>
-        <button type="button" class="btn-gapfill-insert" data-action="gf-insert-blank">
-            <i class="fas fa-plus-circle"></i>
-            <span>درج جای‌خالی</span>
-        </button>
-    </div>
-    <div class="gapfill-settings">
-        <div class="gapfill-setting-item">
-            <label>نوع تصحیح</label>
-            <select class="gapfill-select" data-role="gf-answer-type">
-                <option value="exact">دقیق</option>
-                <option value="similar">مشابه</option>
-                <option value="keyword">کلیدواژه</option>
-            </select>
-        </div>
-        <div class="gapfill-setting-item">
-            <label class="gapfill-checkbox-label">
-                <input type="checkbox" class="gapfill-checkbox" data-role="gf-case">
-                <span>حساس به حروف بزرگ/کوچک</span>
-            </label>
-        </div>
-        <div class="gapfill-setting-item">
-            <label class="gapfill-checkbox-label">
-                <input type="checkbox" class="gapfill-checkbox" data-role="gf-show-options" checked>
-                <span>نمایش گزینه‌های جواب به دانش‌آموز</span>
-            </label>
+        <div class="gapfill-actions">
+            <button type="button" class="gapfill-add-gap" data-action="gf-insert-blank">
+                <i class="fas fa-plus"></i>
+                <span>جای‌خالی جدید</span>
+            </button>
+            <span class="gapfill-actions-hint">پس از درج، هر جای‌خالی را در بخش پایین ویرایش کنید.</span>
         </div>
     </div>
-    <div class="gapfill-global-options" data-role="gf-global-options-container">
-        <label>گزینه‌های عمومی (اختیاری)</label>
-        <textarea class="form-control gapfill-global-options-input" data-role="gf-global-options" rows="3" placeholder="هر گزینه را در یک خط وارد کنید"></textarea>
-        <small class="form-text text-muted">در صورت فعال بودن گزینه «نمایش گزینه‌ها»، این موارد به عنوان گزینه‌های کلی برای تمام جای‌خالی‌ها نمایش داده می‌شوند.</small>
+
+    <div class="gapfill-settings-card">
+        <div class="gapfill-settings-grid">
+            <div class="gapfill-setting">
+                <label>نوع تصحیح</label>
+                <select class="gapfill-select" data-role="gf-answer-type">
+                    <option value="exact">دقیق</option>
+                    <option value="similar">مشابه</option>
+                    <option value="keyword">کلیدواژه</option>
+                </select>
+            </div>
+            <div class="gapfill-setting gapfill-setting-toggle">
+                <label class="gapfill-toggle">
+                    <input type="checkbox" class="gapfill-checkbox" data-role="gf-case">
+                    <span>حساس به حروف بزرگ/کوچک</span>
+                </label>
+            </div>
+            <div class="gapfill-setting gapfill-setting-toggle">
+                <label class="gapfill-toggle">
+                    <input type="checkbox" class="gapfill-checkbox" data-role="gf-show-options" checked>
+                    <span>نمایش گزینه‌های جواب به دانش‌آموز</span>
+                </label>
+            </div>
+        </div>
+
+        <div class="gapfill-global-options" data-role="gf-global-options-container">
+            <label>گزینه‌های عمومی (اختیاری)</label>
+            <textarea class="gapfill-global-options-input" data-role="gf-global-options" rows="3" placeholder="هر گزینه را در یک خط وارد کنید"></textarea>
+            <small class="gapfill-global-hint">در صورت فعال بودن نمایش گزینه‌ها، این موارد برای تمام جای‌خالی‌ها قابل انتخاب خواهند بود.</small>
+        </div>
     </div>
+
     <div class="gaps-list" data-role="gf-gaps">
         <div class="gaps-empty-state">
             <i class="fas fa-info-circle"></i>
-            <p>برای این بلاک هنوز جای‌خالی تعریف نشده است</p>
-            <small>از دکمه "درج جای‌خالی" استفاده کنید</small>
+            <p>هنوز هیچ جای‌خالی‌ای ایجاد نشده است.</p>
+            <small>از دکمه «جای‌خالی جدید» برای شروع استفاده کنید.</small>
         </div>
     </div>
 </div>
