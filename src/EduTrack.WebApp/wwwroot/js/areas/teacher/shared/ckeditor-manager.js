@@ -78,6 +78,21 @@ if (typeof window.CKEditorManager === 'undefined') {
         }
 
         try {
+            window.ensureScheduleItemCustomPlugins?.();
+
+            if (!Plugins.TextDirection && window.CKEditorPlugins.TextDirection) {
+                Plugins.TextDirection = window.CKEditorPlugins.TextDirection;
+            }
+            if (!Plugins.CustomAlignmentButtons && window.CKEditorPlugins.CustomAlignmentButtons) {
+                Plugins.CustomAlignmentButtons = window.CKEditorPlugins.CustomAlignmentButtons;
+            }
+            if (!Plugins.Underline && window.CKEditorPlugins.Underline) {
+                Plugins.Underline = window.CKEditorPlugins.Underline;
+            }
+            if (!Plugins.Alignment && window.CKEditorPlugins.Alignment) {
+                Plugins.Alignment = window.CKEditorPlugins.Alignment;
+            }
+
             const editor = await window.ClassicEditor.create(editorElement, {
                 licenseKey: 'GPL',
                 language: {
@@ -85,11 +100,11 @@ if (typeof window.CKEditorManager === 'undefined') {
                     content: 'fa'
                 },
                 plugins: [
-                    Plugins.Base64UploadAdapter,
                     Plugins.Essentials,
                     Plugins.Paragraph,
                     Plugins.Bold,
                     Plugins.Italic,
+                    Plugins.Underline,
                     Plugins.Font,
                     Plugins.Image,
                     Plugins.ImageToolbar,
@@ -97,30 +112,59 @@ if (typeof window.CKEditorManager === 'undefined') {
                     Plugins.ImageCaption,
                     Plugins.ImageStyle,
                     Plugins.ImageResize,
-                    Plugins.LinkImage,
                     Plugins.SourceEditing,
                     Plugins.Autoformat,
                     Plugins.BlockQuote,
                     Plugins.Heading,
+                    Plugins.Alignment,
                     Plugins.List,
                     Plugins.Table,
                     Plugins.TableToolbar,
                     Plugins.Clipboard,
-                    Plugins.MediaEmbed,
                     Plugins.GeneralHtmlSupport,
-                    Plugins.HtmlEmbed
-                ],
-                toolbar: [
-                    'undo', 'redo', '|',
-                    'bold', 'italic', '|',
-                    'alignment', '|',
-                    'fontSize', 'fontFamily', 'fontColor', 'fontBackgroundColor', '|',
-                    'numberedList', 'bulletedList', '|',
-                    'link', 'imageUpload', 'insertTable', '|',
-                    'blockQuote', '|',
-                    'heading', 'mediaEmbed', '|',
-                    'sourceEditing'
-                ],
+                    Plugins.HtmlEmbed,
+                    Plugins.TextDirection,
+                    Plugins.CustomAlignmentButtons
+                ].filter(Boolean),
+                toolbar: (() => {
+                    const alignmentItems = Plugins.CustomAlignmentButtons
+                        ? ['alignLeft', 'alignCenter', 'alignRight', 'alignJustify']
+                        : ['alignment'];
+                    const directionItems = Plugins.TextDirection
+                        ? ['directionRtl', 'directionLtr']
+                        : [];
+
+                    const items = [
+                        'undo', 'redo', '|',
+                        'bold', 'italic'
+                    ];
+
+                    if (Plugins.Underline) {
+                        items.push('underline');
+                    }
+
+                    items.push('|', ...alignmentItems);
+
+                    if (directionItems.length) {
+                        items.push('|', ...directionItems);
+                    }
+
+                    items.push(
+                        '|',
+                        'fontSize', 'fontFamily', 'fontColor', 'fontBackgroundColor', '|',
+                        'numberedList', 'bulletedList', '|',
+                        'link', 'insertTable', '|',
+                        'blockQuote', '|',
+                        'heading', '|',
+                        'sourceEditing'
+                    );
+
+                    return items;
+                })(),
+                extraPlugins: [
+                    Plugins.TextDirection ?? null,
+                    Plugins.CustomAlignmentButtons ?? null
+                ].filter(Boolean),
                 placeholder: editorElement.dataset.placeholder || 'متن خود را اینجا تایپ کنید...',
                 heading: {
                     options: [
@@ -130,6 +174,12 @@ if (typeof window.CKEditorManager === 'undefined') {
                         { model: 'heading3', view: 'h3', title: 'سرتیتر 3', class: 'ck-heading_heading3' },
                         { model: 'heading4', view: 'h4', title: 'سرتیتر 4', class: 'ck-heading_heading4' }
                     ]
+                },
+                ui: {
+                    viewportOffset: {
+                        top: 120,
+                        bottom: 24
+                    }
                 },
                 fontSize: {
                     options: [

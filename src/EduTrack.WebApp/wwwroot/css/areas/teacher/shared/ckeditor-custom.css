@@ -75,6 +75,15 @@
     border: 1px solid #e9ecef !important;
 }
 
+.ckeditor-container .ck-editor__editable_inline {
+    overflow: visible !important;
+}
+
+.ck.ck-dropdown__panel,
+.ck.ck-balloon-panel {
+    z-index: 3000 !important;
+}
+
 .ckeditor-container .ck-list__item {
     border-radius: 4px !important;
     margin: 2px !important;
