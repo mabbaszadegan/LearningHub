@@ -16,11 +16,11 @@ namespace EduTrack.Application.Features.CourseEnrollment.Queries;
 /// </summary>
 public class GetCourseScheduleItemsQueryHandler : IRequestHandler<GetCourseScheduleItemsQuery, Result<List<TeachingPlanScheduleItemDto>>>
 {
-    private readonly IRepository<ScheduleItem> _scheduleItemRepository;
+    private readonly IScheduleItemRepository _scheduleItemRepository;
     private readonly IRepository<Domain.Entities.CourseEnrollment> _enrollmentRepository;
 
     public GetCourseScheduleItemsQueryHandler(
-        IRepository<ScheduleItem> scheduleItemRepository,
+        IScheduleItemRepository scheduleItemRepository,
         IRepository<Domain.Entities.CourseEnrollment> enrollmentRepository)
     {
         _scheduleItemRepository = scheduleItemRepository;
@@ -51,21 +51,40 @@ public class GetCourseScheduleItemsQueryHandler : IRequestHandler<GetCourseSched
                 return Result<List<TeachingPlanScheduleItemDto>>.Failure("Student is not enrolled in this course");
             }
 
-            // Get schedule items for the course
-            var scheduleItems = await _scheduleItemRepository.GetAll()
-                .Include(si => si.TeachingPlan)
-                .Include(si => si.GroupAssignments)
-                    .ThenInclude(ga => ga.StudentGroup)
-                .Include(si => si.SubChapterAssignments)
-                    .ThenInclude(sca => sca.SubChapter)
-                        .ThenInclude(sc => sc.Chapter)
-                .Include(si => si.StudentAssignments)
-                    .ThenInclude(sa => sa.StudentProfile)
-                .Include(si => si.Lesson)
-                .Where(si => (si.CourseId.HasValue && si.CourseId == request.CourseId) ||
-                             (si.TeachingPlan != null && si.TeachingPlan.CourseId == request.CourseId))
-                .OrderBy(si => si.StartDate)
-                .ToListAsync(cancellationToken);
+            List<ScheduleItem> scheduleItems;
+
+            if (request.StudentProfileId.HasValue)
+            {
+                var accessibleItems = await _scheduleItemRepository.GetScheduleItemsAccessibleToStudentAsync(
+                    request.StudentId,
+                    request.StudentProfileId.Value,
+                    cancellationToken);
+
+                scheduleItems = accessibleItems
+                    .Where(si =>
+                        (si.CourseId.HasValue && si.CourseId == request.CourseId) ||
+                        (si.TeachingPlan != null && si.TeachingPlan.CourseId == request.CourseId))
+                    .OrderBy(si => si.StartDate)
+                    .ToList();
+            }
+            else
+            {
+                // Legacy fallback: return all course items (pre profile-access behaviour)
+                scheduleItems = await _scheduleItemRepository.GetAll()
+                    .Include(si => si.TeachingPlan)
+                    .Include(si => si.GroupAssignments)
+                        .ThenInclude(ga => ga.StudentGroup)
+                    .Include(si => si.SubChapterAssignments)
+                        .ThenInclude(sca => sca.SubChapter)
+                            .ThenInclude(sc => sc.Chapter)
+                    .Include(si => si.StudentAssignments)
+                        .ThenInclude(sa => sa.StudentProfile)
+                    .Include(si => si.Lesson)
+                    .Where(si => (si.CourseId.HasValue && si.CourseId == request.CourseId) ||
+                                 (si.TeachingPlan != null && si.TeachingPlan.CourseId == request.CourseId))
+                    .OrderBy(si => si.StartDate)
+                    .ToListAsync(cancellationToken);
+            }
 
             // Convert to DTOs
             var scheduleItemDtos = scheduleItems.Select(si => new TeachingPlanScheduleItemDto

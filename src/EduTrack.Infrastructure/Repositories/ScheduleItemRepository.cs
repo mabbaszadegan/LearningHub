@@ -1,3 +1,4 @@
+using System;
 using EduTrack.Domain.Entities;
 using EduTrack.Domain.Enums;
 using EduTrack.Domain.Repositories;
@@ -187,13 +188,18 @@ public class ScheduleItemRepository : Repository<ScheduleItem>, IScheduleItemRep
         return Task.CompletedTask;
     }
 
-    public async Task<IEnumerable<ScheduleItem>> GetScheduleItemsAccessibleToStudentAsync(string studentId, int? studentProfileId = null, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<ScheduleItem>> GetScheduleItemsAccessibleToStudentAsync(string studentId, int studentProfileId, CancellationToken cancellationToken = default)
     {
-        // Get all schedule items that the student has access to based on the rules:
-        // 1. Direct assignment to the student
-        // 2. Assignment to student's group AND no individual students in that group are assigned
-        // 3. No group assignments (accessible to all students)
-        
+        if (string.IsNullOrWhiteSpace(studentId))
+        {
+            throw new ArgumentException("Student ID cannot be null or empty.", nameof(studentId));
+        }
+
+        if (studentProfileId <= 0)
+        {
+            throw new ArgumentException("Student profile ID must be greater than 0.", nameof(studentProfileId));
+        }
+
         var enrollments = _context.Set<CourseEnrollment>();
         var courseAccesses = _context.Set<CourseAccess>();
         var now = DateTimeOffset.UtcNow;
@@ -219,8 +225,7 @@ public class ScheduleItemRepository : Repository<ScheduleItem>, IScheduleItemRep
                         e.CourseId == si.CourseId.Value &&
                         e.StudentId == studentId &&
                         e.IsActive &&
-                        ((studentProfileId.HasValue && e.StudentProfileId == studentProfileId.Value) ||
-                         (!studentProfileId.HasValue && e.StudentProfileId == null))) ||
+                        e.StudentProfileId == studentProfileId) ||
                     courseAccesses.Any(ca =>
                         si.CourseId.HasValue &&
                         ca.CourseId == si.CourseId.Value &&
@@ -228,26 +233,18 @@ public class ScheduleItemRepository : Repository<ScheduleItem>, IScheduleItemRep
                         ca.IsActive &&
                         (!ca.ExpiresAt.HasValue || ca.ExpiresAt > now))
                 ) &&
-                
-                // Rule 1: Direct assignment to student
-                si.StudentAssignments.Any(sa =>
-                    (studentProfileId.HasValue && sa.StudentProfileId == studentProfileId.Value) ||
-                    (!studentProfileId.HasValue && sa.StudentProfile != null && sa.StudentProfile.UserId == studentId)) ||
-                
-                // Rule 2: Assignment to student's group AND no individual students in that group are assigned
-                si.GroupAssignments.Any(ga => 
-                    ga.StudentGroup.Members.Any(m =>
-                        (studentProfileId.HasValue && m.StudentProfileId == studentProfileId.Value) ||
-                        (!studentProfileId.HasValue && m.StudentProfile != null && m.StudentProfile.UserId == studentId)) &&
-                    !si.StudentAssignments.Any(sa => 
-                        ga.StudentGroup.Members.Any(m =>
-                            (studentProfileId.HasValue && m.StudentProfileId == sa.StudentProfileId) ||
-                            (!studentProfileId.HasValue && m.StudentProfile != null && sa.StudentProfile != null && m.StudentProfile.UserId == sa.StudentProfile.UserId))
-                    )
-                ) ||
-                
-                // Rule 3: No group assignments (accessible to all students)
-                !si.GroupAssignments.Any()
+                (
+                    // Unassigned items are available to all students within the visible context
+                    (!si.StudentAssignments.Any() && !si.GroupAssignments.Any()) ||
+                    // Direct assignment to the student profile
+                    si.StudentAssignments.Any(sa => sa.StudentProfileId == studentProfileId) ||
+                    // Assignment through a group that contains the student profile,
+                    // but only when no individual assignments exist for members of that group
+                    si.GroupAssignments.Any(ga =>
+                        ga.StudentGroup.Members.Any(m => m.StudentProfileId == studentProfileId) &&
+                        !si.StudentAssignments.Any(sa =>
+                            ga.StudentGroup.Members.Any(m => m.StudentProfileId == sa.StudentProfileId)))
+                )
             )
             .OrderBy(si => si.StartDate)
             .ToListAsync(cancellationToken);

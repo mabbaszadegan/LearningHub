@@ -243,7 +243,7 @@ public class HomeController : Controller
             });
         }
 
-        var scheduleItems = await GetAccessibleScheduleItems(currentUser.Id, activeProfileId, cancellationToken);
+        var scheduleItems = await GetAccessibleScheduleItems(currentUser.Id, activeProfileId.Value, cancellationToken);
         return Ok(new ProfileAwareResponse<List<ScheduleItemDto>>
         {
             Success = true,
@@ -417,7 +417,7 @@ public class HomeController : Controller
         return calendar.GetWeekOfYear(date.DateTime, System.Globalization.CalendarWeekRule.FirstDay, DayOfWeek.Saturday);
     }
 
-    private async Task<List<ScheduleItemDto>> GetAccessibleScheduleItems(string studentId, int? studentProfileId, CancellationToken cancellationToken = default)
+    private async Task<List<ScheduleItemDto>> GetAccessibleScheduleItems(string studentId, int studentProfileId, CancellationToken cancellationToken = default)
     {
         try
         {

@@ -25,6 +25,11 @@ public class GetScheduleItemsAccessibleToStudentQueryHandler : IRequestHandler<G
     {
         try
         {
+            if (request.StudentProfileId <= 0)
+            {
+                return Result<List<ScheduleItemDto>>.Failure("شناسه پروفایل دانش‌آموز معتبر نیست.");
+            }
+
             var scheduleItems = await _scheduleItemRepository.GetScheduleItemsAccessibleToStudentAsync(
                 request.StudentId,
                 request.StudentProfileId,
