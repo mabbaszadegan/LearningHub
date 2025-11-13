@@ -1,4 +1,5 @@
 @using EduTrack.Application.Common.Models.TeachingSessions
+@using EduTrack.Application.Common.Models.ScheduleItems
 @using EduTrack.WebApp.Areas.Teacher.Views.Shared.Components.PageNavigation
 @model TeachingSessionReportDto
 @{
@@ -429,8 +430,139 @@
                             <i class="fas fa-plus"></i>
                             <span>ایجاد تکلیف جدید</span>
                         </a>
+                        <a asp-controller="ScheduleItem"
+                           asp-action="SessionAssignments"
+                           asp-route-sessionReportId="@Model.Id"
+                           class="btn-manage-assignments">
+                            <i class="fas fa-list-ul"></i>
+                            <span>مدیریت تکالیف جلسه</span>
+                        </a>
                     </div>
                 </div>
+                
+                @if (Model.Assignments.Any())
+                {
+                    <div class="assignment-list">
+                        @foreach (var assignment in Model.Assignments.OrderByDescending(a => a.StartDate))
+                        {
+                            var statusClass = assignment.Status switch
+                            {
+                                ScheduleItemStatus.Active => "status-active",
+                                ScheduleItemStatus.Published => "status-published",
+                                ScheduleItemStatus.Completed => "status-completed",
+                                ScheduleItemStatus.Expired => "status-expired",
+                                _ => "status-draft"
+                            };
+
+                            var statusIcon = assignment.Status switch
+                            {
+                                ScheduleItemStatus.Active => "fas fa-play-circle",
+                                ScheduleItemStatus.Published => "fas fa-share-square",
+                                ScheduleItemStatus.Completed => "fas fa-check-circle",
+                                ScheduleItemStatus.Expired => "fas fa-exclamation-triangle",
+                                _ => "fas fa-pencil-alt"
+                            };
+
+                            var mandatoryLabel = assignment.IsMandatory ? "الزامی" : "اختیاری";
+                            var mandatoryClass = assignment.IsMandatory ? "badge-mandatory" : "badge-optional";
+                            <div class="assignment-item">
+                                <div class="assignment-item-header">
+                                    <div class="assignment-title">
+                                        <span class="assignment-type type-@((int)assignment.Type)">
+                                            <i class="fas fa-layer-group"></i>
+                                            @assignment.TypeName
+                                        </span>
+                                        <h5>@assignment.Title</h5>
+                                    </div>
+                                    <div class="assignment-status @statusClass">
+                                        <i class="@statusIcon"></i>
+                                        <span>@assignment.StatusText</span>
+                                    </div>
+                                </div>
+
+                                <div class="assignment-item-body">
+                                    <div class="assignment-dates">
+                                        <div class="date-row">
+                                            <i class="fas fa-calendar-alt"></i>
+                                            <span>شروع: @assignment.StartDate.ToString("yyyy/MM/dd HH:mm")</span>
+                                        </div>
+                                        @if (assignment.DueDate.HasValue)
+                                        {
+                                            <div class="date-row">
+                                                <i class="fas fa-clock"></i>
+                                                <span>مهلت: @assignment.DueDate.Value.ToString("yyyy/MM/dd HH:mm")</span>
+                                            </div>
+                                        }
+                                        <div class="date-row">
+                                            <i class="fas fa-tag"></i>
+                                            <span class="@mandatoryClass">@mandatoryLabel</span>
+                                            @if (assignment.MaxScore.HasValue)
+                                            {
+                                                <span class="score-badge">
+                                                    <i class="fas fa-star"></i>
+                                                    امتیاز: @assignment.MaxScore.Value
+                                                </span>
+                                            }
+                                        </div>
+                                    </div>
+
+                                    <div class="assignment-targets">
+                                        @if (assignment.AssignedGroups.Any())
+                                        {
+                                            <span class="target-chip">
+                                                <i class="fas fa-users"></i>
+                                                گروه‌ها: @assignment.AssignedGroups.Count
+                                            </span>
+                                        }
+                                        @if (assignment.AssignedStudents.Any())
+                                        {
+                                            <span class="target-chip">
+                                                <i class="fas fa-user-graduate"></i>
+                                                افراد: @assignment.AssignedStudents.Count
+                                            </span>
+                                        }
+                                        @if (assignment.AssignedSubChapters.Any())
+                                        {
+                                            <span class="target-chip">
+                                                <i class="fas fa-book-reader"></i>
+                                                زیرمباحث: @assignment.AssignedSubChapters.Count
+                                            </span>
+                                        }
+                                    </div>
+                                </div>
+
+                                <div class="assignment-item-footer">
+                                    <a asp-controller="ScheduleItem"
+                                       asp-action="CreateOrEdit"
+                                       asp-route-id="@assignment.ScheduleItemId"
+                                       asp-route-teachingPlanId="@Model.TeachingPlanId"
+                                       asp-route-sessionReportId="@Model.Id"
+                                       class="btn-outline-secondary">
+                                        <i class="fas fa-edit"></i>
+                                        ویرایش تکلیف
+                                    </a>
+                                    <a asp-controller="ScheduleItem"
+                                       asp-action="SessionAssignments"
+                                       asp-route-sessionReportId="@Model.Id"
+                                       class="btn-link-secondary">
+                                        <i class="fas fa-list"></i>
+                                        مشاهده در صفحه مدیریت
+                                    </a>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="assignment-empty-state">
+                        <div class="empty-icon">
+                            <i class="fas fa-clipboard-list"></i>
+                        </div>
+                        <h5>تکلیفی برای این جلسه ثبت نشده است</h5>
+                        <p>برای شروع، از دکمه بالا یک تکلیف جدید ایجاد کنید.</p>
+                    </div>
+                }
             </div>
         </div>
 

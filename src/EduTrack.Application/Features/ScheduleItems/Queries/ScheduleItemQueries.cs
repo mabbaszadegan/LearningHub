@@ -9,6 +9,8 @@ public record GetScheduleItemsByTeachingPlanQuery(int TeachingPlanId) : IRequest
 
 public record GetScheduleItemsByCourseQuery(int CourseId, bool CourseScopeOnly = true) : IRequest<Result<List<ScheduleItemDto>>>;
 
+public record GetScheduleItemsBySessionReportQuery(int SessionReportId) : IRequest<Result<List<ScheduleItemDto>>>;
+
 public record GetScheduleItemByIdQuery(int Id) : IRequest<Result<ScheduleItemDto>>;
 
 public record GetScheduleItemsByGroupQuery(int GroupId) : IRequest<Result<List<ScheduleItemDto>>>;

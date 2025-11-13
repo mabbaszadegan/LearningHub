@@ -1,8 +1,13 @@
+using System.Collections.Generic;
+using System.Linq;
 using EduTrack.Application.Common.Interfaces;
 using EduTrack.Application.Common.Models;
+using EduTrack.Application.Common.Models.ScheduleItems;
 using EduTrack.Application.Common.Models.TeachingSessions;
 using EduTrack.Application.Features.TeachingSessions.Queries;
+using EduTrack.Domain.Entities;
 using EduTrack.Domain.Enums;
+using EduTrack.Domain.Extensions;
 using EduTrack.Domain.Repositories;
 using MediatR;
 using Newtonsoft.Json;
@@ -15,15 +20,18 @@ public class GetTeachingSessionReportDetailsQueryHandler : IRequestHandler<GetTe
     private readonly ITeachingSessionReportRepository _sessionReportRepository;
     private readonly ICurrentUserService _currentUserService;
     private readonly IStudentGroupRepository _studentGroupRepository;
+    private readonly IScheduleItemRepository _scheduleItemRepository;
 
     public GetTeachingSessionReportDetailsQueryHandler(
         ITeachingSessionReportRepository sessionReportRepository,
         ICurrentUserService currentUserService,
-        IStudentGroupRepository studentGroupRepository)
+        IStudentGroupRepository studentGroupRepository,
+        IScheduleItemRepository scheduleItemRepository)
     {
         _sessionReportRepository = sessionReportRepository;
         _currentUserService = currentUserService;
         _studentGroupRepository = studentGroupRepository;
+        _scheduleItemRepository = scheduleItemRepository;
     }
 
     public async Task<Result<TeachingSessionReportDto>> Handle(GetTeachingSessionReportDetailsQuery request, CancellationToken cancellationToken)
@@ -47,7 +55,10 @@ public class GetTeachingSessionReportDetailsQueryHandler : IRequestHandler<GetTe
         }
 
         // Get all students from groups in this teaching plan
-        var groups = await _studentGroupRepository.GetGroupsByTeachingPlanAsync(sessionReport.TeachingPlanId, cancellationToken);
+        var groups = (await _studentGroupRepository
+                .GetGroupsByTeachingPlanAsync(sessionReport.TeachingPlanId, cancellationToken))
+            .ToList();
+        var groupLookup = groups.ToDictionary(g => g.Id, g => g.Name);
         var allStudents = groups.SelectMany(g => g.Members).ToList();
         
         // Create attendance DTOs with student information
@@ -138,6 +149,14 @@ public class GetTeachingSessionReportDetailsQueryHandler : IRequestHandler<GetTe
 
         statsJson = JsonConvert.SerializeObject(combinedStats, jsonSettings);
 
+        var scheduleItems = await _scheduleItemRepository
+            .GetScheduleItemsByTeachingPlanAsync(sessionReport.TeachingPlanId, cancellationToken);
+        var assignments = scheduleItems
+            .Where(item => item.SessionReportId == sessionReport.Id)
+            .Select(item => CreateAssignmentDto(item, groupLookup))
+            .OrderByDescending(a => a.StartDate)
+            .ToList();
+
         var sessionReportDto = new TeachingSessionReportDto
         {
             Id = sessionReport.Id,
@@ -158,9 +177,148 @@ public class GetTeachingSessionReportDetailsQueryHandler : IRequestHandler<GetTe
             AttendanceCount = attendanceDtos.Count,
             PresentCount = attendanceDtos.Count(a => a.Status == AttendanceStatus.Present || a.Status == AttendanceStatus.Late),
             AbsentCount = attendanceDtos.Count(a => a.Status == AttendanceStatus.Absent || a.Status == AttendanceStatus.Excused),
-            Attendance = attendanceDtos
+            Attendance = attendanceDtos,
+            Assignments = assignments
         };
 
         return Result<TeachingSessionReportDto>.Success(sessionReportDto);
+    }
+
+    private static TeachingSessionAssignmentDto CreateAssignmentDto(
+        ScheduleItem item,
+        IReadOnlyDictionary<int, string> groupLookup)
+    {
+        var now = DateTimeOffset.UtcNow;
+        var status = GetStatus(item);
+
+        var groupNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        if (item.GroupId.HasValue && groupLookup.TryGetValue(item.GroupId.Value, out var primaryGroupName))
+        {
+            groupNames.Add(primaryGroupName);
+        }
+
+        foreach (var groupAssignment in item.GroupAssignments)
+        {
+            if (!string.IsNullOrWhiteSpace(groupAssignment.StudentGroup?.Name))
+            {
+                groupNames.Add(groupAssignment.StudentGroup.Name);
+            }
+        }
+
+        var studentNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var studentAssignment in item.StudentAssignments)
+        {
+            var displayName = GetStudentDisplayName(studentAssignment);
+            if (!string.IsNullOrWhiteSpace(displayName))
+            {
+                studentNames.Add(displayName);
+            }
+        }
+
+        var subChapterTitles = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var subChapterAssignment in item.SubChapterAssignments)
+        {
+            var title = subChapterAssignment.SubChapter?.Title;
+            if (!string.IsNullOrWhiteSpace(title))
+            {
+                subChapterTitles.Add(title);
+            }
+        }
+
+        return new TeachingSessionAssignmentDto
+        {
+            ScheduleItemId = item.Id,
+            TeachingPlanId = item.TeachingPlanId,
+            CourseId = item.CourseId ?? item.TeachingPlan?.CourseId,
+            Title = item.Title,
+            Type = item.Type,
+            TypeName = item.Type.GetDisplayName(),
+            Status = status,
+            StatusText = GetStatusText(status),
+            StartDate = item.StartDate,
+            DueDate = item.DueDate,
+            IsMandatory = item.IsMandatory,
+            MaxScore = item.MaxScore,
+            CurrentStep = item.CurrentStep,
+            IsCompleted = item.IsCompleted,
+            IsOverdue = item.DueDate.HasValue && item.DueDate.Value < now && !item.IsCompleted,
+            CreatedAt = item.CreatedAt,
+            UpdatedAt = item.UpdatedAt,
+            AssignedGroups = groupNames.OrderBy(name => name).ToList(),
+            AssignedStudents = studentNames.OrderBy(name => name).ToList(),
+            AssignedSubChapters = subChapterTitles.OrderBy(title => title).ToList()
+        };
+    }
+
+    private static string GetStudentDisplayName(ScheduleItemStudentAssignment assignment)
+    {
+        var profile = assignment.StudentProfile;
+        if (profile == null)
+        {
+            return string.Empty;
+        }
+
+        if (!string.IsNullOrWhiteSpace(profile.DisplayName))
+        {
+            return profile.DisplayName;
+        }
+
+        var user = profile.User;
+        if (user == null)
+        {
+            return string.Empty;
+        }
+
+        var parts = new[] { user.FirstName, user.LastName }
+            .Where(part => !string.IsNullOrWhiteSpace(part))
+            .ToArray();
+
+        if (parts.Length > 0)
+        {
+            return string.Join(' ', parts);
+        }
+
+        return user.UserName ?? string.Empty;
+    }
+
+    private static ScheduleItemStatus GetStatus(ScheduleItem item)
+    {
+        var now = DateTimeOffset.UtcNow;
+
+        if (item.IsCompleted)
+        {
+            return ScheduleItemStatus.Completed;
+        }
+
+        if (item.DueDate.HasValue && now > item.DueDate.Value)
+        {
+            return ScheduleItemStatus.Expired;
+        }
+
+        if (now >= item.StartDate && (!item.DueDate.HasValue || now <= item.DueDate.Value))
+        {
+            return ScheduleItemStatus.Active;
+        }
+
+        if (now < item.StartDate)
+        {
+            return ScheduleItemStatus.Published;
+        }
+
+        return ScheduleItemStatus.Draft;
+    }
+
+    private static string GetStatusText(ScheduleItemStatus status)
+    {
+        return status switch
+        {
+            ScheduleItemStatus.Draft => "پیش‌نویس",
+            ScheduleItemStatus.Published => "منتشر شده",
+            ScheduleItemStatus.Active => "فعال",
+            ScheduleItemStatus.Completed => "تکمیل شده",
+            ScheduleItemStatus.Expired => "منقضی شده",
+            _ => "نامشخص"
+        };
     }
 }

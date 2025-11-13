@@ -7,13 +7,43 @@
     var courseTitle = ViewBag.CourseTitle as string ?? "دوره";
     var courseId = ViewBag.CourseId as int? ?? 0;
     var isCourseScope = ViewBag.IsCourseScope as bool? ?? false;
+    var isSessionScope = ViewBag.IsSessionScope as bool? ?? false;
+    var sessionReportId = ViewBag.SessionReportId as int? ?? 0;
+    var sessionTitle = ViewBag.SessionTitle as string ?? string.Empty;
     var stats = ViewBag.Stats as EduTrack.Application.Common.Models.ScheduleItems.ScheduleItemStatsDto ?? new EduTrack.Application.Common.Models.ScheduleItems.ScheduleItemStatsDto();
     var itemTypes = Enum.GetValues<EduTrack.Domain.Enums.ScheduleItemType>()
         .Select(t => new { Value = (int)t, Name = t.GetDisplayName() })
         .ToList();
 }
 
-<div class="schedule-items-container" data-teaching-plan-id="@teachingPlanId" data-course-id="@courseId" data-course-scope="@isCourseScope">
+<div class="schedule-items-container"
+     data-teaching-plan-id="@teachingPlanId"
+     data-course-id="@courseId"
+     data-course-scope="@(isCourseScope ? "true" : "false")"
+     data-session-scope="@(isSessionScope ? "true" : "false")"
+     data-session-report-id="@sessionReportId">
+
+    @if (isSessionScope)
+    {
+        <div class="session-context-banner">
+            <div class="context-info">
+                <i class="fas fa-chalkboard-teacher"></i>
+                <span>
+                    تکالیف ثبت شده برای جلسه
+                    @(string.IsNullOrWhiteSpace(sessionTitle) ? $"شماره {sessionReportId}" : sessionTitle)
+                </span>
+            </div>
+            <div class="context-actions">
+                <a asp-controller="TeachingSessions"
+                   asp-action="Details"
+                   asp-route-id="@sessionReportId"
+                   class="btn-outline-secondary">
+                    <i class="fas fa-arrow-right"></i>
+                    <span>بازگشت به جزئیات جلسه</span>
+                </a>
+            </div>
+        </div>
+    }
 
     <!-- Stats Cards -->
     <div class="stats-grid">
@@ -113,25 +143,28 @@
                             <i class="@GetTypeIcon(item.Type)"></i>
                             @item.Type.GetDisplayName()
                         </div>
-                        <div class="item-actions">
-                            <div class="dropdown">
-                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                                    <i class="fas fa-ellipsis-v"></i>
-                                </button>
-                                <ul class="dropdown-menu">
-                                    <li><a class="dropdown-item" href="#" data-action="edit" data-item-id="@item.Id">
-                                        <i class="fas fa-edit"></i> ویرایش
-                                    </a></li>
-                                    <li><a class="dropdown-item" href="#" data-action="duplicate" data-item-id="@item.Id">
-                                        <i class="fas fa-copy"></i> کپی
-                                    </a></li>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item text-danger" href="#" data-action="delete" data-item-id="@item.Id">
-                                        <i class="fas fa-trash"></i> حذف
-                                    </a></li>
-                                </ul>
+                        @if (!isSessionScope)
+                        {
+                            <div class="item-actions">
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                        <i class="fas fa-ellipsis-v"></i>
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item" href="#" data-action="edit" data-item-id="@item.Id">
+                                            <i class="fas fa-edit"></i> ویرایش
+                                        </a></li>
+                                        <li><a class="dropdown-item" href="#" data-action="duplicate" data-item-id="@item.Id">
+                                            <i class="fas fa-copy"></i> کپی
+                                        </a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item text-danger" href="#" data-action="delete" data-item-id="@item.Id">
+                                            <i class="fas fa-trash"></i> حذف
+                                        </a></li>
+                                    </ul>
+                                </div>
                             </div>
-                        </div>
+                        }
                     </div>
                     
                     <div class="item-content">
@@ -186,7 +219,17 @@
                 </div>
                 <h3>هیچ آیتم آموزشی وجود ندارد</h3>
                 <p>برای شروع، اولین آیتم آموزشی خود را ایجاد کنید.</p>
-                @if (isCourseScope)
+                @if (isSessionScope)
+                {
+                    <div class="empty-state">
+                        <div class="empty-icon">
+                            <i class="fas fa-tasks"></i>
+                        </div>
+                        <h3>هنوز تکلیفی برای این جلسه ثبت نشده</h3>
+                        <p>از صفحه جزئیات جلسه می‌توانید تکلیف جدید ثبت کنید.</p>
+                    </div>
+                }
+                else if (isCourseScope)
                 {
                     <a asp-action="CreateOrEdit" asp-route-courseId="@courseId" class="btn-action-primary">
                         <i class="fas fa-plus"></i>

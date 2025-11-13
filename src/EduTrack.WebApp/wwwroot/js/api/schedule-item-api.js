@@ -144,6 +144,20 @@ window.EduTrack.API = window.EduTrack.API || {};
         },
 
         /**
+         * Get schedule items by session report
+         * @param {number} sessionReportId
+         * @returns {Promise<Object>}
+         */
+        async getSessionScheduleItems(sessionReportId) {
+            const parsedId = parseInt(sessionReportId);
+            if (Number.isNaN(parsedId) || parsedId <= 0) {
+                throw new Error(`Invalid session report ID: ${sessionReportId}`);
+            }
+            const url = `${baseUrl}/GetSessionScheduleItems?sessionReportId=${parsedId}`;
+            return await fetchAPI(url, { method: 'GET' });
+        },
+
+        /**
          * Get single schedule item by ID
          * @param {number} id - Schedule item ID
          * @returns {Promise<Object>} API response

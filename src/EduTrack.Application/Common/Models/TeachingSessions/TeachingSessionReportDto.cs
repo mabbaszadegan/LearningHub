@@ -23,4 +23,5 @@ public class TeachingSessionReportDto
     public int PresentCount { get; set; }
     public int AbsentCount { get; set; }
     public List<TeachingSessionAttendanceDto> Attendance { get; set; } = new();
+    public List<TeachingSessionAssignmentDto> Assignments { get; set; } = new();
 }

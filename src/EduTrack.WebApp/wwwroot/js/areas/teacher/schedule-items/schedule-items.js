@@ -22,10 +22,20 @@ class ScheduleItemsManager {
         const container = document.querySelector('.schedule-items-container');
         const dataTeachingPlanId = container?.dataset?.teachingPlanId ? parseInt(container.dataset.teachingPlanId) : 0;
         this.isCourseScope = container?.dataset?.courseScope === 'true';
+        this.isSessionScope = container?.dataset?.sessionScope === 'true';
         this.currentCourseId = container?.dataset?.courseId ? parseInt(container.dataset.courseId) : 0;
+        this.currentSessionReportId = container?.dataset?.sessionReportId ? parseInt(container.dataset.sessionReportId) : 0;
         this.currentTeachingPlanId = dataTeachingPlanId || this.getTeachingPlanIdFromUrl();
         if (this.isCourseScope) {
             this.currentTeachingPlanId = 0;
+        }
+        if (this.isSessionScope && (!this.currentSessionReportId || Number.isNaN(this.currentSessionReportId))) {
+            const urlParams = new URLSearchParams(window.location.search);
+            this.currentSessionReportId = parseInt(urlParams.get('sessionReportId')) || 0;
+        }
+        if (!this.currentSessionReportId) {
+            const urlParams = new URLSearchParams(window.location.search);
+            this.currentSessionReportId = parseInt(urlParams.get('sessionReportId')) || 0;
         }
         if (!this.currentCourseId) {
             const urlParams = new URLSearchParams(window.location.search);
@@ -157,7 +167,9 @@ class ScheduleItemsManager {
             let result;
             
             if (this.api) {
-                if (this.isCourseScope && this.currentCourseId > 0) {
+                if (this.isSessionScope && this.currentSessionReportId > 0) {
+                    result = await this.api.getSessionScheduleItems(this.currentSessionReportId);
+                } else if (this.isCourseScope && this.currentCourseId > 0) {
                     result = await this.api.getCourseScheduleItems(this.currentCourseId, true);
                 } else if (this.currentTeachingPlanId > 0) {
                     result = await this.api.getScheduleItems(this.currentTeachingPlanId);
@@ -166,7 +178,9 @@ class ScheduleItemsManager {
                 }
             } else {
                 let fetchUrl = null;
-                if (this.isCourseScope && this.currentCourseId > 0) {
+                if (this.isSessionScope && this.currentSessionReportId > 0) {
+                    fetchUrl = `/Teacher/ScheduleItem/GetSessionScheduleItems?sessionReportId=${this.currentSessionReportId}`;
+                } else if (this.isCourseScope && this.currentCourseId > 0) {
                     fetchUrl = `/Teacher/ScheduleItem/GetCourseScheduleItems?courseId=${this.currentCourseId}&courseScopeOnly=true`;
                 } else if (this.currentTeachingPlanId > 0) {
                     fetchUrl = `/Teacher/ScheduleItem/GetScheduleItems?teachingPlanId=${this.currentTeachingPlanId}`;
@@ -213,6 +227,31 @@ class ScheduleItemsManager {
         const typeClass = `type-${item.type}`;
         const typeName = this.getTypeName(item.type) || item.typeName || '';
 
+        let actionsHtml = '';
+        if (!this.isSessionScope) {
+            actionsHtml = `
+                <div class="item-actions">
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#" data-action="edit" data-item-id="${item.id}">
+                                <i class="fas fa-edit"></i> ویرایش
+                            </a></li>
+                            <li><a class="dropdown-item" href="#" data-action="duplicate" data-item-id="${item.id}">
+                                <i class="fas fa-copy"></i> کپی
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" href="#" data-action="delete" data-item-id="${item.id}">
+                                <i class="fas fa-trash"></i> حذف
+                            </a></li>
+                        </ul>
+                    </div>
+                </div>
+            `;
+        }
+
         const teachingPlanId = item.teachingPlanId ?? '';
         const courseId = item.courseId ?? '';
         const sessionReportId = item.sessionReportId ?? '';
@@ -230,25 +269,7 @@ class ScheduleItemsManager {
                         <i class="${typeIcon}"></i>
                         ${typeName}
                     </div>
-                    <div class="item-actions">
-                        <div class="dropdown">
-                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                                <i class="fas fa-ellipsis-v"></i>
-                            </button>
-                            <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="#" data-action="edit" data-item-id="${item.id}">
-                                    <i class="fas fa-edit"></i> ویرایش
-                                </a></li>
-                                <li><a class="dropdown-item" href="#" data-action="duplicate" data-item-id="${item.id}">
-                                    <i class="fas fa-copy"></i> کپی
-                                </a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item text-danger" href="#" data-action="delete" data-item-id="${item.id}">
-                                    <i class="fas fa-trash"></i> حذف
-                                </a></li>
-                            </ul>
-                        </div>
-                    </div>
+                    ${actionsHtml}
                 </div>
                 
                 <div class="item-content">
@@ -291,9 +312,22 @@ class ScheduleItemsManager {
     }
 
     getEmptyStateHtml() {
-        const createUrl = this.isCourseScope && this.currentCourseId
-            ? `/Teacher/ScheduleItem/CreateOrEdit?courseId=${this.currentCourseId}`
-            : `/Teacher/ScheduleItem/CreateOrEdit?teachingPlanId=${this.currentTeachingPlanId}`;
+        let createUrl;
+        if (this.isSessionScope && this.currentSessionReportId) {
+            return `
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        <i class="fas fa-tasks"></i>
+                    </div>
+                    <h3>هنوز تکلیفی برای این جلسه ثبت نشده</h3>
+                    <p>از صفحه جزئیات جلسه می‌توانید تکلیف جدید ثبت کنید.</p>
+                </div>
+            `;
+        } else if (this.isCourseScope && this.currentCourseId) {
+            createUrl = `/Teacher/ScheduleItem/CreateOrEdit?courseId=${this.currentCourseId}`;
+        } else {
+            createUrl = `/Teacher/ScheduleItem/CreateOrEdit?teachingPlanId=${this.currentTeachingPlanId}`;
+        }
 
         return `
             <div class="empty-state">

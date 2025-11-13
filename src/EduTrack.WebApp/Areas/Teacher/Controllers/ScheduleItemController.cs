@@ -17,7 +17,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
 using TeachingPlanDto = EduTrack.Application.Common.Models.TeachingPlans.TeachingPlanDto;
 
@@ -79,6 +81,7 @@ public class ScheduleItemController : BaseTeacherController
         ViewBag.Stats = stats.IsSuccess ? stats.Value : new ScheduleItemStatsDto();
         ViewBag.IsCourseScope = false;
         ViewBag.IsSessionScope = false;
+        ViewBag.SessionReportId = null;
 
         // Setup page title section
         await SetPageTitleSectionAsync(PageType.ScheduleItemsIndex, teachingPlanId);
@@ -105,6 +108,7 @@ public class ScheduleItemController : BaseTeacherController
         ViewBag.IsCourseScope = true;
         ViewBag.IsSessionScope = false;
         ViewBag.TeachingPlanId = (int?)null;
+        ViewBag.SessionReportId = null;
         ViewBag.ScheduleItemTypes = Enum.GetValues<ScheduleItemType>()
             .Select(type => new { Value = (int)type, Text = type.GetDisplayName(), Description = type.GetDescription() })
             .ToList();
@@ -120,6 +124,62 @@ public class ScheduleItemController : BaseTeacherController
         await SetPageTitleSectionAsync(PageType.CourseDetails, courseId);
 
         return View("Index", items);
+    }
+
+    // GET: ScheduleItem/SessionAssignments
+    public async Task<IActionResult> SessionAssignments(int sessionReportId)
+    {
+        var currentUser = await _userManager.GetUserAsync(User);
+        if (currentUser == null)
+        {
+            return RedirectToAction("Login", "Account", new { area = "Public" });
+        }
+
+        var sessionReportResult = await _mediator.Send(new GetTeachingSessionReportDetailsQuery(sessionReportId));
+        if (!sessionReportResult.IsSuccess || sessionReportResult.Value == null)
+        {
+            TempData["ErrorMessage"] = sessionReportResult.Error ?? "گزارش جلسه یافت نشد.";
+            return RedirectToAction("Index", "TeachingSessions");
+        }
+
+        var assignmentsResult = await _mediator.Send(new GetScheduleItemsBySessionReportQuery(sessionReportId));
+        if (!assignmentsResult.IsSuccess)
+        {
+            TempData["ErrorMessage"] = assignmentsResult.Error ?? "خطا در بارگذاری تکالیف جلسه.";
+        }
+
+        var assignments = assignmentsResult.IsSuccess && assignmentsResult.Value != null
+            ? assignmentsResult.Value
+            : new List<ScheduleItemDto>();
+
+        var teachingPlanResult = await _mediator.Send(new GetTeachingPlanByIdQuery(sessionReportResult.Value.TeachingPlanId));
+        if (!teachingPlanResult.IsSuccess || teachingPlanResult.Value == null)
+        {
+            TempData["ErrorMessage"] = "پلن آموزشی مرتبط با این جلسه یافت نشد.";
+            return RedirectToAction("Details", "TeachingSessions", new { id = sessionReportId });
+        }
+
+        var stats = new ScheduleItemStatsDto
+        {
+            TotalItems = assignments.Count,
+            ActiveItems = assignments.Count(i => i.Status == ScheduleItemStatus.Active),
+            CompletedItems = assignments.Count(i => i.Status == ScheduleItemStatus.Completed),
+            OverdueItems = assignments.Count(i => i.Status == ScheduleItemStatus.Expired)
+        };
+
+        ViewBag.TeachingPlanId = sessionReportResult.Value.TeachingPlanId;
+        ViewBag.TeachingPlanTitle = sessionReportResult.Value.TeachingPlanTitle ?? teachingPlanResult.Value.Title;
+        ViewBag.CourseId = teachingPlanResult.Value.CourseId;
+        ViewBag.CourseTitle = teachingPlanResult.Value.CourseTitle ?? "دوره";
+        ViewBag.IsCourseScope = false;
+        ViewBag.IsSessionScope = true;
+        ViewBag.SessionReportId = sessionReportId;
+        ViewBag.SessionTitle = sessionReportResult.Value.Title ?? "جلسه آموزشی";
+        ViewBag.Stats = stats;
+
+        await SetPageTitleSectionAsync(PageType.ScheduleItemsIndex, sessionReportId);
+
+        return View("Index", assignments);
     }
 
     // GET: ScheduleItem/CreateOrEdit
@@ -515,6 +575,19 @@ public class ScheduleItemController : BaseTeacherController
     public async Task<IActionResult> GetCourseScheduleItems(int courseId, bool courseScopeOnly = true)
     {
         var result = await _mediator.Send(new GetScheduleItemsByCourseQuery(courseId, courseScopeOnly));
+
+        if (result.IsSuccess)
+        {
+            return Json(new { success = true, data = result.Value });
+        }
+
+        return Json(new { success = false, message = result.Error });
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetSessionScheduleItems(int sessionReportId)
+    {
+        var result = await _mediator.Send(new GetScheduleItemsBySessionReportQuery(sessionReportId));
 
         if (result.IsSuccess)
         {

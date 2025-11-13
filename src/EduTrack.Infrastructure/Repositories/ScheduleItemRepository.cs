@@ -22,6 +22,9 @@ public class ScheduleItemRepository : Repository<ScheduleItem>, IScheduleItemRep
                 .ThenInclude(ga => ga.StudentGroup)
             .Include(si => si.SubChapterAssignments)
                 .ThenInclude(sca => sca.SubChapter)
+            .Include(si => si.StudentAssignments)
+                .ThenInclude(sa => sa.StudentProfile)
+                    .ThenInclude(sp => sp.User)
             .Where(si => si.TeachingPlanId == teachingPlanId)
             .OrderBy(si => si.StartDate)
             .ToListAsync(cancellationToken);
