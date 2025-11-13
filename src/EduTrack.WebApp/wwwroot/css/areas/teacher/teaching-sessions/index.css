@@ -280,6 +280,17 @@
             color: white;
         }
 
+    .action-btn.assignment {
+        background: rgba(249, 115, 22, 0.12);
+        color: #f97316;
+        border-color: rgba(249, 115, 22, 0.25);
+    }
+
+        .action-btn.assignment:hover {
+            background: #f97316;
+            color: #ffffff;
+        }
+
 /* Session Meta */
 .session-meta {
     padding: 0.75rem 1rem;

@@ -77,6 +77,8 @@ public class GetTeachingPlanWithAllQueryHandler : IRequestHandler<GetTeachingPla
                 {
                     Id = si.Id,
                     TeachingPlanId = si.TeachingPlanId,
+                    CourseId = si.CourseId ?? si.TeachingPlan?.CourseId,
+                    SessionReportId = si.SessionReportId,
                     GroupId = si.GroupId,
                     GroupName = si.Group?.Name,
                     LessonId = si.LessonId,

@@ -6,13 +6,14 @@
     var teachingPlanTitle = ViewBag.TeachingPlanTitle as string ?? "برنامه آموزشی";
     var courseTitle = ViewBag.CourseTitle as string ?? "دوره";
     var courseId = ViewBag.CourseId as int? ?? 0;
+    var isCourseScope = ViewBag.IsCourseScope as bool? ?? false;
     var stats = ViewBag.Stats as EduTrack.Application.Common.Models.ScheduleItems.ScheduleItemStatsDto ?? new EduTrack.Application.Common.Models.ScheduleItems.ScheduleItemStatsDto();
     var itemTypes = Enum.GetValues<EduTrack.Domain.Enums.ScheduleItemType>()
         .Select(t => new { Value = (int)t, Name = t.GetDisplayName() })
         .ToList();
 }
 
-<div class="schedule-items-container" data-teaching-plan-id="@teachingPlanId">
+<div class="schedule-items-container" data-teaching-plan-id="@teachingPlanId" data-course-id="@courseId" data-course-scope="@isCourseScope">
 
     <!-- Stats Cards -->
     <div class="stats-grid">
@@ -137,7 +138,7 @@
                         <h5 class="item-title">@item.Title</h5>
                         @if (!string.IsNullOrEmpty(item.Description))
                         {
-                            <p class="item-description">@item.Description</p>
+                            <p class="item-description">@Html.Raw(item.Description)</p>
                         }
                         
                         <div class="item-meta">
@@ -185,10 +186,20 @@
                 </div>
                 <h3>هیچ آیتم آموزشی وجود ندارد</h3>
                 <p>برای شروع، اولین آیتم آموزشی خود را ایجاد کنید.</p>
-                <a asp-action="CreateOrEdit" asp-route-teachingPlanId="@teachingPlanId" class="btn-action-primary">
-                    <i class="fas fa-plus"></i>
-                    <span>افزودن آیتم جدید</span>
-                </a>
+                @if (isCourseScope)
+                {
+                    <a asp-action="CreateOrEdit" asp-route-courseId="@courseId" class="btn-action-primary">
+                        <i class="fas fa-plus"></i>
+                        <span>افزودن آیتم جدید</span>
+                    </a>
+                }
+                else
+                {
+                    <a asp-action="CreateOrEdit" asp-route-teachingPlanId="@teachingPlanId" class="btn-action-primary">
+                        <i class="fas fa-plus"></i>
+                        <span>افزودن آیتم جدید</span>
+                    </a>
+                }
             </div>
         }
     </div>

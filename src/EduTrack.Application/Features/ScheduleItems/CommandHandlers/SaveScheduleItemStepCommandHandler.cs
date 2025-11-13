@@ -11,15 +11,21 @@ public class SaveScheduleItemStepCommandHandler : IRequestHandler<SaveScheduleIt
 {
     private readonly IScheduleItemRepository _scheduleItemRepository;
     private readonly ITeachingPlanRepository _teachingPlanRepository;
+    private readonly ICourseRepository _courseRepository;
+    private readonly ITeachingSessionReportRepository _sessionReportRepository;
     private readonly IUnitOfWork _unitOfWork;
 
     public SaveScheduleItemStepCommandHandler(
         IScheduleItemRepository scheduleItemRepository,
         ITeachingPlanRepository teachingPlanRepository,
+        ICourseRepository courseRepository,
+        ITeachingSessionReportRepository sessionReportRepository,
         IUnitOfWork unitOfWork)
     {
         _scheduleItemRepository = scheduleItemRepository;
         _teachingPlanRepository = teachingPlanRepository;
+        _courseRepository = courseRepository;
+        _sessionReportRepository = sessionReportRepository;
         _unitOfWork = unitOfWork;
     }
 
@@ -55,12 +61,13 @@ public class SaveScheduleItemStepCommandHandler : IRequestHandler<SaveScheduleIt
                     return Result<int>.Failure("نوع آیتم و عنوان برای مرحله اول الزامی است.");
                 }
 
-                // Verify teaching plan exists
-                var teachingPlan = await _teachingPlanRepository.GetByIdAsync(request.TeachingPlanId, cancellationToken);
-                if (teachingPlan == null)
+                var contextValidation = await ResolveContextAsync(request.CourseId, request.TeachingPlanId, request.SessionReportId, cancellationToken);
+                if (!contextValidation.IsSuccess)
                 {
-                    return Result<int>.Failure("برنامه آموزشی یافت نشد.");
+                    return Result<int>.Failure(contextValidation.Error ?? "اطلاعات زمینه آیتم معتبر نیست.");
                 }
+
+                var (courseId, teachingPlanId, sessionReportId) = contextValidation.Value;
 
                 // Convert Persian dates to DateTimeOffset
                 var startDate = ConvertPersianDateToDateTimeOffset(request.PersianStartDate, request.StartTime) 
@@ -69,7 +76,7 @@ public class SaveScheduleItemStepCommandHandler : IRequestHandler<SaveScheduleIt
 
                 // Create with minimal required data
                 scheduleItem = ScheduleItem.Create(
-                    request.TeachingPlanId,
+                    teachingPlanId,
                     request.Type.Value,
                     request.Title,
                     request.Description,
@@ -80,7 +87,9 @@ public class SaveScheduleItemStepCommandHandler : IRequestHandler<SaveScheduleIt
                     request.MaxScore,
                     request.GroupId,
                     null, // lessonId
-                    null // DisciplineHint
+                    null, // DisciplineHint
+                    courseId,
+                    sessionReportId
                 );
             }
 
@@ -329,5 +338,69 @@ public class SaveScheduleItemStepCommandHandler : IRequestHandler<SaveScheduleIt
         {
             return null;
         }
+    }
+
+    private async Task<Result<(int? CourseId, int? TeachingPlanId, int? SessionReportId)>> ResolveContextAsync(
+        int? courseId,
+        int? teachingPlanId,
+        int? sessionReportId,
+        CancellationToken cancellationToken)
+    {
+        int? resolvedCourseId = courseId;
+        int? resolvedTeachingPlanId = teachingPlanId;
+        int? resolvedSessionReportId = sessionReportId;
+
+        if (resolvedSessionReportId.HasValue)
+        {
+            var sessionReport = await _sessionReportRepository.GetByIdAsync(resolvedSessionReportId.Value, cancellationToken);
+            if (sessionReport == null)
+            {
+                return Result<(int?, int?, int?)>.Failure("گزارش جلسه آموزشی یافت نشد.");
+            }
+
+            resolvedTeachingPlanId ??= sessionReport.TeachingPlanId;
+
+            if (!resolvedCourseId.HasValue)
+            {
+                if (sessionReport.TeachingPlan != null)
+                {
+                    resolvedCourseId = sessionReport.TeachingPlan.CourseId;
+                }
+                else if (resolvedTeachingPlanId.HasValue)
+                {
+                    var reportPlan = await _teachingPlanRepository.GetByIdAsync(resolvedTeachingPlanId.Value, cancellationToken);
+                    if (reportPlan == null)
+                    {
+                        return Result<(int?, int?, int?)>.Failure("برنامه آموزشی مرتبط با جلسه یافت نشد.");
+                    }
+                    resolvedCourseId = reportPlan.CourseId;
+                }
+            }
+        }
+
+        if (resolvedTeachingPlanId.HasValue)
+        {
+            var teachingPlan = await _teachingPlanRepository.GetByIdAsync(resolvedTeachingPlanId.Value, cancellationToken);
+            if (teachingPlan == null)
+            {
+                return Result<(int?, int?, int?)>.Failure("برنامه آموزشی یافت نشد.");
+            }
+            resolvedCourseId ??= teachingPlan.CourseId;
+        }
+        else if (!resolvedCourseId.HasValue)
+        {
+            return Result<(int?, int?, int?)>.Failure("شناسه برنامه آموزشی یا دوره باید مشخص باشد.");
+        }
+
+        if (resolvedCourseId.HasValue)
+        {
+            var course = await _courseRepository.GetByIdAsync(resolvedCourseId.Value, cancellationToken);
+            if (course == null)
+            {
+                return Result<(int?, int?, int?)>.Failure("دوره مورد نظر یافت نشد.");
+            }
+        }
+
+        return Result<(int?, int?, int?)>.Success((resolvedCourseId, resolvedTeachingPlanId, resolvedSessionReportId));
     }
 }

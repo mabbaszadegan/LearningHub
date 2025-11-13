@@ -62,7 +62,8 @@ public class GetCourseScheduleItemsQueryHandler : IRequestHandler<GetCourseSched
                 .Include(si => si.StudentAssignments)
                     .ThenInclude(sa => sa.StudentProfile)
                 .Include(si => si.Lesson)
-                .Where(si => si.TeachingPlan.CourseId == request.CourseId)
+                .Where(si => (si.CourseId.HasValue && si.CourseId == request.CourseId) ||
+                             (si.TeachingPlan != null && si.TeachingPlan.CourseId == request.CourseId))
                 .OrderBy(si => si.StartDate)
                 .ToListAsync(cancellationToken);
 
@@ -71,6 +72,8 @@ public class GetCourseScheduleItemsQueryHandler : IRequestHandler<GetCourseSched
             {
                 Id = si.Id,
                 TeachingPlanId = si.TeachingPlanId,
+                CourseId = si.CourseId ?? si.TeachingPlan?.CourseId,
+                    SessionReportId = si.SessionReportId,
                 GroupId = si.GroupId,
                 GroupName = si.Group?.Name,
                 LessonId = si.LessonId,

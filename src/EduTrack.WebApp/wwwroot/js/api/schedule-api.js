@@ -80,6 +80,16 @@ window.EduTrack.API = window.EduTrack.API || {};
         async getSubChapters(teachingPlanId) {
             const url = `${baseUrl}/GetSubChapters?teachingPlanId=${teachingPlanId}`;
             return await fetchAPI(url, { method: 'GET' });
+        },
+
+        /**
+         * Get subchapters for course
+         * @param {number} courseId - Course ID
+         * @returns {Promise<Object>} API response
+         */
+        async getSubChaptersByCourse(courseId) {
+            const url = `${baseUrl}/GetSubChaptersByCourse?courseId=${courseId}`;
+            return await fetchAPI(url, { method: 'GET' });
         }
     };
 

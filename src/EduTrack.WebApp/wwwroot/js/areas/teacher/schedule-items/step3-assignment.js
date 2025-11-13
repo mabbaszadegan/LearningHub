@@ -6,6 +6,7 @@
 class Step3AssignmentManager {
     constructor(formManager) {
         this.formManager = formManager;
+        this.isCourseScope = !!(formManager && formManager.isCourseScope);
         this.selectedGroups = [];
         this.selectedSubChapters = [];
         this.selectedStudents = [];
@@ -60,11 +61,14 @@ class Step3AssignmentManager {
 
         // Check if required elements exist
         const requiredElements = {
-            'groupBadgeGrid': document.getElementById('groupBadgeGrid'),
-            'chapterList': document.getElementById('chapterList'),
-            'studentSelectionContainer': document.getElementById('studentSelectionContainer'),
-            'studentGrid': document.getElementById('studentGrid')
+            'chapterList': document.getElementById('chapterList')
         };
+
+        if (!this.isCourseScope) {
+            requiredElements['groupBadgeGrid'] = document.getElementById('groupBadgeGrid');
+            requiredElements['studentSelectionContainer'] = document.getElementById('studentSelectionContainer');
+            requiredElements['studentGrid'] = document.getElementById('studentGrid');
+        }
 
 
         // Check if all required elements exist
@@ -77,15 +81,24 @@ class Step3AssignmentManager {
         }
 
         // Load groups and subchapters if not already loaded
-        await this.loadGroupsAsBadges();
+        if (!this.isCourseScope) {
+            await this.loadGroupsAsBadges();
+        }
         await this.loadChaptersWithSubChapters();
         await this.loadAndSelectExistingAssignments();
 
         // Setup event listeners after content is loaded
         this.setupStep3EventListeners();
 
-        // Update student selection visibility based on selected groups
-        this.updateStudentSelectionVisibility();
+        if (!this.isCourseScope) {
+            // Update student selection visibility based on selected groups
+            this.updateStudentSelectionVisibility();
+        } else {
+            const studentSelectionContainer = document.getElementById('studentSelectionContainer');
+            if (studentSelectionContainer) {
+                studentSelectionContainer.style.display = 'none';
+            }
+        }
 
         // Update assignment preview
         this.updateAssignmentPreview();
@@ -128,6 +141,9 @@ class Step3AssignmentManager {
 
     // Group Management Methods
     async loadGroupsAsBadges() {
+        if (this.isCourseScope) {
+            return;
+        }
         try {
             const teachingPlanId = this.getTeachingPlanId();
             
@@ -239,6 +255,11 @@ class Step3AssignmentManager {
         if (!summary) return;
 
         const summaryText = summary.querySelector('.summary-text');
+        if (this.isCourseScope) {
+            summaryText.textContent = 'این آیتم برای تمام دانشجویان دوره قابل دسترسی است.';
+            return;
+        }
+
         if (this.selectedGroups.length === 0) {
             summaryText.textContent = 'همه گروه‌ها';
         } else {
@@ -251,8 +272,9 @@ class Step3AssignmentManager {
     async loadChaptersWithSubChapters() {
         try {
             const teachingPlanId = this.getTeachingPlanId();
+            const courseId = this.getCourseId();
             
-            if (!teachingPlanId) {
+            if (!teachingPlanId && !courseId) {
                 return;
             }
             
@@ -260,10 +282,19 @@ class Step3AssignmentManager {
             
             // Use API service if available
             if (window.EduTrack?.API?.Schedule) {
-                subChapters = await window.EduTrack.API.Schedule.getSubChapters(teachingPlanId);
+                if (teachingPlanId) {
+                    subChapters = await window.EduTrack.API.Schedule.getSubChapters(teachingPlanId);
+                } else if (courseId) {
+                    subChapters = await window.EduTrack.API.Schedule.getSubChaptersByCourse(courseId);
+                }
             } else {
-                const response = await fetch(`/Teacher/Schedule/GetSubChapters?teachingPlanId=${teachingPlanId}`);
-                if (!response.ok) {
+                let response;
+                if (teachingPlanId) {
+                    response = await fetch(`/Teacher/Schedule/GetSubChapters?teachingPlanId=${teachingPlanId}`);
+                } else {
+                    response = await fetch(`/Teacher/Schedule/GetSubChaptersByCourse?courseId=${courseId}`);
+                }
+                if (!response || !response.ok) {
                     return;
                 }
                 subChapters = await response.json();
@@ -433,6 +464,14 @@ class Step3AssignmentManager {
 
     // Student Management Methods
     updateStudentSelectionVisibility() {
+        if (this.isCourseScope) {
+            const studentSelectionContainer = document.getElementById('studentSelectionContainer');
+            if (studentSelectionContainer) {
+                studentSelectionContainer.style.display = 'none';
+            }
+            return;
+        }
+
         const studentSelectionContainer = document.getElementById('studentSelectionContainer');
         const studentListContainer = document.getElementById('studentListContainer');
 
@@ -639,6 +678,11 @@ class Step3AssignmentManager {
         const selectedStudentsText = document.getElementById('selectedStudentsText');
         if (!selectedStudentsText) return;
 
+        if (this.isCourseScope) {
+            selectedStudentsText.textContent = 'این آیتم برای تمام دانشجویان دوره در دسترس خواهد بود.';
+            return;
+        }
+
         if (this.selectedStudents.length === 0) {
             selectedStudentsText.textContent = 'هیچ دانش‌آموزی انتخاب نشده - برای همه دانش‌آموزان گروه‌های انتخاب شده';
         } else if (this.selectedStudents.length === this.allStudents.length) {
@@ -657,6 +701,11 @@ class Step3AssignmentManager {
     updateTargetGroupsPreview() {
         const targetGroupsElement = document.getElementById('targetGroups');
         if (targetGroupsElement) {
+            if (this.isCourseScope) {
+                targetGroupsElement.textContent = 'همه دانشجویان دوره';
+                return;
+            }
+
             if (this.selectedGroups.length === 0) {
                 targetGroupsElement.textContent = 'همه گروه‌ها';
             } else {
@@ -682,6 +731,11 @@ class Step3AssignmentManager {
         return teachingPlanIdInput ? teachingPlanIdInput.value : null;
     }
 
+    getCourseId() {
+        const courseIdInput = document.querySelector('input[name="CourseId"]');
+        return courseIdInput ? courseIdInput.value : null;
+    }
+
     updateHiddenInputs() {
         // Update hidden inputs for form submission
         const groupIdsInput = document.getElementById('selectedGroupIds');
@@ -689,7 +743,7 @@ class Step3AssignmentManager {
         const studentProfileIdsInput = document.getElementById('selectedStudentProfileIds');
 
         if (groupIdsInput) {
-            groupIdsInput.value = this.selectedGroups.map(g => g.id).join(',');
+            groupIdsInput.value = this.isCourseScope ? '' : this.selectedGroups.map(g => g.id).join(',');
         }
 
         if (subChapterIdsInput) {
@@ -697,7 +751,7 @@ class Step3AssignmentManager {
         }
 
         if (studentProfileIdsInput) {
-            studentProfileIdsInput.value = this.selectedStudents.map(s => s.id).join(',');
+            studentProfileIdsInput.value = this.isCourseScope ? '' : this.selectedStudents.map(s => s.id).join(',');
         }
     }
 
@@ -733,15 +787,19 @@ class Step3AssignmentManager {
             GroupId: parseInt(document.getElementById('groupId')?.value) || null
         };
         
+        if (this.isCourseScope) {
+            stepData.GroupId = null;
+        }
+
         // Add selected groups and subchapters for badge-based selection
         const selectedGroups = this.getSelectedGroups();
         const selectedSubChapters = this.getSelectedSubChapters();
         const selectedStudents = this.getSelectedStudents();
         
         // Always include arrays, even if empty, to ensure proper handling
-        stepData.GroupIds = selectedGroups.length > 0 ? selectedGroups.map(g => g.id) : [];
+        stepData.GroupIds = this.isCourseScope ? [] : (selectedGroups.length > 0 ? selectedGroups.map(g => g.id) : []);
         stepData.SubChapterIds = selectedSubChapters.length > 0 ? selectedSubChapters.map(sc => sc.id) : [];
-        stepData.StudentProfileIds = selectedStudents.length > 0 ? selectedStudents.map(s => s.id) : [];
+        stepData.StudentProfileIds = this.isCourseScope ? [] : (selectedStudents.length > 0 ? selectedStudents.map(s => s.id) : []);
 
         return stepData;
     }
@@ -834,7 +892,7 @@ class Step3AssignmentManager {
             }
 
             // Load students for selected groups
-            if (this.selectedGroups.length > 0) {
+            if (!this.isCourseScope && this.selectedGroups.length > 0) {
                 this.updateStudentSelectionVisibility();
             }
 

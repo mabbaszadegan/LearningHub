@@ -114,6 +114,7 @@ public interface IStudentGroupRepository : IRepository<StudentGroup>
 public interface IScheduleItemRepository : IRepository<ScheduleItem>
 {
     Task<IEnumerable<ScheduleItem>> GetScheduleItemsByTeachingPlanAsync(int teachingPlanId, CancellationToken cancellationToken = default);
+    Task<IEnumerable<ScheduleItem>> GetScheduleItemsByCourseAsync(int courseId, bool courseScopeOnly = true, CancellationToken cancellationToken = default);
     Task<IEnumerable<ScheduleItem>> GetScheduleItemsByGroupAsync(int groupId, CancellationToken cancellationToken = default);
     Task<IEnumerable<ScheduleItem>> GetScheduleItemsByTypeAsync(ScheduleItemType type, CancellationToken cancellationToken = default);
     Task<IEnumerable<ScheduleItem>> GetUpcomingScheduleItemsAsync(DateTimeOffset fromDate, CancellationToken cancellationToken = default);

@@ -90,15 +90,32 @@ public class ScheduleItemController : Controller
 
         var scheduleItem = scheduleItemResult.Value;
 
-        // Get teaching plan to get course ID
-        var teachingPlanResult = await _mediator.Send(new GetTeachingPlanByIdQuery(scheduleItem.TeachingPlanId));
-        if (!teachingPlanResult.IsSuccess || teachingPlanResult.Value == null)
+        TeachingPlanDto? teachingPlan = null;
+        int? courseId = scheduleItem.CourseId;
+
+        if (scheduleItem.TeachingPlanId.HasValue)
         {
-            TempData["Error"] = "طرح تدریس یافت نشد";
-            return RedirectToAction("Index", "Home");
+            var teachingPlanResult = await _mediator.Send(new GetTeachingPlanByIdQuery(scheduleItem.TeachingPlanId.Value));
+            if (!teachingPlanResult.IsSuccess || teachingPlanResult.Value == null)
+            {
+                if (!courseId.HasValue)
+                {
+                    TempData["Error"] = "طرح تدریس یافت نشد";
+                    return RedirectToAction("Index", "Home");
+                }
+            }
+            else
+            {
+                teachingPlan = teachingPlanResult.Value;
+                courseId ??= teachingPlan.CourseId;
+            }
         }
 
-        var teachingPlan = teachingPlanResult.Value;
+        if (!courseId.HasValue)
+        {
+            TempData["Error"] = "دوره آموزشی مرتبط یافت نشد";
+            return RedirectToAction("Index", "Home");
+        }
 
         // Get study statistics
         var statisticsResult = await _mediator.Send(new GetStudySessionStatisticsQuery(currentUser.Id, id, activeProfileId));
@@ -117,7 +134,7 @@ public class ScheduleItemController : Controller
 
         ViewBag.ActiveSession = activeSession;
         ViewBag.CurrentUserId = currentUser.Id;
-        ViewBag.CourseId = teachingPlan.CourseId;
+        ViewBag.CourseId = courseId.Value;
         ViewBag.ScheduleItemId = scheduleItem.Id;
         ViewBag.ParsedContent = parsedContent;
 

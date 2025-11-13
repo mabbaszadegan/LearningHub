@@ -1,6 +1,9 @@
 @model EduTrack.Application.Common.Models.ScheduleItems.CreateScheduleItemRequest
+@{
+    var isCourseScope = ViewData["IsCourseScope"] as bool? ?? false;
+}
 
-<div class="form-step" data-step="assignment">
+<div class="form-step" data-step="assignment" data-step-order="3">
     <div class="step-header">
         <div class="step-icon">
             <i class="fas fa-users"></i>
@@ -12,56 +15,68 @@
     </div>
     
     <div class="step-content">
-        <!-- Group Selection Section -->
-        <div class="assignment-section">
-            <div class="section-header">
-                <div class="section-icon">
-                    <i class="fas fa-users"></i>
+        @if (!isCourseScope)
+        {
+            <!-- Group Selection Section -->
+            <div class="assignment-section">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="section-info">
+                        <h4 class="section-title">تخصیص گروه‌ها</h4>
+                        <p class="section-description">گروه‌های هدف را انتخاب کنید</p>
+                    </div>
                 </div>
-                <div class="section-info">
-                    <h4 class="section-title">تخصیص گروه‌ها</h4>
-                    <p class="section-description">گروه‌های هدف را انتخاب کنید</p>
-                </div>
-            </div>
-            
-            <div class="badge-selection-container">
-                <div class="selection-hint">
-                    <i class="fas fa-info-circle"></i>
-                    <span>اگر گروهی انتخاب نکنید، آیتم برای همه گروه‌ها خواهد بود</span>
-                </div>
-                <div class="badge-grid" id="groupBadgeGrid">
-                    <!-- Groups will be loaded dynamically as badges -->
-                </div>
-                <!-- Student Selection Container - Hidden by default -->
-                <div class="student-selection-container" id="studentSelectionContainer" style="display: none;">
-                    <div class="student-list-container" id="studentListContainer">
-                        <div class="student-list-header">
-                            <div class="student-count" id="studentCount">0 دانش‌آموز</div>
-                            <div class="student-actions">
-                                <button type="button" class="btn-select-all" id="selectAllStudents">
-                                    <i class="fas fa-check-double"></i>
-                                    انتخاب همه
-                                </button>
-                                <button type="button" class="btn-clear-all" id="clearAllStudents">
-                                    <i class="fas fa-times"></i>
-                                    پاک کردن همه
-                                </button>
+                
+                <div class="badge-selection-container">
+                    <div class="selection-hint">
+                        <i class="fas fa-info-circle"></i>
+                        <span>اگر گروهی انتخاب نکنید، آیتم برای همه گروه‌ها خواهد بود</span>
+                    </div>
+                    <div class="badge-grid" id="groupBadgeGrid">
+                        <!-- Groups will be loaded dynamically as badges -->
+                    </div>
+                    <!-- Student Selection Container - Hidden by default -->
+                    <div class="student-selection-container" id="studentSelectionContainer" style="display: none;">
+                        <div class="student-list-container" id="studentListContainer">
+                            <div class="student-list-header">
+                                <div class="student-count" id="studentCount">0 دانش‌آموز</div>
+                                <div class="student-actions">
+                                    <button type="button" class="btn-select-all" id="selectAllStudents">
+                                        <i class="fas fa-check-double"></i>
+                                        انتخاب همه
+                                    </button>
+                                    <button type="button" class="btn-clear-all" id="clearAllStudents">
+                                        <i class="fas fa-times"></i>
+                                        پاک کردن همه
+                                    </button>
+                                </div>
                             </div>
-                        </div>
-                        
-                        <div class="student-grid" id="studentGrid">
-                            <!-- Students will be loaded dynamically -->
-                        </div>
-                        
-                        <div class="selected-students-summary" id="selectedStudentsSummary">
-                            <div class="summary-text">
-                                <span id="selectedStudentsText">هیچ دانش‌آموزی انتخاب نشده - برای همه دانش‌آموزان گروه</span>
+                            
+                            <div class="student-grid" id="studentGrid">
+                                <!-- Students will be loaded dynamically -->
+                            </div>
+                            
+                            <div class="selected-students-summary" id="selectedStudentsSummary">
+                                <div class="summary-text">
+                                    <span id="selectedStudentsText">هیچ دانش‌آموزی انتخاب نشده - برای همه دانش‌آموزان گروه</span>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
+        }
+        else
+        {
+            <div class="assignment-section">
+                <div class="selection-hint">
+                    <i class="fas fa-user-graduate"></i>
+                    <span>این آیتم به صورت عمومی برای تمام دانشجویان ثبت‌نام شده در این دوره منتشر می‌شود.</span>
+                </div>
+            </div>
+        }
         
         <!-- SubChapter Selection Section -->
         <div class="assignment-section">
@@ -71,7 +86,7 @@
                 </div>
                 <div class="section-info">
                     <h4 class="section-title">زیرمباحث مرتبط</h4>
-                    <p class="section-description">زیرمباحث مرتبط را انتخاب کنید</p>
+                    <p class="section-description">@(!isCourseScope ? "زیرمباحث مرتبط را انتخاب کنید" : "زیرمباحث دوره را انتخاب کنید تا همه دانشجویان دوره دسترسی داشته باشند")</p>
                 </div>
                 <div class="required-badge">
                     <span>اجباری</span>
@@ -108,15 +123,18 @@
                 </div>
             </div>
             <div class="preview-content-modern">
+                @if (!isCourseScope)
+                {
                 <div class="preview-item">
-                    <div class="preview-item-icon">
-                        <i class="fas fa-users"></i>
+                        <div class="preview-item-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="preview-item-content">
+                            <div class="preview-item-label">گروه‌های هدف</div>
+                            <div class="preview-item-value" id="targetGroups">همه گروه‌ها</div>
+                        </div>
                     </div>
-                    <div class="preview-item-content">
-                        <div class="preview-item-label">گروه‌های هدف</div>
-                        <div class="preview-item-value" id="targetGroups">همه گروه‌ها</div>
-                    </div>
-                </div>
+                }
                 <div class="preview-item">
                     <div class="preview-item-icon">
                         <i class="fas fa-list-alt"></i>

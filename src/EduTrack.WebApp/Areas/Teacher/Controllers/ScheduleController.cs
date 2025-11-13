@@ -225,102 +225,43 @@ public class ScheduleController : Controller
         }
     }
 
-    public async Task<IActionResult> Edit(int id)
+    [HttpGet]
+    public async Task<IActionResult> GetSubChaptersByCourse(int courseId)
     {
-        var currentUser = await _userManager.GetUserAsync(User);
-        if (currentUser == null)
+        try
         {
-            return RedirectToAction("Login", "Account", new { area = "Public" });
-        }
+            var chapters = await _mediator.Send(new EduTrack.Application.Features.Chapters.Queries.GetChaptersByCourseIdQuery(courseId));
+            if (!chapters.IsSuccess)
+            {
+                return Json(new { success = false, message = "خطا در بارگذاری فصول" });
+            }
 
-        var scheduleItem = await _mediator.Send(new GetScheduleItemByIdQuery(id));
-        if (!scheduleItem.IsSuccess || scheduleItem.Value == null)
+            var subChapterDtos = new List<object>();
+            foreach (var chapter in chapters.Value ?? new List<ChapterDto>())
+            {
+                var chapterSubChapters = await _mediator.Send(new EduTrack.Application.Features.Chapters.Queries.GetSubChaptersByChapterIdQuery(chapter.Id));
+                if (chapterSubChapters.IsSuccess)
+                {
+                    foreach (var subChapter in chapterSubChapters.Value ?? new List<SubChapterDto>())
+                    {
+                        subChapterDtos.Add(new
+                        {
+                            id = subChapter.Id,
+                            title = subChapter.Title,
+                            chapterTitle = chapter.Title
+                        });
+                    }
+                }
+            }
+
+            return Json(new { success = true, data = subChapterDtos });
+        }
+        catch (Exception)
         {
-            return NotFound("Schedule item not found");
+            return Json(new { success = false, message = "خطا در بارگذاری زیرمباحث" });
         }
-
-        // Verify user has access to this schedule item's teaching plan
-        var teachingPlan = await _mediator.Send(new GetTeachingPlanByIdQuery(scheduleItem.Value.TeachingPlanId));
-        if (!teachingPlan.IsSuccess || teachingPlan.Value == null || teachingPlan.Value.TeacherId != currentUser.Id)
-        {
-            return Forbid("You don't have permission to edit this schedule item");
-        }
-
-        var command = new UpdateScheduleItemCommand(
-            scheduleItem.Value.Id,
-            scheduleItem.Value.Title,
-            scheduleItem.Value.Description,
-            scheduleItem.Value.StartDate,
-            scheduleItem.Value.DueDate,
-            scheduleItem.Value.IsMandatory,
-            scheduleItem.Value.ContentJson,
-            scheduleItem.Value.MaxScore,
-            scheduleItem.Value.GroupId,
-            scheduleItem.Value.LessonId);
-
-        // Get course to determine discipline type
-        var course = await _mediator.Send(new GetCourseByIdQuery(teachingPlan.Value.CourseId));
-        var groups = await _mediator.Send(new GetStudentGroupsByTeachingPlanQuery(scheduleItem.Value.TeachingPlanId));
-        var lessons = await _mediator.Send(new GetLessonsByCourseIdQuery(teachingPlan.Value.CourseId));
-
-        ViewBag.TeachingPlanId = scheduleItem.Value.TeachingPlanId;
-        ViewBag.TeachingPlanTitle = teachingPlan.Value.Title;
-        ViewBag.CourseTitle = teachingPlan.Value.CourseTitle;
-        ViewBag.Groups = groups.IsSuccess ? groups.Value : new List<StudentGroupDto>();
-        ViewBag.Lessons = lessons.IsSuccess ? lessons.Value : new List<LessonDto>();
-        ViewBag.DisciplineType = course.Value?.DisciplineType;
-        ViewBag.ScheduleItemTypes = GetScheduleItemTypes(course.Value?.DisciplineType);
-        ViewBag.CurrentType = scheduleItem.Value.Type;
-
-        return View(command);
     }
 
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(UpdateScheduleItemCommand command)
-    {
-        if (!ModelState.IsValid)
-        {
-            var scheduleItem = await _mediator.Send(new GetScheduleItemByIdQuery(command.Id));
-            var teachingPlan = await _mediator.Send(new GetTeachingPlanByIdQuery(scheduleItem.Value?.TeachingPlanId ?? 0));
-            var course = await _mediator.Send(new GetCourseByIdQuery(teachingPlan.Value?.CourseId ?? 0));
-            var groups = await _mediator.Send(new GetStudentGroupsByTeachingPlanQuery(scheduleItem.Value?.TeachingPlanId ?? 0));
-            var lessons = await _mediator.Send(new GetLessonsByCourseIdQuery(teachingPlan.Value?.CourseId ?? 0));
-
-            ViewBag.TeachingPlanId = scheduleItem.Value?.TeachingPlanId ?? 0;
-            ViewBag.TeachingPlanTitle = teachingPlan.Value?.Title ?? "Unknown Plan";
-            ViewBag.CourseTitle = teachingPlan.Value?.CourseTitle ?? "Unknown Course";
-            ViewBag.Groups = groups.IsSuccess ? groups.Value : new List<StudentGroupDto>();
-            ViewBag.Lessons = lessons.IsSuccess ? lessons.Value : new List<LessonDto>();
-            ViewBag.DisciplineType = course.Value?.DisciplineType;
-            ViewBag.ScheduleItemTypes = GetScheduleItemTypes(course.Value?.DisciplineType);
-            ViewBag.CurrentType = scheduleItem.Value?.Type;
-            return View(command);
-        }
-
-        var result = await _mediator.Send(command);
-        if (!result.IsSuccess)
-        {
-            ModelState.AddModelError("", result.Error ?? "An error occurred while updating the schedule item");
-            var scheduleItem = await _mediator.Send(new GetScheduleItemByIdQuery(command.Id));
-            var teachingPlan = await _mediator.Send(new GetTeachingPlanByIdQuery(scheduleItem.Value?.TeachingPlanId ?? 0));
-            var course = await _mediator.Send(new GetCourseByIdQuery(teachingPlan.Value?.CourseId ?? 0));
-            var groups = await _mediator.Send(new GetStudentGroupsByTeachingPlanQuery(scheduleItem.Value?.TeachingPlanId ?? 0));
-            var lessons = await _mediator.Send(new GetLessonsByCourseIdQuery(teachingPlan.Value?.CourseId ?? 0));
-
-            ViewBag.TeachingPlanId = scheduleItem.Value?.TeachingPlanId ?? 0;
-            ViewBag.TeachingPlanTitle = teachingPlan.Value?.Title ?? "Unknown Plan";
-            ViewBag.CourseTitle = teachingPlan.Value?.CourseTitle ?? "Unknown Course";
-            ViewBag.Groups = groups.IsSuccess ? groups.Value : new List<StudentGroupDto>();
-            ViewBag.Lessons = lessons.IsSuccess ? lessons.Value : new List<LessonDto>();
-            ViewBag.DisciplineType = course.Value?.DisciplineType;
-            ViewBag.ScheduleItemTypes = GetScheduleItemTypes(course.Value?.DisciplineType);
-            ViewBag.CurrentType = scheduleItem.Value?.Type;
-            return View(command);
-        }
-
-        return RedirectToAction(nameof(Index), new { planId = result.Value?.TeachingPlanId ?? 0 });
-    }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
@@ -339,7 +280,14 @@ public class ScheduleController : Controller
         }
 
         // Verify user has access to this schedule item's teaching plan
-        var teachingPlan = await _mediator.Send(new GetTeachingPlanByIdQuery(scheduleItem.Value.TeachingPlanId));
+        if (!scheduleItem.Value.TeachingPlanId.HasValue)
+        {
+            return BadRequest("Schedule item is not associated with a teaching plan");
+        }
+
+        var teachingPlanId = scheduleItem.Value.TeachingPlanId.Value;
+
+        var teachingPlan = await _mediator.Send(new GetTeachingPlanByIdQuery(teachingPlanId));
         if (!teachingPlan.IsSuccess || teachingPlan.Value == null || teachingPlan.Value.TeacherId != currentUser.Id)
         {
             return Forbid("You don't have permission to delete this schedule item");

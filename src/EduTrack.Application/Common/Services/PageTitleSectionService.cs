@@ -235,8 +235,9 @@ public class PageTitleSectionFactory : IPageTitleSectionFactory
             },
             Actions = new List<PageTitleAction>
             {
-                CreatePageAction("ویرایش", $"{baseUrl}/Courses/Edit/{courseId}", "btn-primary", "fas fa-edit"),
-                CreatePageAction("بازگشت", $"{baseUrl}/Courses", "btn-secondary", "fas fa-arrow-right")
+                CreatePageAction("آیتم جدید", $"{baseUrl}/ScheduleItem/CreateOrEdit?courseId={courseId}", "btn-primary", "fas fa-plus"),
+                CreatePageAction("ویرایش", $"{baseUrl}/Courses/Edit/{courseId}", "btn-secondary", "fas fa-edit"),
+                CreatePageAction("بازگشت", $"{baseUrl}/Courses", "btn-outline-secondary", "fas fa-arrow-right")
             }
         };
     }

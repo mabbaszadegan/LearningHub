@@ -651,6 +651,10 @@ public class AppDbContext : IdentityDbContext<User>
             entity.Property(e => e.UpdatedAt)
                 .IsConcurrencyToken();
             
+            entity.HasOne(e => e.Course)
+                .WithMany()
+                .HasForeignKey(e => e.CourseId)
+                .OnDelete(DeleteBehavior.NoAction);
             entity.HasOne(e => e.TeachingPlan)
                 .WithMany(e => e.ScheduleItems)
                 .HasForeignKey(e => e.TeachingPlanId)
@@ -663,6 +667,7 @@ public class AppDbContext : IdentityDbContext<User>
                 .WithMany()
                 .HasForeignKey(e => e.LessonId)
                 .OnDelete(DeleteBehavior.SetNull);
+            entity.HasIndex(e => e.CourseId);
             entity.HasIndex(e => new { e.TeachingPlanId, e.StartDate });
             entity.HasIndex(e => new { e.GroupId, e.DueDate });
             entity.HasIndex(e => e.Type);

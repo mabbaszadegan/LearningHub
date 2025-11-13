@@ -6,7 +6,9 @@ using MediatR;
 namespace EduTrack.Application.Features.ScheduleItems.Commands;
 
     public record CreateScheduleItemCommand(
-        int TeachingPlanId,
+        int? CourseId,
+        int? TeachingPlanId,
+        int? SessionReportId,
         int? GroupId, // Legacy single group assignment
         ScheduleItemType Type,
         string Title,
@@ -24,6 +26,9 @@ namespace EduTrack.Application.Features.ScheduleItems.Commands;
 
 public record UpdateScheduleItemCommand(
     int Id,
+    int? CourseId,
+    int? TeachingPlanId,
+    int? SessionReportId,
     string Title,
     string? Description,
     DateTimeOffset StartDate,
@@ -43,7 +48,9 @@ public record UnpublishScheduleItemCommand(int Id) : IRequest<Result>;
 
 public record SaveScheduleItemStepCommand(
     int? Id,
-    int TeachingPlanId,
+    int? CourseId,
+    int? TeachingPlanId,
+    int? SessionReportId,
     int Step,
     ScheduleItemType? Type,
     string? Title,

@@ -35,6 +35,17 @@ class ModernScheduleItemFormManager {
             3: null,
             4: null
         };
+        this.skippedSteps = new Set();
+        this.formElement = document.getElementById('createItemForm');
+        this.isCourseScope = false;
+        this.isSessionScope = false;
+        if (this.formElement) {
+            this.isCourseScope = this.formElement.dataset.courseScope === 'true';
+            this.isSessionScope = this.formElement.dataset.sessionScope === 'true';
+            if (this.isCourseScope) {
+                this.skippedSteps.add(2);
+            }
+        }
         
         this.init();
     }
@@ -178,7 +189,9 @@ class ModernScheduleItemFormManager {
         const selectedSubChapters = this.step3Manager ? this.step3Manager.getSelectedSubChapters() : [];
 
         if (targetGroupsElement) {
-            if (selectedGroups.length === 0) {
+            if (this.isCourseScope) {
+                targetGroupsElement.textContent = 'همه دانشجویان دوره';
+            } else if (selectedGroups.length === 0) {
                 targetGroupsElement.textContent = 'همه گروه‌ها';
             } else {
                 targetGroupsElement.textContent = selectedGroups.map(g => g.name).join(', ');
@@ -273,19 +286,59 @@ class ModernScheduleItemFormManager {
         }, 30000);
     }
 
+    getEffectiveTotalSteps() {
+        return this.totalSteps - this.skippedSteps.size;
+    }
+
+    getOrdinalStep(step) {
+        let ordinal = 0;
+        for (let i = 1; i <= step; i++) {
+            if (!this.skippedSteps.has(i)) {
+                ordinal++;
+            }
+        }
+        return ordinal;
+    }
+
+    getNextStep(step) {
+        let next = step + 1;
+        while (next <= this.totalSteps && this.skippedSteps.has(next)) {
+            next++;
+        }
+        return next;
+    }
+
+    getPreviousStep(step) {
+        let previous = step - 1;
+        while (previous >= 1 && this.skippedSteps.has(previous)) {
+            previous--;
+        }
+        return previous;
+    }
+
+    isStepActive(step) {
+        return !this.skippedSteps.has(step);
+    }
+
     // Step Navigation Methods
     goToStep(step) {
-        if (step < 1 || step > this.totalSteps) {
-            return;
-        }
-
-        // In create mode, only allow step 1
-        if (!this.isEditMode && step > 1) {
-            return;
-        }
-
-        // Prevent rapid step changes
         if (this.isNavigating) {
+            return;
+        }
+
+        if (this.skippedSteps.has(step)) {
+            step = this.getNextStep(step);
+            if (step > this.totalSteps) {
+                step = this.getPreviousStep(this.totalSteps);
+            }
+        }
+
+        if (step < 1 || step > this.totalSteps || this.skippedSteps.has(step)) {
+            return;
+        }
+
+        // In create mode, only allow the first active step
+        if (!this.isEditMode && this.getOrdinalStep(step) > 1) {
             return;
         }
 
@@ -464,31 +517,41 @@ class ModernScheduleItemFormManager {
         const form = document.getElementById('createItemForm');
         const formData = new FormData(form);
         
-        // Get values directly from form elements using correct names
         const titleInput = form.querySelector('input[name="Title"]');
         const descriptionInput = form.querySelector('textarea[name="Description"]');
         const typeSelect = form.querySelector('select[name="Type"]');
-        
-        // Debug: log the form data
-        
+        const teachingPlanIdInput = form.querySelector('input[name="TeachingPlanId"]');
+        const courseIdInput = form.querySelector('input[name="CourseId"]');
+        const sessionReportIdInput = form.querySelector('input[name="SessionReportId"]');
+
+        const parsedTeachingPlanId = teachingPlanIdInput && teachingPlanIdInput.value ? parseInt(teachingPlanIdInput.value) : null;
+        const parsedCourseId = courseIdInput && courseIdInput.value ? parseInt(courseIdInput.value) : null;
+        const parsedSessionReportId = sessionReportIdInput && sessionReportIdInput.value ? parseInt(sessionReportIdInput.value) : null;
+
         return {
-            TeachingPlanId: parseInt(formData.get('TeachingPlanId')) || 0,
-            GroupId: null, // Legacy single group assignment
+            TeachingPlanId: !isNaN(parsedTeachingPlanId) && parsedTeachingPlanId > 0 ? parsedTeachingPlanId : null,
+            CourseId: !isNaN(parsedCourseId) && parsedCourseId > 0 ? parsedCourseId : null,
+            SessionReportId: !isNaN(parsedSessionReportId) && parsedSessionReportId > 0 ? parsedSessionReportId : null,
+            GroupId: null,
             Title: titleInput ? titleInput.value : '',
             Description: descriptionInput ? descriptionInput.value : '',
             Type: typeSelect ? parseInt(typeSelect.value) : 1,
-            StartDate: new Date().toISOString(), // Default start date
-            DueDate: null, // No due date initially
-            IsMandatory: false, // Default to false
-            DisciplineHint: null, // No discipline hint initially
-            ContentJson: '{}', // Empty content initially
-            MaxScore: null, // No max score initially
+            StartDate: new Date().toISOString(),
+            DueDate: null,
+            IsMandatory: false,
+            DisciplineHint: null,
+            ContentJson: '{}',
+            MaxScore: null,
             GroupIds: [],
             SubChapterIds: []
         };
     }
 
     async goToNextStep() {
+        const targetStep = this.getNextStep(this.currentStep);
+        if (targetStep > this.totalSteps) {
+            return true;
+        }
         if (this.currentStep < this.totalSteps) {
             const nextBtn = document.getElementById('nextStepBtn');
             
@@ -525,7 +588,7 @@ class ModernScheduleItemFormManager {
                     }
                     
                     // Now proceed to next step
-                    this.goToStep(this.currentStep + 1);
+                    this.goToStep(targetStep);
                     this.setButtonLoadingState(nextBtn, false, 'ادامه');
                     return true;
                 }
@@ -558,7 +621,7 @@ class ModernScheduleItemFormManager {
                 // Show loading state for navigation
                 this.setButtonLoadingState(nextBtn, true, 'در حال انتقال...');
                 
-                this.goToStep(this.currentStep + 1);
+                this.goToStep(targetStep);
                 
                 // Re-enable button after navigation
                 this.setButtonLoadingState(nextBtn, false, 'مرحله بعدی');
@@ -590,7 +653,8 @@ class ModernScheduleItemFormManager {
     }
 
     async goToPreviousStep() {
-        if (this.currentStep > 1) {
+        const targetStep = this.getPreviousStep(this.currentStep);
+        if (targetStep >= 1) {
             const prevBtn = document.getElementById('prevStepBtn');
             
             try {
@@ -600,7 +664,7 @@ class ModernScheduleItemFormManager {
                 // Add a small delay to show loading state
                 await new Promise(resolve => setTimeout(resolve, 300));
                 
-                this.goToStep(this.currentStep - 1);
+                this.goToStep(targetStep);
                 
                 // Re-enable button after navigation
                 this.setButtonLoadingState(prevBtn, false, 'مرحله قبلی');
@@ -616,10 +680,13 @@ class ModernScheduleItemFormManager {
     }
 
     updateStepVisibility() {
-        document.querySelectorAll('.form-step').forEach((step, index) => {
-            const stepNumber = index + 1;
-            // In create mode, only show step 1
-            if (!this.isEditMode && stepNumber > 1) {
+        document.querySelectorAll('.form-step').forEach((step) => {
+            const stepNumber = parseInt(step.dataset.stepOrder || step.dataset.step || '0', 10);
+            const ordinal = this.getOrdinalStep(stepNumber);
+            if (!this.isEditMode && ordinal > 1) {
+                step.style.display = 'none';
+                step.classList.remove('active');
+            } else if (!this.isStepActive(stepNumber)) {
                 step.style.display = 'none';
                 step.classList.remove('active');
             } else {
@@ -628,12 +695,14 @@ class ModernScheduleItemFormManager {
             }
         });
 
-        document.querySelectorAll('.step-item').forEach((item, index) => {
-            const stepNumber = index + 1;
+        document.querySelectorAll('.step-item').forEach((item) => {
+            const stepNumber = parseInt(item.dataset.step || item.dataset.stepOrder || '0', 10);
             item.classList.remove('active', 'completed');
 
             // In create mode, only allow step 1
-            if (!this.isEditMode && stepNumber > 1) {
+            if (!this.isEditMode && this.getOrdinalStep(stepNumber) > 1) {
+                item.classList.add('disabled');
+            } else if (!this.isStepActive(stepNumber)) {
                 item.classList.add('disabled');
             } else {
                 item.classList.remove('disabled');
@@ -656,12 +725,16 @@ class ModernScheduleItemFormManager {
         const progressText = document.getElementById('progressText');
 
         if (progressFill) {
-            const percentage = (this.currentStep / this.totalSteps) * 100;
+            const effectiveTotal = this.getEffectiveTotalSteps();
+            const ordinalCurrent = this.getOrdinalStep(this.currentStep);
+            const percentage = effectiveTotal > 0 ? (ordinalCurrent / effectiveTotal) * 100 : 0;
             progressFill.style.width = `${percentage}%`;
         }
 
         if (progressText) {
-            progressText.textContent = `مرحله ${this.currentStep} از ${this.totalSteps}`;
+            const effectiveTotal = this.getEffectiveTotalSteps();
+            const ordinalCurrent = this.getOrdinalStep(this.currentStep);
+            progressText.textContent = `مرحله ${ordinalCurrent} از ${effectiveTotal}`;
         }
     }
 
@@ -672,7 +745,7 @@ class ModernScheduleItemFormManager {
 
         // Show/hide previous button
         if (prevBtn) {
-            if (this.currentStep === 1) {
+            if (this.getPreviousStep(this.currentStep) < 1) {
                 prevBtn.style.display = 'none';
             } else {
                 prevBtn.style.display = 'flex';
@@ -682,7 +755,8 @@ class ModernScheduleItemFormManager {
 
         // Update next button text and visibility
         if (nextBtn) {
-            if (this.currentStep === this.totalSteps) {
+            const hasNext = this.getNextStep(this.currentStep) <= this.totalSteps;
+            if (!hasNext) {
                 nextBtn.style.display = 'none';
             } else {
                 const stepNames = {
@@ -712,7 +786,8 @@ class ModernScheduleItemFormManager {
 
         // Show/hide submit button
         if (submitBtn) {
-            if (this.currentStep === this.totalSteps) {
+            const hasNext = this.getNextStep(this.currentStep) <= this.totalSteps;
+            if (!hasNext) {
                 const stepNames = {
                     1: 'اطلاعات کلی',
                     2: 'زمان‌بندی',
@@ -1364,9 +1439,19 @@ class ModernScheduleItemFormManager {
             // Collect step data from the appropriate step manager
             const stepData = await this.collectCurrentStepData();
 
+            const teachingPlanIdInput = document.querySelector('input[name="TeachingPlanId"]');
+            const courseIdInput = document.querySelector('input[name="CourseId"]');
+            const sessionReportIdInput = document.querySelector('input[name="SessionReportId"]');
+
+            const parsedTeachingPlanId = teachingPlanIdInput && teachingPlanIdInput.value ? parseInt(teachingPlanIdInput.value) : null;
+            const parsedCourseId = courseIdInput && courseIdInput.value ? parseInt(courseIdInput.value) : null;
+            const parsedSessionReportId = sessionReportIdInput && sessionReportIdInput.value ? parseInt(sessionReportIdInput.value) : null;
+
             const requestData = {
                 Id: this.currentItemId,
-                TeachingPlanId: parseInt(document.querySelector('input[name="TeachingPlanId"]')?.value) || 0,
+                TeachingPlanId: !isNaN(parsedTeachingPlanId) && parsedTeachingPlanId > 0 ? parsedTeachingPlanId : null,
+                CourseId: !isNaN(parsedCourseId) && parsedCourseId > 0 ? parsedCourseId : null,
+                SessionReportId: !isNaN(parsedSessionReportId) && parsedSessionReportId > 0 ? parsedSessionReportId : null,
                 Step: this.currentStep,
                 ...stepData
             };
@@ -1465,7 +1550,7 @@ class ModernScheduleItemFormManager {
             Object.assign(stepData, step1Data);
         }
         
-        if (this.currentStep >= 2 && window.step2Manager && typeof window.step2Manager.collectStep2Data === 'function') {
+        if (this.currentStep >= 2 && this.isStepActive(2) && window.step2Manager && typeof window.step2Manager.collectStep2Data === 'function') {
             const step2Data = window.step2Manager.collectStep2Data();
             Object.assign(stepData, step2Data);
         }
@@ -1740,16 +1825,22 @@ class ModernScheduleItemFormManager {
     updateStepProgress() {
         const progressFill = document.getElementById('stepProgressFill');
         if (progressFill) {
-            const progress = (this.currentStep / this.totalSteps) * 100;
+            const effectiveTotal = this.getEffectiveTotalSteps();
+            const ordinalCurrent = this.getOrdinalStep(this.currentStep);
+            const progress = effectiveTotal > 0 ? (ordinalCurrent / effectiveTotal) * 100 : 0;
             progressFill.style.width = `${progress}%`;
         }
 
         // Update step indicators
         const stepIndicators = document.querySelectorAll('.step-indicator');
-        stepIndicators.forEach((indicator, index) => {
-            const stepNumber = index + 1;
+        stepIndicators.forEach((indicator) => {
+            const stepNumber = parseInt(indicator.dataset.step || indicator.dataset.stepOrder || '0', 10);
             indicator.classList.remove('current', 'completed');
-            
+            if (!this.isStepActive(stepNumber)) {
+                indicator.classList.add('disabled');
+                return;
+            }
+
             if (stepNumber === this.currentStep) {
                 indicator.classList.add('current');
             } else if (stepNumber < this.currentStep) {

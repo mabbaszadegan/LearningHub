@@ -96,6 +96,14 @@
 
                 <!-- Session Actions -->
                 <div class="session-actions">
+                    <a asp-controller="ScheduleItem"
+                       asp-action="CreateOrEdit"
+                       asp-route-sessionReportId="@session.Id"
+                       asp-route-teachingPlanId="@planId"
+                       class="action-btn assignment">
+                        <i class="fas fa-tasks"></i>
+                        <span>تعریف تکلیف</span>
+                    </a>
                     <a asp-action="Complete" asp-route-id="@session.Id" class="action-btn success">
                         <i class="fas fa-check-circle"></i>
                         <span>تکمیل گزارش</span>

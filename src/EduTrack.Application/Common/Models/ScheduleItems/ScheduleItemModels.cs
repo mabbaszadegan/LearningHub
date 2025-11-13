@@ -6,7 +6,8 @@ namespace EduTrack.Application.Common.Models.ScheduleItems;
 public class ScheduleItemDto
 {
     public int Id { get; set; }
-    public int TeachingPlanId { get; set; }
+    public int? TeachingPlanId { get; set; }
+    public int? CourseId { get; set; }
     public int? GroupId { get; set; }
     public string? GroupName { get; set; }
     public List<int> GroupIds { get; set; } = new List<int>();
@@ -47,13 +48,17 @@ public class ScheduleItemListDto
     public ScheduleItemStatus Status { get; set; }
     public string StatusText { get; set; } = string.Empty;
     public int? GroupId { get; set; }
+    public int? CourseId { get; set; }
+    public int? TeachingPlanId { get; set; }
     public string? GroupName { get; set; }
 }
 
 // Request/Response Models
 public class CreateScheduleItemRequest
 {
-    public int TeachingPlanId { get; set; }
+    public int? TeachingPlanId { get; set; }
+    public int? CourseId { get; set; }
+    public int? SessionReportId { get; set; }
     public int? GroupId { get; set; } // Legacy single group assignment
     public ScheduleItemType Type { get; set; }
     public string Title { get; set; } = string.Empty;
@@ -74,7 +79,9 @@ public class CreateScheduleItemRequest
 public class UpdateScheduleItemRequest
 {
     public int Id { get; set; }
-    public int TeachingPlanId { get; set; }
+    public int? TeachingPlanId { get; set; }
+    public int? CourseId { get; set; }
+    public int? SessionReportId { get; set; }
     public int? GroupId { get; set; } // Legacy single group assignment
     public ScheduleItemType Type { get; set; }
     public string Title { get; set; } = string.Empty;
@@ -619,7 +626,9 @@ public enum ScheduleItemStatus
 public record SaveScheduleItemStepRequest
 {
     public int? Id { get; init; }
-    public int TeachingPlanId { get; init; }
+    public int? TeachingPlanId { get; init; }
+    public int? CourseId { get; init; }
+    public int? SessionReportId { get; init; }
     public int Step { get; init; }
     public ScheduleItemType? Type { get; init; }
     public string? Title { get; init; }

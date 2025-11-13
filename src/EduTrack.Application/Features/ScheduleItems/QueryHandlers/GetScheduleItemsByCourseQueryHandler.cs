@@ -8,12 +8,12 @@ using MediatR;
 
 namespace EduTrack.Application.Features.ScheduleItems.QueryHandlers;
 
-public class GetScheduleItemsAccessibleToStudentQueryHandler : IRequestHandler<GetScheduleItemsAccessibleToStudentQuery, Result<List<ScheduleItemDto>>>
+public class GetScheduleItemsByCourseQueryHandler : IRequestHandler<GetScheduleItemsByCourseQuery, Result<List<ScheduleItemDto>>>
 {
     private readonly IScheduleItemRepository _scheduleItemRepository;
     private readonly IStudentGroupRepository _groupRepository;
 
-    public GetScheduleItemsAccessibleToStudentQueryHandler(
+    public GetScheduleItemsByCourseQueryHandler(
         IScheduleItemRepository scheduleItemRepository,
         IStudentGroupRepository groupRepository)
     {
@@ -21,17 +21,14 @@ public class GetScheduleItemsAccessibleToStudentQueryHandler : IRequestHandler<G
         _groupRepository = groupRepository;
     }
 
-    public async Task<Result<List<ScheduleItemDto>>> Handle(GetScheduleItemsAccessibleToStudentQuery request, CancellationToken cancellationToken)
+    public async Task<Result<List<ScheduleItemDto>>> Handle(GetScheduleItemsByCourseQuery request, CancellationToken cancellationToken)
     {
         try
         {
-            var scheduleItems = await _scheduleItemRepository.GetScheduleItemsAccessibleToStudentAsync(
-                request.StudentId,
-                request.StudentProfileId,
-                cancellationToken);
-            
+            var scheduleItems = await _scheduleItemRepository.GetScheduleItemsByCourseAsync(request.CourseId, request.CourseScopeOnly, cancellationToken);
+
             var scheduleItemDtos = new List<ScheduleItemDto>();
-            
+
             foreach (var item in scheduleItems)
             {
                 var groupName = string.Empty;
@@ -84,7 +81,7 @@ public class GetScheduleItemsAccessibleToStudentQueryHandler : IRequestHandler<G
         }
         catch (Exception ex)
         {
-            return Result<List<ScheduleItemDto>>.Failure($"خطا در دریافت آیتم‌های قابل دسترسی دانش‌آموز: {ex.Message}");
+            return Result<List<ScheduleItemDto>>.Failure($"خطا در دریافت آیتم‌های دوره: {ex.Message}");
         }
     }
 
@@ -101,6 +98,7 @@ public class GetScheduleItemsAccessibleToStudentQueryHandler : IRequestHandler<G
             ScheduleItemType.ErrorFinding => "پیدا کردن خطا",
             ScheduleItemType.CodeExercise => "تمرین کد",
             ScheduleItemType.Quiz => "کوئیز",
+            ScheduleItemType.Ordering => "مرتب‌سازی",
             _ => "نامشخص"
         };
     }
@@ -108,16 +106,19 @@ public class GetScheduleItemsAccessibleToStudentQueryHandler : IRequestHandler<G
     private static ScheduleItemStatus GetStatus(ScheduleItem item)
     {
         var now = DateTimeOffset.UtcNow;
-        
+
+        if (item.IsCompleted)
+            return ScheduleItemStatus.Completed;
+
         if (item.DueDate.HasValue && now > item.DueDate.Value)
             return ScheduleItemStatus.Expired;
-        
+
         if (now >= item.StartDate && (!item.DueDate.HasValue || now <= item.DueDate.Value))
             return ScheduleItemStatus.Active;
-        
+
         if (now < item.StartDate)
             return ScheduleItemStatus.Published;
-        
+
         return ScheduleItemStatus.Draft;
     }
 
@@ -134,3 +135,4 @@ public class GetScheduleItemsAccessibleToStudentQueryHandler : IRequestHandler<G
         };
     }
 }
+

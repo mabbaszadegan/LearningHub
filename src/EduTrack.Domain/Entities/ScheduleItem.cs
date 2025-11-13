@@ -8,7 +8,8 @@ namespace EduTrack.Domain.Entities;
 public class ScheduleItem
 {
     public int Id { get; private set; }
-    public int TeachingPlanId { get; private set; }
+    public int? CourseId { get; private set; }
+    public int? TeachingPlanId { get; private set; }
     public int? GroupId { get; private set; }
     public int? LessonId { get; private set; }
     public ScheduleItemType Type { get; private set; }
@@ -20,17 +21,18 @@ public class ScheduleItem
     public DisciplineType? DisciplineHint { get; private set; }
     public string ContentJson { get; private set; } = string.Empty;
     public decimal? MaxScore { get; private set; }
-    public int? SessionReportId { get; set; }
+    public int? SessionReportId { get; private set; }
     public int CurrentStep { get; private set; } = 1;
     public bool IsCompleted { get; private set; } = false;
     public DateTimeOffset CreatedAt { get; private set; }
     public DateTimeOffset UpdatedAt { get; private set; }
 
     // Navigation properties
-    public TeachingPlan TeachingPlan { get; private set; } = null!;
+    public Course? Course { get; private set; }
+    public TeachingPlan? TeachingPlan { get; private set; }
     public StudentGroup? Group { get; private set; } // Legacy single group assignment
     public Lesson? Lesson { get; private set; }
-    public TeachingSessionReport? SessionReport { get; set; }
+    public TeachingSessionReport? SessionReport { get; private set; }
     
     // Navigation properties for multiple assignments
     public ICollection<ScheduleItemGroupAssignment> GroupAssignments { get; set; } = new List<ScheduleItemGroupAssignment>();
@@ -40,13 +42,12 @@ public class ScheduleItem
     // Private constructor for EF Core
     private ScheduleItem() { }
 
-    public static ScheduleItem Create(int teachingPlanId, ScheduleItemType type, string title, 
+    public static ScheduleItem Create(int? teachingPlanId, ScheduleItemType type, string title,
         string? description, DateTimeOffset startDate, DateTimeOffset? dueDate, bool isMandatory,
         string contentJson, decimal? maxScore = null, int? groupId = null, int? lessonId = null,
-        DisciplineType? disciplineHint = null)
+        DisciplineType? disciplineHint = null, int? courseId = null, int? sessionReportId = null)
     {
-        if (teachingPlanId <= 0)
-            throw new ArgumentException("Teaching Plan ID must be greater than 0", nameof(teachingPlanId));
+        ValidateContext(courseId, teachingPlanId, sessionReportId);
         
         if (string.IsNullOrWhiteSpace(title))
             throw new ArgumentException("Title cannot be null or empty", nameof(title));
@@ -59,7 +60,9 @@ public class ScheduleItem
 
         return new ScheduleItem
         {
+            CourseId = courseId,
             TeachingPlanId = teachingPlanId,
+            SessionReportId = sessionReportId,
             GroupId = groupId,
             LessonId = lessonId,
             Type = type,
@@ -276,5 +279,63 @@ public class ScheduleItem
     public bool IsAssignedToAllStudents()
     {
         return !StudentAssignments.Any();
+    }
+
+    public void AttachToTeachingPlan(int teachingPlanId, int? courseId = null)
+    {
+        if (teachingPlanId <= 0)
+            throw new ArgumentException("Teaching Plan ID must be greater than 0", nameof(teachingPlanId));
+
+        TeachingPlanId = teachingPlanId;
+
+        if (courseId.HasValue)
+        {
+            if (courseId.Value <= 0)
+                throw new ArgumentException("Course ID must be greater than 0", nameof(courseId));
+
+            CourseId = courseId;
+        }
+
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
+    public void AttachToSessionReport(int sessionReportId, int teachingPlanId, int? courseId = null)
+    {
+        if (sessionReportId <= 0)
+            throw new ArgumentException("Session report ID must be greater than 0", nameof(sessionReportId));
+
+        if (teachingPlanId <= 0)
+            throw new ArgumentException("Teaching Plan ID must be greater than 0", nameof(teachingPlanId));
+
+        SessionReportId = sessionReportId;
+        TeachingPlanId = teachingPlanId;
+
+        if (courseId.HasValue)
+        {
+            if (courseId.Value <= 0)
+                throw new ArgumentException("Course ID must be greater than 0", nameof(courseId));
+
+            CourseId = courseId;
+        }
+
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
+    private static void ValidateContext(int? courseId, int? teachingPlanId, int? sessionReportId)
+    {
+        if (!courseId.HasValue && !teachingPlanId.HasValue && !sessionReportId.HasValue)
+            throw new ArgumentException("At least one context identifier must be provided.");
+
+        if (courseId.HasValue && courseId.Value <= 0)
+            throw new ArgumentException("Course ID must be greater than 0", nameof(courseId));
+
+        if (teachingPlanId.HasValue && teachingPlanId.Value <= 0)
+            throw new ArgumentException("Teaching Plan ID must be greater than 0", nameof(teachingPlanId));
+
+        if (sessionReportId.HasValue && sessionReportId.Value <= 0)
+            throw new ArgumentException("Session report ID must be greater than 0", nameof(sessionReportId));
+
+        if (sessionReportId.HasValue && !teachingPlanId.HasValue)
+            throw new ArgumentException("Teaching plan ID is required when session report ID is specified.", nameof(teachingPlanId));
     }
 }

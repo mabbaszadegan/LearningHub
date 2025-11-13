@@ -7,6 +7,8 @@
     var teachingPlanTitle = ViewBag.TeachingPlanTitle as string ?? "برنامه آموزشی";
     var courseTitle = ViewBag.CourseTitle as string ?? "دوره";
     var courseId = ViewBag.CourseId as int? ?? 0;
+    var isCourseScope = ViewBag.IsCourseScope as bool? ?? false;
+    var isSessionScope = ViewBag.IsSessionScope as bool? ?? false;
 }
 
 
@@ -20,12 +22,15 @@
                 </div>
                 <span class="step-indicator-label">اطلاعات کلی</span>
             </div>
-            <div class="step-indicator" data-step="2">
-                <div class="step-indicator-icon">
-                    <span class="step-number">2</span>
+            @if (!isCourseScope)
+            {
+                <div class="step-indicator" data-step="2">
+                    <div class="step-indicator-icon">
+                        <span class="step-number">2</span>
+                    </div>
+                    <span class="step-indicator-label">زمان‌بندی</span>
                 </div>
-                <span class="step-indicator-label">زمان‌بندی</span>
-            </div>
+            }
             <div class="step-indicator" data-step="3">
                 <div class="step-indicator-icon">
                     <span class="step-number">3</span>
@@ -52,9 +57,11 @@
             <!-- Main Form -->
             <div class="col-12">
                 <div class="modern-form-container">
-                    <form asp-action="CreateOrEdit" method="post" id="createItemForm" class="modern-form">
+                    <form asp-action="CreateOrEdit" method="post" id="createItemForm" class="modern-form" data-course-scope="@isCourseScope.ToString().ToLower()" data-session-scope="@isSessionScope.ToString().ToLower()">
                         @Html.AntiForgeryToken()
                         <input asp-for="TeachingPlanId" type="hidden" />
+                        <input asp-for="CourseId" type="hidden" />
+                        <input asp-for="SessionReportId" type="hidden" />
                         <input name="id" value="@scheduleItemId" type="hidden" />
                         <!-- Hidden fields for multi-select values -->
                         <input type="hidden" id="selectedGroupIds" name="GroupIds" />
@@ -67,10 +74,13 @@
                         @await Html.PartialAsync("_Step1BasicInfo", Model)
 
                         <!-- Step 2: Schedule Information -->
-                        @await Html.PartialAsync("_Step2Scheduling", Model)
+                        @if (!isCourseScope)
+                        {
+                            @await Html.PartialAsync("_Step2Scheduling", Model, new ViewDataDictionary(ViewData) { ["IsCourseScope"] = isCourseScope })
+                        }
 
                         <!-- Step 3: Assignment Information -->
-                        @await Html.PartialAsync("_Step3Assignment", Model)
+                        @await Html.PartialAsync("_Step3Assignment", Model, new ViewDataDictionary(ViewData) { ["IsCourseScope"] = isCourseScope })
 
                         <!-- Step 4: Content Design Section -->
                         @await Html.PartialAsync("_Step4Content", Model)

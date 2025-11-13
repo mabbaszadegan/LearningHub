@@ -15,7 +15,9 @@ public enum ScheduleItemStatus
 public class ScheduleItemDto
 {
     public int Id { get; set; }
-    public int TeachingPlanId { get; set; }
+    public int? TeachingPlanId { get; set; }
+    public int? CourseId { get; set; }
+    public int? SessionReportId { get; set; }
     public int? GroupId { get; set; } // Legacy single group assignment
     public string? GroupName { get; set; }
     public int? LessonId { get; set; }

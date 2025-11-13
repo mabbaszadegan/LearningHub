@@ -35,7 +35,9 @@ public class SubmissionRepository : Repository<Submission>, ISubmissionRepositor
         var query = FilterByStudent(_dbSet.AsQueryable(), studentId, studentProfileId)
             .Include(s => s.ScheduleItem)
             .ThenInclude(si => si.TeachingPlan)
-            .ThenInclude(tp => tp.Course)
+            .ThenInclude(tp => tp!.Course)
+            .Include(s => s.ScheduleItem)
+            .ThenInclude(si => si.Course)
             .Include(s => s.Teacher)
             .Include(s => s.StudentProfile)
             .OrderByDescending(s => s.UpdatedAt);
@@ -63,7 +65,9 @@ public class SubmissionRepository : Repository<Submission>, ISubmissionRepositor
             .Include(s => s.StudentProfile)
             .Include(s => s.ScheduleItem)
             .ThenInclude(si => si.TeachingPlan)
-            .ThenInclude(tp => tp.Course)
+            .ThenInclude(tp => tp!.Course)
+            .Include(s => s.ScheduleItem)
+            .ThenInclude(si => si.Course)
             .OrderByDescending(s => s.UpdatedAt)
             .ToListAsync(cancellationToken);
     }
@@ -74,7 +78,9 @@ public class SubmissionRepository : Repository<Submission>, ISubmissionRepositor
             .Where(s => s.ScheduleItemId == scheduleItemId)
             .Include(s => s.ScheduleItem)
                 .ThenInclude(si => si.TeachingPlan)
-                .ThenInclude(tp => tp.Course)
+                .ThenInclude(tp => tp!.Course)
+            .Include(s => s.ScheduleItem)
+                .ThenInclude(si => si.Course)
             .Include(s => s.Student)
             .Include(s => s.Teacher)
             .Include(s => s.StudentProfile);
@@ -90,7 +96,9 @@ public class SubmissionRepository : Repository<Submission>, ISubmissionRepositor
             .Include(s => s.StudentProfile)
             .Include(s => s.ScheduleItem)
             .ThenInclude(si => si.TeachingPlan)
-            .ThenInclude(tp => tp.Course)
+            .ThenInclude(tp => tp!.Course)
+            .Include(s => s.ScheduleItem)
+            .ThenInclude(si => si.Course)
             .OrderBy(s => s.SubmittedAt)
             .ToListAsync(cancellationToken);
     }
@@ -103,7 +111,9 @@ public class SubmissionRepository : Repository<Submission>, ISubmissionRepositor
             .Include(s => s.StudentProfile)
             .Include(s => s.ScheduleItem)
             .ThenInclude(si => si.TeachingPlan)
-            .ThenInclude(tp => tp.Course)
+            .ThenInclude(tp => tp!.Course)
+            .Include(s => s.ScheduleItem)
+            .ThenInclude(si => si.Course)
             .OrderByDescending(s => s.ReviewedAt ?? s.SubmittedAt)
             .ToListAsync(cancellationToken);
     }

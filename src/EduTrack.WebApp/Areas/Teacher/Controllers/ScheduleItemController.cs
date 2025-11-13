@@ -1,8 +1,12 @@
 using EduTrack.Application.Common.Interfaces;
 using EduTrack.Application.Common.Models.ScheduleItems;
+using EduTrack.Application.Common.Models.Courses;
+using EduTrack.Application.Common.Models.TeachingSessions;
 using EduTrack.Application.Features.ScheduleItems.Commands;
 using EduTrack.Application.Features.ScheduleItems.Queries;
+using EduTrack.Application.Features.Courses.Queries;
 using EduTrack.Application.Features.TeachingPlan.Queries;
+using EduTrack.Application.Features.TeachingSessions.Queries;
 using EduTrack.Domain.Entities;
 using EduTrack.Domain.Enums;
 using EduTrack.Domain.Extensions;
@@ -15,6 +19,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.IO;
 using System.Text.Json;
+using TeachingPlanDto = EduTrack.Application.Common.Models.TeachingPlans.TeachingPlanDto;
 
 namespace EduTrack.WebApp.Areas.Teacher.Controllers;
 
@@ -68,6 +73,8 @@ public class ScheduleItemController : BaseTeacherController
         ViewBag.CourseTitle = teachingPlan.Value.CourseTitle ?? "دوره";
         ViewBag.CourseId = teachingPlan.Value.CourseId;
         ViewBag.Stats = stats.IsSuccess ? stats.Value : new ScheduleItemStatsDto();
+        ViewBag.IsCourseScope = false;
+        ViewBag.IsSessionScope = false;
 
         // Setup page title section
         await SetPageTitleSectionAsync(PageType.ScheduleItemsIndex, teachingPlanId);
@@ -75,20 +82,104 @@ public class ScheduleItemController : BaseTeacherController
         return View(scheduleItems.Value);
     }
 
-    // GET: ScheduleItem/CreateOrEdit
-    public async Task<IActionResult> CreateOrEdit(int teachingPlanId, int id = 0)
+    // GET: ScheduleItem/CourseLessons
+    public async Task<IActionResult> CourseLessons(int courseId)
     {
-        // Get teaching plan details for navigation
-        var teachingPlan = await _mediator.Send(new GetTeachingPlanByIdQuery(teachingPlanId));
-        if (!teachingPlan.IsSuccess || teachingPlan.Value == null)
+        var courseResult = await _mediator.Send(new GetCourseByIdQuery(courseId));
+        if (!courseResult.IsSuccess || courseResult.Value == null)
         {
-            return NotFound("برنامه آموزشی یافت نشد.");
+            return NotFound("دوره آموزشی یافت نشد.");
         }
 
+        var scheduleItems = await _mediator.Send(new GetScheduleItemsByCourseQuery(courseId, true));
+        var items = scheduleItems.IsSuccess && scheduleItems.Value != null
+            ? scheduleItems.Value
+            : new List<ScheduleItemDto>();
+
+        ViewBag.CourseId = courseId;
+        ViewBag.CourseTitle = courseResult.Value.Title;
+        ViewBag.IsCourseScope = true;
+        ViewBag.IsSessionScope = false;
+        ViewBag.TeachingPlanId = (int?)null;
+        ViewBag.ScheduleItemTypes = Enum.GetValues<ScheduleItemType>()
+            .Select(type => new { Value = (int)type, Text = type.GetDisplayName(), Description = type.GetDescription() })
+            .ToList();
+
+        ViewBag.Stats = new ScheduleItemStatsDto
+        {
+            TotalItems = items.Count,
+            ActiveItems = items.Count(i => i.Status == ScheduleItemStatus.Active),
+            CompletedItems = items.Count(i => i.Status == ScheduleItemStatus.Completed),
+            OverdueItems = items.Count(i => i.Status == ScheduleItemStatus.Expired)
+        };
+
+        await SetPageTitleSectionAsync(PageType.CourseDetails, courseId);
+
+        return View("Index", items);
+    }
+
+    // GET: ScheduleItem/CreateOrEdit
+    public async Task<IActionResult> CreateOrEdit(int? teachingPlanId = null, int? courseId = null, int? sessionReportId = null, int id = 0)
+    {
+        if (!teachingPlanId.HasValue && !courseId.HasValue && !sessionReportId.HasValue)
+        {
+            return BadRequest("کانتکست نامعتبر است.");
+        }
+
+        TeachingPlanDto? teachingPlan = null;
+        CourseDto? course = null;
+        TeachingSessionReportDto? sessionReport = null;
+
+        if (sessionReportId.HasValue)
+        {
+            var sessionReportResult = await _mediator.Send(new GetTeachingSessionReportDetailsQuery(sessionReportId.Value));
+            if (!sessionReportResult.IsSuccess || sessionReportResult.Value == null)
+            {
+                return NotFound("گزارش جلسه آموزشی یافت نشد.");
+            }
+
+            sessionReport = sessionReportResult.Value;
+            teachingPlanId ??= sessionReport.TeachingPlanId;
+        }
+
+        if (teachingPlanId.HasValue)
+        {
+            var teachingPlanResult = await _mediator.Send(new GetTeachingPlanByIdQuery(teachingPlanId.Value));
+            if (!teachingPlanResult.IsSuccess || teachingPlanResult.Value == null)
+            {
+                return NotFound("برنامه آموزشی یافت نشد.");
+            }
+
+            teachingPlan = teachingPlanResult.Value;
+            courseId ??= teachingPlan.CourseId;
+        }
+
+        if (courseId.HasValue)
+        {
+            var courseResult = await _mediator.Send(new GetCourseByIdQuery(courseId.Value));
+            if (!courseResult.IsSuccess || courseResult.Value == null)
+            {
+                return NotFound("دوره آموزشی یافت نشد.");
+            }
+
+            course = courseResult.Value;
+        }
+
+        if (!courseId.HasValue)
+        {
+            return BadRequest("دوره مرتبط یافت نشد.");
+        }
+
+        var isCourseScope = !teachingPlanId.HasValue && !sessionReportId.HasValue;
+        var isSessionScope = sessionReportId.HasValue;
+
         ViewBag.TeachingPlanId = teachingPlanId;
-        ViewBag.TeachingPlanTitle = teachingPlan.Value.Title;
-        ViewBag.CourseTitle = teachingPlan.Value.CourseTitle ?? "دوره";
-        ViewBag.CourseId = teachingPlan.Value.CourseId;
+        ViewBag.TeachingPlanTitle = teachingPlan?.Title ?? (isCourseScope ? course?.Title ?? "دوره" : "برنامه آموزشی");
+        ViewBag.CourseTitle = course?.Title ?? teachingPlan?.CourseTitle ?? "دوره";
+        ViewBag.CourseId = courseId;
+        ViewBag.SessionReportId = sessionReportId;
+        ViewBag.IsCourseScope = isCourseScope;
+        ViewBag.IsSessionScope = isSessionScope;
         ViewBag.ScheduleItemTypes = Enum.GetValues<ScheduleItemType>()
             .Select(type => new { Value = (int)type, Text = type.GetDisplayName(), Description = type.GetDescription() })
             .ToList();
@@ -99,13 +190,17 @@ public class ScheduleItemController : BaseTeacherController
         ViewBag.ScheduleItemId = id;
 
         // Setup page title section
-        if (isEditMode)
+        if (isEditMode && teachingPlanId.HasValue)
         {
-            await SetPageTitleSectionAsync(PageType.ScheduleItemEdit, (teachingPlanId, id));
+            await SetPageTitleSectionAsync(PageType.ScheduleItemEdit, (teachingPlanId.Value, id));
+        }
+        else if (teachingPlanId.HasValue)
+        {
+            await SetPageTitleSectionAsync(PageType.ScheduleItemCreate, teachingPlanId.Value);
         }
         else
         {
-            await SetPageTitleSectionAsync(PageType.ScheduleItemCreate, teachingPlanId);
+            await SetPageTitleSectionAsync(PageType.CourseDetails, courseId.Value);
         }
 
         CreateScheduleItemRequest model;
@@ -121,7 +216,9 @@ public class ScheduleItemController : BaseTeacherController
 
             model = new CreateScheduleItemRequest
             {
-                TeachingPlanId = teachingPlanId,
+                TeachingPlanId = scheduleItem.Value.TeachingPlanId,
+                CourseId = scheduleItem.Value.CourseId ?? courseId,
+                SessionReportId = scheduleItem.Value.SessionReportId,
                 Title = scheduleItem.Value.Title,
                 Description = scheduleItem.Value.Description,
                 StartDate = scheduleItem.Value.StartDate,
@@ -139,6 +236,8 @@ public class ScheduleItemController : BaseTeacherController
             model = new CreateScheduleItemRequest
             {
                 TeachingPlanId = teachingPlanId,
+                CourseId = courseId,
+                SessionReportId = sessionReportId,
                 ContentJson = string.Empty
             };
         }
@@ -154,6 +253,10 @@ public class ScheduleItemController : BaseTeacherController
         if (!ModelState.IsValid)
         {
             ViewBag.TeachingPlanId = request.TeachingPlanId;
+            ViewBag.CourseId = request.CourseId;
+            ViewBag.SessionReportId = request.SessionReportId;
+            ViewBag.IsCourseScope = !request.TeachingPlanId.HasValue && request.CourseId.HasValue;
+            ViewBag.IsSessionScope = request.SessionReportId.HasValue;
             ViewBag.ScheduleItemTypes = Enum.GetValues<ScheduleItemType>()
                 .Select(type => new { Value = (int)type, Text = type.GetDisplayName(), Description = type.GetDescription() })
                 .ToList();
@@ -166,24 +269,35 @@ public class ScheduleItemController : BaseTeacherController
             var updateRequest = new UpdateScheduleItemRequest
             {
                 Id = id,
+                CourseId = request.CourseId,
+                TeachingPlanId = request.TeachingPlanId,
+                SessionReportId = request.SessionReportId,
                 Title = request.Title,
                 Description = request.Description,
                 StartDate = request.StartDate,
                 DueDate = request.DueDate,
                 IsMandatory = request.IsMandatory,
                 ContentJson = request.ContentJson,
-                MaxScore = request.MaxScore
+                MaxScore = request.MaxScore,
+                GroupIds = request.GroupIds,
+                SubChapterIds = request.SubChapterIds,
+                StudentProfileIds = request.StudentProfileIds
             };
 
             var updateCommand = new UpdateScheduleItemCommand(
                 updateRequest.Id,
+                updateRequest.CourseId,
+                updateRequest.TeachingPlanId,
+                updateRequest.SessionReportId,
                 updateRequest.Title,
                 updateRequest.Description,
                 updateRequest.StartDate,
                 updateRequest.DueDate,
                 updateRequest.IsMandatory,
                 updateRequest.ContentJson,
-                updateRequest.MaxScore
+                updateRequest.MaxScore,
+                updateRequest.GroupIds,
+                updateRequest.SubChapterIds
             );
 
             var result = await _mediator.Send(updateCommand);
@@ -191,19 +305,35 @@ public class ScheduleItemController : BaseTeacherController
             {
                 ModelState.AddModelError("", result.Error ?? "خطا در به‌روزرسانی آیتم آموزشی");
                 ViewBag.TeachingPlanId = request.TeachingPlanId;
+                ViewBag.CourseId = request.CourseId;
+                ViewBag.SessionReportId = request.SessionReportId;
+                ViewBag.IsCourseScope = !request.TeachingPlanId.HasValue && request.CourseId.HasValue;
+                ViewBag.IsSessionScope = request.SessionReportId.HasValue;
                 ViewBag.ScheduleItemTypes = Enum.GetValues<ScheduleItemType>()
                 .Select(type => new { Value = (int)type, Text = type.GetDisplayName(), Description = type.GetDescription() })
                 .ToList();
                 return View("Edit", updateRequest);
             }
 
-            return RedirectToAction(nameof(Index), new { teachingPlanId = request.TeachingPlanId });
+            if (request.TeachingPlanId.HasValue && request.TeachingPlanId.Value > 0)
+            {
+                return RedirectToAction(nameof(Index), new { teachingPlanId = request.TeachingPlanId.Value });
+            }
+
+            if (request.CourseId.HasValue && request.CourseId.Value > 0)
+            {
+                return RedirectToAction(nameof(CourseLessons), new { courseId = request.CourseId.Value });
+            }
+
+            return RedirectToAction(nameof(Index), new { teachingPlanId = 0 });
         }
         else
         {
             // Create new item
             var command = new CreateScheduleItemCommand(
+                request.CourseId,
                 request.TeachingPlanId,
+                request.SessionReportId,
                 request.GroupId,
                 request.Type,
                 request.Title,
@@ -224,13 +354,27 @@ public class ScheduleItemController : BaseTeacherController
             {
                 ModelState.AddModelError("", result.Error ?? "خطا در ایجاد آیتم آموزشی");
                 ViewBag.TeachingPlanId = request.TeachingPlanId;
+                ViewBag.CourseId = request.CourseId;
+                ViewBag.SessionReportId = request.SessionReportId;
+                ViewBag.IsCourseScope = !request.TeachingPlanId.HasValue && request.CourseId.HasValue;
+                ViewBag.IsSessionScope = request.SessionReportId.HasValue;
                 ViewBag.ScheduleItemTypes = Enum.GetValues<ScheduleItemType>()
                 .Select(type => new { Value = (int)type, Text = type.GetDisplayName(), Description = type.GetDescription() })
                 .ToList();
                 return View(request);
             }
 
-            return RedirectToAction(nameof(Index), new { teachingPlanId = request.TeachingPlanId });
+            if (request.TeachingPlanId.HasValue && request.TeachingPlanId.Value > 0)
+            {
+                return RedirectToAction(nameof(Index), new { teachingPlanId = request.TeachingPlanId.Value });
+            }
+
+            if (request.CourseId.HasValue && request.CourseId.Value > 0)
+            {
+                return RedirectToAction(nameof(CourseLessons), new { courseId = request.CourseId.Value });
+            }
+
+            return RedirectToAction(nameof(Index), new { teachingPlanId = 0 });
         }
     }
 
@@ -256,18 +400,28 @@ public class ScheduleItemController : BaseTeacherController
             ViewBag.ScheduleItemTypes = Enum.GetValues<ScheduleItemType>()
                 .Select(type => new { Value = (int)type, Text = type.GetDisplayName(), Description = type.GetDescription() })
                 .ToList();
+            ViewBag.TeachingPlanId = request.TeachingPlanId;
+            ViewBag.CourseId = request.CourseId;
+            ViewBag.SessionReportId = request.SessionReportId;
+            ViewBag.IsCourseScope = !request.TeachingPlanId.HasValue && request.CourseId.HasValue;
+            ViewBag.IsSessionScope = request.SessionReportId.HasValue;
             return View(request);
         }
 
         var command = new UpdateScheduleItemCommand(
             request.Id,
+            request.CourseId,
+            request.TeachingPlanId,
+            request.SessionReportId,
             request.Title,
             request.Description,
             request.StartDate,
             request.DueDate,
             request.IsMandatory,
             request.ContentJson,
-            request.MaxScore
+            request.MaxScore,
+            request.GroupIds,
+            request.SubChapterIds
         );
 
         var result = await _mediator.Send(command);
@@ -282,7 +436,18 @@ public class ScheduleItemController : BaseTeacherController
 
         // Get the teaching plan ID from the updated item
         var scheduleItem = await _mediator.Send(new EduTrack.Application.Features.ScheduleItems.Queries.GetScheduleItemByIdQuery(request.Id));
-        return RedirectToAction(nameof(Index), new { teachingPlanId = scheduleItem.Value?.TeachingPlanId ?? 0 });
+        if (scheduleItem.Value?.TeachingPlanId is int redirectPlanId && redirectPlanId > 0)
+        {
+            return RedirectToAction(nameof(Index), new { teachingPlanId = redirectPlanId });
+        }
+
+        var redirectCourseId = scheduleItem.Value?.CourseId ?? request.CourseId;
+        if (redirectCourseId.HasValue && redirectCourseId.Value > 0)
+        {
+            return RedirectToAction(nameof(CourseLessons), new { courseId = redirectCourseId.Value });
+        }
+
+        return RedirectToAction(nameof(Index), new { teachingPlanId = 0 });
     }
 
     // POST: ScheduleItem/Delete
@@ -302,7 +467,17 @@ public class ScheduleItemController : BaseTeacherController
             TempData["Error"] = result.Error ?? "خطا در حذف آیتم آموزشی";
         }
 
-        return RedirectToAction(nameof(Index), new { teachingPlanId = scheduleItem.Value.TeachingPlanId });
+        if (scheduleItem.Value.TeachingPlanId.HasValue)
+        {
+            return RedirectToAction(nameof(Index), new { teachingPlanId = scheduleItem.Value.TeachingPlanId.Value });
+        }
+
+        if (scheduleItem.Value.CourseId.HasValue)
+        {
+            return RedirectToAction(nameof(CourseLessons), new { courseId = scheduleItem.Value.CourseId.Value });
+        }
+
+        return RedirectToAction(nameof(Index), new { teachingPlanId = 0 });
     }
 
     // API Endpoints for AJAX calls
@@ -332,6 +507,19 @@ public class ScheduleItemController : BaseTeacherController
         return Json(new { success = false, message = result.Error });
     }
 
+    [HttpGet]
+    public async Task<IActionResult> GetCourseScheduleItems(int courseId, bool courseScopeOnly = true)
+    {
+        var result = await _mediator.Send(new GetScheduleItemsByCourseQuery(courseId, courseScopeOnly));
+
+        if (result.IsSuccess)
+        {
+            return Json(new { success = true, data = result.Value });
+        }
+
+        return Json(new { success = false, message = result.Error });
+    }
+
     [HttpPost]
     public async Task<IActionResult> CreateScheduleItem([FromBody] CreateScheduleItemRequest request)
     {
@@ -341,10 +529,12 @@ public class ScheduleItemController : BaseTeacherController
         }
 
         // Log the request for debugging
-        Console.WriteLine($"CreateScheduleItem request: TeachingPlanId={request.TeachingPlanId}, Title={request.Title}, Type={request.Type}");
+        Console.WriteLine($"CreateScheduleItem request: TeachingPlanId={request.TeachingPlanId}, CourseId={request.CourseId}, Title={request.Title}, Type={request.Type}");
 
         var command = new CreateScheduleItemCommand(
+            request.CourseId,
             request.TeachingPlanId,
+            request.SessionReportId,
             request.GroupId ?? null,
             request.Type,
             request.Title ?? "",
@@ -356,7 +546,8 @@ public class ScheduleItemController : BaseTeacherController
             request.ContentJson ?? "{}",
             request.MaxScore,
             request.GroupIds ?? new List<int>(),
-            request.SubChapterIds ?? new List<int>()
+            request.SubChapterIds ?? new List<int>(),
+            request.StudentProfileIds ?? new List<int>()
         );
 
         var result = await _mediator.Send(command);
@@ -374,13 +565,18 @@ public class ScheduleItemController : BaseTeacherController
     {
         var command = new UpdateScheduleItemCommand(
             request.Id,
+            request.CourseId,
+            request.TeachingPlanId,
+            request.SessionReportId,
             request.Title,
             request.Description,
             request.StartDate,
             request.DueDate,
             request.IsMandatory,
             request.ContentJson,
-            request.MaxScore
+            request.MaxScore,
+            request.GroupIds,
+            request.SubChapterIds
         );
 
         var result = await _mediator.Send(command);
@@ -463,7 +659,7 @@ public class ScheduleItemController : BaseTeacherController
             }
 
             _logger.LogInformation("SaveStep called with request: {@Request}", request);
-            Console.WriteLine($"SaveStep called - Step: {request.Step}, TeachingPlanId: {request.TeachingPlanId}");
+            Console.WriteLine($"SaveStep called - Step: {request.Step}, TeachingPlanId: {request.TeachingPlanId}, CourseId: {request.CourseId}");
 
             var currentUser = await _userManager.GetUserAsync(User);
             if (currentUser == null)
@@ -479,7 +675,9 @@ public class ScheduleItemController : BaseTeacherController
 
             var command = new SaveScheduleItemStepCommand(
                 request.Id,
+            request.CourseId,
                 request.TeachingPlanId,
+            request.SessionReportId,
                 request.Step,
                 request.Type,
                 request.Title,

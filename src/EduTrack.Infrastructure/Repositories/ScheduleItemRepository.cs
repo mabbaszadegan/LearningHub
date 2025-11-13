@@ -27,6 +27,22 @@ public class ScheduleItemRepository : Repository<ScheduleItem>, IScheduleItemRep
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<IEnumerable<ScheduleItem>> GetScheduleItemsByCourseAsync(int courseId, bool courseScopeOnly = true, CancellationToken cancellationToken = default)
+    {
+        return await _dbSet
+            .Include(si => si.GroupAssignments)
+                .ThenInclude(ga => ga.StudentGroup)
+            .Include(si => si.SubChapterAssignments)
+                .ThenInclude(sca => sca.SubChapter)
+            .Include(si => si.StudentAssignments)
+                .ThenInclude(sa => sa.StudentProfile)
+            .Include(si => si.TeachingPlan)
+            .Include(si => si.Group)
+            .Where(si => si.CourseId == courseId && (!courseScopeOnly || !si.TeachingPlanId.HasValue))
+            .OrderBy(si => si.StartDate)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<IEnumerable<ScheduleItem>> GetScheduleItemsByGroupAsync(int groupId, CancellationToken cancellationToken = default)
     {
         return await _dbSet
@@ -175,6 +191,10 @@ public class ScheduleItemRepository : Repository<ScheduleItem>, IScheduleItemRep
         // 2. Assignment to student's group AND no individual students in that group are assigned
         // 3. No group assignments (accessible to all students)
         
+        var enrollments = _context.Set<CourseEnrollment>();
+        var courseAccesses = _context.Set<CourseAccess>();
+        var now = DateTimeOffset.UtcNow;
+
         var accessibleItems = await _dbSet
             .Include(si => si.GroupAssignments)
                 .ThenInclude(ga => ga.StudentGroup)
@@ -188,20 +208,38 @@ public class ScheduleItemRepository : Repository<ScheduleItem>, IScheduleItemRep
             .Include(si => si.Group)
             .Include(si => si.Lesson)
             .Where(si => 
+                // Course-level visibility
+                (
+                    !si.CourseId.HasValue ||
+                    enrollments.Any(e =>
+                        si.CourseId.HasValue &&
+                        e.CourseId == si.CourseId.Value &&
+                        e.StudentId == studentId &&
+                        e.IsActive &&
+                        ((studentProfileId.HasValue && e.StudentProfileId == studentProfileId.Value) ||
+                         (!studentProfileId.HasValue && e.StudentProfileId == null))) ||
+                    courseAccesses.Any(ca =>
+                        si.CourseId.HasValue &&
+                        ca.CourseId == si.CourseId.Value &&
+                        ca.StudentId == studentId &&
+                        ca.IsActive &&
+                        (!ca.ExpiresAt.HasValue || ca.ExpiresAt > now))
+                ) &&
+                
                 // Rule 1: Direct assignment to student
                 si.StudentAssignments.Any(sa =>
                     (studentProfileId.HasValue && sa.StudentProfileId == studentProfileId.Value) ||
-                    (!studentProfileId.HasValue && sa.StudentProfile.UserId == studentId)) ||
+                    (!studentProfileId.HasValue && sa.StudentProfile != null && sa.StudentProfile.UserId == studentId)) ||
                 
                 // Rule 2: Assignment to student's group AND no individual students in that group are assigned
                 si.GroupAssignments.Any(ga => 
                     ga.StudentGroup.Members.Any(m =>
                         (studentProfileId.HasValue && m.StudentProfileId == studentProfileId.Value) ||
-                        (!studentProfileId.HasValue && m.StudentProfile.UserId == studentId)) &&
+                        (!studentProfileId.HasValue && m.StudentProfile != null && m.StudentProfile.UserId == studentId)) &&
                     !si.StudentAssignments.Any(sa => 
                         ga.StudentGroup.Members.Any(m =>
                             (studentProfileId.HasValue && m.StudentProfileId == sa.StudentProfileId) ||
-                            (!studentProfileId.HasValue && m.StudentProfile.UserId == sa.StudentProfile.UserId))
+                            (!studentProfileId.HasValue && m.StudentProfile != null && sa.StudentProfile != null && m.StudentProfile.UserId == sa.StudentProfile.UserId))
                     )
                 ) ||
                 

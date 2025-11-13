@@ -42,6 +42,8 @@ public class GetScheduleItemsByTeachingPlanQueryHandler : IRequestHandler<GetSch
                 {
                     Id = item.Id,
                     TeachingPlanId = item.TeachingPlanId,
+                    CourseId = item.CourseId ?? item.TeachingPlan?.CourseId,
+                    SessionReportId = item.SessionReportId,
                     GroupId = item.GroupId,
                     GroupName = groupName,
                     Type = item.Type,

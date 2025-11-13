@@ -1,5 +1,6 @@
 using EduTrack.Application.Common.Models;
 using EduTrack.Application.Common.Models.StudySessions;
+using EduTrack.Application.Common.Models.TeachingPlans;
 using EduTrack.Application.Features.StudySessions.Queries;
 using EduTrack.Application.Features.ScheduleItems.Queries;
 using EduTrack.Application.Features.TeachingPlan.Queries;
@@ -268,14 +269,30 @@ public class GetLastStudySessionsQueryHandler : IRequestHandler<GetLastStudySess
                 var scheduleItem = scheduleItemResult.Value;
 
                 // Get teaching plan to get course ID
-                var teachingPlanResult = await _mediator.Send(new GetTeachingPlanByIdQuery(scheduleItem.TeachingPlanId));
-                if (!teachingPlanResult.IsSuccess || teachingPlanResult.Value == null)
-                    continue;
+                TeachingPlanDto? teachingPlan = null;
+                int? courseId = scheduleItem.CourseId;
 
-                var teachingPlan = teachingPlanResult.Value;
+                if (scheduleItem.TeachingPlanId.HasValue)
+                {
+                    var teachingPlanResult = await _mediator.Send(new GetTeachingPlanByIdQuery(scheduleItem.TeachingPlanId.Value));
+                    if (teachingPlanResult.IsSuccess && teachingPlanResult.Value != null)
+                    {
+                        teachingPlan = teachingPlanResult.Value;
+                        courseId ??= teachingPlan.CourseId;
+                    }
+                    else if (!courseId.HasValue)
+                    {
+                        continue;
+                    }
+                }
+
+                if (!courseId.HasValue)
+                {
+                    continue;
+                }
 
                 // Get course information
-                var courseResult = await _mediator.Send(new EduTrack.Application.Features.Courses.Queries.GetCourseByIdQuery(teachingPlan.CourseId));
+                var courseResult = await _mediator.Send(new EduTrack.Application.Features.Courses.Queries.GetCourseByIdQuery(courseId.Value));
                 var courseTitle = courseResult.IsSuccess && courseResult.Value != null ? courseResult.Value.Title : "دوره آموزشی";
                 var courseThumbnail = courseResult.IsSuccess && courseResult.Value != null ? courseResult.Value.Thumbnail : null;
 
@@ -287,7 +304,7 @@ public class GetLastStudySessionsQueryHandler : IRequestHandler<GetLastStudySess
                     StudentProfileId = session.StudentProfileId,
                     ScheduleItemTitle = scheduleItem.Title,
                     ScheduleItemDescription = scheduleItem.Description,
-                    CourseId = teachingPlan.CourseId,
+                    CourseId = courseId.Value,
                     CourseTitle = courseTitle,
                     CourseThumbnail = courseThumbnail,
                     StartedAt = session.StartedAt,
@@ -350,14 +367,30 @@ public class GetAllStudySessionsQueryHandler : IRequestHandler<GetAllStudySessio
                 var scheduleItem = scheduleItemResult.Value;
 
                 // Get teaching plan to get course ID
-                var teachingPlanResult = await _mediator.Send(new GetTeachingPlanByIdQuery(scheduleItem.TeachingPlanId));
-                if (!teachingPlanResult.IsSuccess || teachingPlanResult.Value == null)
-                    continue;
+                TeachingPlanDto? teachingPlan = null;
+                int? courseId = scheduleItem.CourseId;
 
-                var teachingPlan = teachingPlanResult.Value;
+                if (scheduleItem.TeachingPlanId.HasValue)
+                {
+                    var teachingPlanResult = await _mediator.Send(new GetTeachingPlanByIdQuery(scheduleItem.TeachingPlanId.Value));
+                    if (teachingPlanResult.IsSuccess && teachingPlanResult.Value != null)
+                    {
+                        teachingPlan = teachingPlanResult.Value;
+                        courseId ??= teachingPlan.CourseId;
+                    }
+                    else if (!courseId.HasValue)
+                    {
+                        continue;
+                    }
+                }
+
+                if (!courseId.HasValue)
+                {
+                    continue;
+                }
 
                 // Get course information
-                var courseResult = await _mediator.Send(new EduTrack.Application.Features.Courses.Queries.GetCourseByIdQuery(teachingPlan.CourseId));
+                var courseResult = await _mediator.Send(new EduTrack.Application.Features.Courses.Queries.GetCourseByIdQuery(courseId.Value));
                 var courseTitle = courseResult.IsSuccess && courseResult.Value != null ? courseResult.Value.Title : "دوره آموزشی";
                 var courseThumbnail = courseResult.IsSuccess && courseResult.Value != null ? courseResult.Value.Thumbnail : null;
 
@@ -369,7 +402,7 @@ public class GetAllStudySessionsQueryHandler : IRequestHandler<GetAllStudySessio
                     StudentProfileId = session.StudentProfileId,
                     ScheduleItemTitle = scheduleItem.Title,
                     ScheduleItemDescription = scheduleItem.Description,
-                    CourseId = teachingPlan.CourseId,
+                    CourseId = courseId.Value,
                     CourseTitle = courseTitle,
                     CourseThumbnail = courseThumbnail,
                     StartedAt = session.StartedAt,
@@ -433,18 +466,30 @@ public class GetLastStudyCoursesQueryHandler : IRequestHandler<GetLastStudyCours
                 var scheduleItem = scheduleItemResult.Value;
 
                 // Get teaching plan to get course ID
-                var teachingPlanResult = await _mediator.Send(new GetTeachingPlanByIdQuery(scheduleItem.TeachingPlanId));
-                if (!teachingPlanResult.IsSuccess || teachingPlanResult.Value == null)
-                    continue;
-
-                var teachingPlan = teachingPlanResult.Value;
-                var courseId = teachingPlan.CourseId;
-
-                if (!courseGroups.ContainsKey(courseId))
+                int? courseId = scheduleItem.CourseId;
+                if (scheduleItem.TeachingPlanId.HasValue)
                 {
-                    courseGroups[courseId] = new List<Domain.Entities.StudySession>();
+                    var teachingPlanResult = await _mediator.Send(new GetTeachingPlanByIdQuery(scheduleItem.TeachingPlanId.Value));
+                    if (teachingPlanResult.IsSuccess && teachingPlanResult.Value != null)
+                    {
+                        courseId ??= teachingPlanResult.Value.CourseId;
+                    }
+                    else if (!courseId.HasValue)
+                    {
+                        continue;
+                    }
                 }
-                courseGroups[courseId].Add(session);
+
+                if (!courseId.HasValue)
+                {
+                    continue;
+                }
+
+                if (!courseGroups.ContainsKey(courseId.Value))
+                {
+                    courseGroups[courseId.Value] = new List<Domain.Entities.StudySession>();
+                }
+                courseGroups[courseId.Value].Add(session);
             }
 
             var courseHistoryDtos = new List<CourseStudyHistoryDto>();

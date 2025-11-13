@@ -41,7 +41,11 @@ public class GetStudentAgendaQueryHandler : IRequestHandler<GetStudentAgendaQuer
         // Filter by course if specified
         if (request.CourseId.HasValue)
         {
-            allScheduleItems = allScheduleItems.Where(si => si.TeachingPlan.CourseId == request.CourseId.Value).ToList();
+            allScheduleItems = allScheduleItems
+                .Where(si =>
+                    (si.CourseId.HasValue && si.CourseId == request.CourseId.Value) ||
+                    (si.TeachingPlan != null && si.TeachingPlan.CourseId == request.CourseId.Value))
+                .ToList();
         }
 
         // Get student's submissions
@@ -115,6 +119,8 @@ public class GetStudentAgendaQueryHandler : IRequestHandler<GetStudentAgendaQuer
         {
             Id = item.Id,
             TeachingPlanId = item.TeachingPlanId,
+            CourseId = item.CourseId ?? item.TeachingPlan?.CourseId,
+            SessionReportId = item.SessionReportId,
             GroupId = item.GroupId,
             GroupName = item.Group?.Name,
             LessonId = item.LessonId,

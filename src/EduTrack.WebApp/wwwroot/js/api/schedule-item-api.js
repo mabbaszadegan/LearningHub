@@ -133,6 +133,17 @@ window.EduTrack.API = window.EduTrack.API || {};
         },
 
         /**
+         * Get schedule items by course
+         * @param {number} courseId
+         * @param {boolean} courseScopeOnly
+         * @returns {Promise<Object>}
+         */
+        async getCourseScheduleItems(courseId, courseScopeOnly = true) {
+            const url = `${baseUrl}/GetCourseScheduleItems?courseId=${courseId}&courseScopeOnly=${courseScopeOnly}`;
+            return await fetchAPI(url, { method: 'GET' });
+        },
+
+        /**
          * Get single schedule item by ID
          * @param {number} id - Schedule item ID
          * @returns {Promise<Object>} API response

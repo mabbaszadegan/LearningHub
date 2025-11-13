@@ -21,7 +21,16 @@ class ScheduleItemsManager {
         // Prefer reading from container data attribute; fallback to query string
         const container = document.querySelector('.schedule-items-container');
         const dataTeachingPlanId = container?.dataset?.teachingPlanId ? parseInt(container.dataset.teachingPlanId) : 0;
+        this.isCourseScope = container?.dataset?.courseScope === 'true';
+        this.currentCourseId = container?.dataset?.courseId ? parseInt(container.dataset.courseId) : 0;
         this.currentTeachingPlanId = dataTeachingPlanId || this.getTeachingPlanIdFromUrl();
+        if (this.isCourseScope) {
+            this.currentTeachingPlanId = 0;
+        }
+        if (!this.currentCourseId) {
+            const urlParams = new URLSearchParams(window.location.search);
+            this.currentCourseId = parseInt(urlParams.get('courseId')) || 0;
+        }
         this.currentFilters = {
             search: '',
             type: '',
@@ -148,11 +157,26 @@ class ScheduleItemsManager {
             let result;
             
             if (this.api) {
-                // Use centralized API service
-                result = await this.api.getScheduleItems(this.currentTeachingPlanId);
+                if (this.isCourseScope && this.currentCourseId > 0) {
+                    result = await this.api.getCourseScheduleItems(this.currentCourseId, true);
+                } else if (this.currentTeachingPlanId > 0) {
+                    result = await this.api.getScheduleItems(this.currentTeachingPlanId);
+                } else {
+                    return;
+                }
             } else {
-                // Fallback to direct fetch
-                const response = await fetch(`/Teacher/ScheduleItem/GetScheduleItems?teachingPlanId=${this.currentTeachingPlanId}`);
+                let fetchUrl = null;
+                if (this.isCourseScope && this.currentCourseId > 0) {
+                    fetchUrl = `/Teacher/ScheduleItem/GetCourseScheduleItems?courseId=${this.currentCourseId}&courseScopeOnly=true`;
+                } else if (this.currentTeachingPlanId > 0) {
+                    fetchUrl = `/Teacher/ScheduleItem/GetScheduleItems?teachingPlanId=${this.currentTeachingPlanId}`;
+                }
+
+                if (!fetchUrl) {
+                    return;
+                }
+
+                const response = await fetch(fetchUrl);
                 result = await response.json();
             }
             
@@ -189,8 +213,18 @@ class ScheduleItemsManager {
         const typeClass = `type-${item.type}`;
         const typeName = this.getTypeName(item.type) || item.typeName || '';
 
+        const teachingPlanId = item.teachingPlanId ?? '';
+        const courseId = item.courseId ?? '';
+        const sessionReportId = item.sessionReportId ?? '';
+
         return `
-            <div class="schedule-item-card" data-item-id="${item.id}" data-type="${item.type}" data-status="${item.status}">
+            <div class="schedule-item-card"
+                 data-item-id="${item.id}"
+                 data-type="${item.type}"
+                 data-status="${item.status}"
+                 data-teaching-plan-id="${teachingPlanId}"
+                 data-course-id="${courseId}"
+                 data-session-report-id="${sessionReportId}">
                 <div class="item-header">
                     <div class="item-type-badge ${typeClass}">
                         <i class="${typeIcon}"></i>
@@ -257,6 +291,10 @@ class ScheduleItemsManager {
     }
 
     getEmptyStateHtml() {
+        const createUrl = this.isCourseScope && this.currentCourseId
+            ? `/Teacher/ScheduleItem/CreateOrEdit?courseId=${this.currentCourseId}`
+            : `/Teacher/ScheduleItem/CreateOrEdit?teachingPlanId=${this.currentTeachingPlanId}`;
+
         return `
             <div class="empty-state">
                 <div class="empty-icon">
@@ -264,10 +302,10 @@ class ScheduleItemsManager {
                 </div>
                 <h3>هیچ آیتم آموزشی وجود ندارد</h3>
                 <p>برای شروع، اولین آیتم آموزشی خود را ایجاد کنید.</p>
-                <button type="button" class="btn btn-primary btn-modern" data-bs-toggle="modal" data-bs-target="#createItemModal">
+                <a href="${createUrl}" class="btn btn-primary btn-modern">
                     <i class="fas fa-plus"></i>
                     افزودن آیتم جدید
-                </button>
+                </a>
             </div>
         `;
     }
@@ -411,12 +449,32 @@ class ScheduleItemsManager {
 
 
     async editItem(itemId) {
-        // Get teaching plan ID from current page URL or from a global variable
-        const urlParams = new URLSearchParams(window.location.search);
-        const teachingPlanId = urlParams.get('teachingPlanId') || window.teachingPlanId || 1;
-        
-        // Redirect to create page with edit parameters
-        window.location.href = `/Teacher/ScheduleItem/CreateOrEdit?teachingPlanId=${teachingPlanId}&id=${itemId}`;
+        const card = document.querySelector(`.schedule-item-card[data-item-id="${itemId}"]`);
+        const cardTeachingPlanId = card && card.dataset && card.dataset.teachingPlanId ? parseInt(card.dataset.teachingPlanId) : 0;
+        const cardCourseId = card && card.dataset && card.dataset.courseId ? parseInt(card.dataset.courseId) : 0;
+        const cardSessionReportId = card && card.dataset && card.dataset.sessionReportId ? parseInt(card.dataset.sessionReportId) : 0;
+
+        if (cardTeachingPlanId && cardTeachingPlanId > 0) {
+            const query = new URLSearchParams();
+            query.set('teachingPlanId', cardTeachingPlanId);
+            query.set('id', itemId);
+            if (cardSessionReportId > 0) {
+                query.set('sessionReportId', cardSessionReportId);
+            }
+            window.location.href = `/Teacher/ScheduleItem/CreateOrEdit?${query.toString()}`;
+            return;
+        }
+
+        const courseId = cardCourseId || this.currentCourseId || parseInt(new URLSearchParams(window.location.search).get('courseId')) || 0;
+        const query = new URLSearchParams();
+        if (courseId > 0) {
+            query.set('courseId', courseId);
+        }
+        if (cardSessionReportId > 0) {
+            query.set('sessionReportId', cardSessionReportId);
+        }
+        query.set('id', itemId);
+        window.location.href = `/Teacher/ScheduleItem/CreateOrEdit?${query.toString()}`;
     }
 
     async duplicateItem(itemId) {
