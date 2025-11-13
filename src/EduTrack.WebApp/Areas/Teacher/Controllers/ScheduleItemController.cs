@@ -177,7 +177,7 @@ public class ScheduleItemController : BaseTeacherController
         ViewBag.SessionTitle = sessionReportResult.Value.Title ?? "جلسه آموزشی";
         ViewBag.Stats = stats;
 
-        await SetPageTitleSectionAsync(PageType.ScheduleItemsIndex, sessionReportId);
+        await SetPageTitleSectionAsync(PageType.ScheduleItemsIndex, sessionReportResult.Value.TeachingPlanId);
 
         return View("Index", assignments);
     }
