@@ -163,13 +163,6 @@
                                    autocomplete="off"
                                    placeholder="@placeholder"
                                    @(allowManual ? null : "readonly") />
-                            <button type="button"
-                                    class="gapfill-clear"
-                                    data-action="clear-blank"
-                                    title="حذف پاسخ">
-                                <span class="sr-only">حذف پاسخ</span>
-                                <i class="fas fa-times" aria-hidden="true"></i>
-                            </button>
                         </span>
 
                         @if (allowBlank && blankOptions.Any())
@@ -205,7 +198,6 @@
         @if (Model.ShowGlobalOptions && Model.GlobalOptions != null && Model.GlobalOptions.Any())
         {
             <div class="gapfill-global-options" data-role="global-options">
-                <span class="gapfill-global-options-label"><i class="fas fa-lightbulb"></i> گزینه‌های پیشنهادی:</span>
                 <div class="gapfill-global-options-list">
                     @foreach (var option in globalOptions)
                     {

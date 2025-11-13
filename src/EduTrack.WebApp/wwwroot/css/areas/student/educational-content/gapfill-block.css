@@ -120,26 +120,6 @@
     cursor: pointer;
 }
 
-.gapfill-clear {
-    border: none;
-    background: transparent;
-    color: #9ca3af;
-    cursor: pointer;
-    padding: 0.15rem;
-    border-radius: 999px;
-    transition: color 0.2s ease, background-color 0.2s ease, opacity 0.2s ease;
-    opacity: 0;
-}
-
-.gapfill-blank.has-value .gapfill-clear {
-    opacity: 1;
-}
-
-.gapfill-clear:hover {
-    color: #dc2626;
-    background-color: rgba(220, 38, 38, 0.12);
-}
-
 .gapfill-blank.has-value .gapfill-blank-input {
     border-color: #4f46e5;
 }
@@ -210,19 +190,11 @@
     margin-top: 0.75rem;
 }
 
-.gapfill-global-options-label {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    font-weight: 600;
-    color: #1d4ed8;
-    margin-bottom: 0.5rem;
-}
-
 .gapfill-global-options-list {
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
+    justify-content: center;
 }
 
 .gapfill-option-global {
