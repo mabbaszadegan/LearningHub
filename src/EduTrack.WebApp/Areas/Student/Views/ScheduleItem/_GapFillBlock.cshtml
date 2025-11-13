@@ -143,7 +143,7 @@
                     var allowBlank = !allowManual && blankSegment.AllowBlankOptions && (blankSegment.Options?.Any() ?? false);
                     var placeholder = allowManual
                         ? "پاسخ خود را وارد کنید"
-                        : "یک گزینه را انتخاب کنید";
+                        : null;
                     var blankOptions = (blankSegment.Options ?? new List<GapFillOption>())
                         .Where(option => option != null && !string.IsNullOrWhiteSpace(option.Value))
                         .ToList();
