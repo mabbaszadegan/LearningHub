@@ -14,6 +14,22 @@
     // Calculate total study time and sessions count
     var totalStudyTimeSeconds = scheduleItemsWithStats.Sum(s => s.TotalStudyTimeSeconds);
     var totalSessionsCount = scheduleItemsWithStats.Sum(s => s.StudySessionsCount);
+
+    var categoryKeys = new[] { "general", "personalized", "assignments" };
+    var categories = new List<(string Key, string Label, int Count)>();
+    foreach (var key in categoryKeys)
+    {
+        var count = scheduleItemsWithStats.Count(si => GetItemCategory(si.Item) == key);
+        if (count > 0)
+        {
+            var label = GetCategoryLabel(key);
+            if (!string.IsNullOrWhiteSpace(label))
+            {
+                categories.Add((key, label!, count));
+            }
+        }
+    }
+    var defaultCategory = categories.FirstOrDefault().Key;
 }
 
 @section Styles {
@@ -55,21 +71,24 @@
             </a>
         </div>
         
-        <!-- Type Filter in Header -->
-        @if (scheduleItems.Any())
+        <!-- Category Tabs in Header -->
+        @if (categories.Any())
         {
-            <div class="study-header-filters">
-                <div class="study-type-filter-header">
-                    @{
-                        var typeGroups = scheduleItems.GroupBy(si => si.Type).OrderBy(g => g.Key);
-                    }
-                    @foreach (var typeGroup in typeGroups)
+            <div class="study-header-tabs">
+                <div class="study-tab-list" role="tablist">
+                    @for (var i = 0; i < categories.Count; i++)
                     {
-                        <button class="study-type-filter-item-header" 
-                                data-type="@typeGroup.Key.ToString()" 
-                                data-count="@typeGroup.Count()">
-                            <i class="@GetItemTypeIcon(typeGroup.Key)"></i>
-                            <span>@GetItemTypeName(typeGroup.Key)</span>
+                        var category = categories[i];
+                        var isActive = category.Key == defaultCategory;
+                        <button type="button"
+                                class="study-tab@(isActive ? " active" : string.Empty)"
+                                data-category="@category.Key"
+                                role="tab"
+                                aria-selected="@(isActive ? "true" : "false")"
+                                aria-controls="studyItemsGrid"
+                                tabindex="@(isActive ? "0" : "-1")">
+                            <span>@category.Label</span>
+                            <span class="study-tab-count">@category.Count</span>
                         </button>
                     }
                 </div>
@@ -142,10 +161,19 @@
                         var sessionsCount = statItem.StudySessionsCount;
                         var lastStudyDate = statItem.LastStudyDate;
                         
+                        var category = GetItemCategory(item);
+                        if (string.IsNullOrWhiteSpace(category))
+                        {
+                            continue;
+                        }
+                        var isVisible = string.IsNullOrWhiteSpace(defaultCategory) || category == defaultCategory;
+                        var itemClasses = $"study-item-card{(isVisible ? string.Empty : " hidden")}";
+                        
                         <a href="@Url.Action("Study", "ScheduleItem", new { area = "Student", id = item.Id })" 
-                           class="study-item-card" 
+                           class="@itemClasses" 
                            data-item-id="@item.Id"
                            data-item-type="@item.Type.ToString()"
+                           data-category="@category"
                            data-status="@GetItemStatus(item)"
                            data-subchapter-ids="@string.Join(",", item.SubChapterAssignments.Select(sa => sa.SubChapterId))"
                            data-study-time="@totalTime"
@@ -303,6 +331,42 @@
         };
     }
     
+    string GetItemCategory(ScheduleItemDto? item)
+    {
+        if (item == null)
+        {
+            return string.Empty;
+        }
+
+        if (item.SessionReportId.HasValue)
+        {
+            return "assignments";
+        }
+
+        if (item.TeachingPlanId.HasValue)
+        {
+            return "personalized";
+        }
+
+        if (item.CourseId.HasValue)
+        {
+            return "general";
+        }
+
+        return "general";
+    }
+
+    string? GetCategoryLabel(string categoryKey)
+    {
+        return categoryKey switch
+        {
+            "general" => "آیتم‌های عمومی",
+            "personalized" => "آیتم‌های اختصاصی",
+            "assignments" => "تکالیف",
+            _ => null
+        };
+    }
+
     string FormatTime(int totalSeconds)
     {
         var hours = totalSeconds / 3600;

@@ -227,30 +227,27 @@ class ScheduleItemsManager {
         const typeClass = `type-${item.type}`;
         const typeName = this.getTypeName(item.type) || item.typeName || '';
 
-        let actionsHtml = '';
-        if (!this.isSessionScope) {
-            actionsHtml = `
-                <div class="item-actions">
-                    <div class="dropdown">
-                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                            <i class="fas fa-ellipsis-v"></i>
-                        </button>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="#" data-action="edit" data-item-id="${item.id}">
-                                <i class="fas fa-edit"></i> ویرایش
-                            </a></li>
-                            <li><a class="dropdown-item" href="#" data-action="duplicate" data-item-id="${item.id}">
-                                <i class="fas fa-copy"></i> کپی
-                            </a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item text-danger" href="#" data-action="delete" data-item-id="${item.id}">
-                                <i class="fas fa-trash"></i> حذف
-                            </a></li>
-                        </ul>
-                    </div>
+        const actionsHtml = `
+            <div class="item-actions">
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-ellipsis-v"></i>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#" data-action="edit" data-item-id="${item.id}">
+                            <i class="fas fa-edit"></i> ویرایش
+                        </a></li>
+                        <li><a class="dropdown-item" href="#" data-action="duplicate" data-item-id="${item.id}">
+                            <i class="fas fa-copy"></i> کپی
+                        </a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item text-danger" href="#" data-action="delete" data-item-id="${item.id}">
+                            <i class="fas fa-trash"></i> حذف
+                        </a></li>
+                    </ul>
                 </div>
-            `;
-        }
+            </div>
+        `;
 
         const teachingPlanId = item.teachingPlanId ?? '';
         const courseId = item.courseId ?? '';
@@ -484,30 +481,43 @@ class ScheduleItemsManager {
 
     async editItem(itemId) {
         const card = document.querySelector(`.schedule-item-card[data-item-id="${itemId}"]`);
-        const cardTeachingPlanId = card && card.dataset && card.dataset.teachingPlanId ? parseInt(card.dataset.teachingPlanId) : 0;
-        const cardCourseId = card && card.dataset && card.dataset.courseId ? parseInt(card.dataset.courseId) : 0;
-        const cardSessionReportId = card && card.dataset && card.dataset.sessionReportId ? parseInt(card.dataset.sessionReportId) : 0;
+        const urlParams = new URLSearchParams(window.location.search);
 
-        if (cardTeachingPlanId && cardTeachingPlanId > 0) {
-            const query = new URLSearchParams();
-            query.set('teachingPlanId', cardTeachingPlanId);
-            query.set('id', itemId);
-            if (cardSessionReportId > 0) {
-                query.set('sessionReportId', cardSessionReportId);
-            }
-            window.location.href = `/Teacher/ScheduleItem/CreateOrEdit?${query.toString()}`;
+        const cardTeachingPlanId = card?.dataset?.teachingPlanId ? parseInt(card.dataset.teachingPlanId) : 0;
+        const cardCourseId = card?.dataset?.courseId ? parseInt(card.dataset.courseId) : 0;
+        const cardSessionReportId = card?.dataset?.sessionReportId ? parseInt(card.dataset.sessionReportId) : 0;
+
+        const teachingPlanId = cardTeachingPlanId
+            || this.currentTeachingPlanId
+            || parseInt(urlParams.get('teachingPlanId')) || 0;
+
+        const courseId = cardCourseId
+            || this.currentCourseId
+            || parseInt(urlParams.get('courseId')) || 0;
+
+        const sessionReportId = cardSessionReportId
+            || this.currentSessionReportId
+            || parseInt(urlParams.get('sessionReportId')) || 0;
+
+        const query = new URLSearchParams();
+
+        if (sessionReportId > 0) {
+            query.set('sessionReportId', sessionReportId);
+        }
+
+        if (teachingPlanId > 0) {
+            query.set('teachingPlanId', teachingPlanId);
+        } else if (courseId > 0) {
+            query.set('courseId', courseId);
+        }
+
+        query.set('id', itemId);
+
+        if (!query.has('teachingPlanId') && !query.has('courseId') && !query.has('sessionReportId')) {
+            this.showError('کانتکست آیتم برای ویرایش یافت نشد.');
             return;
         }
 
-        const courseId = cardCourseId || this.currentCourseId || parseInt(new URLSearchParams(window.location.search).get('courseId')) || 0;
-        const query = new URLSearchParams();
-        if (courseId > 0) {
-            query.set('courseId', courseId);
-        }
-        if (cardSessionReportId > 0) {
-            query.set('sessionReportId', cardSessionReportId);
-        }
-        query.set('id', itemId);
         window.location.href = `/Teacher/ScheduleItem/CreateOrEdit?${query.toString()}`;
     }
 

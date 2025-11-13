@@ -137,34 +137,37 @@
         {
             @foreach (var item in Model)
             {
-                <div class="schedule-item-card" data-item-id="@item.Id" data-type="@((int)item.Type)" data-status="@((int)item.Status)">
+                <div class="schedule-item-card"
+                     data-item-id="@item.Id"
+                     data-type="@((int)item.Type)"
+                     data-status="@((int)item.Status)"
+                     data-teaching-plan-id="@(item.TeachingPlanId?.ToString() ?? string.Empty)"
+                     data-course-id="@(item.CourseId?.ToString() ?? string.Empty)"
+                     data-session-report-id="@(item.SessionReportId?.ToString() ?? string.Empty)">
                     <div class="item-header">
                         <div class="item-type-badge type-@((int)item.Type)">
                             <i class="@GetTypeIcon(item.Type)"></i>
                             @item.Type.GetDisplayName()
                         </div>
-                        @if (!isSessionScope)
-                        {
-                            <div class="item-actions">
-                                <div class="dropdown">
-                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                                        <i class="fas fa-ellipsis-v"></i>
-                                    </button>
-                                    <ul class="dropdown-menu">
-                                        <li><a class="dropdown-item" href="#" data-action="edit" data-item-id="@item.Id">
-                                            <i class="fas fa-edit"></i> ویرایش
-                                        </a></li>
-                                        <li><a class="dropdown-item" href="#" data-action="duplicate" data-item-id="@item.Id">
-                                            <i class="fas fa-copy"></i> کپی
-                                        </a></li>
-                                        <li><hr class="dropdown-divider"></li>
-                                        <li><a class="dropdown-item text-danger" href="#" data-action="delete" data-item-id="@item.Id">
-                                            <i class="fas fa-trash"></i> حذف
-                                        </a></li>
-                                    </ul>
-                                </div>
+                        <div class="item-actions">
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-ellipsis-v"></i>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="#" data-action="edit" data-item-id="@item.Id">
+                                        <i class="fas fa-edit"></i> ویرایش
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="#" data-action="duplicate" data-item-id="@item.Id">
+                                        <i class="fas fa-copy"></i> کپی
+                                    </a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item text-danger" href="#" data-action="delete" data-item-id="@item.Id">
+                                        <i class="fas fa-trash"></i> حذف
+                                    </a></li>
+                                </ul>
                             </div>
-                        }
+                        </div>
                     </div>
                     
                     <div class="item-content">

@@ -5,6 +5,7 @@ using EduTrack.Domain.Entities;
 using EduTrack.Domain.Enums;
 using EduTrack.Domain.Repositories;
 using MediatR;
+using System.Linq;
 
 namespace EduTrack.Application.Features.ScheduleItems.QueryHandlers;
 
@@ -26,10 +27,13 @@ public class GetScheduleItemsByTeachingPlanQueryHandler : IRequestHandler<GetSch
         try
         {
             var scheduleItems = await _scheduleItemRepository.GetScheduleItemsByTeachingPlanAsync(request.TeachingPlanId, cancellationToken);
+            var planLevelItems = scheduleItems
+                .Where(item => !item.SessionReportId.HasValue)
+                .ToList();
             
             var scheduleItemDtos = new List<ScheduleItemDto>();
             
-            foreach (var item in scheduleItems)
+            foreach (var item in planLevelItems)
             {
                 var groupName = string.Empty;
                 if (item.GroupId.HasValue)

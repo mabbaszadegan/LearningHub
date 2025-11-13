@@ -10,7 +10,7 @@ class StudyPage {
         this.chapters = this.config.chapters || [];
         this.selectedChapterId = null;
         this.selectedSubChapterId = null;
-        this.selectedTypes = [];
+        this.selectedCategory = null;
         this.handleViewportResize = this.updateViewportHeightVar.bind(this);
         this.teardownHandler = this.restoreLayoutAdjustments.bind(this);
         this.layoutAdjusted = false;
@@ -29,6 +29,7 @@ class StudyPage {
         window.addEventListener('beforeunload', this.teardownHandler);
         window.addEventListener('pagehide', this.teardownHandler);
         this.bindEvents();
+        this.initializeCategoryTabs();
         this.initializeFilters();
         this.initializeSorting();
         this.hideBottomMenu();
@@ -97,6 +98,16 @@ class StudyPage {
             });
         });
 
+        // Category tabs
+        document.querySelectorAll('.study-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                const category = tab.dataset.category;
+                if (category) {
+                    this.selectCategory(category);
+                }
+            });
+        });
+
         // All topics filter
         document.querySelectorAll('.study-filter-item-all').forEach(btn => {
             btn.addEventListener('click', () => {
@@ -108,14 +119,6 @@ class StudyPage {
             });
         });
 
-        // Type filter (in header)
-        document.querySelectorAll('.study-type-filter-item-header').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const type = btn.dataset.type;
-                this.toggleTypeFilter(type);
-            });
-        });
-        
         // Sort control
         const sortSelect = document.getElementById('sortBy');
         if (sortSelect) {
@@ -269,17 +272,6 @@ class StudyPage {
         this.filterItems();
     }
 
-    toggleTypeFilter(type) {
-        const index = this.selectedTypes.indexOf(type);
-        if (index > -1) {
-            this.selectedTypes.splice(index, 1);
-        } else {
-            this.selectedTypes.push(type);
-        }
-        this.updateFilterButtons();
-        this.filterItems();
-    }
-
     updateFilterButtons() {
         // Update "All" button
         document.querySelectorAll('.study-filter-item-all').forEach(btn => {
@@ -309,16 +301,6 @@ class StudyPage {
                 btn.classList.remove('active');
             }
         });
-
-        // Update type filter buttons (in header)
-        document.querySelectorAll('.study-type-filter-item-header').forEach(btn => {
-            const type = btn.dataset.type;
-            if (this.selectedTypes.includes(type)) {
-                btn.classList.add('active');
-            } else {
-                btn.classList.remove('active');
-            }
-        });
     }
 
     filterItems() {
@@ -327,6 +309,12 @@ class StudyPage {
 
         items.forEach(item => {
             let shouldShow = true;
+            const itemCategory = item.dataset.category || '';
+
+            // Filter by category tab
+            if (this.selectedCategory) {
+                shouldShow = shouldShow && itemCategory === this.selectedCategory;
+            }
 
             // Filter by chapter/subchapter
             if (this.selectedSubChapterId) {
@@ -341,14 +329,6 @@ class StudyPage {
                     const chapterSubChapterIds = chapter.subChapterIds || [];
                     shouldShow = shouldShow && subChapterIds.some(id => chapterSubChapterIds.includes(id));
                 } else {
-                    shouldShow = false;
-                }
-            }
-
-            // Filter by type - only apply if types are selected
-            if (this.selectedTypes.length > 0) {
-                const itemType = item.dataset.itemType;
-                if (!itemType || !this.selectedTypes.includes(itemType)) {
                     shouldShow = false;
                 }
             }
@@ -411,6 +391,53 @@ class StudyPage {
                         });
                     }
                 }
+            }
+        });
+    }
+
+    initializeCategoryTabs() {
+        const tabs = Array.from(document.querySelectorAll('.study-tab'));
+        if (tabs.length === 0) {
+            this.selectedCategory = null;
+            return;
+        }
+
+        let activeTab = tabs.find(tab => tab.classList.contains('active') || tab.getAttribute('aria-selected') === 'true');
+        if (!activeTab) {
+            activeTab = tabs[0];
+        }
+
+        this.selectedCategory = activeTab.dataset.category || null;
+        this.updateTabStates();
+        this.filterItems();
+    }
+
+    selectCategory(category) {
+        if (!category || this.selectedCategory === category) {
+            return;
+        }
+        this.selectedCategory = category;
+        this.updateTabStates();
+        this.filterItems();
+    }
+
+    updateTabStates() {
+        const tabs = document.querySelectorAll('.study-tab');
+        if (tabs.length === 0) {
+            return;
+        }
+
+        tabs.forEach(tab => {
+            const category = tab.dataset.category || null;
+            const isActive = this.selectedCategory === category;
+            if (isActive) {
+                tab.classList.add('active');
+                tab.setAttribute('aria-selected', 'true');
+                tab.setAttribute('tabindex', '0');
+            } else {
+                tab.classList.remove('active');
+                tab.setAttribute('aria-selected', 'false');
+                tab.setAttribute('tabindex', '-1');
             }
         });
     }
