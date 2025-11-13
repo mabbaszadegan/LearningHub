@@ -1,5 +1,7 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
@@ -109,7 +111,7 @@ public class GapFillBlockValidator : IBlockAnswerValidator
             var optionValue = ResolveOptionValue(blank, evaluation.SubmittedOptionId, globalOptionLookup);
             var comparisonValue = optionValue ?? evaluation.SubmittedValue ?? string.Empty;
 
-            if (string.IsNullOrWhiteSpace(optionValue) && !blank.AllowManualInput)
+            if (string.IsNullOrWhiteSpace(comparisonValue))
             {
                 evaluation.IsCorrect = false;
                 evaluations.Add(evaluation);
@@ -190,12 +192,39 @@ public class GapFillBlockValidator : IBlockAnswerValidator
         var comparison = caseSensitive ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
         var normalizedAnswerType = answerType?.Trim().ToLowerInvariant() ?? "exact";
 
-        var normalizedCorrect = correctValue?.Trim() ?? string.Empty;
-        var normalizedSubmitted = submittedValue?.Trim() ?? string.Empty;
+        var normalizedCorrect = NormalizeForComparison(correctValue);
+        var normalizedSubmitted = NormalizeForComparison(submittedValue);
 
-        if (string.IsNullOrWhiteSpace(normalizedCorrect))
+        if (string.Equals(normalizedCorrect, normalizedSubmitted, comparison))
         {
-            return string.IsNullOrWhiteSpace(normalizedSubmitted);
+            return true;
+        }
+
+        if (string.IsNullOrEmpty(normalizedCorrect))
+        {
+            return string.IsNullOrEmpty(normalizedSubmitted);
+        }
+
+        if (ContainsPersianHalfSpace(correctValue) || ContainsPersianHalfSpace(submittedValue))
+        {
+            var compactCorrect = RemoveSpaces(normalizedCorrect);
+            var compactSubmitted = RemoveSpaces(normalizedSubmitted);
+
+            if (string.Equals(compactCorrect, compactSubmitted, comparison))
+            {
+                return true;
+            }
+        }
+
+        if (ContainsPersianCharacters(correctValue) || ContainsPersianCharacters(submittedValue))
+        {
+            var compactCorrect = RemoveSpaces(normalizedCorrect);
+            var compactSubmitted = RemoveSpaces(normalizedSubmitted);
+
+            if (string.Equals(compactCorrect, compactSubmitted, comparison))
+            {
+                return true;
+            }
         }
 
         switch (normalizedAnswerType)
@@ -214,6 +243,87 @@ public class GapFillBlockValidator : IBlockAnswerValidator
         }
     }
 
+    private static string NormalizeForComparison(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return string.Empty;
+        }
+
+        var normalized = value.Trim().Normalize(NormalizationForm.FormD);
+        var builder = new StringBuilder(normalized.Length);
+
+        foreach (var character in normalized)
+        {
+            if (IsIgnorableCharacter(character))
+            {
+                continue;
+            }
+
+            var category = CharUnicodeInfo.GetUnicodeCategory(character);
+            if (category is UnicodeCategory.NonSpacingMark or UnicodeCategory.SpacingCombiningMark or UnicodeCategory.EnclosingMark)
+            {
+                continue;
+            }
+
+            builder.Append(MapPersianCharacter(character));
+        }
+
+        return builder.ToString().Normalize(NormalizationForm.FormC);
+    }
+
+    private static bool IsIgnorableCharacter(char character)
+    {
+        return character switch
+        {
+            '\u200C' or // zero-width non-joiner
+            '\u200D' or // zero-width joiner
+            '\u200E' or // left-to-right mark
+            '\u200F' or // right-to-left mark
+            '\u202A' or // left-to-right embedding
+            '\u202B' or // right-to-left embedding
+            '\u202C' or // pop directional formatting
+            '\u202D' or // left-to-right override
+            '\u202E' or // right-to-left override
+            '\u2060' or // word joiner
+            '\uFEFF' or // zero-width no-break space
+            '\u0640'    // tatweel
+                => true,
+            _ => false
+        };
+    }
+
+    private static char MapPersianCharacter(char character)
+    {
+        return character switch
+        {
+            '\u064A' or '\u0649' or '\u0626' => '\u06CC', // Arabic yeh variants -> Farsi yeh
+            '\u0643' => '\u06A9', // Arabic kaf -> Farsi kaf
+            '\u0660' => '0',
+            '\u0661' => '1',
+            '\u0662' => '2',
+            '\u0663' => '3',
+            '\u0664' => '4',
+            '\u0665' => '5',
+            '\u0666' => '6',
+            '\u0667' => '7',
+            '\u0668' => '8',
+            '\u0669' => '9',
+            '\u06F0' => '0',
+            '\u06F1' => '1',
+            '\u06F2' => '2',
+            '\u06F3' => '3',
+            '\u06F4' => '4',
+            '\u06F5' => '5',
+            '\u06F6' => '6',
+            '\u06F7' => '7',
+            '\u06F8' => '8',
+            '\u06F9' => '9',
+            _ when char.IsWhiteSpace(character) => ' ',
+            _ => character
+        };
+    }
+
     private static string NormalizeWhitespace(string value)
     {
         if (string.IsNullOrWhiteSpace(value))
@@ -224,7 +334,7 @@ public class GapFillBlockValidator : IBlockAnswerValidator
         var builder = new StringBuilder();
         var previousIsWhitespace = false;
 
-        foreach (var character in value.Trim())
+        foreach (var character in value)
         {
             if (char.IsWhiteSpace(character))
             {
@@ -241,7 +351,7 @@ public class GapFillBlockValidator : IBlockAnswerValidator
             }
         }
 
-        return builder.ToString();
+        return builder.ToString().Trim();
     }
 
     private static Dictionary<string, object> BuildCorrectAnswer(GapFillBlock block)
@@ -304,6 +414,72 @@ public class GapFillBlockValidator : IBlockAnswerValidator
         };
     }
 
+    private static bool ContainsPersianHalfSpace(string? value)
+    {
+        if (string.IsNullOrEmpty(value))
+        {
+            return false;
+        }
+
+        return value.IndexOf('\u200C') >= 0 ||
+               value.IndexOf('\u200D') >= 0;
+    }
+
+    private static bool ContainsPersianCharacters(string? value)
+    {
+        if (string.IsNullOrEmpty(value))
+        {
+            return false;
+        }
+
+        foreach (var character in value)
+        {
+            if (character is >= '\u0600' and <= '\u06FF' or >= '\u0750' and <= '\u077F' or >= '\u08A0' and <= '\u08FF')
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static string RemoveSpaces(string value)
+    {
+        if (string.IsNullOrEmpty(value))
+        {
+            return string.Empty;
+        }
+
+        var builder = new StringBuilder(value.Length);
+
+        foreach (var character in value)
+        {
+            if (!char.IsWhiteSpace(character))
+            {
+                builder.Append(character);
+            }
+        }
+
+        return builder.ToString();
+    }
+
+    private static JObject? TryParseJObject(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return null;
+        }
+
+        try
+        {
+            return JObject.Parse(value);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
     private static Dictionary<string, object> BuildDetailedFeedback(
         IEnumerable<BlankEvaluation> evaluations,
         GapFillBlock block)
@@ -340,12 +516,33 @@ public class GapFillBlockValidator : IBlockAnswerValidator
             var blanksToken = ConvertToJToken(blanksValue);
             if (blanksToken is JArray blanksArray)
             {
-                return blanksArray
-                    .OfType<JObject>()
-                    .Select(ParseSubmittedBlank)
-                    .Where(blank => blank != null)
-                    .Cast<SubmittedBlank>()
-                    .ToList();
+                var parsedBlanks = new List<SubmittedBlank>();
+
+                foreach (var token in blanksArray)
+                {
+                    JObject? blankObject = token as JObject;
+
+                    if (blankObject == null && token is JValue valueToken && valueToken.Type == JTokenType.String)
+                    {
+                        blankObject = TryParseJObject(valueToken.Value<string>());
+                    }
+
+                    if (blankObject == null)
+                    {
+                        continue;
+                    }
+
+                    var parsed = ParseSubmittedBlank(blankObject);
+                    if (parsed != null)
+                    {
+                        parsedBlanks.Add(parsed);
+                    }
+                }
+
+                if (parsedBlanks.Count > 0)
+                {
+                    return parsedBlanks;
+                }
             }
         }
 
@@ -371,19 +568,14 @@ public class GapFillBlockValidator : IBlockAnswerValidator
 
         var blank = new SubmittedBlank
         {
-            BlankId = obj["blankId"]?.ToString() ??
-                      obj["id"]?.ToString() ??
-                      obj["key"]?.ToString(),
-            OptionId = obj["optionId"]?.ToString() ??
-                       obj["selectedOptionId"]?.ToString(),
-            Value = obj["value"]?.ToString() ??
-                    obj["text"]?.ToString() ??
-                    obj["input"]?.ToString()
+            BlankId = GetString(obj, "blankId", "id", "key"),
+            OptionId = GetString(obj, "optionId", "selectedOptionId"),
+            Value = GetString(obj, "value", "text", "input")
         };
 
-        if (blank.BlankId == null && obj["index"] != null)
+        if (blank.BlankId == null && TryGetInt(obj, out var indexValue, "index", "order", "number"))
         {
-            blank.Index = obj["index"]!.Value<int>();
+            blank.Index = indexValue;
             blank.BlankId = $"blank{Math.Max(1, blank.Index)}";
         }
         else if (int.TryParse(blank.BlankId, out var numericId))
@@ -410,6 +602,45 @@ public class GapFillBlockValidator : IBlockAnswerValidator
         return blank;
     }
 
+    private static string? GetString(JObject obj, params string[] keys)
+    {
+        foreach (var property in obj.Properties())
+        {
+            foreach (var key in keys)
+            {
+                if (string.Equals(property.Name, key, StringComparison.OrdinalIgnoreCase))
+                {
+                    var value = property.Value?.ToString();
+                    if (!string.IsNullOrWhiteSpace(value))
+                    {
+                        return value.Trim();
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private static bool TryGetInt(JObject obj, out int value, params string[] keys)
+    {
+        foreach (var property in obj.Properties())
+        {
+            foreach (var key in keys)
+            {
+                if (string.Equals(property.Name, key, StringComparison.OrdinalIgnoreCase) &&
+                    property.Value != null &&
+                    int.TryParse(property.Value.ToString(), NumberStyles.Integer, CultureInfo.InvariantCulture, out value))
+                {
+                    return true;
+                }
+            }
+        }
+
+        value = 0;
+        return false;
+    }
+
     private static JToken? ConvertToJToken(object? value)
     {
         if (value == null)
@@ -425,6 +656,43 @@ public class GapFillBlockValidator : IBlockAnswerValidator
         if (value is JsonElement jsonElement)
         {
             return JToken.Parse(jsonElement.GetRawText());
+        }
+
+        if (value is IDictionary dictionary)
+        {
+            var obj = new JObject();
+            foreach (DictionaryEntry entry in dictionary)
+            {
+                var key = entry.Key?.ToString();
+                if (string.IsNullOrWhiteSpace(key))
+                {
+                    continue;
+                }
+
+                var childToken = ConvertToJToken(entry.Value);
+                obj[key] = childToken ?? JValue.CreateNull();
+            }
+
+            return obj;
+        }
+
+        if (value is IEnumerable enumerable && value is not string)
+        {
+            var array = new JArray();
+            foreach (var item in enumerable)
+            {
+                var itemToken = ConvertToJToken(item);
+                if (itemToken != null)
+                {
+                    array.Add(itemToken);
+                }
+                else
+                {
+                    array.Add(JValue.CreateNull());
+                }
+            }
+
+            return array;
         }
 
         if (value is string stringValue &&
