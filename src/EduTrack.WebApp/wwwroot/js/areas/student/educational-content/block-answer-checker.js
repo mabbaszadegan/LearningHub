@@ -724,11 +724,12 @@
     }
     
     function loadAnswerHistory() {
-        // Get all ordering blocks and MCQ blocks on the page
+        // Get all ordering blocks, MCQ blocks, and gap fill blocks on the page
         const orderingBlocks = document.querySelectorAll('.ordering-block-card');
         const mcqBlocks = document.querySelectorAll('.mcq-block-card');
+        const gapfillBlocks = document.querySelectorAll('.gapfill-block-card');
         
-        if (orderingBlocks.length === 0 && mcqBlocks.length === 0) return;
+        if (orderingBlocks.length === 0 && mcqBlocks.length === 0 && gapfillBlocks.length === 0) return;
         
         // Get schedule item ID from first button
         const firstButton = document.querySelector('.btn-check-answer-minimal, .btn-check-answer');
@@ -737,27 +738,24 @@
         const scheduleItemId = firstButton.getAttribute('data-schedule-item-id');
         if (!scheduleItemId) return;
         
+        const loadHistoryForCard = function(blockCard) {
+            const button = blockCard.querySelector('.btn-check-answer-minimal, .btn-check-answer');
+            if (!button) return;
+
+            const blockId = button.getAttribute('data-block-id');
+            if (!blockId) return;
+
+            loadAnswerHistoryForBlock(scheduleItemId, blockId);
+        };
+
         // Load history for all ordering blocks
-        orderingBlocks.forEach(function(blockCard) {
-            const button = blockCard.querySelector('.btn-check-answer-minimal, .btn-check-answer');
-            if (!button) return;
-            
-            const blockId = button.getAttribute('data-block-id');
-            if (!blockId) return;
-            
-            loadAnswerHistoryForBlock(scheduleItemId, blockId);
-        });
-        
+        orderingBlocks.forEach(loadHistoryForCard);
+
         // Load history for all MCQ blocks
-        mcqBlocks.forEach(function(blockCard) {
-            const button = blockCard.querySelector('.btn-check-answer-minimal, .btn-check-answer');
-            if (!button) return;
-            
-            const blockId = button.getAttribute('data-block-id');
-            if (!blockId) return;
-            
-            loadAnswerHistoryForBlock(scheduleItemId, blockId);
-        });
+        mcqBlocks.forEach(loadHistoryForCard);
+
+        // Load history for all gap fill blocks
+        gapfillBlocks.forEach(loadHistoryForCard);
     }
     
     function loadAnswerHistoryForBlock(scheduleItemId, blockId) {
