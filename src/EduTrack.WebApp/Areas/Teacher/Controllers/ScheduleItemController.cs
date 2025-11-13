@@ -65,6 +65,10 @@ public class ScheduleItemController : BaseTeacherController
             return View(new List<ScheduleItemDto>());
         }
 
+        var items = scheduleItems.Value?
+            .Where(item => !item.SessionReportId.HasValue)
+            .ToList() ?? new List<ScheduleItemDto>();
+
         // Get stats
         var stats = await _mediator.Send(new GetScheduleItemStatsQuery(teachingPlanId));
 
@@ -79,7 +83,7 @@ public class ScheduleItemController : BaseTeacherController
         // Setup page title section
         await SetPageTitleSectionAsync(PageType.ScheduleItemsIndex, teachingPlanId);
 
-        return View(scheduleItems.Value);
+        return View(items);
     }
 
     // GET: ScheduleItem/CourseLessons
