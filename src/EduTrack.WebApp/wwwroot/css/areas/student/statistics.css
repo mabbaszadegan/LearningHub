@@ -1,15 +1,99 @@
 /* Statistics Page Styles */
 
 .statistics-header {
-    text-align: center;
-    padding: 20px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0 12px;
 }
 
 .statistics-title {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: #2c3e50;
-    margin-bottom: 10px;
+    font-size: 1.35rem;
+    font-weight: 600;
+    color: #212529;
+    margin-bottom: 6px;
+}
+
+.profile-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: #f1f3f5;
+    color: #495057;
+    font-size: 0.85rem;
+}
+
+.study-time-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 16px;
+}
+
+.study-time-item {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 14px;
+    border: 1px solid #edf0f2;
+}
+
+.study-time-item h5 {
+    font-weight: 600;
+    color: #1f2933;
+    font-size: 1.1rem;
+}
+
+.content-container .card {
+    border: 1px solid #edf0f2;
+    border-radius: 16px;
+    box-shadow: none;
+}
+
+.card-header {
+    padding: 12px 16px;
+}
+
+.card-body {
+    padding: 16px;
+}
+
+.chart-wrapper {
+    position: relative;
+    min-height: 220px;
+}
+
+.question-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.topics-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.topic-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px dashed #eef0f3;
+    font-size: 0.92rem;
+}
+
+.topic-item:last-child {
+    border-bottom: none;
+}
+
+.topic-item strong {
+    font-weight: 600;
+}
+
+.topic-item.error strong {
+    color: #e03131;
 }
 
 /* Progress Overview */
@@ -42,8 +126,8 @@
 
 .progress-ring-circle {
     fill: none;
-    stroke: #667eea;
-    stroke-width: 8;
+    stroke: #4c6ef5;
+    stroke-width: 7;
     stroke-linecap: round;
     transition: stroke-dashoffset 1s ease-in-out;
 }
@@ -58,9 +142,9 @@
 
 .progress-percentage {
     display: block;
-    font-size: 2rem;
-    font-weight: 700;
-    color: #667eea;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #4c6ef5;
     line-height: 1;
 }
 
@@ -73,19 +157,20 @@
 
 .progress-stats-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 15px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
     width: 100%;
 }
 
 .progress-stat-item {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 15px;
+    gap: 10px;
+    padding: 12px;
     background: #f8f9fa;
     border-radius: 12px;
-    transition: all 0.3s ease;
+    transition: background 0.2s ease;
+    border: 1px solid #edf0f2;
 }
 
 .progress-stat-item:hover {
@@ -110,11 +195,10 @@
 }
 
 .stat-value {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: #2c3e50;
-    line-height: 1;
-    margin-bottom: 5px;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #1f2933;
+    margin-bottom: 2px;
 }
 
 .stat-label {
@@ -132,9 +216,9 @@
 .course-progress-item {
     display: flex;
     align-items: center;
-    padding: 20px;
-    border-bottom: 1px solid #e9ecef;
-    gap: 15px;
+    padding: 16px 18px;
+    border-bottom: 1px solid #f1f3f5;
+    gap: 12px;
 }
 
 .course-progress-item:last-child {
@@ -147,10 +231,10 @@
 }
 
 .course-progress-title {
-    font-size: 1rem;
+    font-size: 0.95rem;
     font-weight: 600;
-    color: #2c3e50;
-    margin: 0 0 12px 0;
+    color: #1f2933;
+    margin: 0 0 8px 0;
 }
 
 .course-progress-bar-container {
@@ -160,18 +244,19 @@
 /* Detailed Statistics */
 .detailed-stats {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 15px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
 }
 
 .stat-card {
     display: flex;
     align-items: center;
-    gap: 15px;
-    padding: 20px;
+    gap: 12px;
+    padding: 16px;
     background: #f8f9fa;
     border-radius: 12px;
-    transition: all 0.3s ease;
+    border: 1px solid #edf0f2;
+    transition: background 0.2s ease;
 }
 
 .stat-card:hover {
@@ -180,14 +265,14 @@
 }
 
 .stat-card-icon {
-    width: 50px;
-    height: 50px;
-    border-radius: 12px;
+    width: 46px;
+    height: 46px;
+    border-radius: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: white;
-    font-size: 20px;
+    color: #fff;
+    font-size: 18px;
     flex-shrink: 0;
 }
 
@@ -196,15 +281,15 @@
 }
 
 .stat-card-label {
-    font-size: 0.875rem;
+    font-size: 0.82rem;
     color: #6c757d;
-    margin-bottom: 5px;
+    margin-bottom: 4px;
 }
 
 .stat-card-value {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: #2c3e50;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #1f2933;
 }
 
 /* Responsive Design */
@@ -213,6 +298,10 @@
         grid-template-columns: 1fr;
     }
     
+    .question-stats-grid {
+        grid-template-columns: 1fr;
+    }
+
     .detailed-stats {
         grid-template-columns: 1fr;
     }

@@ -2,12 +2,15 @@ using EduTrack.Application.Features.Progress.Queries;
 using EduTrack.Application.Features.StudySessions.Queries;
 using EduTrack.Application.Features.CourseEnrollment.Queries;
 using EduTrack.Application.Common.Models.Exams;
+using EduTrack.Application.Common.Models.Statistics;
+using EduTrack.Application.Features.Statistics.Queries;
 using EduTrack.Domain.Entities;
 using EduTrack.Domain.Repositories;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using EduTrack.WebApp.Areas.Student.Models;
 using EduTrack.WebApp.Services;
 
 namespace EduTrack.WebApp.Areas.Student.Controllers;
@@ -49,13 +52,26 @@ public class StatisticsController : Controller
 
         // Get student statistics
         var studentStatsResult = await _mediator.Send(new GetStudentStatsQuery(currentUser.Id));
-        
+
         // Get enrolled courses
         var activeProfileName = await _studentProfileContext.GetActiveProfileNameAsync();
         var enrolledCoursesResult = await _mediator.Send(new GetStudentCourseEnrollmentsQuery(currentUser.Id, activeProfileId));
         var enrolledCourses = enrolledCoursesResult.IsSuccess && enrolledCoursesResult.Value != null 
             ? enrolledCoursesResult.Value 
             : new List<Application.Features.CourseEnrollment.DTOs.StudentCourseEnrollmentSummaryDto>();
+
+        var learningStatsResult = await _mediator.Send(new GetStudentLearningStatisticsQuery(currentUser.Id, activeProfileId));
+        LearningStatisticsDto learningStatistics;
+
+        if (learningStatsResult.IsSuccess && learningStatsResult.Value != null)
+        {
+            learningStatistics = learningStatsResult.Value;
+        }
+        else
+        {
+            _logger.LogWarning("Failed to load learning statistics for student {StudentId}: {Error}", currentUser.Id, learningStatsResult.Error);
+            learningStatistics = new LearningStatisticsDto();
+        }
 
         // Calculate statistics
         var totalProgress = progressData.Count;
@@ -64,23 +80,23 @@ public class StatisticsController : Controller
         var notStarted = progressData.Count(p => p.Status == Domain.Enums.ProgressStatus.NotStarted);
         var completionPercentage = totalProgress > 0 ? (double)completedProgress / totalProgress * 100 : 0;
 
-        var viewModel = new
+        var viewModel = new StudentStatisticsViewModel
         {
             StudentName = currentUser.FullName,
             StudentFirstName = currentUser.FirstName,
             ActiveStudentProfileId = activeProfileId,
             ActiveStudentProfileName = activeProfileName,
-            ProgressData = progressData,
             StudentStatistics = studentStatsResult.IsSuccess ? studentStatsResult.Value : null,
             EnrolledCourses = enrolledCourses,
-            ProgressStats = new
+            ProgressStats = new ProgressOverviewViewModel
             {
                 Total = totalProgress,
                 Completed = completedProgress,
                 InProgress = inProgress,
                 NotStarted = notStarted,
                 CompletionPercentage = completionPercentage
-            }
+            },
+            LearningStatistics = learningStatistics
         };
 
         return View(viewModel);

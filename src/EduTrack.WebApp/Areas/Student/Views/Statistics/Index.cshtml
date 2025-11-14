@@ -1,23 +1,199 @@
+@using System.Collections.Generic
+@using System.Text.Json
+@using EduTrack.Application.Common.Models.Statistics
+@using EduTrack.WebApp.Areas.Student.Models
+@using EduTrack.WebApp.Extensions
+@model StudentStatisticsViewModel
+
 @{
     ViewData["Title"] = "آمار و پیشرفت";
-    var statsModel = ViewData.Model as dynamic;
+    var learningStats = Model.LearningStatistics ?? new LearningStatisticsDto();
+    var jsonOptions = new JsonSerializerOptions(JsonSerializerDefaults.Web);
+    var learningStatsJson = JsonSerializer.Serialize(learningStats, jsonOptions);
+    var studySummary = learningStats.StudyTimeSummary;
+    var questionStats = learningStats.QuestionPerformance;
+    var recentTopics = learningStats.RecentTopics ?? new List<TopicStudyDto>();
+    var errorTopics = learningStats.MostIncorrectTopics ?? new List<TopicErrorDto>();
 }
 
 @section Styles {
     <link rel="stylesheet" href="~/css/areas/student/statistics.css" asp-append-version="true" />
 }
 
-<div class="content-container">
-    <!-- Header -->
+<div class="content-container" id="student-statistics-root" data-learning-stats='@learningStatsJson'>
     <div class="statistics-header mb-4">
-        <h4 class="statistics-title">
-            <i class="fas fa-chart-bar me-2"></i>
-            آمار و پیشرفت یادگیری
-        </h4>
-        <p class="text-muted mb-0">@(statsModel?.StudentFirstName ?? "دانش‌آموز") عزیز، پیشرفت خود را مشاهده کنید</p>
+        <div>
+            <h4 class="statistics-title">
+                <i class="fas fa-chart-bar me-2"></i>
+                آمار و پیشرفت یادگیری
+            </h4>
+            <p class="text-muted mb-1">@((Model.ActiveStudentProfileName ?? Model.StudentFirstName) ?? "دانش‌آموز") عزیز، پیشرفت خود را مشاهده کنید</p>
+            @if (!string.IsNullOrWhiteSpace(Model.ActiveStudentProfileName))
+            {
+                <span class="profile-chip">
+                    <i class="fas fa-user me-1"></i>
+                    پروفایل فعال: @Model.ActiveStudentProfileName
+                </span>
+            }
+        </div>
     </div>
-    <!-- Progress Overview -->
-    @if (statsModel?.ProgressStats != null)
+
+    @if (studySummary != null)
+    {
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="study-time-grid">
+                    <div class="study-time-item">
+                        <p class="text-muted mb-1">میزان مطالعه امروز</p>
+                        <h5 class="mb-1">@studySummary.TodayMinutes.ToReadableDuration()</h5>
+                        <small class="text-muted">@studySummary.TodayMinutes دقیقه</small>
+                    </div>
+                    <div class="study-time-item">
+                        <p class="text-muted mb-1">میزان مطالعه هفته</p>
+                        <h5 class="mb-1">@studySummary.WeekMinutes.ToReadableDuration()</h5>
+                        <small class="text-muted">@studySummary.WeekMinutes دقیقه</small>
+                    </div>
+                    <div class="study-time-item">
+                        <p class="text-muted mb-1">میزان مطالعه ماه</p>
+                        <h5 class="mb-1">@studySummary.MonthMinutes.ToReadableDuration()</h5>
+                        <small class="text-muted">@studySummary.MonthMinutes دقیقه</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <div class="row g-4 mb-4">
+        <div class="col-lg-8">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">
+                        <i class="fas fa-chart-line me-2"></i>
+                        نمودار پیشرفت مطالعه
+                    </h6>
+                    <div class="btn-group btn-group-sm chart-range-toggle" role="group" aria-label="گزینه‌های نمودار">
+                        <button type="button" class="btn btn-outline-primary active" data-chart-range="week">هفته اخیر</button>
+                        <button type="button" class="btn btn-outline-primary" data-chart-range="month">ماه اخیر</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-wrapper">
+                        <canvas id="study-time-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-question-circle me-2"></i>
+                        عملکرد سوالات
+                    </h6>
+                </div>
+                <div class="card-body">
+                    @if (questionStats != null && questionStats.TotalAnswered > 0)
+                    {
+                        <div class="question-stats-grid">
+                            <div>
+                                <p class="text-muted mb-1">کل سوالات پاسخ داده شده</p>
+                                <h4>@questionStats.TotalAnswered</h4>
+                            </div>
+                            <div>
+                                <p class="text-muted mb-1">درست</p>
+                                <h5 class="text-success mb-0">@questionStats.CorrectAnswers</h5>
+                            </div>
+                            <div>
+                                <p class="text-muted mb-1">غلط</p>
+                                <h5 class="text-danger mb-0">@questionStats.IncorrectAnswers</h5>
+                            </div>
+                            <div>
+                                <p class="text-muted mb-1">درصد موفقیت</p>
+                                <h5 class="mb-0">@questionStats.AccuracyPercentage.ToString("F1")%</h5>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-muted mb-0">هنوز سوالی پاسخ داده نشده است.</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">
+                        <i class="fas fa-book-reader me-2"></i>
+                        ۵ مبحث اخیر مطالعه شده
+                    </h6>
+                </div>
+                <div class="card-body">
+                    @if (recentTopics.Any())
+                    {
+                        <ul class="topics-list">
+                            @foreach (var topic in recentTopics)
+                            {
+                                <li class="topic-item">
+                                    <div>
+                                        <strong>@topic.SubChapterTitle</strong>
+                                        <p class="mb-0 text-muted small">@topic.ChapterTitle</p>
+                                    </div>
+                                    <div class="text-end">
+                                        <span class="d-block">@topic.TotalMinutes.ToReadableDuration()</span>
+                                        <small class="text-muted">@topic.LastStudiedAt.ToLocalTime().ToString("yyyy/MM/dd HH:mm")</small>
+                                    </div>
+                                </li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <p class="text-muted mb-0">هنوز مطالعه‌ای ثبت نشده است.</p>
+                    }
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        مباحث با بیشترین غلط
+                    </h6>
+                </div>
+                <div class="card-body">
+                    @if (errorTopics.Any())
+                    {
+                        <ul class="topics-list">
+                            @foreach (var topic in errorTopics)
+                            {
+                                <li class="topic-item error">
+                                    <div>
+                                        <strong>@topic.SubChapterTitle</strong>
+                                        <p class="mb-0 text-muted small">@topic.ChapterTitle</p>
+                                    </div>
+                                    <div class="text-end">
+                                        <span class="d-block text-danger">@topic.IncorrectAttempts غلط</span>
+                                        <small class="text-muted">@topic.SuccessRate.ToString("F1")% موفقیت</small>
+                                    </div>
+                                </li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <p class="text-muted mb-0">در حال حاضر خطای قابل توجهی وجود ندارد.</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (Model.ProgressStats != null)
     {
         <div class="card mb-4">
             <div class="card-header">
@@ -29,13 +205,13 @@
             <div class="card-body">
                 <div class="progress-overview">
                     <div class="progress-circle-container">
-                        <div class="progress-circle" data-percentage="@statsModel.ProgressStats.CompletionPercentage">
+                        <div class="progress-circle" data-percentage="@Model.ProgressStats.CompletionPercentage">
                             <svg class="progress-ring" width="120" height="120">
                                 <circle class="progress-ring-circle-bg" cx="60" cy="60" r="54"></circle>
                                 <circle class="progress-ring-circle" cx="60" cy="60" r="54"></circle>
                             </svg>
                             <div class="progress-circle-text">
-                                <span class="progress-percentage">@((int)statsModel.ProgressStats.CompletionPercentage)%</span>
+                                <span class="progress-percentage">@((int)Model.ProgressStats.CompletionPercentage)%</span>
                                 <span class="progress-label">تکمیل شده</span>
                             </div>
                         </div>
@@ -46,7 +222,7 @@
                                 <i class="fas fa-check-circle"></i>
                             </div>
                             <div class="stat-content">
-                                <div class="stat-value">@statsModel.ProgressStats.Completed</div>
+                                <div class="stat-value">@Model.ProgressStats.Completed</div>
                                 <div class="stat-label">تکمیل شده</div>
                             </div>
                         </div>
@@ -55,7 +231,7 @@
                                 <i class="fas fa-clock"></i>
                             </div>
                             <div class="stat-content">
-                                <div class="stat-value">@statsModel.ProgressStats.InProgress</div>
+                                <div class="stat-value">@Model.ProgressStats.InProgress</div>
                                 <div class="stat-label">در حال انجام</div>
                             </div>
                         </div>
@@ -64,7 +240,7 @@
                                 <i class="fas fa-circle"></i>
                             </div>
                             <div class="stat-content">
-                                <div class="stat-value">@statsModel.ProgressStats.NotStarted</div>
+                                <div class="stat-value">@Model.ProgressStats.NotStarted</div>
                                 <div class="stat-label">شروع نشده</div>
                             </div>
                         </div>
@@ -73,7 +249,7 @@
                                 <i class="fas fa-list"></i>
                             </div>
                             <div class="stat-content">
-                                <div class="stat-value">@statsModel.ProgressStats.Total</div>
+                                <div class="stat-value">@Model.ProgressStats.Total</div>
                                 <div class="stat-label">کل آیتم‌ها</div>
                             </div>
                         </div>
@@ -83,13 +259,7 @@
         </div>
     }
 
-    <!-- Course Statistics -->
-    @{
-        var enrolledCoursesCollection = statsModel?.EnrolledCourses as System.Collections.ICollection;
-        var hasCoursesCollection = enrolledCoursesCollection != null && enrolledCoursesCollection.Count > 0;
-        var coursesList = statsModel?.EnrolledCourses as System.Collections.IEnumerable ?? new List<object>();
-    }
-    @if (hasCoursesCollection)
+    @if (Model.EnrolledCourses.Any())
     {
         <div class="card mb-4">
             <div class="card-header">
@@ -100,28 +270,26 @@
             </div>
             <div class="card-body p-0">
                 <div class="course-progress-list">
-                    @foreach (dynamic course in coursesList)
+                    @foreach (var course in Model.EnrolledCourses)
                     {
                         <div class="course-progress-item">
                             <div class="course-progress-info">
-                                <h6 class="course-progress-title">@(course?.CourseTitle ?? "")</h6>
+                                <h6 class="course-progress-title">@course.CourseTitle</h6>
                                 <div class="course-progress-bar-container">
                                     <div class="progress" style="height: 8px;">
-                                        <div class="progress-bar" role="progressbar" style="width: @(course?.ProgressPercentage ?? 0)%" 
-                                             aria-valuenow="@(course?.ProgressPercentage ?? 0)" aria-valuemin="0" aria-valuemax="100">
-                                        </div>
+                                        <div class="progress-bar" role="progressbar" style="width: @course.ProgressPercentage%" aria-valuenow="@course.ProgressPercentage" aria-valuemin="0" aria-valuemax="100"></div>
                                     </div>
                                     <div class="d-flex justify-content-between align-items-center mt-2">
-                                        <small class="text-muted">@(course?.ProgressPercentage ?? 0)% تکمیل شده</small>
+                                        <small class="text-muted">@course.ProgressPercentage% تکمیل شده</small>
                                         <small class="text-muted">
                                             <i class="fas fa-check-circle me-1"></i>
-                                            @(course?.CompletedLessons ?? 0) درس
+                                            @course.CompletedLessons درس
                                         </small>
                                     </div>
                                 </div>
                             </div>
                             <div class="course-progress-action">
-                                <a href="@Url.Action("Study", "Course", new { id = course?.CourseId ?? 0 })" class="btn btn-sm btn-primary">
+                                <a href="@Url.Action("Study", "Course", new { id = course.CourseId })" class="btn btn-sm btn-primary">
                                     <i class="fas fa-arrow-left"></i>
                                 </a>
                             </div>
@@ -132,8 +300,7 @@
         </div>
     }
 
-    <!-- Additional Statistics -->
-    @if (statsModel?.StudentStatistics != null)
+    @if (Model.StudentStatistics != null)
     {
         <div class="card mb-4">
             <div class="card-header">
@@ -150,7 +317,7 @@
                         </div>
                         <div class="stat-card-content">
                             <div class="stat-card-label">درس‌های تکمیل شده</div>
-                            <div class="stat-card-value">@(statsModel.StudentStatistics.CompletedLessons ?? 0) / @(statsModel.StudentStatistics.TotalLessons ?? 0)</div>
+                            <div class="stat-card-value">@Model.StudentStatistics.CompletedLessons / @Model.StudentStatistics.TotalLessons</div>
                         </div>
                     </div>
                     <div class="stat-card">
@@ -159,7 +326,7 @@
                         </div>
                         <div class="stat-card-content">
                             <div class="stat-card-label">میانگین نمره</div>
-                            <div class="stat-card-value">@(statsModel.StudentStatistics.AverageScore?.ToString("F1") ?? "0")</div>
+                            <div class="stat-card-value">@Model.StudentStatistics.AverageScore.ToString("F1")</div>
                         </div>
                     </div>
                     <div class="stat-card">
@@ -168,7 +335,7 @@
                         </div>
                         <div class="stat-card-content">
                             <div class="stat-card-label">رکورد متوالی</div>
-                            <div class="stat-card-value">@(statsModel.StudentStatistics.LongestStreak ?? 0) روز</div>
+                            <div class="stat-card-value">@Model.StudentStatistics.LongestStreak روز</div>
                         </div>
                     </div>
                     <div class="stat-card">
@@ -177,7 +344,7 @@
                         </div>
                         <div class="stat-card-content">
                             <div class="stat-card-label">رکورد فعلی</div>
-                            <div class="stat-card-value">@(statsModel.StudentStatistics.CurrentStreak ?? 0) روز</div>
+                            <div class="stat-card-value">@Model.StudentStatistics.CurrentStreak روز</div>
                         </div>
                     </div>
                 </div>
@@ -185,12 +352,8 @@
         </div>
     }
 
-    <!-- Empty State -->
     @{
-        var progressStats = statsModel?.ProgressStats as dynamic;
-        var totalProgress = progressStats?.Total ?? 0;
-        var coursesCount = (statsModel?.EnrolledCourses as System.Collections.ICollection)?.Count ?? 0;
-        var isEmpty = (progressStats == null || totalProgress == 0) && coursesCount == 0;
+        var isEmpty = (Model.ProgressStats == null || Model.ProgressStats.Total == 0) && !Model.EnrolledCourses.Any();
     }
     @if (isEmpty)
     {
@@ -207,31 +370,6 @@
 </div>
 
 @section Scripts {
-    <script>
-        $(document).ready(function() {
-            // Initialize bottom navigation
-            if (window.bottomNavigation) {
-                window.bottomNavigation.setActivePage('statistics');
-            }
-
-            // Animate progress circle
-            const progressCircle = document.querySelector('.progress-circle');
-            if (progressCircle) {
-                const percentage = parseFloat(progressCircle.dataset.percentage) || 0;
-                const circle = progressCircle.querySelector('.progress-ring-circle');
-                const radius = circle.r.baseVal.value;
-                const circumference = radius * 2 * Math.PI;
-                
-                circle.style.strokeDasharray = `${circumference} ${circumference}`;
-                circle.style.strokeDashoffset = circumference;
-                
-                const offset = circumference - (percentage / 100) * circumference;
-                setTimeout(() => {
-                    circle.style.transition = 'stroke-dashoffset 1s ease-in-out';
-                    circle.style.strokeDashoffset = offset;
-                }, 100);
-            }
-        });
-    </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="~/js/areas/student/statistics.js" asp-append-version="true"></script>
 }
-

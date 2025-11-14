@@ -33,6 +33,7 @@
   <ItemGroup>
     <ProjectReference Include="..\EduTrack.Domain\EduTrack.Domain.csproj" />
     <ProjectReference Include="..\EduTrack.Application\EduTrack.Application.csproj" />
+    <ProjectReference Include="..\EduTrack.Infrastructure\EduTrack.Infrastructure.csproj" />
     <ProjectReference Include="..\EduTrack.TestUtilities\EduTrack.TestUtilities.csproj" />
   </ItemGroup>
 
