@@ -1,5 +1,5 @@
-using System.Globalization;
 using System.Linq;
+using EduTrack.Application.Common.Helpers;
 using EduTrack.Application.Common.Models;
 using EduTrack.Application.Common.Models.Statistics;
 using EduTrack.Application.Features.Statistics.Queries;
@@ -46,11 +46,13 @@ public class GetStudentLearningStatisticsQueryHandler : IRequestHandler<GetStude
                     .GetByStudentAsync(request.StudentId, request.StudentProfileId, cancellationToken))
                 .ToList();
 
-            var scheduleItemMap = await LoadScheduleItemsAsync(completedSessions, blockStatistics, cancellationToken);
-            var culture = new CultureInfo("fa-IR");
-
-            var (studySummary, weeklyChart, monthlyChart) = BuildStudyTimeSummaries(completedSessions, culture);
-            var questionPerformance = BuildQuestionPerformance(blockAttempts);
+            var scheduleItemMap = await LoadScheduleItemsAsync(
+                completedSessions,
+                blockStatistics,
+                blockAttempts,
+                cancellationToken);
+            var (studySummary, weeklyChart, monthlyChart) = BuildStudyTimeSummaries(completedSessions);
+            var questionPerformance = BuildQuestionPerformance(blockAttempts, scheduleItemMap);
             var recentTopics = BuildRecentTopics(completedSessions, scheduleItemMap, request.RecentTopicsLimit);
             var incorrectTopics = BuildTopicsWithMostErrors(blockStatistics, scheduleItemMap, request.MostIncorrectTopicsLimit);
 
@@ -75,11 +77,13 @@ public class GetStudentLearningStatisticsQueryHandler : IRequestHandler<GetStude
     private async Task<Dictionary<int, ScheduleItem>> LoadScheduleItemsAsync(
         List<StudySession> sessions,
         List<ScheduleItemBlockStatistics> blockStatistics,
+        List<ScheduleItemBlockAttempt> blockAttempts,
         CancellationToken cancellationToken)
     {
         var scheduleItemIds = sessions
             .Select(session => session.ScheduleItemId)
             .Concat(blockStatistics.Select(stat => stat.ScheduleItemId))
+            .Concat(blockAttempts.Select(attempt => attempt.ScheduleItemId))
             .Distinct()
             .ToList();
 
@@ -98,8 +102,7 @@ public class GetStudentLearningStatisticsQueryHandler : IRequestHandler<GetStude
     }
 
     private static (StudyTimeSummaryDto Summary, StudyChartDto WeeklyChart, StudyChartDto MonthlyChart) BuildStudyTimeSummaries(
-        List<StudySession> sessions,
-        CultureInfo culture)
+        List<StudySession> sessions)
     {
         var todayUtc = DateTime.UtcNow.Date;
         var weekStart = todayUtc.AddDays(-6);
@@ -140,11 +143,15 @@ public class GetStudentLearningStatisticsQueryHandler : IRequestHandler<GetStude
             RangeTitle = "هفته اخیر",
             Points = weekBuckets
                 .OrderBy(bucket => bucket.Key)
-                .Select(bucket => new StudyChartPointDto
+                .Select(bucket =>
                 {
-                    Date = new DateTimeOffset(bucket.Key, TimeSpan.Zero),
-                    Label = bucket.Key.ToString("ddd", culture),
-                    Minutes = bucket.Value
+                    var bucketDate = new DateTimeOffset(bucket.Key, TimeSpan.Zero);
+                    return new StudyChartPointDto
+                    {
+                        Date = bucketDate,
+                        Label = bucketDate.ToPersianDateString(),
+                        Minutes = bucket.Value
+                    };
                 })
                 .ToList()
         };
@@ -155,11 +162,15 @@ public class GetStudentLearningStatisticsQueryHandler : IRequestHandler<GetStude
             RangeTitle = "ماه اخیر",
             Points = monthBuckets
                 .OrderBy(bucket => bucket.Key)
-                .Select(bucket => new StudyChartPointDto
+                .Select(bucket =>
                 {
-                    Date = new DateTimeOffset(bucket.Key, TimeSpan.Zero),
-                    Label = bucket.Key.ToString("dd MMM", culture),
-                    Minutes = bucket.Value
+                    var bucketDate = new DateTimeOffset(bucket.Key, TimeSpan.Zero);
+                    return new StudyChartPointDto
+                    {
+                        Date = bucketDate,
+                        Label = bucketDate.ToPersianDateString(),
+                        Minutes = bucket.Value
+                    };
                 })
                 .ToList()
         };
@@ -167,7 +178,9 @@ public class GetStudentLearningStatisticsQueryHandler : IRequestHandler<GetStude
         return (summary, weeklyChart, monthlyChart);
     }
 
-    private static QuestionPerformanceDto BuildQuestionPerformance(List<ScheduleItemBlockAttempt> attempts)
+    private static QuestionPerformanceDto BuildQuestionPerformance(
+        List<ScheduleItemBlockAttempt> attempts,
+        IReadOnlyDictionary<int, ScheduleItem> scheduleItems)
     {
         var total = attempts.Count;
         var correct = attempts.Count(attempt => attempt.IsCorrect);
@@ -176,12 +189,38 @@ public class GetStudentLearningStatisticsQueryHandler : IRequestHandler<GetStude
             ? Math.Round((double)correct / total * 100, 1, MidpointRounding.AwayFromZero)
             : 0;
 
+        var attemptSummaries = attempts
+            .OrderByDescending(attempt => attempt.AttemptedAt)
+            .Take(30)
+            .Select(attempt =>
+            {
+                scheduleItems.TryGetValue(attempt.ScheduleItemId, out var scheduleItem);
+                var scheduleTitle = scheduleItem?.Title ?? "سوال";
+                var questionLabel = !string.IsNullOrWhiteSpace(attempt.BlockInstruction)
+                    ? attempt.BlockInstruction!
+                    : scheduleItem?.Description ?? scheduleTitle;
+
+                return new QuestionAttemptSummaryDto
+                {
+                    ScheduleItemId = attempt.ScheduleItemId,
+                    ScheduleItemTitle = scheduleTitle,
+                    QuestionLabel = questionLabel,
+                    BlockOrder = attempt.BlockOrder,
+                    IsCorrect = attempt.IsCorrect,
+                    AttemptedAt = attempt.AttemptedAt,
+                    PointsEarned = attempt.PointsEarned,
+                    MaxPoints = attempt.MaxPoints
+                };
+            })
+            .ToList();
+
         return new QuestionPerformanceDto
         {
             TotalAnswered = total,
             CorrectAnswers = correct,
             IncorrectAnswers = incorrect,
-            AccuracyPercentage = accuracy
+            AccuracyPercentage = accuracy,
+            AttemptSummaries = attemptSummaries
         };
     }
 

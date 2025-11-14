@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 
 namespace EduTrack.Application.Common.Models.Statistics;
@@ -51,6 +52,7 @@ public class QuestionPerformanceDto
     public int CorrectAnswers { get; init; }
     public int IncorrectAnswers { get; init; }
     public double AccuracyPercentage { get; init; }
+    public IReadOnlyList<QuestionAttemptSummaryDto> AttemptSummaries { get; init; } = new List<QuestionAttemptSummaryDto>();
 }
 
 public class TopicStudyDto
@@ -73,5 +75,17 @@ public class TopicErrorDto
     public int CorrectAttempts { get; init; }
     public int TotalAttempts { get; init; }
     public decimal SuccessRate { get; init; }
+}
+
+public class QuestionAttemptSummaryDto
+{
+    public int ScheduleItemId { get; init; }
+    public string ScheduleItemTitle { get; init; } = string.Empty;
+    public string QuestionLabel { get; init; } = string.Empty;
+    public int? BlockOrder { get; init; }
+    public bool IsCorrect { get; init; }
+    public DateTimeOffset AttemptedAt { get; init; }
+    public decimal PointsEarned { get; init; }
+    public decimal MaxPoints { get; init; }
 }
 

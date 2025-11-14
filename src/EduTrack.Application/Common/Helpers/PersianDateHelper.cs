@@ -1,3 +1,4 @@
+using System;
 using System.Globalization;
 
 namespace EduTrack.Application.Common.Helpers;
@@ -46,7 +47,8 @@ public static class DateTimeOffsetExtensions
     public static string ToPersianDateWithDayName(this DateTimeOffset dateTime)
     {
         var persianDate = PersianDateHelper.DateTimeOffsetToPersian(dateTime, false);
-        var dayOfWeek = GetPersianDayName(dateTime.DayOfWeek);
+        var tehranTime = TimeZoneInfo.ConvertTime(dateTime, PersianDateHelper.GetTehranTimeZone());
+        var dayOfWeek = GetPersianDayName(tehranTime.DayOfWeek);
         return $"{dayOfWeek}، {persianDate}";
     }
 
@@ -69,6 +71,32 @@ public static class DateTimeOffsetExtensions
 public static class PersianDateHelper
 {
     private static readonly PersianCalendar _persianCalendar = new();
+    private static readonly TimeZoneInfo _tehranTimeZone = ResolveTehranTimeZone();
+
+    private static TimeZoneInfo ResolveTehranTimeZone()
+    {
+        var candidates = new[] { "Asia/Tehran", "Iran Standard Time" };
+
+        foreach (var candidate in candidates)
+        {
+            try
+            {
+                return TimeZoneInfo.FindSystemTimeZoneById(candidate);
+            }
+            catch (TimeZoneNotFoundException)
+            {
+                // Try next candidate
+            }
+            catch (InvalidTimeZoneException)
+            {
+                // Try next candidate
+            }
+        }
+
+        return TimeZoneInfo.Utc;
+    }
+
+    public static TimeZoneInfo GetTehranTimeZone() => _tehranTimeZone;
 
     /// <summary>
     /// Converts Persian date string to DateTimeOffset
@@ -94,17 +122,16 @@ public static class PersianDateHelper
 
         // Convert Persian date to Gregorian
         var gregorianDate = _persianCalendar.ToDateTime(year, month, day, 0, 0, 0, 0);
+        var tehranDateTime = DateTime.SpecifyKind(gregorianDate, DateTimeKind.Unspecified);
 
         // Parse time if provided
-        if (!string.IsNullOrWhiteSpace(timeString))
+        if (!string.IsNullOrWhiteSpace(timeString) && TimeSpan.TryParse(timeString, out var time))
         {
-            if (TimeSpan.TryParse(timeString, out var time))
-            {
-                gregorianDate = gregorianDate.Date.Add(time);
-            }
+            tehranDateTime = tehranDateTime.Date.Add(time);
         }
 
-        return new DateTimeOffset(gregorianDate, TimeSpan.Zero);
+        var offset = _tehranTimeZone.GetUtcOffset(tehranDateTime);
+        return new DateTimeOffset(tehranDateTime, offset);
     }
 
     /// <summary>
@@ -115,7 +142,8 @@ public static class PersianDateHelper
     /// <returns>Persian date string in format "yyyy/MM/dd" or "yyyy/MM/dd HH:mm"</returns>
     public static string DateTimeOffsetToPersian(DateTimeOffset dateTimeOffset, bool includeTime = false)
     {
-        var localDateTime = dateTimeOffset.DateTime;
+        var tehranTime = TimeZoneInfo.ConvertTime(dateTimeOffset, _tehranTimeZone);
+        var localDateTime = tehranTime.DateTime;
         
         var year = _persianCalendar.GetYear(localDateTime);
         var month = _persianCalendar.GetMonth(localDateTime);
@@ -125,8 +153,8 @@ public static class PersianDateHelper
 
         if (includeTime)
         {
-            var hour = localDateTime.Hour;
-            var minute = localDateTime.Minute;
+            var hour = tehranTime.Hour;
+            var minute = tehranTime.Minute;
             result += $" {hour:D2}:{minute:D2}";
         }
 

@@ -4,6 +4,8 @@ class StudentStatisticsPage {
         this.chartElement = document.getElementById('study-time-chart');
         this.chartInstance = null;
         this.learningStats = this.parseDataset();
+        this.questionStats = this.learningStats?.questionPerformance ?? null;
+        this.questionAttempts = this.questionStats?.attemptSummaries ?? [];
         this.init();
     }
 
@@ -26,6 +28,7 @@ class StudentStatisticsPage {
         this.animateProgressCircle();
         this.initializeChart();
         this.bindRangeToggle();
+        this.bindQuestionStatCards();
     }
 
     setActiveNavigation() {
@@ -160,6 +163,147 @@ class StudentStatisticsPage {
                 this.renderChart(rangeKey);
             });
         });
+    }
+
+    bindQuestionStatCards() {
+        const cards = document.querySelectorAll('.question-stat-card');
+        const modalElement = document.getElementById('questionAttemptModal');
+        const modalList = document.getElementById('questionAttemptModalList');
+        const modalTitle = document.getElementById('questionAttemptModalTitle');
+        const modalDescription = document.getElementById('questionAttemptModalDescription');
+
+        if (!cards.length || !modalElement || !modalList || !modalTitle || !this.questionStats) {
+            return;
+        }
+
+        this.ensureModalPlacement(modalElement);
+        const bootstrapModal = window.bootstrap?.Modal
+            ? window.bootstrap.Modal.getOrCreateInstance(modalElement)
+            : null;
+
+        cards.forEach(card => {
+            card.addEventListener('click', () => {
+                const filterKey = card.dataset.filter || 'all';
+                const attempts = this.getFilteredAttempts(filterKey);
+                modalTitle.textContent = card.dataset.modalTitle || 'خلاصه تلاش‌ها';
+                modalDescription.textContent = card.dataset.modalDescription || '';
+                modalList.innerHTML = attempts.length
+                    ? attempts.map(attempt => this.buildAttemptItem(attempt)).join('')
+                    : this.renderEmptyAttemptState();
+
+                if (bootstrapModal) {
+                    bootstrapModal.show();
+                } else {
+                    modalElement.classList.add('show');
+                    modalElement.style.display = 'block';
+                }
+            });
+        });
+
+        modalElement.addEventListener('hidden.bs.modal', () => {
+            modalList.innerHTML = '';
+        });
+    }
+
+    ensureModalPlacement(modalElement) {
+        if (modalElement.parentElement !== document.body) {
+            document.body.appendChild(modalElement);
+        }
+    }
+
+    getFilteredAttempts(filterKey) {
+        if (!Array.isArray(this.questionAttempts)) {
+            return [];
+        }
+
+        if (filterKey === 'correct') {
+            return this.questionAttempts.filter(attempt => attempt.isCorrect);
+        }
+
+        if (filterKey === 'incorrect') {
+            return this.questionAttempts.filter(attempt => attempt.isCorrect === false);
+        }
+
+        return this.questionAttempts;
+    }
+
+    buildAttemptItem(attempt) {
+        const questionLabel = this.escapeHtml(this.toPlainText(attempt.questionLabel || attempt.scheduleItemTitle || 'سوال'));
+        const scheduleTitle = this.escapeHtml(this.toPlainText(attempt.scheduleItemTitle || ''));
+        const orderLabel = typeof attempt.blockOrder === 'number' ? `سوال ${attempt.blockOrder}` : '';
+        const dateLabel = this.formatPersianDateTime(attempt.attemptedAt);
+        const statusClass = attempt.isCorrect ? 'success' : 'danger';
+        const statusLabel = attempt.isCorrect ? 'درست' : 'غلط';
+        const points = typeof attempt.pointsEarned === 'number' && typeof attempt.maxPoints === 'number'
+            ? `${attempt.pointsEarned}/${attempt.maxPoints}`
+            : '';
+
+        return `
+            <div class="attempt-item">
+                <div class="attempt-info">
+                    <div class="attempt-question">${questionLabel}</div>
+                    <div class="attempt-meta">
+                        ${orderLabel ? `${orderLabel} · ` : ''}${scheduleTitle}
+                        ${points ? ` · ${points} امتیاز` : ''}
+                        <span> · ${dateLabel}</span>
+                    </div>
+                </div>
+                <span class="attempt-status ${statusClass}">${statusLabel}</span>
+            </div>
+        `;
+    }
+
+    renderEmptyAttemptState() {
+        return `
+            <div class="question-attempt-empty">
+                هنوز داده‌ای در این دسته وجود ندارد.
+            </div>
+        `;
+    }
+
+    formatPersianDateTime(value) {
+        try {
+            const options = {
+                day: '2-digit',
+                month: 'long',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false,
+                timeZone: 'Asia/Tehran'
+            };
+
+            const formatter = new Intl.DateTimeFormat('fa-IR-u-ca-persian', options);
+            return formatter.format(new Date(value));
+        } catch (error) {
+            return value;
+        }
+    }
+
+    escapeHtml(value) {
+        if (typeof value !== 'string') {
+            return value || '';
+        }
+
+        const map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        };
+
+        return value.replace(/[&<>"']/g, char => map[char]);
+    }
+
+    toPlainText(value) {
+        if (typeof DOMParser === 'undefined' || typeof value !== 'string') {
+            return value || '';
+        }
+
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(value, 'text/html');
+        return doc.body.textContent?.trim() || '';
     }
 }
 
