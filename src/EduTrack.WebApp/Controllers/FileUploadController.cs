@@ -146,13 +146,13 @@ public class FileUploadController : Controller
     {
         try
         {
-            var fileResult = await _mediator.Send(new GetFileByIdQuery(id));
-            if (!fileResult.IsSuccess || fileResult.Value == null)
+            var fileResponse = await _mediator.Send(new GetFileByIdQuery(id));
+            if (!fileResponse.IsSuccess || fileResponse.Value == null)
             {
                 return NotFound();
             }
 
-            var file = fileResult.Value;
+            var file = fileResponse.Value;
 
             // Check if file exists
             if (!await _fileStorageService.FileExistsAsync(file.FilePath))
@@ -183,9 +183,9 @@ public class FileUploadController : Controller
                 mimeType = "audio/wav";
             }
 
-            var fileResult = File(fileStream, mimeType, fileName);
-            fileResult.EnableRangeProcessing = true;
-            return fileResult;
+            var fileStreamResult = File(fileStream, mimeType, fileName);
+            fileStreamResult.EnableRangeProcessing = true;
+            return fileStreamResult;
         }
         catch (Exception ex)
         {

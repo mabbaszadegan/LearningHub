@@ -49,15 +49,15 @@ public class GetStudentLearningStatisticsQueryHandlerTests : IDisposable
 
         var blockAttempts = new List<ScheduleItemBlockAttempt>
         {
-            ScheduleItemBlockAttempt.Create(scheduleItemId, ScheduleItemType.Lesson, "block-1", studentId, "{}", "{}", true, 1, 1),
-            ScheduleItemBlockAttempt.Create(scheduleItemId, ScheduleItemType.Lesson, "block-1", studentId, "{}", "{}", false, 0, 1)
+            ScheduleItemBlockAttempt.Create(scheduleItemId, ScheduleItemType.Reminder, "block-1", studentId, "{}", "{}", true, 1, 1),
+            ScheduleItemBlockAttempt.Create(scheduleItemId, ScheduleItemType.Reminder, "block-1", studentId, "{}", "{}", false, 0, 1)
         };
 
         _blockAttemptRepositoryMock
             .Setup(repo => repo.GetByStudentAsync(studentId, null, It.IsAny<CancellationToken>()))
             .ReturnsAsync(blockAttempts);
 
-        var blockStat = ScheduleItemBlockStatistics.Create(scheduleItemId, ScheduleItemType.Lesson, "block-1", studentId);
+        var blockStat = ScheduleItemBlockStatistics.Create(scheduleItemId, ScheduleItemType.Reminder, "block-1", studentId);
         blockStat.RecordAttempt(false, DateTimeOffset.UtcNow.AddHours(-3));
         blockStat.RecordAttempt(true, DateTimeOffset.UtcNow.AddHours(-2));
 
@@ -72,7 +72,8 @@ public class GetStudentLearningStatisticsQueryHandlerTests : IDisposable
 
         // Assert
         result.IsSuccess.Should().BeTrue();
-        var stats = result.Value;
+        result.Value.Should().NotBeNull();
+        var stats = result.Value!;
 
         stats.StudyTimeSummary.TodayMinutes.Should().BeGreaterThan(0);
         stats.StudyTimeSummary.WeekMinutes.Should().BeGreaterThan(stats.StudyTimeSummary.TodayMinutes - 1);
@@ -114,7 +115,7 @@ public class GetStudentLearningStatisticsQueryHandlerTests : IDisposable
 
         var scheduleItem = ScheduleItem.Create(
             teachingPlanId: 1,
-            type: ScheduleItemType.Lesson,
+            type: ScheduleItemType.Reminder,
             title: "درس نمونه",
             description: "توضیح",
             startDate: DateTimeOffset.UtcNow,
@@ -132,7 +133,7 @@ public class GetStudentLearningStatisticsQueryHandlerTests : IDisposable
         await _dbContext.SaveChangesAsync();
 
         var assignment = ScheduleItemSubChapterAssignment.Create(scheduleItem.Id, subChapter.Id);
-        _dbContext.ScheduleItemSubChapterAssignments.Add(assignment);
+        _dbContext.Set<ScheduleItemSubChapterAssignment>().Add(assignment);
         await _dbContext.SaveChangesAsync();
 
         return (scheduleItem.Id, subChapter.Title, chapter.Title);
