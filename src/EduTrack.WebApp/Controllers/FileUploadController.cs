@@ -183,7 +183,9 @@ public class FileUploadController : Controller
                 mimeType = "audio/wav";
             }
 
-            return File(fileStream, mimeType, fileName);
+            var fileResult = File(fileStream, mimeType, fileName);
+            fileResult.EnableRangeProcessing = true;
+            return fileResult;
         }
         catch (Exception ex)
         {

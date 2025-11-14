@@ -60,7 +60,13 @@ public class FileStorageService : IFileStorageService
                 throw new FileNotFoundException($"File not found: {filePath}");
             }
 
-            var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+            var fileStream = new FileStream(
+                filePath,
+                FileMode.Open,
+                FileAccess.Read,
+                FileShare.Read,
+                bufferSize: 4096,
+                FileOptions.Asynchronous | FileOptions.SequentialScan);
             return Task.FromResult<Stream>(fileStream);
         }
         catch (Exception ex)
