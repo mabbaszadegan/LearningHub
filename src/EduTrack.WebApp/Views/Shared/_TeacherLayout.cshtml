@@ -23,7 +23,6 @@
     <link rel="stylesheet" href="~/css/areas/teacher/buttons.css" />
     <link rel="stylesheet" href="~/css/areas/teacher/teacher.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/areas/teacher/teacher-sidebar-collapse.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/areas/teacher/interactive-lesson-creator.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/areas/teacher/page-title-section.css" asp-append-version="true" />
     
     <!-- Persian Date Picker CSS -->
@@ -87,19 +86,6 @@
                         <span>دانش‌آموزان</span>
                     </a>
                     
-                    <div class="topnav-link has-dropdown" id="lessonsDropdown">
-                        <i class="fas fa-play-circle"></i>
-                        <span>درس‌ها</span>
-                        <i class="fas fa-chevron-down dropdown-icon"></i>
-                        <div class="topnav-dropdown">
-                            <a asp-area="Teacher" asp-controller="InteractiveLesson" asp-action="Index" class="dropdown-item">
-                                <i class="fas fa-list"></i>همه درس‌ها
-                            </a>
-                            <a asp-area="Teacher" asp-controller="InteractiveLesson" asp-action="Create" class="dropdown-item">
-                                <i class="fas fa-plus"></i>ایجاد درس
-                            </a>
-                        </div>
-                    </div>
                     
                     <a asp-area="Teacher" asp-controller="Exam" asp-action="Index" class="topnav-link">
                         <i class="fas fa-clipboard-list"></i>
@@ -283,14 +269,6 @@
             }
             else if (currentPath.includes('/Teacher/Home/MyStudents')) {
                 document.querySelector('.topnav-link[href*="/MyStudents"]')?.classList.add('active');
-            }
-            else if (currentPath.includes('/Teacher/InteractiveLesson')) {
-                // Add active class to the parent dropdown link (visual indicator only, don't open dropdown)
-                const lessonsParent = document.querySelector('#lessonsDropdown');
-                if (lessonsParent) {
-                    lessonsParent.style.color = '#667eea';
-                    lessonsParent.style.fontWeight = '500';
-                }
             }
             else if (currentPath.includes('/Teacher/Exam')) {
                 document.querySelector('.topnav-link[href*="/Exam"]')?.classList.add('active');
