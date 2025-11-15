@@ -12,3 +12,4 @@ public interface IStudentProfileRepository : IRepository<StudentProfile>
     Task<bool> ExistsWithDisplayNameAsync(string userId, string displayName, CancellationToken cancellationToken = default);
 }
 
+

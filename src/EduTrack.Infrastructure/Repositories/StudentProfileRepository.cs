@@ -33,3 +33,4 @@ public class StudentProfileRepository : Repository<StudentProfile>, IStudentProf
     }
 }
 
+
