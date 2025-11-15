@@ -95,12 +95,6 @@ public enum PageType
     StudentsIndex,
     StudentDetails,
     
-    // Interactive Lesson pages
-    InteractiveLessonsIndex,
-    InteractiveLessonCreate,
-    InteractiveLessonEdit,
-    InteractiveLessonDetails,
-    
     // Exam pages
     ExamsIndex,
     ExamCreate,
